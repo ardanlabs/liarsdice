@@ -1,0 +1,36 @@
+# Build the Go Binary.
+FROM golang:1.18 as build_engine
+ENV CGO_ENABLED 0
+ARG BUILD_REF
+
+# Copy the source code into the container.
+COPY . /code
+
+# Build the admin binary.
+WORKDIR /code/app/tooling/admin
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
+# Build the engine binary.
+WORKDIR /code/app/engine
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
+
+# Run the Go Binary in Alpine.
+FROM alpine:3.16
+ARG BUILD_DATE
+ARG BUILD_REF
+RUN addgroup -g 1000 -S engine && \
+    adduser -u 1000 -h /code -G engine -S engine
+COPY --from=build_engine --chown=engine:engine /code/zarf/keys/. /code/zarf/keys/.
+COPY --from=build_engine --chown=engine:engine /code/app/tooling/admin/admin /code/admin
+COPY --from=build_engine --chown=engine:engine /code/app/engine/engine /code/engine
+WORKDIR /code
+USER engine
+CMD ["./engine"]
+
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.title="engine" \
+      org.opencontainers.image.authors="William Kennedy <bill@ardanlabs.com>" \
+      org.opencontainers.image.source="https://github.com/ardanlabs/liarsdice" \
+      org.opencontainers.image.revision="${BUILD_REF}" \
+      org.opencontainers.image.vendor="Ardan Labs"

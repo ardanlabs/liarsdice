@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: engine-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: engine-pod # Base POD name
+  namespace: engine-system
+spec:
+  selector:
+    matchLabels:
+      app: engine # Selector for POD name search.
+  template:
+    metadata:
+      labels:
+        app: engine
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      initContainers:
+      # engine-api init container configuration
+      - name: init-migrate
+        image: engine-image
+        command: ['./admin', 'migrate']
+      - name: init-seed
+        image: engine-image
+        command: ['./admin', 'seed']
+      containers:
+      # engine container configuration
+      - name: engine
+        image: engine-image
+        ports:
+        - name: engine
+          containerPort: 3000
+        - name: engine-debug
+          containerPort: 4000
+        readinessProbe: # readiness probes mark the service available to accept traffic.
+          httpGet:
+            path: /debug/readiness
+            port: 4000
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 2
+        livenessProbe: # liveness probes mark the service alive or dead (to be restarted).
+          httpGet:
+            path: /debug/liveness
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 2
+        env:
+        - name: engine_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: db_host
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBERNETES_PODNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: KUBERNETES_NAMESPACE_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: KUBERNETES_NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: engine-service
+  namespace: engine-system
+spec:
+  type: ClusterIP
+  selector:
+    app: engine
+  ports:
+  - name: engine
+    port: 3000
+    targetPort: engine
+  - name: engine-debug
+    port: 4000
+    targetPort: engine-debug
