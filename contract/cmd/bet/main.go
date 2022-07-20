@@ -54,8 +54,6 @@ func run() error {
 		return err
 	}
 
-	player := common.HexToAddress("0x8e113078adf6888b7ba84967f299f29aece24c55")
-
 	// =========================================================================
 
 	// if rawurl == smart.NetworkLocalhost {
@@ -74,7 +72,7 @@ func run() error {
 
 	// =========================================================================
 
-	tx, err := contract.PlaceBet(tranOpts, player, "liarsdice", big.NewInt(1), big.NewInt(1))
+	tx, err := contract.PlaceAnte(tranOpts, "liarsdice", big.NewInt(1), big.NewInt(1))
 	if err != nil {
 		return err
 	}

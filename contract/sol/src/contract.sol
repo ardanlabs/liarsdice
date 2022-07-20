@@ -24,8 +24,8 @@ contract LiarsDice {
     // EventLog provides support for external logging.
     event EventLog(string value);
 
-    // EventPlaceBet is an event to indicate a bet was performed.
-    event EventPlaceBet(address player, string uuid, uint amount);
+    // EventPlaceAnte is an event to indicate a bet was performed.
+    event EventPlaceAnte(address player, string uuid, uint amount);
 
     // EventNewGame is an event to indicate a new game was created.
     event EventNewGame(string uuid);
@@ -41,8 +41,9 @@ contract LiarsDice {
         emit EventNewGame(uuid);
     }
 
-    // PlaceBet adds the amount to the game pot and removes from player balance.
-    function PlaceBet(address player, string memory uuid, uint256 amount, uint256 minimum) public {
+    // PlaceAnte adds the amount to the game pot and removes from player balance.
+    function PlaceAnte(string memory uuid, uint256 amount, uint256 minimum) public {
+        address player = msg.sender;
 
         // Check if game is finshed.
         if (games[uuid].finished) {
@@ -59,7 +60,7 @@ contract LiarsDice {
 
         emit EventLog(string.concat("player ", Error.Addrtoa(player), " placed a bet of ", Error.Itoa(amount), " LDC on game ", uuid));
         emit EventLog(string.concat("current game pot ", Error.Itoa(games[uuid].pot)));
-        emit EventPlaceBet(player, uuid, amount);
+        emit EventPlaceAnte(player, uuid, amount);
     }
 
     // GameEnd transfers the game pot amount to the player and resets the pot.
