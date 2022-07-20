@@ -3,6 +3,16 @@
 # The coinbase address is the account to pay mining rewards to.
 # The coinbase address is given a LOT of money to start.
 #
+# These are examples of what you can do in the attach JS environment.
+# 	eth.getBalance("0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd") or eth.getBalance(eth.coinbase)
+# 	eth.getBalance("0x8e113078adf6888b7ba84967f299f29aece24c55")
+# 	eth.getBalance("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
+#   eth.sendTransaction({from:eth.coinbase, to:"0x8e113078adf6888b7ba84967f299f29aece24c55", value: web3.toWei(0.05, "ether")})
+#   eth.sendTransaction({from:eth.coinbase, to:"0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7", value: web3.toWei(0.05, "ether")})
+#   eth.blockNumber
+#   eth.getBlockByNumber(8)
+#   eth.getTransaction("0xaea41e7c13a7ea627169c74ade4d5ea86664ff1f740cd90e499f3f842656d4ad")
+#
 # Testing running system
 # For testing a simple query on the system. Don't forget to `make seed` first.
 # curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token
@@ -233,5 +243,5 @@ geth-new-account:
 # This will deposit 1 ETH into the two extra accounts from the coinbase account.
 # Do this if you delete the geth folder and start over or if the accounts need money.
 geth-deposit:
-	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x8e113078adf6888b7ba84967f299f29aece24c55", "to":"0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8e113078adf6888b7ba84967f299f29aece24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
