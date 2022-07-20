@@ -225,6 +225,9 @@ contract-withdraw:
 contract-endgame:
 	go run contract/cmd/end/main.go
 
+# This will show the game pot amount.
+contract-gameante:
+	go run contract/cmd/gameante/main.go
 
 # ==============================================================================
 # These commands start the Ethereum node and provide examples of attaching

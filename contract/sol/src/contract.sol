@@ -30,6 +30,12 @@ contract LiarsDice {
     // EventNewGame is an event to indicate a new game was created.
     event EventNewGame(string uuid);
 
+    // onlyOwner can be used to restrict access to a function for only the owner.
+    modifier onlyOwner {
+        if (msg.sender != Owner) revert();
+        _;
+    }
+
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
@@ -69,6 +75,12 @@ contract LiarsDice {
         games[uuid].finished = true;
         
         emit EventLog(string.concat("game ", uuid, " is over with a pot of ", Error.Itoa(games[uuid].pot), " LDC. The winner is ", Error.Addrtoa(player)));
+    }
+
+    // GameAnte returns the game pot amount.
+    function GameAnte(string memory uuid) onlyOwner public returns (uint) {
+        emit EventLog(string.concat("game ", uuid, " has a pot of ", Error.Itoa(games[uuid].pot), " LDCs"));
+        return games[uuid].pot;
     }
 
     //===========================================================================
