@@ -175,13 +175,34 @@ list:
 # This will compile the smart contract and produce the binary code. Then with the
 # abi and binary code, a Go source code file can be generated for Go API access.
 contract-build:
-	solc --abi contract/src/contract.sol -o contract/abi --overwrite
-	solc --bin contract/src/contract.sol -o contract/abi --overwrite
-	abigen --bin=contract/abi/Book.bin --abi=contract/abi/Book.abi --pkg=contract --out=contract/go/pkg/contract.go
+	solc --abi contract/sol/src/contract.sol -o contract/sol/abi --overwrite
+	solc --bin contract/sol/src/contract.sol -o contract/sol/abi --overwrite
+	abigen --bin=contract/sol/abi/LiarsDice.bin --abi=contract/sol/abi/LiarsDice.abi --pkg=contract --out=contract/sol/go/contract.go
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 contract-deploy: contract-build
-	go run app/cmd/deploy/main.go
+	go run contract/cmd/deploy/main.go
+
+contract-transfer:
+	go run contract/cmd/transfer/main.go
+
+contract-trancheck:
+	go run contract/cmd/trancheck/main.go
+
+contract-newgame:
+	go run contract/cmd/start/main.go
+
+contract-bet:
+	go run contract/cmd/bet/main.go
+
+contract-deposit:
+	go run contract/cmd/deposit/main.go
+
+contract-withdraw:
+	go run contract/cmd/withdraw/main.go
+
+contract-endgame:
+	go run contract/cmd/end/main.go
 
 
 # ==============================================================================

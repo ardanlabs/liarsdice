@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	contract "github.com/ardanlabs/liarsdice/contract/go/pkg"
+	contract "github.com/ardanlabs/liarsdice/contract/sol/go"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 )
 
