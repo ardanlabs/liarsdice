@@ -117,7 +117,6 @@ func (t *Table) NewRound() int {
 			players = append(players, player)
 		}
 	}
-
 	t.Game.Players = players
 
 	if len(players) == 1 {
