@@ -139,6 +139,15 @@ kind-database:
 	# ./admin --db-disable-tls=1 seed
 
 # ==============================================================================
+# Client support
+
+client-run:
+	go run app/client/main.go | go run app/tooling/logfmt/main.go
+
+client-view:
+	python -m webbrowser "http://localhost"
+
+# ==============================================================================
 # Administration
 
 migrate:

@@ -4,34 +4,20 @@
         <title>Ardan Node Viewer</title>
         <meta content="Ardan blockchain node viewer" name="description">
         <meta charset="utf-8">
-        <link rel="stylesheet" href="/assets/styles/main.css?v1">
-        <script src="/assets/scripts/main.js?v1"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.7.4-rc.1/web3.min.js"></script>
     </head>
     <body>
-        <div id="flex-container">
-            <div id="msg-block1">
-                <div id="first-msg1" class="block info" onclick="showMempool(1, 8080)">Node 1: Connecting...</div>
-            </div>
-            <div id="msg-block2">
-                <div id="first-msg2" class="block info" onclick="showMempool(2, 8280)">Node 2: Connecting...</div>
-            </div>
-			<div id="msg-block3">
-                <div id="first-msg3" class="block info" onclick="showMempool(3, 8380)">Node 3: Connecting...</div>
-            </div>
-        </div>
-		<div id="transactions">
-			<button class="button-transactions-hide" onclick="hideTransactions()">
-				<strong>X</strong>
-			</button>
-			<div id="transactions-content">
-			</div>
-		</div>
-        <div id="mempool">
-			<button class="button-transactions-hide" onclick="hideMempool()">
-				<strong>X</strong>
-			</button>
-			<div id="mempool-content">
-			</div>
-		</div>
+        <script>
+            /* To connect using MetaMask */
+            async function connect() {
+                if (window.ethereum) {
+                    await window.ethereum.request({ method: "eth_requestAccounts" });
+                    window.web3 = new Web3(window.ethereum);
+                } else {
+                    console.log("No wallet");
+                }
+            }
+        </script>
+        <input type="button" value="Connect Wallet" onclick="connect();">
     </body>
 </html>
