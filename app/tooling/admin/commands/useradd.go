@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ardanlabs/service/business/core/user"
-	"github.com/ardanlabs/service/business/sys/database"
-	"github.com/ardanlabs/service/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/core/user"
+	"github.com/ardanlabs/liarsdice/business/sys/database"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"go.uber.org/zap"
 )
 

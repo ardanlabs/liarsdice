@@ -9,7 +9,7 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ardanlabs/smartcontract/foundation/smartcontract/etherscan"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/etherscan"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"

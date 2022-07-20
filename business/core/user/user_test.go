@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ardanlabs/service/business/core/user"
-	"github.com/ardanlabs/service/business/data/dbschema"
-	"github.com/ardanlabs/service/business/data/dbtest"
-	"github.com/ardanlabs/service/business/web/auth"
-	"github.com/ardanlabs/service/foundation/docker"
+	"github.com/ardanlabs/liarsdice/business/core/user"
+	"github.com/ardanlabs/liarsdice/business/data/dbschema"
+	"github.com/ardanlabs/liarsdice/business/data/dbtest"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/foundation/docker"
 	"github.com/google/go-cmp/cmp"
 )
 

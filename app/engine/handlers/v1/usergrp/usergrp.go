@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ardanlabs/service/business/core/user"
-	"github.com/ardanlabs/service/business/web/auth"
-	v1Web "github.com/ardanlabs/service/business/web/v1"
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/business/core/user"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // Handlers manages the set of user endpoints.

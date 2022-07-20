@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // Cors sets the response headers needed for Cross-Origin Resource Sharing

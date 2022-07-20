@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf/v3"
-	"github.com/ardanlabs/service/app/services/sales-api/handlers"
-	"github.com/ardanlabs/service/business/sys/database"
-	"github.com/ardanlabs/service/business/web/auth"
-	"github.com/ardanlabs/service/foundation/keystore"
-	"github.com/ardanlabs/service/foundation/logger"
+	"github.com/ardanlabs/liarsdice/app/engine/handlers"
+	"github.com/ardanlabs/liarsdice/business/sys/database"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/foundation/keystore"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )

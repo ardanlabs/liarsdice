@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"go.uber.org/zap"
 )
 

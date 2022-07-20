@@ -4,7 +4,7 @@ import (
 	"embed" // Calls init function.
 	"testing"
 
-	"github.com/ardanlabs/service/foundation/keystore"
+	"github.com/ardanlabs/liarsdice/foundation/keystore"
 )
 
 // Success and failure markers.

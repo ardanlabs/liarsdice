@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq" // Calls init function.
 	"go.uber.org/zap"

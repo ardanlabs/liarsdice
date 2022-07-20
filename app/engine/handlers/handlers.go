@@ -8,11 +8,11 @@ import (
 	"net/http/pprof"
 	"os"
 
-	"github.com/ardanlabs/service/app/services/sales-api/handlers/debug/checkgrp"
-	v1 "github.com/ardanlabs/service/app/services/sales-api/handlers/v1"
-	"github.com/ardanlabs/service/business/web/auth"
-	"github.com/ardanlabs/service/business/web/v1/mid"
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/app/engine/handlers/debug/checkgrp"
+	v1 "github.com/ardanlabs/liarsdice/app/engine/handlers/v1"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )

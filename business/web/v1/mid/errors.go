@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ardanlabs/service/business/sys/validate"
-	v1Web "github.com/ardanlabs/service/business/web/v1"
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/business/sys/validate"
+	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"go.uber.org/zap"
 )
 

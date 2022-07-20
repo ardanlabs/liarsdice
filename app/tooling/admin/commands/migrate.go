@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ardanlabs/service/business/data/dbschema"
-	"github.com/ardanlabs/service/business/sys/database"
+	"github.com/ardanlabs/liarsdice/business/data/dbschema"
+	"github.com/ardanlabs/liarsdice/business/sys/database"
 )
 
 // ErrHelp provides context that help was given.

@@ -4,7 +4,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/ardanlabs/service/business/core/user/db"
+	"github.com/ardanlabs/liarsdice/business/core/user/db"
 )
 
 // User represents an individual user.

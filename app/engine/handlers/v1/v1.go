@@ -5,11 +5,11 @@ package v1
 import (
 	"net/http"
 
-	"github.com/ardanlabs/service/app/services/sales-api/handlers/v1/usergrp"
-	"github.com/ardanlabs/service/business/core/user"
-	"github.com/ardanlabs/service/business/web/auth"
-	"github.com/ardanlabs/service/business/web/v1/mid"
-	"github.com/ardanlabs/service/foundation/web"
+	"github.com/ardanlabs/liarsdice/app/engine/handlers/v1/usergrp"
+	"github.com/ardanlabs/liarsdice/business/core/user"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
