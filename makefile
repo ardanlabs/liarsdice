@@ -183,24 +183,23 @@ contract-build:
 contract-deploy: contract-build
 	go run contract/cmd/deploy/main.go
 
-contract-transfer:
-	go run contract/cmd/transfer/main.go
-
-contract-trancheck:
-	go run contract/cmd/trancheck/main.go
-
+# This will create a new game in the Liars Dice contract.
 contract-newgame:
 	go run contract/cmd/start/main.go
 
+# This will make a bet of 1 coin in the game.
 contract-bet:
 	go run contract/cmd/bet/main.go
 
+# This will deposit one coin into the player's balance.
 contract-deposit:
 	go run contract/cmd/deposit/main.go
 
+# This will withdraw one coin into the player's balance.
 contract-withdraw:
 	go run contract/cmd/withdraw/main.go
 
+# This will end the game and transfer the game pot to the winner.
 contract-endgame:
 	go run contract/cmd/end/main.go
 
