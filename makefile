@@ -26,6 +26,9 @@
 # Running pgcli client for database
 # brew install pgcli
 # pgcli postgresql://postgres:postgres@localhost
+#
+# Web3 API
+# https://web3js.readthedocs.io/en/v1.7.4/
 
 # ==============================================================================
 # Install dependencies
