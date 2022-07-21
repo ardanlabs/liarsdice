@@ -10,16 +10,17 @@ contract LiarsDice {
         uint created_at;
         bool finished;
         uint256 pot;
+        uint256 ante;
     }
 
     // Owner represents the address who deployed the contract.
     address public Owner;
 
-    // playerbalance represents the amount of coins a player have available.
-    mapping (address => uint) public playerbalance;
+    // Game represents the current game.
+    game public Game;
 
-    // Games represents a list of all games.
-    mapping (string => game) public games;
+    // playerbalance represents the amount of coins a player have available.
+    mapping (address => uint) private playerbalance;
 
     // EventLog provides support for external logging.
     event EventLog(string value);
@@ -41,58 +42,69 @@ contract LiarsDice {
         Owner = msg.sender;
     }
 
-    // NewGame creates a new game with the given uuid and default values.
-    function NewGame(string memory uuid) public {
-        games[uuid] = game(block.timestamp, false, 0);
-        emit EventNewGame(uuid);
+    // NewGame creates a new game.
+    function NewGame() public {
+        Game = game(block.timestamp, false, 0, 5);
     }
 
     // PlaceAnte adds the amount to the game pot and removes from player balance.
-    function PlaceAnte(string memory uuid, uint256 amount) payable public {
-        address player = msg.sender;
-        uint gas = gasleft();
-        emit EventLog(string.concat(Error.Itoa(msg.value), Error.Itoa(gas)));
-        
-        // TODO: check the minimum value against the amount.
+    function PlaceAnte() public {
 
         // Check if game is finshed.
-        if (games[uuid].finished) {
-            revert(string.concat("game ", uuid, " is not available anymore"));
+        if (Game.finished) {
+            revert(string.concat("game is not available anymore"));
         }
 
-        games[uuid].pot += amount;
+        // Check if player has enough balance to pay the game ante.
+        if (playerbalance[msg.sender] < Game.ante) {
+            revert(string.concat("not enough balance to join the game, it requires ", Error.Itoa(Game.ante)));
+        }
 
-        emit EventLog(string.concat("player ", Error.Addrtoa(player), " placed a bet of ", Error.Itoa(amount), " LDC on game ", uuid));
-        emit EventLog(string.concat("current game pot ", Error.Itoa(games[uuid].pot)));
-        emit EventPlaceAnte(player, uuid, amount);
+        // Remove game ante from player's balance.
+        playerbalance[msg.sender] -= Game.ante;
+
+        // Increase game pot.
+        Game.pot += Game.ante;
+
+        emit EventLog(string.concat("player ", Error.Addrtoa(msg.sender), " joined the game"));
+        emit EventLog(string.concat("current game pot ", Error.Itoa(Game.pot)));
     }
 
     // GameEnd transfers the game pot amount to the player and finish the game.
-    function GameEnd(address player, string memory uuid) public {
-        games[uuid].finished = true;
+    function GameEnd(address player) onlyOwner public {
 
-        // TODO: Transfer the pot value to the player's address.
+        // Finish the game so it does not accept any more players.
+        Game.finished = true;
 
-        emit EventLog(string.concat("game ", uuid, " is over with a pot of ", Error.Itoa(games[uuid].pot), " LDC. The winner is ", Error.Addrtoa(player)));
+        // Move the pot amount to the player's balance.
+        playerbalance[player] += Game.pot;
+
+        emit EventLog(string.concat("game is over with a pot of ", Error.Itoa(Game.pot), " LDC. The winner is ", Error.Addrtoa(player)));
     }
 
     // GameAnte returns the game pot amount.
-    function GameAnte(string memory uuid) onlyOwner public returns (uint) {
-        emit EventLog(string.concat("game ", uuid, " has a pot of ", Error.Itoa(games[uuid].pot), " LDCs"));
-        return games[uuid].pot;
+    function GameAnte() onlyOwner public returns (uint) {
+        emit EventLog(string.concat("game current pot: ", Error.Itoa(Game.pot)));
+        return Game.pot;
     }
 
-    //===========================================================================
-
-    // [For testing purposes]
-    // deposits the given amount to the player balance.
-    function deposit(address player, uint256 amount) public {
-        playerbalance[player] += amount;
+    // Deposit the given amount to the player balance.
+    function Deposit() payable public {
+        playerbalance[msg.sender] += msg.value;
+        emit EventLog(string.concat("deposit: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(msg.value)));
     }
 
-    // [For testing purposes]
-    // withdraws the given amount to the player balance.
-    function withdraw(address player, uint256 amount) public {
-        playerbalance[player] -= amount;
+    // Withdraw the given amount from the player balance.
+    // TODO: we still need to find a way to transfer the balance amount to the
+    // player's wallet.
+    function Withdraw(uint256 amount) public {
+
+        // Check if player has enough balance.
+        if (playerbalance[msg.sender] < amount) {
+            revert("not enough balance");
+        }
+
+        playerbalance[msg.sender] -= amount;
+        emit EventLog(string.concat("withdraw: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(amount)));
     }
 }
