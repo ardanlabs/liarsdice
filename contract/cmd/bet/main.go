@@ -72,7 +72,7 @@ func run() error {
 
 	// =========================================================================
 
-	tx, err := contract.PlaceAnte(tranOpts, "liarsdice", big.NewInt(1), big.NewInt(1))
+	tx, err := contract.PlaceAnte(tranOpts, "liarsdice", big.NewInt(1))
 	if err != nil {
 		return err
 	}

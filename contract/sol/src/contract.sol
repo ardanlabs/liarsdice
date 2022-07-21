@@ -48,20 +48,18 @@ contract LiarsDice {
     }
 
     // PlaceAnte adds the amount to the game pot and removes from player balance.
-    function PlaceAnte(string memory uuid, uint256 amount, uint256 minimum) public {
+    function PlaceAnte(string memory uuid, uint256 amount) payable public {
         address player = msg.sender;
+        uint gas = gasleft();
+        emit EventLog(string.concat(Error.Itoa(msg.value), Error.Itoa(gas)));
+        
+        // TODO: check the minimum value against the amount.
 
         // Check if game is finshed.
         if (games[uuid].finished) {
             revert(string.concat("game ", uuid, " is not available anymore"));
         }
 
-        // Check if player has enough balance.
-        if (playerbalance[player] < minimum) {
-            revert("not enough balance to place a bet");
-        }
-
-        playerbalance[player] -= amount;
         games[uuid].pot += amount;
 
         emit EventLog(string.concat("player ", Error.Addrtoa(player), " placed a bet of ", Error.Itoa(amount), " LDC on game ", uuid));
@@ -69,11 +67,12 @@ contract LiarsDice {
         emit EventPlaceAnte(player, uuid, amount);
     }
 
-    // GameEnd transfers the game pot amount to the player and resets the pot.
+    // GameEnd transfers the game pot amount to the player and finish the game.
     function GameEnd(address player, string memory uuid) public {
-        playerbalance[player] += games[uuid].pot;
         games[uuid].finished = true;
-        
+
+        // TODO: Transfer the pot value to the player's address.
+
         emit EventLog(string.concat("game ", uuid, " is over with a pot of ", Error.Itoa(games[uuid].pot), " LDC. The winner is ", Error.Addrtoa(player)));
     }
 
