@@ -19,9 +19,6 @@ contract LiarsDice {
     // game represents the only game we current allow to be played.
     gameInfo private game;
 
-    // fees collected by the smart contract for the owner.
-    uint256 private fees;
-
     // playerBalance represents the amount of money a player have available.
     mapping (address => uint256) private playerBalance;
 
@@ -47,21 +44,17 @@ contract LiarsDice {
 
     // PlaceAnte adds the amount to the game pot and removes from player balance. Each
     // player pays the gas fees for this call.
-    function PlaceAnte(address player, uint256 ante, uint256 gasFee) onlyOwner public {
+    function PlaceAnte(address player, uint256 ante) onlyOwner public {
         if (!game.playing) {
             revert("game is not available anymore");
         }
 
-        uint256 totalPrice = ante + gasFee;
-
-        if (playerBalance[player] < totalPrice) {
-            revert(string.concat("not enough balance to join the game, it requires ", Error.Itoa(totalPrice)));
+        if (playerBalance[player] < ante) {
+            revert(string.concat("not enough balance to join the game, it requires ", Error.Itoa(ante)));
         }
 
-        playerBalance[player] -= totalPrice;
-
+        playerBalance[player] -= ante;
         game.pot += ante;
-        fees += gasFee;
 
         emit EventLog(string.concat("player: ", Error.Addrtoa(msg.sender), " joined the game"));
         emit EventLog(string.concat("current game pot: ", Error.Itoa(game.pot)));
@@ -69,11 +62,12 @@ contract LiarsDice {
 
     // GameEnd transfers the game pot amount to the winning player and they pay
     // any gas fees.
-    function GameEnd(address winningPlayer, uint256 gasFee) onlyOwner public {
+    function GameEnd(address winningPlayer, uint256 gameFee) onlyOwner public {
         game.playing = false;
 
+        game.pot -= gameFee;
         playerBalance[winningPlayer] += game.pot;
-        fees += gasFee;
+        playerBalance[Owner] += gameFee;
 
         emit EventLog(string.concat("game is over with a pot of ", Error.Itoa(game.pot), ". The winner is ", Error.Addrtoa(winningPlayer)));
 

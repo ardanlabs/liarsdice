@@ -15,8 +15,9 @@ const (
 
 // Player represents someone in the system.
 type Player struct {
-	UserID string
-	Dice   []int
+	UserID  string
+	Address string
+	Dice    []int
 }
 
 // Bet represents a single bet by a player.
@@ -29,7 +30,7 @@ type Bet struct {
 // Game represents an instance of game play.
 type Game struct {
 	ID      string
-	Price   int
+	Ante    int
 	Round   int
 	Next    int
 	Players []*Player
@@ -43,18 +44,18 @@ type Game struct {
 type Table struct {
 	ID      string
 	Name    string
-	Price   int
+	Ante    int
 	Status  string
 	Players map[string]*Player
 	Game    *Game
 }
 
 // NewTable constructs a table for players to use.
-func NewTable(name string, price int) *Table {
+func NewTable(name string, ante int) *Table {
 	t := Table{
 		ID:     uuid.NewString(),
 		Name:   name,
-		Price:  price,
+		Ante:   ante,
 		Status: StatusEmpty,
 	}
 
