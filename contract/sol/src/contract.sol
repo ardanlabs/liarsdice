@@ -5,31 +5,30 @@ import "./error.sol";
 
 contract LiarsDice {
 
-    // game holds all game related data.
-    struct game {
-        uint created_at;
-        bool finished;
+    // gameInfo holds all game related data.
+    struct gameInfo {
+        bool playing;
         uint256 pot;
-        uint256 ante;
     }
+
+    // =========================================================================
 
     // Owner represents the address who deployed the contract.
     address public Owner;
 
-    // Game represents the current game.
-    game public Game;
+    // game represents the only game we current allow to be played.
+    gameInfo private game;
 
-    // playerbalance represents the amount of coins a player have available.
-    mapping (address => uint) private playerbalance;
+    // fees collected by the smart contract for the owner.
+    uint256 private fees;
+
+    // playerBalance represents the amount of money a player have available.
+    mapping (address => uint256) private playerBalance;
 
     // EventLog provides support for external logging.
     event EventLog(string value);
 
-    // EventPlaceAnte is an event to indicate a bet was performed.
-    event EventPlaceAnte(address player, string uuid, uint amount);
-
-    // EventNewGame is an event to indicate a new game was created.
-    event EventNewGame(string uuid);
+    // =========================================================================
 
     // onlyOwner can be used to restrict access to a function for only the owner.
     modifier onlyOwner {
@@ -40,82 +39,82 @@ contract LiarsDice {
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
+        game = gameInfo(false, 0);
     }
 
-    // NewGame creates a new game.
-    function NewGame() public {
-        Game = game(block.timestamp, false, 0, 5);
-    }
+    // =========================================================================
+    // Owner Only Calls
 
-    // PlaceAnte adds the amount to the game pot and removes from player balance.
-    function PlaceAnte() onlyOwner public {
-
-        // Check if game is finshed.
-        if (Game.finished) {
+    // PlaceAnte adds the amount to the game pot and removes from player balance. Each
+    // player pays the gas fees for this call.
+    function PlaceAnte(address player, uint256 ante, uint256 gasFee) onlyOwner public {
+        if (!game.playing) {
             revert("game is not available anymore");
         }
 
-        // Check if game ante is zero (not initialised).
-        if (Game.ante == 0) {
-            revert("game is not created");
+        uint256 totalPrice = ante + gasFee;
+
+        if (playerBalance[player] < totalPrice) {
+            revert(string.concat("not enough balance to join the game, it requires ", Error.Itoa(totalPrice)));
         }
 
-        // Check if player has enough balance to pay the game ante.
-        if (playerbalance[msg.sender] < Game.ante) {
-            revert(string.concat("not enough balance to join the game, it requires ", Error.Itoa(Game.ante)));
-        }
+        playerBalance[player] -= totalPrice;
 
-        // Remove game ante from player's balance.
-        playerbalance[msg.sender] -= Game.ante;
-
-        // Increase game pot.
-        Game.pot += Game.ante;
+        game.pot += ante;
+        fees += gasFee;
 
         emit EventLog(string.concat("player: ", Error.Addrtoa(msg.sender), " joined the game"));
-        emit EventLog(string.concat("current game pot: ", Error.Itoa(Game.pot)));
+        emit EventLog(string.concat("current game pot: ", Error.Itoa(game.pot)));
     }
 
-    // GameEnd transfers the game pot amount to the player and finish the game.
-    function GameEnd(address player) onlyOwner public {
+    // GameEnd transfers the game pot amount to the winning player and they pay
+    // any gas fees.
+    function GameEnd(address winningPlayer, uint256 gasFee) onlyOwner public {
+        game.playing = false;
 
-        // Finish the game so it does not accept any more players.
-        Game.finished = true;
+        playerBalance[winningPlayer] += game.pot;
+        fees += gasFee;
 
-        // Move the pot amount to the player's balance.
-        playerbalance[player] += Game.pot;
+        emit EventLog(string.concat("game is over with a pot of ", Error.Itoa(game.pot), ". The winner is ", Error.Addrtoa(winningPlayer)));
 
-        emit EventLog(string.concat("game is over with a pot of ", Error.Itoa(Game.pot), " LDC. The winner is ", Error.Addrtoa(player)));
+        game.playing = false;
+        game.pot = 0;
     }
 
     // GamePot returns the game pot amount.
     function GamePot() onlyOwner view public returns (uint) {
-        return Game.pot;
+        return game.pot;
     }
+
+    // PlayerBalance returns the current players balance.
+    function PlayerBalance(address player) onlyOwner view public returns (uint) {
+        return playerBalance[player];
+    }
+
+    // function Players() onlyOwner view public returns (mapping (address => uint256)) {
+    //     return playerBalance;
+    // }
+
+    // =========================================================================
+    // Player Wallet Calls
 
     // Deposit the given amount to the player balance.
     function Deposit() payable public {
-        playerbalance[msg.sender] += msg.value;
-        emit EventLog(string.concat("deposit: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(playerbalance[msg.sender])));
+        playerBalance[msg.sender] += msg.value;
+        emit EventLog(string.concat("deposit: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(playerBalance[msg.sender])));
     }
 
     // Withdraw the given amount from the player balance.
     function Withdraw() payable public {
         address payable player = payable(msg.sender);
 
-        // Check if player has enough balance.
-        if (playerbalance[msg.sender] <= 0) {
+        if (playerBalance[msg.sender] == 0) {
             revert("not enough balance");
         }
 
-        player.transfer(playerbalance[msg.sender]);
-        
-        playerbalance[msg.sender] = 0;
+        player.transfer(playerBalance[msg.sender]);        
+        playerBalance[msg.sender] = 0;
 
         emit EventLog(string.concat("withdraw: ", Error.Addrtoa(msg.sender)));
     }
-
-    function PlayerBalance() view public returns (uint) {
-        return playerbalance[msg.sender];
-    }
-
 }

@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	StatusOpen = "open"
-	StatusPlay = "playing"
+	StatusEmpty = "empty"
+	StatusNew   = "new"
+	StatusPlay  = "playing"
 )
 
 // Player represents someone in the system.
@@ -51,9 +52,10 @@ type Table struct {
 // NewTable constructs a table for players to use.
 func NewTable(name string, price int) *Table {
 	t := Table{
-		ID:    uuid.NewString(),
-		Name:  name,
-		Price: price,
+		ID:     uuid.NewString(),
+		Name:   name,
+		Price:  price,
+		Status: StatusEmpty,
 	}
 
 	return &t
@@ -96,7 +98,7 @@ func (t *Table) StartNewGame() error {
 		outs[player] = 0
 	}
 
-	t.Status = StatusOpen
+	t.Status = StatusNew
 	t.Game = &Game{
 		ID:      uuid.NewString(),
 		Price:   t.Price,
