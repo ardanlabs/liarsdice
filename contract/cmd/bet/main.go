@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -72,7 +71,7 @@ func run() error {
 
 	// =========================================================================
 
-	tx, err := contract.PlaceAnte(tranOpts, "liarsdice", big.NewInt(1))
+	tx, err := contract.PlaceAnte(tranOpts)
 	if err != nil {
 		return err
 	}

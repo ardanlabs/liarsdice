@@ -71,7 +71,7 @@ func run() error {
 
 	// =========================================================================
 
-	tx, err := contract.GameAnte(tranOpts, "liarsdice")
+	tx, err := contract.GameAnte(tranOpts)
 	if err != nil {
 		return err
 	}

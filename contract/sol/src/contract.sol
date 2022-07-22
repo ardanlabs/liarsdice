@@ -48,11 +48,16 @@ contract LiarsDice {
     }
 
     // PlaceAnte adds the amount to the game pot and removes from player balance.
-    function PlaceAnte() public {
+    function PlaceAnte() onlyOwner public {
 
         // Check if game is finshed.
         if (Game.finished) {
-            revert(string.concat("game is not available anymore"));
+            revert("game is not available anymore");
+        }
+
+        // Check if game ante is zero (not initialised).
+        if (Game.ante == 0) {
+            revert("game is not created");
         }
 
         // Check if player has enough balance to pay the game ante.
@@ -66,8 +71,8 @@ contract LiarsDice {
         // Increase game pot.
         Game.pot += Game.ante;
 
-        emit EventLog(string.concat("player ", Error.Addrtoa(msg.sender), " joined the game"));
-        emit EventLog(string.concat("current game pot ", Error.Itoa(Game.pot)));
+        emit EventLog(string.concat("player: ", Error.Addrtoa(msg.sender), " joined the game"));
+        emit EventLog(string.concat("current game pot: ", Error.Itoa(Game.pot)));
     }
 
     // GameEnd transfers the game pot amount to the player and finish the game.
@@ -82,29 +87,35 @@ contract LiarsDice {
         emit EventLog(string.concat("game is over with a pot of ", Error.Itoa(Game.pot), " LDC. The winner is ", Error.Addrtoa(player)));
     }
 
-    // GameAnte returns the game pot amount.
-    function GameAnte() onlyOwner public returns (uint) {
-        emit EventLog(string.concat("game current pot: ", Error.Itoa(Game.pot)));
+    // GamePot returns the game pot amount.
+    function GamePot() onlyOwner view public returns (uint) {
         return Game.pot;
     }
 
     // Deposit the given amount to the player balance.
     function Deposit() payable public {
         playerbalance[msg.sender] += msg.value;
-        emit EventLog(string.concat("deposit: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(msg.value)));
+        emit EventLog(string.concat("deposit: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(playerbalance[msg.sender])));
     }
 
     // Withdraw the given amount from the player balance.
-    // TODO: we still need to find a way to transfer the balance amount to the
-    // player's wallet.
-    function Withdraw(uint256 amount) public {
+    function Withdraw() payable public {
+        address payable player = payable(msg.sender);
 
         // Check if player has enough balance.
-        if (playerbalance[msg.sender] < amount) {
+        if (playerbalance[msg.sender] <= 0) {
             revert("not enough balance");
         }
 
-        playerbalance[msg.sender] -= amount;
-        emit EventLog(string.concat("withdraw: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(amount)));
+        player.transfer(playerbalance[msg.sender]);
+        
+        playerbalance[msg.sender] = 0;
+
+        emit EventLog(string.concat("withdraw: ", Error.Addrtoa(msg.sender)));
     }
+
+    function PlayerBalance() view public returns (uint) {
+        return playerbalance[msg.sender];
+    }
+
 }
