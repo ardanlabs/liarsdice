@@ -205,29 +205,29 @@ contract-build:
 contract-deploy: contract-build
 	go run contract/cmd/deploy/main.go
 
-# This will create a new game in the Liars Dice contract.
-contract-newgame:
-	go run contract/cmd/start/main.go
+# This will show the game pot.
+contract-gamepot:
+	go run contract/cmd/gamepot/main.go
 
-# This will make a bet of 1 coin in the game.
-contract-bet:
-	go run contract/cmd/bet/main.go
+# This will end the game and transfer the game pot to the winner.
+contract-gameend:
+	go run contract/cmd/gameend/main.go
 
-# This will deposit one coin into the player's balance.
+# This will place an ante for the player.
+contract-placeante:
+	go run contract/cmd/placeante/main.go
+
+# This will show the player's balance.
+contract-playerbalance:
+	go run contract/cmd/playerbalance/main.go
+
+# This will make a deposit for the player.
 contract-deposit:
 	go run contract/cmd/deposit/main.go
 
-# This will withdraw one coin into the player's balance.
+# This will withdraw from the player balance and transfer to their wallet.
 contract-withdraw:
 	go run contract/cmd/withdraw/main.go
-
-# This will end the game and transfer the game pot to the winner.
-contract-endgame:
-	go run contract/cmd/end/main.go
-
-# This will show the game pot amount.
-contract-gameante:
-	go run contract/cmd/gameante/main.go
 
 # ==============================================================================
 # These commands start the Ethereum node and provide examples of attaching

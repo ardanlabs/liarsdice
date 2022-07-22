@@ -22,7 +22,7 @@ func run() error {
 	ctx := context.Background()
 
 	const rawurl = smart.NetworkLocalhost
-	client, err := smart.Connect(ctx, rawurl, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
+	client, err := smart.Connect(ctx, rawurl, smart.PlayerKeyPath, smart.PlayerPassPhrase)
 	if err != nil {
 		return err
 	}
@@ -52,24 +52,6 @@ func run() error {
 	if err != nil {
 		return err
 	}
-
-	// =========================================================================
-
-	// if rawurl == smart.NetworkLocalhost {
-	// 	sink := make(chan *ldc.LdcEventNewGame, 100)
-	// 	if _, err := contract.WatchEventNewGame(nil, sink); err != nil {
-	// 		return err
-	// 	}
-
-	// 	go func() {
-	// 		event := <-sink
-	// 		fmt.Println("\nEvents")
-	// 		fmt.Println("----------------------------------------------------")
-	// 		fmt.Println("new game event", event)
-	// 	}()
-	// }
-
-	// =========================================================================
 
 	tx, err := contract.Withdraw(tranOpts)
 	if err != nil {

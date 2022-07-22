@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -55,26 +56,13 @@ func run() error {
 
 	// =========================================================================
 
-	// if rawurl == smart.NetworkLocalhost {
-	// 	sink := make(chan *ldc.LdcEventNewGame, 100)
-	// 	if _, err := contract.WatchEventNewGame(nil, sink); err != nil {
-	// 		return err
-	// 	}
+	to := common.HexToAddress("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
 
-	// 	go func() {
-	// 		event := <-sink
-	// 		fmt.Println("\nEvents")
-	// 		fmt.Println("----------------------------------------------------")
-	// 		fmt.Println("new game event", event)
-	// 	}()
-	// }
-
-	// =========================================================================
-
-	tx, err := contract.GameAnte(tranOpts)
+	tx, err := contract.GameEnd(tranOpts, to, big.NewInt(1000000000))
 	if err != nil {
 		return err
 	}
+
 	client.DisplayTransaction(tx)
 
 	receipt, err := client.WaitMined(ctx, tx)

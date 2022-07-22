@@ -46,42 +46,18 @@ func run() error {
 
 	// =========================================================================
 
-	const gasLimit = 300000
-	const valueGwei = 0
-	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, valueGwei)
+	tranOpts, err := client.NewCallOpts(ctx)
 	if err != nil {
 		return err
 	}
 
 	// =========================================================================
-
-	if rawurl == smart.NetworkLocalhost {
-		sink := make(chan *ldc.ContractEventNewGame, 100)
-		if _, err := contract.WatchEventNewGame(nil, sink); err != nil {
-			return err
-		}
-
-		go func() {
-			event := <-sink
-			fmt.Println("\nEvents")
-			fmt.Println("----------------------------------------------------")
-			fmt.Println("new game event", event)
-		}()
-	}
-
-	// =========================================================================
-
-	tx, err := contract.NewGame(tranOpts)
+	amount, err := contract.GamePot(tranOpts)
 	if err != nil {
 		return err
 	}
-	client.DisplayTransaction(tx)
 
-	receipt, err := client.WaitMined(ctx, tx)
-	if err != nil {
-		return err
-	}
-	client.DisplayTransactionReceipt(receipt, tx)
+	fmt.Println(amount)
 
 	return nil
 }

@@ -36,7 +36,7 @@ contract LiarsDice {
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
-        game = gameInfo(false, 0);
+        game = gameInfo(true, 0);
     }
 
     // =========================================================================
@@ -85,7 +85,7 @@ contract LiarsDice {
         return playerBalance[player];
     }
 
-    // function Players() onlyOwner view public returns (mapping (address => uint256)) {
+    // function Players() onlyOwner view public returns (players[] memory) {
     //     return playerBalance;
     // }
 

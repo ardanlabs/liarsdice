@@ -30,6 +30,9 @@ const (
 const (
 	PrimaryKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	PrimaryPassPhrase = "123"
+
+	PlayerKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
+	PlayerPassPhrase = "123"
 )
 
 // =============================================================================
@@ -80,6 +83,18 @@ func Connect(ctx context.Context, network string, keyPath string, passPhrase str
 	}
 
 	return &c, nil
+}
+
+// NewCallOpts constructs a new CallOpts which is used to call contract methods
+// that does not require a transaction.
+func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
+	call := bind.CallOpts{
+		Pending: true,
+		From:    c.Account,
+		Context: ctx,
+	}
+
+	return &call, nil
 }
 
 // NewTransaction constructs a new TransactOpts which is the collection of
