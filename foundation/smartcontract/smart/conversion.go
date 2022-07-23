@@ -37,7 +37,9 @@ func Wei2GWei(amount *big.Int) string {
 }
 
 // USD2Wei converts USD to Wei.
-func USD2Wei(amount *big.Int) *big.Int {
-	multiplier := big.NewInt(1e9)
-	return big.NewInt(0).Mul(amount, multiplier)
+func USD2Wei(amount *big.Float) *big.Int {
+	gwei := big.NewFloat(0).Mul(amount, USDPrice)
+	multiplier := big.NewFloat(1e9)
+	v, _ := big.NewFloat(0).Mul(gwei, multiplier).Int64()
+	return big.NewInt(0).SetInt64(v)
 }

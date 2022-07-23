@@ -21,6 +21,8 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
+	player := common.HexToAddress(smart.Player1Address)
+
 	const rawurl = smart.NetworkLocalhost
 	client, err := smart.Connect(ctx, rawurl, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
 	if err != nil {
@@ -52,9 +54,8 @@ func run() error {
 	}
 
 	// =========================================================================
-	to := common.HexToAddress("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
 
-	amount, err := contract.PlayerBalance(tranOpts, to)
+	amount, err := contract.PlayerBalance(tranOpts, player)
 	if err != nil {
 		return err
 	}

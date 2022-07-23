@@ -57,8 +57,11 @@ func run() error {
 
 	winner := common.HexToAddress("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
 	loser := common.HexToAddress("0x8e113078adf6888b7ba84967f299f29aece24c55")
-	ante := smart.USD2Wei(big.NewInt(10))
-	fee := smart.USD2Wei(big.NewInt(1))
+	ante := smart.USD2Wei(big.NewFloat(1))
+	fee := smart.USD2Wei(big.NewFloat(.10))
+
+	fmt.Println("****> ANTE", ante)
+	fmt.Println("****> FEE ", fee)
 
 	tx, err := contract.Reconcile(tranOpts, winner, []common.Address{loser}, ante, fee)
 	if err != nil {

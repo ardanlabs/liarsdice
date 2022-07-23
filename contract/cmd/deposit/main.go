@@ -22,7 +22,7 @@ func run() error {
 	ctx := context.Background()
 
 	const rawurl = smart.NetworkLocalhost
-	client, err := smart.Connect(ctx, rawurl, smart.Player2KeyPath, smart.Player2PassPhrase)
+	client, err := smart.Connect(ctx, rawurl, smart.Player1KeyPath, smart.Player1PassPhrase)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func run() error {
 	// =========================================================================
 
 	const gasLimit = 300000
-	const valueGwei = 10
+	const valueGwei = 40000000
 	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, valueGwei)
 	if err != nil {
 		return err

@@ -16,12 +16,6 @@ contract Bank {
 
     // =========================================================================
 
-    // onlyOwner can be used to restrict access to a function for only the owner.
-    modifier onlyOwner {
-        if (msg.sender != Owner) revert();
-        _;
-    }
-
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
@@ -29,6 +23,12 @@ contract Bank {
 
     // =========================================================================
     // Owner Only Calls
+
+    // onlyOwner can be used to restrict access to a function for only the owner.
+    modifier onlyOwner {
+        if (msg.sender != Owner) revert();
+        _;
+    }
 
     // Reconcile settles the accounting for a game that was played.
     function Reconcile(address winningPlayer, address[] calldata losers, uint256 ante, uint256 gameFee) onlyOwner public {
@@ -38,22 +38,37 @@ contract Bank {
         uint256 pot;
         for (uint i = 0; i < losers.length; i++) {
             if (playerBalance[losers[i]] < ante) {
+                emit EventLog(string.concat("player balance ", Error.Itoa(playerBalance[losers[i]]), " is less than ante ", Error.Itoa(ante)));
                 pot += playerBalance[losers[i]];
                 playerBalance[losers[i]] = 0;                
             } else {
-                playerBalance[losers[i]] -= ante;
                 pot += ante;
+                playerBalance[losers[i]] -= ante;
             }
         }
 
-        // Take the gameFree from the pot for cover the cost of this transaction.
-        pot -= gameFee;
+        emit EventLog(string.concat("ante[", Error.Itoa(ante), "] gameFee[", Error.Itoa(gameFee), "] pot[", Error.Itoa(pot), "]"));
 
-        // Payout the winner and the owner.
+        // This should not happen but check to see if the pot is 0 because none
+        // of the losers had a player balance.
+        if (pot == 0) {
+            revert("no pot was created based on player balances");
+        }
+
+        // This should not happen but check there is enough in the pot to cover
+        // the game fee.
+        if (pot < gameFee) {
+            playerBalance[Owner] += pot;
+            emit EventLog(string.concat("winningPlayer[0] owner[", Error.Itoa(pot), "]"));
+            return;
+        }
+
+        // Take the game fee from the pot and give the winner the remaining pot
+        // and the owner the game fee.
+        pot -= gameFee;
         playerBalance[winningPlayer] += pot;
         playerBalance[Owner] += gameFee;
-
-        emit EventLog(string.concat("game closed with a pot of ", Error.Itoa(pot)));
+        emit EventLog(string.concat("winningPlayer[", Error.Itoa(pot), "] owner[", Error.Itoa(gameFee), "]"));
     }
 
     // PlayerBalance returns the current players balance.
