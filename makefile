@@ -199,23 +199,15 @@ list:
 contract-build:
 	solc --abi contract/sol/src/contract.sol -o contract/sol/abi --overwrite
 	solc --bin contract/sol/src/contract.sol -o contract/sol/abi --overwrite
-	abigen --bin=contract/sol/abi/LiarsDice.bin --abi=contract/sol/abi/LiarsDice.abi --pkg=contract --out=contract/sol/go/contract.go
+	abigen --bin=contract/sol/abi/Bank.bin --abi=contract/sol/abi/Bank.abi --pkg=contract --out=contract/sol/go/contract.go
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 contract-deploy: contract-build
 	go run contract/cmd/deploy/main.go
 
-# This will show the game pot.
-contract-gamepot:
-	go run contract/cmd/gamepot/main.go
-
-# This will end the game and transfer the game pot to the winner.
-contract-gameend:
-	go run contract/cmd/gameend/main.go
-
-# This will place an ante for the player.
-contract-placeante:
-	go run contract/cmd/placeante/main.go
+# This will show the reconcile.
+contract-reconcile:
+	go run contract/cmd/reconcile/main.go
 
 # This will show the player's balance.
 contract-playerbalance:

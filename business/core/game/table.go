@@ -13,41 +13,55 @@ import (
 General account
 
 1. Player login occurs
-2. They are on dashboard
-	a. They can see their balance.
-	b. They can add money to their balance.
-	c. They can withdrawl money from their balance.
-3. They navigate to the table.
-	a. They are added to the table.
-	b. They wait for the next game.
-	c. They can see the current game.
-4. They navigate away from the table to dashboard.
-	a. Remove the player from the table.
+2. They enter the game room
+	a. Automatically added to the list of players.
+	b. They can see their balance.
+	c. They see the current game being played.
+	---
+	a. Button: Connect Wallet
+	b. Button: Deposit Money
+	c. Button: Withdrawl Money
+	d. Button: Join/Leave Game
 
 
 General game play
 
-1. New Game Starts
-	a. Ask table players if they want to play. Give them 30 seconds.
-		1. If they say Yes
-			a. Do they have enough money for the ante?
-			b. Collect the ante.
-			c. Add them to the game.
+1. New Game Setup
+	a. 30 second clock starts
+	b. Ask players to Join game
+		1. Check they have enough money for the ante
+	c. Still have time to leave the game
 
-2. Player makes bets
-	a. If first bet, random player is selected.
-	b. Loser of the last round starts.
-	c. If Loser is elminated, the player who got them out starts.
-	d. Next player in list makes the next bet.
+2. New Game Start
+	a. Must have at lease 2 players
+	b. Randomly select the first player to bet
 
-3. If player calls liar
-	a. Validate who won
-	b. Round is over
-		1. Check if winner or start new round.
-			a. No winner goto 2
-			b. There is a winner
-				1. Close game and finish payouts.
-				2. Go back to 1
+3. Game Play
+	a. Players in slice order makes bets
+	b. Player calls the last player a liar
+		1. Validate bet against all the player dice to determine winner/loser
+		2. Give loser an out
+
+4. Round Over
+	a. Remove players with 3 outs from the game
+	b. If: Only one player is left Close Game (6)
+	c. Else: Start Next Round (5)
+
+5. Next Round
+	a. Loser of last round starts the betting
+	b. If loser was eliminated, the player who won the last round starts
+	c. Back to (3) Game Play
+
+6. Close Game
+	a. Provide SC the winner, losers, ante, gameFee
+	b. Reconcile the accounting
+	c. New Game Setup (1)
+
+
+Things to Consider
+
+1. We can't allow a player to withdrawl while they are in a game.
+2. A player closing their browser or logging out doesn't matter.
 */
 
 const (

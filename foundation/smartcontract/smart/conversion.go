@@ -9,6 +9,7 @@ import (
 var (
 	GWeiConv  = big.NewInt(1_000_000_000)
 	GWeiPrice = big.NewFloat(0.00000255) // 5/26/22 at 7pm ET
+	USDPrice  = big.NewFloat(391440.31)  // $1 USD to GWei
 )
 
 // Wei2USD converts Wei to USD.
@@ -33,4 +34,10 @@ func Wei2GWei(amount *big.Int) string {
 	divisor := big.NewInt(1e9)
 	compact_amount.QuoRem(amount, divisor, reminder)
 	return fmt.Sprintf("%s.%s", compact_amount.String(), reminder.String())
+}
+
+// USD2Wei converts USD to Wei.
+func USD2Wei(amount *big.Int) *big.Int {
+	multiplier := big.NewInt(1e9)
+	return big.NewInt(0).Mul(amount, multiplier)
 }

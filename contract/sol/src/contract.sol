@@ -3,21 +3,10 @@ pragma solidity ^0.8.0;
 
 import "./error.sol";
 
-contract LiarsDice {
-
-    // gameInfo holds all game related data.
-    struct gameInfo {
-        bool playing;
-        uint256 pot;
-    }
-
-    // =========================================================================
+contract Bank {
 
     // Owner represents the address who deployed the contract.
     address public Owner;
-
-    // game represents the only game we current allow to be played.
-    gameInfo private game;
 
     // playerBalance represents the amount of money a player have available.
     mapping (address => uint256) private playerBalance;
@@ -36,58 +25,41 @@ contract LiarsDice {
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
-        game = gameInfo(true, 0);
     }
 
     // =========================================================================
     // Owner Only Calls
 
-    // PlaceAnte adds the amount to the game pot and removes from player balance. Each
-    // player pays the gas fees for this call.
-    function PlaceAnte(address player, uint256 ante) onlyOwner public {
-        if (!game.playing) {
-            revert("game is not available anymore");
+    // Reconcile settles the accounting for a game that was played.
+    function Reconcile(address winningPlayer, address[] calldata losers, uint256 ante, uint256 gameFee) onlyOwner public {
+
+        // Build the pot for the winner based on taking the ante from
+        // each player that lost.
+        uint256 pot;
+        for (uint i = 0; i < losers.length; i++) {
+            if (playerBalance[losers[i]] < ante) {
+                pot += playerBalance[losers[i]];
+                playerBalance[losers[i]] = 0;                
+            } else {
+                playerBalance[losers[i]] -= ante;
+                pot += ante;
+            }
         }
 
-        if (playerBalance[player] < ante) {
-            revert(string.concat("not enough balance to join the game, it requires ", Error.Itoa(ante)));
-        }
+        // Take the gameFree from the pot for cover the cost of this transaction.
+        pot -= gameFee;
 
-        playerBalance[player] -= ante;
-        game.pot += ante;
-
-        emit EventLog(string.concat("player: ", Error.Addrtoa(msg.sender), " joined the game"));
-        emit EventLog(string.concat("current game pot: ", Error.Itoa(game.pot)));
-    }
-
-    // GameEnd transfers the game pot amount to the winning player and they pay
-    // any gas fees.
-    function GameEnd(address winningPlayer, uint256 gameFee) onlyOwner public {
-        game.playing = false;
-
-        game.pot -= gameFee;
-        playerBalance[winningPlayer] += game.pot;
+        // Payout the winner and the owner.
+        playerBalance[winningPlayer] += pot;
         playerBalance[Owner] += gameFee;
 
-        emit EventLog(string.concat("game is over with a pot of ", Error.Itoa(game.pot), ". The winner is ", Error.Addrtoa(winningPlayer)));
-
-        game.playing = false;
-        game.pot = 0;
-    }
-
-    // GamePot returns the game pot amount.
-    function GamePot() onlyOwner view public returns (uint) {
-        return game.pot;
+        emit EventLog(string.concat("game closed with a pot of ", Error.Itoa(pot)));
     }
 
     // PlayerBalance returns the current players balance.
     function PlayerBalance(address player) onlyOwner view public returns (uint) {
         return playerBalance[player];
     }
-
-    // function Players() onlyOwner view public returns (players[] memory) {
-    //     return playerBalance;
-    // }
 
     // =========================================================================
     // Player Wallet Calls

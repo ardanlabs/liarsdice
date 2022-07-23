@@ -22,7 +22,7 @@ func run() error {
 	ctx := context.Background()
 
 	const rawurl = smart.NetworkLocalhost
-	client, err := smart.Connect(ctx, rawurl, smart.PlayerKeyPath, smart.PlayerPassPhrase)
+	client, err := smart.Connect(ctx, rawurl, smart.Player1KeyPath, smart.Player1PassPhrase)
 	if err != nil {
 		return err
 	}

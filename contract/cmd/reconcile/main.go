@@ -7,10 +7,9 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	ldc "github.com/ardanlabs/liarsdice/contract/sol/go"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func main() {
@@ -56,9 +55,12 @@ func run() error {
 
 	// =========================================================================
 
-	to := common.HexToAddress("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
+	winner := common.HexToAddress("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
+	loser := common.HexToAddress("0x8e113078adf6888b7ba84967f299f29aece24c55")
+	ante := smart.USD2Wei(big.NewInt(10))
+	fee := smart.USD2Wei(big.NewInt(1))
 
-	tx, err := contract.GameEnd(tranOpts, to, big.NewInt(1000000000))
+	tx, err := contract.Reconcile(tranOpts, winner, []common.Address{loser}, ante, fee)
 	if err != nil {
 		return err
 	}

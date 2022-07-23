@@ -31,8 +31,11 @@ const (
 	PrimaryKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	PrimaryPassPhrase = "123"
 
-	PlayerKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
-	PlayerPassPhrase = "123"
+	Player1KeyPath    = "zarf/ethereum/keystore/UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
+	Player1PassPhrase = "123"
+
+	Player2KeyPath    = "zarf/ethereum/keystore/UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
+	Player2PassPhrase = "123"
 )
 
 // =============================================================================
