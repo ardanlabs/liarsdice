@@ -21,9 +21,9 @@ import (
 
 // Set of networks supported by the smart package.
 const (
-	// geth = "http://localhost:8545"
-	NetworkLocalhost = "zarf/ethereum/geth.ipc"
-	NetworkGoerli    = "https://rpc.goerli.mudit.blog/"
+	NetworkHTTPLocalhost = "http://localhost:8545"
+	NetworkLocalhost     = "zarf/ethereum/geth.ipc"
+	NetworkGoerli        = "https://rpc.goerli.mudit.blog/"
 )
 
 // Harded this here for now just to make life easier.
