@@ -199,7 +199,7 @@ list:
 contract-build:
 	solc --abi contract/sol/src/contract.sol -o contract/sol/abi --overwrite
 	solc --bin contract/sol/src/contract.sol -o contract/sol/abi --overwrite
-	abigen --bin=contract/sol/abi/Bank.bin --abi=contract/sol/abi/Bank.abi --pkg=contract --out=contract/sol/go/contract.go
+	abigen --bin=contract/sol/abi/Bank.bin --abi=contract/sol/abi/Bank.abi --pkg=contract --out=contract/sol/go/contract/contract.go
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 contract-deploy: contract-build
