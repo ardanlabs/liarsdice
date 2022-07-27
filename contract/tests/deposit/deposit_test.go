@@ -20,45 +20,44 @@ const (
 	Player1PassPhrase = "123"
 )
 
-var contract *ldc.Contract
-var ctx context.Context
-
-func setup() error {
-	ctx = context.Background()
+func deployContract(ctx context.Context, primaryKeyPath string, primaryPassPhrase string) (*ldc.Contract, error) {
 	var err error
 
-	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase)
+	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	const gasLimit = 3000000
 	const valueGwei = 0
 	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, valueGwei)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	address, _, _, err := ldc.DeployContract(tranOpts, client.ContractBackend())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	contract, err = ldc.NewContract(address, client.ContractBackend())
+	contract, err := ldc.NewContract(address, client.ContractBackend())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return contract, nil
 }
 
 func TestDeposit(t *testing.T) {
-	err := setup()
+	ctx := context.Background()
+
+	// Deploy the contract so it can be tested.
+	contract, err := deployContract(ctx, PrimaryKeyPath, PrimaryPassPhrase)
 	if err != nil {
-		t.Fatalf("unexpected setup error: %s", err)
+		t.Fatalf("unexpected deploy error: %s", err)
 	}
 
-	// Connect as Player1.
+	// Create a client connection on behalf of player1.
 	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase)
 	if err != nil {
 		t.Fatalf("unexpected Connect error: %s", err)
@@ -106,4 +105,6 @@ func TestDeposit(t *testing.T) {
 	if amount.Cmp(expectedWei) != 0 {
 		t.Fatalf("expecting player's balance to be %d; got %d", expectedWei, amount)
 	}
+
+	// WE NEED MORE. WE NEED TO CHECK THE PLAYERS WALLET BALANCE AS WELL TO BE ACCURATE.
 }
