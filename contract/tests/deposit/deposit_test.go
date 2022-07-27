@@ -21,8 +21,6 @@ const (
 )
 
 func deployContract(ctx context.Context, primaryKeyPath string, primaryPassPhrase string) (*ldc.Contract, error) {
-	var err error
-
 	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
 		return nil, err
