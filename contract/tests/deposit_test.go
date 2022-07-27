@@ -25,14 +25,16 @@ func TestDeposit(t *testing.T) {
 		t.Fatalf("unexpected Connect error: %s", err)
 	}
 
+	// Get player's wallet balance before the transaction.
+	startingBalance, err := client.CurrentBalance(ctx)
+	if err != nil {
+		t.Fatalf("unexpected CurrentBalance error: %s", err)
+	}
+
 	const gasLimit = 300000
-	const valueGwei = 40000000
+	const transactionGwei = 40000000
 
-	// 1 Wei == 1 Gwei * (10^9).
-	valueWei := valueGwei * math.Pow(10, 9)
-	expectedWei := big.NewInt(int64(valueWei))
-
-	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, valueGwei)
+	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, transactionGwei)
 	if err != nil {
 		t.Fatalf("unexpected NewTransactOpts error: %s", err)
 	}
@@ -42,7 +44,8 @@ func TestDeposit(t *testing.T) {
 		t.Fatalf("unexpected Deposit error: %s", err)
 	}
 
-	_, err = client.WaitMined(ctx, tx)
+	// The receipt gets the total gas used by the transaction.
+	receipt, err := client.WaitMined(ctx, tx)
 	if err != nil {
 		t.Fatalf("unexpected WaitMined error: %s", err)
 	}
@@ -64,9 +67,33 @@ func TestDeposit(t *testing.T) {
 		t.Fatalf("unexpected PlayerBalance error: %s", err)
 	}
 
-	if amount.Cmp(expectedWei) != 0 {
-		t.Fatalf("expecting player's balance to be %d; got %d", expectedWei, amount)
+	// We need the transaction value from Gwei to Wei.
+	valueWei := transactionGwei * math.Pow(10, 9)
+
+	// We need it to be big.Int for calculations.
+	transactionWei := big.NewInt(int64(valueWei))
+
+	// Check the player's balance in the contract.
+	if amount.Cmp(transactionWei) != 0 {
+		t.Fatalf("expecting player's balance to be %d; got %d", transactionWei, amount)
 	}
 
-	// WE NEED MORE. WE NEED TO CHECK THE PLAYERS WALLET BALANCE AS WELL TO BE ACCURATE.
+	// Get the player's wallet balance after the transaction.
+	finalBalance, err := client.CurrentBalance(ctx)
+	if err != nil {
+		t.Fatalf("unexpected CurrentBalance error: %s", err)
+	}
+
+	// Calculate the total Gas cost (gas price * used gas)
+	totalGasCost := big.NewInt(0)
+	totalGasCost.Mul(tx.GasPrice(), big.NewInt(int64(receipt.GasUsed)))
+
+	// Subtract the transaction amount and total gas cost from starting balance.
+	expectedBalance := big.NewInt(0)
+	expectedBalance.Sub(startingBalance, transactionWei)
+	expectedBalance.Sub(expectedBalance, totalGasCost)
+
+	if expectedBalance.Cmp(finalBalance) != 0 {
+		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, finalBalance)
+	}
 }
