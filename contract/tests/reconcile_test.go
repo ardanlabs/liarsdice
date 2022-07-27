@@ -5,58 +5,17 @@ import (
 	"math/big"
 	"testing"
 
-	ldc "github.com/ardanlabs/liarsdice/contract/sol/go"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const (
-	PrimaryKeyPath    = "../UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
-	PrimaryPassPhrase = "123"
-
-	Player1Address    = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
-	Player1KeyPath    = "../UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
-	Player1PassPhrase = "123"
-
-	Player2Address    = "0x8e113078adf6888b7ba84967f299f29aece24c55"
-	Player2KeyPath    = "../UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
-	Player2PassPhrase = "123"
-)
-
-var contract *ldc.Contract
-var ctx context.Context
-
-func setup() error {
-	ctx = context.Background()
-	var err error
-
-	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase)
-	if err != nil {
-		return err
-	}
-
-	tranOpts, err := client.NewTransactOpts(ctx, 3000000, 0)
-	if err != nil {
-		return err
-	}
-
-	address, _, _, err := ldc.DeployContract(tranOpts, client.ContractBackend())
-	if err != nil {
-		return err
-	}
-
-	contract, err = ldc.NewContract(address, client.ContractBackend())
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func TestReconcile(t *testing.T) {
-	err := setup()
+	ctx := context.Background()
+
+	// Deploy the contract so it can be tested.
+	contract, err := deployContract(ctx, PrimaryKeyPath, PrimaryPassPhrase)
 	if err != nil {
-		t.Fatalf("unexpected setup error: %s", err)
+		t.Fatalf("unexpected deploy error: %s", err)
 	}
 
 	var gasLimit uint64 = 300000
