@@ -248,7 +248,7 @@ func (t *Table) NewRound() (int, error) {
 
 	// Reset players dice..
 	for _, player := range t.Game.Players {
-		player.Dice = make([]int, 7)
+		player.Dice = make([]int, 6)
 	}
 
 	// Reset the claims to start over.

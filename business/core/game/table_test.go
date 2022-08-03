@@ -13,7 +13,7 @@ func TestGameFlow(t *testing.T) {
 		Address: "aaa",
 		Dice:    nil,
 	}
-	playerA.Dice = []int{3, 4, 3, 1, 1, 3}
+	playerA.Dice = []int{3, 4, 3, 1, 1}
 
 	// Player B rolls the dices.
 	playerB := Player{
@@ -21,7 +21,7 @@ func TestGameFlow(t *testing.T) {
 		Address: "bbb",
 		Dice:    nil,
 	}
-	playerB.Dice = []int{6, 6, 2, 4, 5, 4}
+	playerB.Dice = []int{6, 6, 2, 4, 5}
 
 	// Player C rolls the dices.
 	playerC := Player{
@@ -29,7 +29,7 @@ func TestGameFlow(t *testing.T) {
 		Address: "ccc",
 		Dice:    nil,
 	}
-	playerC.Dice = []int{3, 1, 3, 2, 1, 4}
+	playerC.Dice = []int{3, 1, 3, 2, 1}
 
 	// Add players to the table.
 	table.AddPlayer(&playerA)
@@ -121,7 +121,7 @@ func TestGameFlow(t *testing.T) {
 	}
 
 	// Players new dice rolls.
-	playerA.Dice = []int{5, 1, 5, 2, 2, 6}
+	playerA.Dice = []int{5, 1, 5, 2, 2}
 	claimA2 := Claim{
 		Player: &playerA,
 		Number: 2,
