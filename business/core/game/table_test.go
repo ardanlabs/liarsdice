@@ -4,6 +4,49 @@ import (
 	"testing"
 )
 
+func TestRemovePlayerFromGame(t *testing.T) {
+	table := NewTable(1)
+
+	playerA := Player{
+		UserID:  "a",
+		Address: "aaa",
+		Dice:    nil,
+	}
+
+	playerB := Player{
+		UserID:  "b",
+		Address: "bbb",
+		Dice:    nil,
+	}
+	table.AddPlayer(&playerA)
+	table.AddPlayer(&playerB)
+
+	err := table.StartGame()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	tablePlayers := len(table.Players)
+	gamePlayers := len(table.Game.Players)
+
+	if tablePlayers != 2 && gamePlayers != 2 {
+		t.Fatalf("expecting 2 players in the table and game; got table %d and game %d", tablePlayers, gamePlayers)
+	}
+
+	err = table.Game.RemovePlayer(playerA.UserID)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	// Count players again.
+	tablePlayers = len(table.Players)
+	gamePlayers = len(table.Game.Players)
+
+	if tablePlayers != 1 && gamePlayers != 1 {
+		t.Fatalf("expecting 1 player in the table and game; got table %d and game %d", tablePlayers, gamePlayers)
+	}
+}
+
 func TestGameFlow(t *testing.T) {
 	table := NewTable(10)
 

@@ -150,6 +150,8 @@ func (t *Table) RemovePlayer(userID string) error {
 	}
 
 	delete(t.Players, userID)
+
+	t.Game.RemovePlayer(userID)
 	return nil
 }
 
@@ -343,4 +345,18 @@ func (t *Table) CallLiar(p *Player) (winner *Player, loser *Player, err error) {
 	t.Game.LastOut = p
 
 	return lastClaim.Player, p, nil
+}
+
+//==============================================================================
+
+// RemovePlayer removes a player from the game.
+func (g *Game) RemovePlayer(userID string) error {
+	for i, player := range g.Players {
+		if player.UserID == userID {
+			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			return nil
+		}
+	}
+
+	return errors.New("player not found")
 }
