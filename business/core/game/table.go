@@ -85,8 +85,8 @@ func (p *Player) RollDice() {
 	p.Dice = dice
 }
 
-// Bet represents a single bet by a player.
-type Bet struct {
+// Claim represents a single claim by a player.
+type Claim struct {
 	Player *Player
 	Number int
 	Suite  int
@@ -97,7 +97,7 @@ type Game struct {
 	ID         string
 	Players    []*Player
 	nextPlayer int
-	Bets       []Bet
+	Claims     []Claim
 	LastOut    *Player
 	LastWin    *Player
 	Outs       map[*Player]uint8
@@ -115,9 +115,10 @@ type Table struct {
 // NewTable constructs a table for players to use.
 func NewTable(ante int) *Table {
 	t := Table{
-		ID:     uuid.NewString(),
-		Ante:   ante,
-		Status: StatusRoundOver,
+		ID:      uuid.NewString(),
+		Ante:    ante,
+		Status:  StatusRoundOver,
+		Players: make(map[string]*Player),
 	}
 
 	rand.Seed(time.Now().Unix())
@@ -126,14 +127,17 @@ func NewTable(ante int) *Table {
 }
 
 // AddPlayer adds a player to the table who can play in any future games.
-func (t *Table) AddPlayer(userID string) error {
-	if _, exists := t.Players[userID]; exists {
+// NOTE: Since we have to initialise the Player, we
+func (t *Table) AddPlayer(player *Player) error {
+	if player == nil {
+		return errors.New("player not found")
+	}
+
+	if _, exists := t.Players[player.UserID]; exists {
 		return errors.New("player already at the table")
 	}
 
-	t.Players[userID] = &Player{
-		UserID: userID,
-	}
+	t.Players[player.UserID] = player
 
 	return nil
 }
@@ -156,7 +160,12 @@ func (t *Table) StartGame() error {
 	}
 
 	// Add all the existing players at the table to this new game.
-	players := make([]*Player, len(t.Players))
+
+	// NOTE: this make is creating a list with X player with nil values.
+	// The append will add new Players to the list, not use the already created
+	// slots.
+	players := make([]*Player, 0)
+
 	outs := make(map[*Player]uint8)
 	for _, player := range t.Players {
 		players = append(players, player)
@@ -167,7 +176,7 @@ func (t *Table) StartGame() error {
 	t.Game = &Game{
 		ID:      uuid.NewString(),
 		Players: players,
-		Bets:    []Bet{},
+		Claims:  []Claim{},
 		Outs:    outs,
 	}
 
@@ -237,41 +246,52 @@ func (t *Table) NewRound() (int, error) {
 		}
 	}
 
-	// Reset the bets to start over.
-	t.Game.Bets = []Bet{}
+	// Reset players dice..
+	for _, player := range t.Game.Players {
+		player.Dice = make([]int, 7)
+	}
+
+	// Reset the claims to start over.
+	t.Game.Claims = []Claim{}
 
 	// Return the number of players for this round.
 	return len(players), nil
 }
 
-// NextTurn returns the next player who's turn it is to make a bet
-func (t *Table) NextTurn() *Player {
+// NextPlayer returns the next player who's turn it is to make a claim.
+func (t *Table) NextPlayer() *Player {
 	return t.Game.Players[t.Game.nextPlayer]
 }
 
-// MakeBet allows the specified player to make the next bet.
-func (t *Table) MakeBet(bet Bet) error {
+// MakeClaim allows the specified player to make the next claim.
+func (t *Table) MakeClaim(claim Claim) error {
 
 	// Validate this player does have the next turn.
-	if bet.Player.UserID != t.Game.Players[t.Game.nextPlayer].UserID {
-		return errors.New("wrong player making bet")
+	if claim.Player.UserID != t.NextPlayer().UserID {
+		return errors.New("wrong player making claim")
 	}
 
-	// If this is not the first bet, validate the bet.
-	if len(t.Game.Bets) != 0 {
-		lastBet := t.Game.Bets[len(t.Game.Players)-1]
+	// Validate this player have rolled the dices,
+	if claim.Player.Dice == nil {
+		return errors.New("player didn't roll the dices yet")
+	}
 
-		if bet.Number < lastBet.Number {
-			return errors.New("bet number must be greater or equal to the last bet")
+	// If this is not the first claim, validate the claim.
+	if len(t.Game.Claims) != 0 {
+		// NOTE: Check len of 'Bets' instead of 'Players'.
+		lastClaim := t.Game.Claims[len(t.Game.Claims)-1]
+
+		if claim.Number < lastClaim.Number {
+			return errors.New("claim number must be greater or equal to the last claim")
 		}
 
-		if bet.Number == lastBet.Number && bet.Suite <= lastBet.Suite {
-			return errors.New("bet suite must be greater that the last bet")
+		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
+			return errors.New("claim suite must be greater that the last claim")
 		}
 	}
 
-	// Add the bet to the set of bets for this round.
-	t.Game.Bets = append(t.Game.Bets, bet)
+	// Add the claim to the set of claims for this round.
+	t.Game.Claims = append(t.Game.Claims, claim)
 
 	// Increment the next player index.
 	t.Game.nextPlayer++
@@ -287,31 +307,40 @@ func (t *Table) MakeBet(bet Bet) error {
 func (t *Table) CallLiar(p *Player) (winner *Player, loser *Player, err error) {
 
 	// Validate this player does have the next turn.
-	if p.UserID != t.Game.Players[t.Game.nextPlayer].UserID {
+	if p.UserID != t.NextPlayer().UserID {
 		return nil, nil, errors.New("wrong player calling lair")
 	}
 
-	// Compare the last bet to all the dice the players are holding.
+	// Compare the last claim to all the dice the players are holding.
 	t.Status = StatusRoundOver
 
 	// Add up the number of each number of dice players have.
-	dice := make([]int, 6)
+	//==========================================================================
+	// NOTE: we cannot have an []int with 6 items.
+	// Dice suite 6 would give an index error.
+	dice := make([]int, 7) // The position 0 of the list will never be used.
 	for _, player := range t.Game.Players {
 		for _, suite := range player.Dice {
 			dice[suite]++
 		}
 	}
 
-	// Capture the last bet.
-	lastBet := t.Game.Bets[len(t.Game.Players)-1]
+	// Capture the last claim.
+	// NOTE: Check len of 'Bets' instead of 'Players'.
+	lastClaim := t.Game.Claims[len(t.Game.Claims)-1]
 
 	// Did the person calling Liar win?
-	if dice[lastBet.Suite] < lastBet.Number {
-		t.Game.Outs[lastBet.Player]++
-		return p, lastBet.Player, nil
+	if dice[lastClaim.Suite] < lastClaim.Number {
+		t.Game.Outs[lastClaim.Player]++
+		// NOTE: Update Game.LastOut
+		t.Game.LastOut = lastClaim.Player
+		return p, lastClaim.Player, nil
 	}
 
 	// The person calling Liar lost.
 	t.Game.Outs[p]++
-	return lastBet.Player, p, nil
+	// NOTE: Update Game.LastOut
+	t.Game.LastOut = p
+
+	return lastClaim.Player, p, nil
 }
