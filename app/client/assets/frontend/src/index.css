@@ -1,0 +1,56 @@
+@import url(//db.onlinewebfonts.com/c/721c73bcd2e49f3a621991089838b503?family=Euclid+Circular+B+Medium);
+
+:root {
+  /* Global variables */
+  --main-height: 820px;
+  --outer-box-heigth: 740px;
+  --primary-color: #F15825;
+  --secondary-color: #35495C;
+  --ternary-color: #EFEFEF;
+  --modals: #F0EAD6;
+  --borders:#00284d;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 'Euclid Circular B Medium',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--borders);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+#metamask__wrapper {
+  font-family: 'Euclid Circular B Medium', sans-serif;
+  font-weight: 700;
+}
+#login__wrapper {
+  font-weight: 400;
+  width: 600px;
+  background-color: var(--modals);
+  border-radius: 8px;
+  padding: 20px;
+}
+#wallets__wrapper {
+  width: 100%;
+  border: 2px solid var(--secondary-color);
+  border-radius: 8px;
+}
+
+/* Metamask svg */
+.st0{fill:#E2761B;stroke:#E2761B;stroke-linecap:round;stroke-linejoin:round;}
+.st1{fill:#E4761B;stroke:#E4761B;stroke-linecap:round;stroke-linejoin:round;}
+.st2{fill:#D7C1B3;stroke:#D7C1B3;stroke-linecap:round;stroke-linejoin:round;}
+.st3{fill:#233447;stroke:#233447;stroke-linecap:round;stroke-linejoin:round;}
+.st4{fill:#CD6116;stroke:#CD6116;stroke-linecap:round;stroke-linejoin:round;}
+.st5{fill:#E4751F;stroke:#E4751F;stroke-linecap:round;stroke-linejoin:round;}
+.st6{fill:#F6851B;stroke:#F6851B;stroke-linecap:round;stroke-linejoin:round;}
+.st7{fill:#C0AD9E;stroke:#C0AD9E;stroke-linecap:round;stroke-linejoin:round;}
+.st8{fill:#161616;stroke:#161616;stroke-linecap:round;stroke-linejoin:round;}
+.st9{fill:#763D16;stroke:#763D16;stroke-linecap:round;stroke-linejoin:round;}

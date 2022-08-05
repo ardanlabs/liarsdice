@@ -252,3 +252,11 @@ geth-new-account:
 geth-deposit:
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8e113078adf6888b7ba84967f299f29aece24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+
+
+# ==============================================================================
+#This will start the React Frontend 
+react-install:
+	npm install --prefix app/client/assets/frontend/
+react-start:
+	npm start --prefix app/client/assets/frontend/
