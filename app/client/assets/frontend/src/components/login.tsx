@@ -1,27 +1,18 @@
 import React, { Component } from 'react'
-import { user } from '../../types/index.d'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
 
-export type State = {
-  user: user
-}
-
-interface userProps {
+interface loginProps {
   clickHandler: Function
+  show: boolean
 }
 
-class Login extends Component<userProps, State> {
-  constructor(props: userProps) {
-    super(props)
-    this.state = {
-      user: {
-        address: '',
-      },
-    }
-  }
+class Login extends Component<loginProps> {
   render() {
-    const { clickHandler } = this.props
+    const { clickHandler, show } = this.props
+    if (!show) {
+      return null
+    }
     return (
       <div
         id="login__wrapper"
