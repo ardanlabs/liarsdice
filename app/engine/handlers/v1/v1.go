@@ -30,14 +30,11 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodGet, version, "/game/list", ggh.List)
 	app.Handle(http.MethodGet, version, "/game/status/:uuid", ggh.Status)
+	app.Handle(http.MethodGet, version, "/game/rolldices/:uuid/:wallet", ggh.RollDices)
 
 	app.Handle(http.MethodPost, version, "/game/new", ggh.New)
 	app.Handle(http.MethodPost, version, "/game/join", ggh.Join)
 	app.Handle(http.MethodPost, version, "/game/start/:uuid", ggh.Start)
-
-	// app.Handle(http.MethodGet, version, "/users/:page/:rows", ugh.Query, authen, admin)
-	// app.Handle(http.MethodGet, version, "/users/:id", ugh.QueryByID, authen)
-	// app.Handle(http.MethodPost, version, "/users", ugh.Create, authen, admin)
-	// app.Handle(http.MethodPut, version, "/users/:id", ugh.Update, authen, admin)
-	// app.Handle(http.MethodDelete, version, "/users/:id", ugh.Delete, authen, admin)
+	app.Handle(http.MethodPost, version, "/game/claim/:uuid/:wallet", ggh.Claim)
+	app.Handle(http.MethodPost, version, "/game/callliar/:uuid/:wallet", ggh.CallLiar)
 }

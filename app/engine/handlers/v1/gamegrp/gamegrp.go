@@ -3,6 +3,7 @@ package gamegrp
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
@@ -31,11 +32,9 @@ func (h Handlers) New(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 	id := uuid.NewString()
 	game := Game{
-		ID:     id,
-		Status: STATUSOPEN,
-		Players: []Player{
-			player,
-		},
+		ID:      id,
+		Status:  STATUSOPEN,
+		Players: []Player{player},
 	}
 
 	h.Table.Games[id] = game
@@ -123,4 +122,162 @@ func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	h.Table.Games[uuid] = game
 
 	return web.Respond(ctx, w, game, http.StatusOK)
+}
+
+// RollDices will roll 5 dices for the given player and game.
+func (h Handlers) RollDices(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	uuid := web.Param(r, "uuid")
+	if uuid == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty uuid"), http.StatusBadRequest)
+	}
+
+	wallet := web.Param(r, "wallet")
+	if wallet == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty wallet address"), http.StatusBadRequest)
+	}
+
+	game, ok := h.Table.Games[uuid]
+	if !ok {
+		return v1Web.NewRequestError(fmt.Errorf("invalid game uuid [%s]", uuid), http.StatusBadRequest)
+	}
+
+	// The game should be in the playing state.
+	if game.Status != STATUSPLAYING {
+		return v1Web.NewRequestError(fmt.Errorf("game [%s] is not started", uuid), http.StatusBadRequest)
+	}
+
+	for i := range game.Players {
+		if game.Players[i].Wallet == wallet {
+
+			dice := make([]int, 5)
+			for i := range dice {
+				dice[i] = rand.Intn(6) + 1
+			}
+
+			game.Players[i].Dices = dice
+			break
+		}
+	}
+
+	return web.Respond(ctx, w, game, http.StatusOK)
+}
+
+// Claim processes a claim made by a player in a game.
+func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	uuid := web.Param(r, "uuid")
+	if uuid == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty uuid"), http.StatusBadRequest)
+	}
+
+	wallet := web.Param(r, "wallet")
+	if wallet == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty wallet address"), http.StatusBadRequest)
+	}
+
+	game := h.Table.Games[uuid]
+
+	if game.Players[game.CurrentPlayer].Wallet != wallet {
+		return v1Web.NewRequestError(fmt.Errorf("wrong player"), http.StatusBadRequest)
+	}
+
+	var claim Claim
+	if err := web.Decode(r, &claim); err != nil {
+		return fmt.Errorf("unable to decode payload: %w", err)
+	}
+
+	// Validate this player have rolled the dices,
+	if game.Players[game.CurrentPlayer].Dices == nil {
+		return v1Web.NewRequestError(fmt.Errorf("player [%s] didn't roll dices yet", wallet), http.StatusBadRequest)
+	}
+
+	// If this is not the first claim, validate the claim.
+	if len(game.Claims) != 0 {
+		lastClaim := game.Claims[len(game.Claims)-1]
+
+		if claim.Number < lastClaim.Number {
+			return v1Web.NewRequestError(fmt.Errorf("claim number must be greater or equal to the last claim"), http.StatusBadRequest)
+		}
+
+		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
+			return v1Web.NewRequestError(fmt.Errorf("claim suite must be greater that the last claim"), http.StatusBadRequest)
+		}
+	}
+
+	claim.Wallet = wallet
+
+	// Add the claim to the set of claims for this round.
+	game.Claims = append(game.Claims, claim)
+
+	// Increment the next player index.
+	game.CurrentPlayer++
+	game.CurrentPlayer = game.CurrentPlayer % len(game.Players)
+
+	h.Table.Games[uuid] = game
+
+	return web.Respond(ctx, w, game, http.StatusOK)
+}
+
+func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	uuid := web.Param(r, "uuid")
+	if uuid == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty uuid"), http.StatusBadRequest)
+	}
+
+	wallet := web.Param(r, "wallet")
+	if wallet == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty wallet address"), http.StatusBadRequest)
+	}
+
+	game := h.Table.Games[uuid]
+
+	if game.Players[game.CurrentPlayer].Wallet != wallet {
+		return v1Web.NewRequestError(fmt.Errorf("wrong player"), http.StatusBadRequest)
+	}
+
+	// NOTE: do we need a ROUNDOVER status?
+
+	dice := make([]int, 7) // The position 0 of the list will never be used.
+	for _, player := range game.Players {
+		for _, suite := range player.Dices {
+			dice[suite]++
+		}
+	}
+
+	lastClaim := game.Claims[len(game.Claims)-1]
+
+	if dice[lastClaim.Suite] < lastClaim.Number {
+		// the player that made the last claim, gets an `out``.
+		var loser string
+		for i := range game.Players {
+			if game.Players[i].Wallet == lastClaim.Wallet {
+				game.Players[i].Outs++
+				loser = game.Players[i].Wallet
+				break
+			}
+		}
+
+		r := struct {
+			ID     string
+			Winner string
+			Loser  string
+		}{
+			ID:     uuid,
+			Winner: wallet,
+			Loser:  loser,
+		}
+
+		return web.Respond(ctx, w, r, http.StatusOK)
+	}
+
+	resp := struct {
+		ID     string
+		Winner string
+		Loser  string
+	}{
+		ID:     uuid,
+		Winner: lastClaim.Wallet,
+		Loser:  wallet,
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
 }
