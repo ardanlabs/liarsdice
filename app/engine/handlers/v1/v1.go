@@ -29,6 +29,8 @@ func Routes(app *web.App, cfg Config) {
 	}
 
 	app.Handle(http.MethodGet, version, "/game/list", ggh.List)
+	app.Handle(http.MethodGet, version, "/game/status/:uuid", ggh.Status)
+
 	app.Handle(http.MethodPost, version, "/game/new", ggh.New)
 	app.Handle(http.MethodPost, version, "/game/join", ggh.Join)
 	app.Handle(http.MethodPost, version, "/game/start/:uuid", ggh.Start)

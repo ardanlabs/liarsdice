@@ -14,6 +14,7 @@ import (
 const (
 	STATUSPLAYING = "playing"
 	STATUSOPEN    = "open"
+	NUMBERPLAYERS = 2
 )
 
 // Handlers manages the set of user endpoints.
@@ -47,6 +48,21 @@ func (h Handlers) List(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	return web.Respond(ctx, w, h.Table.Games, http.StatusOK)
 }
 
+// Status will return information about the game.
+func (h Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	uuid := web.Param(r, "uuid")
+	if uuid == "" {
+		return v1Web.NewRequestError(fmt.Errorf("empty uuid"), http.StatusBadRequest)
+	}
+
+	game, ok := h.Table.Games[uuid]
+	if !ok {
+		return v1Web.NewRequestError(fmt.Errorf("invalid game uuid [%s]", uuid), http.StatusBadRequest)
+	}
+
+	return web.Respond(ctx, w, game, http.StatusOK)
+}
+
 // Join adds the given player to the given game.
 func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	p := struct {
@@ -75,7 +91,6 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		Wallet: p.Wallet,
 	}
 
-	// TODO: validate if player is already in the game.
 	game.Players = append(game.Players, player)
 
 	h.Table.Games[p.ID] = game
@@ -97,6 +112,10 @@ func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	if game.Status != STATUSOPEN {
 		return v1Web.NewRequestError(fmt.Errorf("game [%s] cannot be started", uuid), http.StatusBadRequest)
+	}
+
+	if len(game.Players) < NUMBERPLAYERS {
+		return v1Web.NewRequestError(fmt.Errorf("not enough players to start game [%s]", uuid), http.StatusBadRequest)
 	}
 
 	game.Status = STATUSPLAYING
