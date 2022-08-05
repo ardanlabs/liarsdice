@@ -33,12 +33,12 @@
 # ==============================================================================
 # Install dependencies
 
-dev.setup.mac:
+dev.setup:
 	brew update
 	brew list kind || brew install kind
 	brew list kubectl || brew install kubectl
 	brew list kustomize || brew install kustomize
-
+	brew list geth || brew install geth
 
 # ==============================================================================
 # Building containers
