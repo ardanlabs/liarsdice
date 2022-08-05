@@ -5,7 +5,7 @@ interface ButtonProps {
   classes?: string,
   id?: string,
   disabled?: boolean,
-  children: JSX.Element[]
+  children: JSX.Element[] | JSX.Element
 }
 
 const Button: FC<ButtonProps> = (ButtonProps) => {
