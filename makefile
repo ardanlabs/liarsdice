@@ -142,6 +142,12 @@ kind-database:
 	# ./admin --db-disable-tls=1 seed
 
 # ==============================================================================
+# Game API
+
+game-run:
+	go run app/engine/main.go
+
+# ==============================================================================
 # Client support
 
 client-run:
