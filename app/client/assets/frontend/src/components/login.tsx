@@ -1,25 +1,18 @@
 import React from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
-import { useEthers, useEtherBalance } from "@usedapp/core";
+import { useEthers } from "@usedapp/core";
 import MainRoom from './mainRoom'
 
 export default function Login() {
-  const { account, deactivate, activateBrowserWallet } = useEthers()
-  const etherBalance = useEtherBalance(account)
+  const { account, activateBrowserWallet } = useEthers()
   function handleConnectWallet() {
     activateBrowserWallet();
   }
-  function handleDisconnectWallet() {
-    deactivate();
-  }
 
   return account ? (
-    <div>
-      <MainRoom etherBalance={etherBalance} show={Boolean(account)} />
-      <Button {...{ id: 'metamask__wrapper', clickHandler: handleDisconnectWallet, classes: 'd-flex align-items-center pa-4'}}>
-        <span className="ml-4"> Disconnect </span>
-      </Button>
+    <div style={{height: '100%', width: '100%'}}>
+      <MainRoom />
     </div>
   ) : (
     <div

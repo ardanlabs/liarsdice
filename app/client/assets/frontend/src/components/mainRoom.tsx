@@ -1,26 +1,37 @@
-import React, { Component } from "react";
-import { formatEther } from '@ethersproject/units'
+import React, { useState } from 'react'
+import SideBar from './sidebar'
+import { user } from '../../types/index.d'
 
 interface MainRoomProps {
-  show: boolean
-  etherBalance: any
 }
+const MainRoom = (props: MainRoomProps) => {
+  const activePlayers: user[] = []
+  const waitingPlayers: user[] = []
 
-class MainRoom extends Component<MainRoomProps>{
-  render() {
-    const { show, etherBalance } = this.props
-    
-    if (!show) {
-      return null
-    }
-    return (
-      <div style={{height: '100%', width: '100%', color: "black", display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <div id="players-list" style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-          {formatEther(etherBalance)} ETH
-        </div>
+  return (
+    <div
+      style={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'start',
+        alignItems: 'center',
+      }}
+    >
+      <SideBar activePlayers={activePlayers} waitingPlayers={waitingPlayers} />
+      <div
+        style={{
+          height: '100%',
+          width: 'fit-content',
+          backgroundColor: 'var(--primary-color)',
+          display: 'flex',
+          justifyContent: 'start',
+          alignItems: 'center',
+        }}
+      >
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 export default MainRoom

@@ -17,17 +17,24 @@ const mainnetConfig: Config = {
     [Mainnet.chainId]: getDefaultProvider('mainnet'),
   },
 }
-// To be done CORS ERROR
+
 const ardansLocalHostConfig = {
   readOnlyChainId: Localhost.chainId,
   readOnlyUrls: {
     [Localhost.chainId]: 'http://127.0.0.1:8545/',
   },
+  gasLimitBufferPercentage: 20,
 }
 
+const chainsConfig = {
+  'Ardans': ardansLocalHostConfig,
+  'EthMainnet': mainnetConfig,
+}
+
+// TODO: ADD dinamic .env support
 root.render(
   <React.StrictMode>
-    <DAppProvider config={mainnetConfig}>
+    <DAppProvider config={chainsConfig['Ardans']}> 
       <App />
     </DAppProvider>
   </React.StrictMode>

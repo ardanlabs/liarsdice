@@ -43,6 +43,49 @@ code {
   border-radius: 8px;
 }
 
+
+/******** Main Board ********/
+/* Details */
+.details div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  color: var(--borders);
+  font-weight: 500;
+}
+.details div strong {
+  color: var(--primary-color);
+  font-weight: 400;
+}
+/* Players */
+.players div[class$="__players"] span{
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.players div[class$="__players"] li {
+  color: var(--borders)
+}
+.players div[class$="__players"] li.out{
+  color: var(--secondary-color)
+}
+.players div[class$="__players"] li.active {
+  color: var(--primary-color)
+}
+
+.join__buton {
+  border-radius: 0;
+  border-bottom-right-radius: 8px;
+  background-color: var(--primary-color);
+  width: 100%;
+  color: var(--ternary-color);
+  font-size: 32px;
+  font-weight: 600;
+  text-transform: uppercase;
+  aspect-ratio: 4 / 1;
+}
+
 /* Metamask svg */
 .st0{fill:#E2761B;stroke:#E2761B;stroke-linecap:round;stroke-linejoin:round;}
 .st1{fill:#E4761B;stroke:#E4761B;stroke-linecap:round;stroke-linejoin:round;}
