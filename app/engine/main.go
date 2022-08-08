@@ -14,10 +14,13 @@ import (
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ardanlabs/liarsdice/app/engine/handlers"
+	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/sys/database"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -156,6 +159,22 @@ func run(log *zap.SugaredLogger) error {
 	}()
 
 	// =========================================================================
+	// Start Game and Bank Services
+
+	bankCfg := bank.BankConfig{
+		Network:    smart.NetworkLocalhost,
+		KeyPath:    smart.PrimaryKeyPath,
+		PassPhrase: smart.PrimaryPassPhrase,
+	}
+
+	bank, err := bank.NewBank(bankCfg)
+	if err != nil {
+		return fmt.Errorf("connecting to db: %w", err)
+	}
+
+	game := game.NewGame(bank)
+
+	// =========================================================================
 	// Start Debug Service
 
 	log.Infow("startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
@@ -190,6 +209,7 @@ func run(log *zap.SugaredLogger) error {
 		Log:      log,
 		Auth:     auth,
 		DB:       db,
+		Game:     game,
 	})
 
 	// Construct a server to service the requests against the mux.
