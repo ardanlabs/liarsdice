@@ -37,31 +37,33 @@ type Player struct {
 
 // Claim represents a claim of dice on the table.
 type Claim struct {
-	Wallet string
-	Number int
-	Suite  int
+	player *Player
+	number int
+	suite  int
 }
 
 // =============================================================================
 
 // Game represents a single game that is being played.
 type Game struct {
-	ID            string
+	id            string
 	Status        string
-	Banker        Banker
+	banker        Banker
+	lastOut       *Player
+	lastWin       *Player
 	CurrentPlayer int
 	Round         int
 	Players       []Player
-	Claims        []Claim
+	claims        []Claim
 }
 
 // NewGame creates a new game.
 func NewGame(banker Banker) *Game {
 	return &Game{
-		ID:      uuid.NewString(),
+		id:      uuid.NewString(),
 		Status:  STATUSOPEN,
 		Players: []Player{},
-		Banker:  banker,
+		banker:  banker,
 	}
 }
 
@@ -88,10 +90,9 @@ func (g *Game) AddPlayer(wallet string) error {
 	}
 
 	// Check if player wallet was already added to the game.
-	for _, player := range g.Players {
-		if wallet == player.Wallet {
-			return fmt.Errorf("player [%s] is already in the game", wallet)
-		}
+	_, _, found := g.findPlayer(wallet)
+	if found {
+		return fmt.Errorf("player [%s] is already in the game", wallet)
 	}
 
 	// Create a player based on the wallet address.
@@ -110,14 +111,14 @@ func (g *Game) RemovePlayer(wallet string) error {
 		return errors.New("invalid wallet address")
 	}
 
-	for i, player := range g.Players {
-		if player.Wallet == wallet {
-			g.Players = append(g.Players[:i], g.Players[i+1:]...)
-			return nil
-		}
+	_, i, found := g.findPlayer(wallet)
+	if !found {
+		return errors.New("player not found")
 	}
 
-	return errors.New("player not found")
+	g.Players = append(g.Players[:i], g.Players[i+1:]...)
+
+	return nil
 }
 
 // CallLiar checks all the claims made so far in the round and defines a winner
@@ -132,9 +133,6 @@ func (g *Game) CallLiar(wallet string) (string, string, error) {
 		return "", "", fmt.Errorf("player [%s] can't make a claim now", wallet)
 	}
 
-	// Update the game status.
-	g.Status = STATUSROUNDOVER
-
 	// Hold the sum of all the dice values.
 	dice := make([]int, 7)
 	for _, player := range g.Players {
@@ -143,30 +141,28 @@ func (g *Game) CallLiar(wallet string) (string, string, error) {
 		}
 	}
 
-	lastClaim := g.Claims[len(g.Claims)-1]
+	// Find player who called a liar.
+	callPlayer, _, found := g.findPlayer(wallet)
+	if !found {
+		return "", "", fmt.Errorf("player [%s] was not found", wallet)
+	}
+
+	lastClaim := g.claims[len(g.claims)-1]
 
 	// If the last Claim is incorrect, the player who made it, gets an out.
-	if dice[lastClaim.Suite] < lastClaim.Number {
-		var loser string
-		for i := range g.Players {
-			if g.Players[i].Wallet == lastClaim.Wallet {
-				g.Players[i].Outs++
-				loser = g.Players[i].Wallet
-				break
-			}
-		}
-		return wallet, loser, nil
+	if dice[lastClaim.suite] < lastClaim.number {
+		lastClaim.player.Outs++
+		g.lastOut = lastClaim.player
+		g.lastWin = callPlayer
+
+		return wallet, g.lastOut.Wallet, nil
 	}
 
-	// Find the calling player to increment the out count.
-	for i := range g.Players {
-		if g.Players[i].Wallet == wallet {
-			g.Players[i].Outs++
-			break
-		}
-	}
+	callPlayer.Outs++
+	g.lastOut = callPlayer
+	g.lastWin = lastClaim.player
 
-	return lastClaim.Wallet, wallet, nil
+	return lastClaim.player.Wallet, wallet, nil
 }
 
 // NewRound checks for players out count, reset players dice and game claims.
@@ -194,23 +190,19 @@ func (g *Game) NewRound() (int, error) {
 
 	// Figure out who starts the round. The person who was last out should
 	// start the round.
-	// var found bool
-	// for i, player := range t.Game.Players {
-	// 	if player.UserID == t.Game.LastOut.UserID {
-	// 		t.Game.nextPlayer = i
-	// 		found = true
-	// 	}
-	// }
+	_, i, found := g.findPlayer(g.lastOut.Wallet)
+	if found {
+		g.CurrentPlayer = i
+	}
 
 	// If the person who was last out is no longer in the game, then the
 	// player who won the last round starts.
-	// if !found {
-	// 	for i, player := range t.Game.Players {
-	// 		if player.UserID == t.Game.LastWin.UserID {
-	// 			t.Game.nextPlayer = i
-	// 		}
-	// 	}
-	// }
+	if !found {
+		_, i, found := g.findPlayer(g.lastWin.Wallet)
+		if found {
+			g.CurrentPlayer = i
+		}
+	}
 
 	// Reset players dice.
 	for i := range g.Players {
@@ -218,7 +210,7 @@ func (g *Game) NewRound() (int, error) {
 	}
 
 	// Reset the claims to start over.
-	g.Claims = []Claim{}
+	g.claims = []Claim{}
 
 	// Return the number of players for this round.
 	return len(g.Players), nil
@@ -242,26 +234,33 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 	}
 
 	// If this is not the first claim, validate it against the previous claim.
-	if len(g.Claims) != 0 {
-		lastClaim := g.Claims[len(g.Claims)-1]
+	if len(g.claims) != 0 {
+		lastClaim := g.claims[len(g.claims)-1]
 
-		if claim.Number < lastClaim.Number {
+		if claim.number < lastClaim.number {
 			return errors.New("claim number must be greater or equal to the last claim")
 		}
 
-		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
+		if claim.number == lastClaim.number && claim.suite <= lastClaim.suite {
 			return errors.New("claim suite must be greater that the last claim")
 		}
 	}
 
-	// Specify who made the claim.
-	claim.Wallet = wallet
+	player, _, found := g.findPlayer(wallet)
+	if !found {
+		return fmt.Errorf("player [%s] was not found", wallet)
+	}
 
-	g.Claims = append(g.Claims, claim)
+	// Specify who made the claim.
+	claim.player = player
+
+	g.claims = append(g.claims, claim)
 
 	// Update the CurrentPlayer index.
 	g.CurrentPlayer++
 	g.CurrentPlayer = g.CurrentPlayer % len(g.Players)
+
+	g.Round++
 
 	return nil
 }
@@ -307,10 +306,23 @@ func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, erro
 		return nil, errors.New("invalid wallet address")
 	}
 
-	return g.Banker.PlayerBalance(ctx, wallet)
+	return g.banker.PlayerBalance(ctx, wallet)
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
 func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
 	return nil
+}
+
+//==============================================================================
+
+// helper function to return the player, index and found values.
+func (g *Game) findPlayer(wallet string) (*Player, int, bool) {
+	for i := range g.Players {
+		if g.Players[i].Wallet == wallet {
+			return &g.Players[i], i, true
+		}
+	}
+
+	return nil, 0, false
 }
