@@ -14,3 +14,9 @@ type Player struct {
 	Outs   uint8  `json:"outs"`
 	Dice   []int  `json:"dice,omitempty"`
 }
+
+// Claim exposes the require Claim data for the HTTP requests and responses.
+type Claim struct {
+	Number int `json:"number"`
+	Suite  int `json:"suite"`
+}

@@ -38,8 +38,8 @@ type Player struct {
 // Claim represents a claim of dice on the table.
 type Claim struct {
 	player *Player
-	number int
-	suite  int
+	Number int
+	Suite  int
 }
 
 // =============================================================================
@@ -147,10 +147,12 @@ func (g *Game) CallLiar(wallet string) (string, string, error) {
 		return "", "", fmt.Errorf("player [%s] was not found", wallet)
 	}
 
+	g.Status = STATUSROUNDOVER
+
 	lastClaim := g.claims[len(g.claims)-1]
 
 	// If the last Claim is incorrect, the player who made it, gets an out.
-	if dice[lastClaim.suite] < lastClaim.number {
+	if dice[lastClaim.Suite] < lastClaim.Number {
 		lastClaim.player.Outs++
 		g.lastOut = lastClaim.player
 		g.lastWin = callPlayer
@@ -185,6 +187,7 @@ func (g *Game) NewRound() (int, error) {
 
 	// If there is only 1 player left we have a winner.
 	if len(g.Players) == 1 {
+		g.Status = STATUSOPEN
 		return 1, nil
 	}
 
@@ -206,11 +209,13 @@ func (g *Game) NewRound() (int, error) {
 
 	// Reset players dice.
 	for i := range g.Players {
-		g.Players[i].Dice = make([]int, 6)
+		g.Players[i].Dice = []int{}
 	}
 
 	// Reset the claims to start over.
 	g.claims = []Claim{}
+
+	g.Status = STATUSPLAYING
 
 	// Return the number of players for this round.
 	return len(g.Players), nil
@@ -237,11 +242,11 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 	if len(g.claims) != 0 {
 		lastClaim := g.claims[len(g.claims)-1]
 
-		if claim.number < lastClaim.number {
+		if claim.Number < lastClaim.Number {
 			return errors.New("claim number must be greater or equal to the last claim")
 		}
 
-		if claim.number == lastClaim.number && claim.suite <= lastClaim.suite {
+		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
 			return errors.New("claim suite must be greater that the last claim")
 		}
 	}

@@ -63,12 +63,14 @@ func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.R
 func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	wallet := web.Param(r, "wallet")
 
-	var claim game.Claim
+	var claim Claim
 	if err := web.Decode(r, &claim); err != nil {
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	if err := h.Game.Claim(wallet, claim); err != nil {
+	businessClaim := claimToBusiness(claim)
+
+	if err := h.Game.Claim(wallet, businessClaim); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -155,4 +157,11 @@ func playerToResponse(players []game.Player) []Player {
 	}
 
 	return playerList
+}
+
+func claimToBusiness(claim Claim) game.Claim {
+	return game.Claim{
+		Number: claim.Number,
+		Suite:  claim.Suite,
+	}
 }
