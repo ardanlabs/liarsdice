@@ -7,44 +7,33 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 )
 
-// Banker interface declares the bank behaviour.
-type Banker interface {
-	PlayerBalance(address string) (*big.Int, error)
-	Reconcile(winner string, losers []string, ante uint, gameFee uint)
-}
-
-// BankConfig contains all the information required by the bank client.
-type BankConfig struct {
-	Network    string
-	KeyPath    string
-	PassPhrase string
-}
-
-type bank struct {
+// Bank represents a bank that allows for the reconciling of a game and
+// information about player balances.
+type Bank struct {
 	client *smart.Client
 }
 
-// NewBank returns a new Banker interface type with a smart client.
-func NewBank(cfg BankConfig) (Banker, error) {
-	var ctx context.Context
-
-	client, err := smart.Connect(ctx, cfg.Network, cfg.KeyPath, cfg.PassPhrase)
+// NewBank returns a new bank with the ability to manage the game money.
+func NewBank(ctx context.Context, network string, keyPath string, passPhrase string) (Bank, error) {
+	client, err := smart.Connect(ctx, network, keyPath, passPhrase)
 	if err != nil {
-		return nil, err
+		return Bank{}, err
 	}
 
-	bank := bank{
+	bank := Bank{
 		client: client,
 	}
 
-	return &bank, nil
+	return bank, nil
 }
 
-// PlayerBalance will call the contract PlayerBalance method.
-func (b *bank) PlayerBalance(address string) (*big.Int, error) {
+// PlayerBalance will return the specified player's balance.
+func (b Bank) PlayerBalance(address string) (*big.Int, error) {
 	return nil, nil
 }
 
-// Reconcilse will call the contract Reconcile method.
-func (b *bank) Reconcile(winner string, losers []string, ante uint, gameFee uint) {
+// Reconcile will apply with ante to the winner and losers and provide the
+// house the game fee.
+func (b Bank) Reconcile(winner string, losers []string, ante uint, gameFee uint) error {
+	return nil
 }
