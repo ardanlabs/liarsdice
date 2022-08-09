@@ -4,9 +4,9 @@ package game
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"math/rand"
 
-	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/google/uuid"
 )
 
@@ -17,14 +17,102 @@ const (
 	NUMBERPLAYERS   = 2
 )
 
-// NewGame creates a new game (open status) with a UUID.
-func NewGame(banker bank.Banker) *Game {
-	// contruct bank
+// =============================================================================
+
+// Banker interface declares the bank behaviour.
+type Banker interface {
+	PlayerBalance(address string) (*big.Int, error)
+	Reconcile(winner string, losers []string, ante uint, gameFee uint)
+}
+
+// =============================================================================
+
+// Player represents a person playing the game.
+type Player struct {
+	Wallet string
+	Outs   uint8
+	Dice   []int
+}
+
+// Claim represents a claim of dice on the table.
+type Claim struct {
+	Wallet string
+	Number int
+	Suite  int
+}
+
+// =============================================================================
+
+// Game represents a single game that is being played.
+type Game struct {
+	ID            string
+	Status        string
+	Banker        Banker
+	CurrentPlayer int
+	Players       []Player
+	Claims        []Claim
+}
+
+// NewGame creates a new game.
+func NewGame(banker Banker) *Game {
 	return &Game{
 		ID:      uuid.NewString(),
 		Status:  STATUSOPEN,
 		Players: []Player{},
 	}
+}
+
+// AddPlayer adds the player to the game. The player will not be added twice.
+func (g *Game) AddPlayer(wallet string) error {
+	if wallet == "" {
+		return errors.New("invalid wallet address")
+	}
+
+	// Check if player wallet was already added to the game.
+	for _, player := range g.Players {
+		if wallet == player.Wallet {
+			return fmt.Errorf("player [%s] is already in the game", wallet)
+		}
+	}
+
+	// Create a player based on the wallet address.
+	player := Player{
+		Wallet: wallet,
+	}
+
+	g.Players = append(g.Players, player)
+
+	return nil
+}
+
+func (g *Game) RemovePlayer(wallet string) error {
+	if wallet == "" {
+		return errors.New("invalid wallet address")
+	}
+
+	for i, player := range g.Players {
+		if player.Wallet == wallet {
+			g.Players = append(g.Players[:i], g.Players[i+1:]...)
+			return nil
+		}
+	}
+
+	return errors.New("player not found")
+}
+
+// StartGame will check if the current game can be started and update its status.
+func (g *Game) StartGame() error {
+	if g.Status != STATUSOPEN {
+		return errors.New("game cannot be started")
+	}
+
+	if len(g.Players) < NUMBERPLAYERS {
+		return errors.New("not enough players to start game")
+	}
+
+	g.Status = STATUSPLAYING
+
+	return nil
 }
 
 func (g *Game) CallLiar(wallet string) (string, string, error) {
@@ -196,57 +284,4 @@ func (g *Game) RollDice(wallet string) error {
 	}
 
 	return nil
-}
-
-// StartGame will check if the current game can be started and update its status.
-func (g *Game) StartGame() error {
-	if g.Status != STATUSOPEN {
-		return errors.New("game cannot be started")
-	}
-
-	if len(g.Players) < NUMBERPLAYERS {
-		return errors.New("not enough players to start game")
-	}
-
-	g.Status = STATUSPLAYING
-
-	return nil
-}
-
-// AddPlayer adds the player to the game. The player will not be added twice.
-func (g *Game) AddPlayer(wallet string) error {
-	if wallet == "" {
-		return errors.New("invalid wallet address")
-	}
-
-	// Check if player wallet was already added to the game.
-	for _, player := range g.Players {
-		if wallet == player.Wallet {
-			return fmt.Errorf("player [%s] is already in the game", wallet)
-		}
-	}
-
-	// Create a player based on the wallet address.
-	player := Player{
-		Wallet: wallet,
-	}
-
-	g.Players = append(g.Players, player)
-
-	return nil
-}
-
-func (g *Game) RemovePlayer(wallet string) error {
-	if wallet == "" {
-		return errors.New("invalid wallet address")
-	}
-
-	for i, player := range g.Players {
-		if player.Wallet == wallet {
-			g.Players = append(g.Players[:i], g.Players[i+1:]...)
-			return nil
-		}
-	}
-
-	return errors.New("player not found")
 }
