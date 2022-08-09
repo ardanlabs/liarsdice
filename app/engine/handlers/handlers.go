@@ -10,6 +10,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/app/engine/handlers/debug/checkgrp"
 	v1 "github.com/ardanlabs/liarsdice/app/engine/handlers/v1"
+	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/web"
@@ -35,6 +36,7 @@ type APIMuxConfig struct {
 	Log      *zap.SugaredLogger
 	Auth     *auth.Auth
 	DB       *sqlx.DB
+	Game     *game.Game
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -82,6 +84,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 		Log:  cfg.Log,
 		Auth: cfg.Auth,
 		DB:   cfg.DB,
+		Game: cfg.Game,
 	})
 
 	return app
