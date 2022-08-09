@@ -84,6 +84,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 		Log:  cfg.Log,
 		Auth: cfg.Auth,
 		DB:   cfg.DB,
+		Game: cfg.Game,
 	})
 
 	return app

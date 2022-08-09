@@ -3,6 +3,7 @@ package gamegrp
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"net/http"
 
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
@@ -94,6 +95,23 @@ func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.R
 	}{
 		Winner: winner,
 		Loser:  loser,
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
+}
+
+func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	wallet := web.Param(r, "wallet")
+
+	balance, err := h.Game.PlayerBalance(ctx, wallet)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusInternalServerError)
+	}
+
+	resp := struct {
+		Balance *big.Int `json:"balance"`
+	}{
+		Balance: balance,
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)

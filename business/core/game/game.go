@@ -2,6 +2,7 @@
 package game
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -21,8 +22,8 @@ const (
 
 // Banker interface declares the bank behaviour.
 type Banker interface {
-	PlayerBalance(address string) (*big.Int, error)
-	Reconcile(winner string, losers []string, ante uint, gameFee uint)
+	PlayerBalance(ctx context.Context, address string) (*big.Int, error)
+	Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error
 }
 
 // =============================================================================
@@ -49,6 +50,7 @@ type Game struct {
 	Status        string
 	Banker        Banker
 	CurrentPlayer int
+	Round         int
 	Players       []Player
 	Claims        []Claim
 }
@@ -59,7 +61,24 @@ func NewGame(banker Banker) *Game {
 		ID:      uuid.NewString(),
 		Status:  STATUSOPEN,
 		Players: []Player{},
+		Banker:  banker,
 	}
+}
+
+// StartGame will check if the current game can be started and update its status.
+func (g *Game) StartGame() error {
+	if g.Status != STATUSOPEN {
+		return errors.New("game cannot be started")
+	}
+
+	if len(g.Players) < NUMBERPLAYERS {
+		return errors.New("not enough players to start game")
+	}
+
+	g.Round = 1
+	g.Status = STATUSPLAYING
+
+	return nil
 }
 
 // AddPlayer adds the player to the game. The player will not be added twice.
@@ -85,6 +104,7 @@ func (g *Game) AddPlayer(wallet string) error {
 	return nil
 }
 
+// RemovePlayer removes a player from the game.
 func (g *Game) RemovePlayer(wallet string) error {
 	if wallet == "" {
 		return errors.New("invalid wallet address")
@@ -100,21 +120,8 @@ func (g *Game) RemovePlayer(wallet string) error {
 	return errors.New("player not found")
 }
 
-// StartGame will check if the current game can be started and update its status.
-func (g *Game) StartGame() error {
-	if g.Status != STATUSOPEN {
-		return errors.New("game cannot be started")
-	}
-
-	if len(g.Players) < NUMBERPLAYERS {
-		return errors.New("not enough players to start game")
-	}
-
-	g.Status = STATUSPLAYING
-
-	return nil
-}
-
+// CallLiar checks all the claims made so far in the round and defines a winner
+//and a loser.
 func (g *Game) CallLiar(wallet string) (string, string, error) {
 	if wallet == "" {
 		return "", "", errors.New("invalid wallet address")
@@ -162,12 +169,15 @@ func (g *Game) CallLiar(wallet string) (string, string, error) {
 	return lastClaim.Wallet, wallet, nil
 }
 
+// NewRound checks for players out count, reset players dice and game claims.
 func (g *Game) NewRound() (int, error) {
 
 	// Check the round is over.
 	if g.Status != STATUSROUNDOVER {
 		return 0, errors.New("current round is not over")
 	}
+
+	g.Round++
 
 	// Figure out which players are left in the game from the close of
 	// the previous round.
@@ -214,6 +224,8 @@ func (g *Game) NewRound() (int, error) {
 	return len(g.Players), nil
 }
 
+// Claim checks if the claim is valid and made by the correct player before
+// adding it to the list of claims for the current game.
 func (g *Game) Claim(wallet string, claim Claim) error {
 	if wallet == "" {
 		return errors.New("invalid wallet address")
@@ -229,7 +241,7 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 		return fmt.Errorf("player [%s] didn't roll dice yet", wallet)
 	}
 
-	// If this is not the first claim, validate it agains the previous claim.
+	// If this is not the first claim, validate it against the previous claim.
 	if len(g.Claims) != 0 {
 		lastClaim := g.Claims[len(g.Claims)-1]
 
@@ -242,6 +254,7 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 		}
 	}
 
+	// Specify who made the claim.
 	claim.Wallet = wallet
 
 	g.Claims = append(g.Claims, claim)
@@ -253,6 +266,7 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 	return nil
 }
 
+// RollDice will generate 5 random integer and add to the player's dice list.
 func (g *Game) RollDice(wallet string) error {
 	if wallet == "" {
 		return errors.New("invalid wallet address")
@@ -283,5 +297,20 @@ func (g *Game) RollDice(wallet string) error {
 		return fmt.Errorf("player [%s] not found in this game", wallet)
 	}
 
+	return nil
+}
+
+// PlayerBalance returns the player's balance, by calling the banks contract
+// method.
+func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, error) {
+	if wallet == "" {
+		return nil, errors.New("invalid wallet address")
+	}
+
+	return g.Banker.PlayerBalance(ctx, wallet)
+}
+
+// Reconcile calculates the game pot and make the transfer to the winner.
+func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
 	return nil
 }

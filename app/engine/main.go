@@ -161,13 +161,8 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Start Game and Bank Services
 
-	bankCfg := bank.BankConfig{
-		Network:    smart.NetworkLocalhost,
-		KeyPath:    smart.PrimaryKeyPath,
-		PassPhrase: smart.PrimaryPassPhrase,
-	}
-
-	bank, err := bank.NewBank(bankCfg)
+	ctx := context.Background()
+	bank, err := bank.NewBank(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
