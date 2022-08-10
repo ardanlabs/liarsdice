@@ -135,8 +135,10 @@ func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 func gameToResponse(game *game.Game) Game {
 	g := Game{
-		Status: game.Status,
-		Round:  game.Round,
+		Status:        game.Status,
+		Round:         game.Round,
+		CurrentPlayer: game.CurrentPlayer,
+		CupsOrder:     game.CupsOrder,
 	}
 	g.Players = playerToResponse(game.Cups)
 

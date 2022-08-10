@@ -90,6 +90,8 @@ func (g *Game) Start() error {
 		return errors.New("not enough players to start game")
 	}
 
+	g.CurrentPlayer = g.CupsOrder[0]
+
 	g.Round = 1
 	g.Status = StatusPlaying
 
