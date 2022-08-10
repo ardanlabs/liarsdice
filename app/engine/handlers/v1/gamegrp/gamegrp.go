@@ -19,7 +19,7 @@ type Handlers struct {
 
 // Start starts the game.
 func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if err := h.Game.StartGame(); err != nil {
+	if err := h.Game.Start(); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -41,7 +41,7 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	if err := h.Game.AddPlayer(p.Wallet); err != nil {
+	if err := h.Game.AddAccount(p.Wallet); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -63,12 +63,14 @@ func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.R
 func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	wallet := web.Param(r, "wallet")
 
-	var claim game.Claim
+	var claim Claim
 	if err := web.Decode(r, &claim); err != nil {
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	if err := h.Game.Claim(wallet, claim); err != nil {
+	businessClaim := claimToBusiness(claim)
+
+	if err := h.Game.Claim(wallet, businessClaim); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -136,23 +138,31 @@ func gameToResponse(game *game.Game) Game {
 		Status:        game.Status,
 		Round:         game.Round,
 		CurrentPlayer: game.CurrentPlayer,
+		CupsOrder:     game.CupsOrder,
 	}
-	g.Players = playerToResponse(game.Players)
+	g.Players = playerToResponse(game.Cups)
 
 	return g
 }
 
-func playerToResponse(players []game.Player) []Player {
+func playerToResponse(cups map[string]game.Cup) []Player {
 	var playerList []Player
 
-	for _, player := range players {
+	for _, cup := range cups {
 		p := Player{
-			Wallet: player.Wallet,
-			Outs:   player.Outs,
-			Dice:   player.Dice,
+			Wallet: cup.Account,
+			Outs:   cup.Outs,
+			Dice:   cup.Dice,
 		}
 		playerList = append(playerList, p)
 	}
 
 	return playerList
+}
+
+func claimToBusiness(claim Claim) game.Claim {
+	return game.Claim{
+		Number: claim.Number,
+		Suite:  claim.Suite,
+	}
 }
