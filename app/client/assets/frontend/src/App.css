@@ -1,17 +1,10 @@
 .App {
   text-align: center;
+  scroll-snap-type: y mandatory;
+  position: absolute;
+  width: 100%;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
 
 .App-header {
   background-color: var(--primary-color);

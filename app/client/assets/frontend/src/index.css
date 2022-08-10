@@ -2,13 +2,18 @@
 
 :root {
   /* Global variables */
-  --main-height: 820px;
   --outer-box-heigth: 740px;
   --primary-color: #F15825;
   --secondary-color: #35495C;
   --ternary-color: #EFEFEF;
   --modals: #F0EAD6;
   --borders:#00284d;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#root {
+  overflow-y: hidden;
 }
 
 body {
@@ -45,6 +50,21 @@ code {
 
 
 /******** Main Board ********/
+/* Hide scrollbar but allows scroll for main Content in Chrome, Safari and Opera */
+#mainRoom::-webkit-scrollbar, #cupsContainer::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar but allows scroll for main Content in IE, Edge and Firefox */
+#mainRoom, #cupsContainer {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+#cupsContainer {
+  overflow-x: scroll !important;
+  padding-right: 0 400px;
+}
+/***** SideBar *****/
 /* Details */
 .details div {
   display: flex;
@@ -85,6 +105,62 @@ code {
   text-transform: uppercase;
   aspect-ratio: 4 / 1;
 }
+
+/***** BoardGame *****/
+/* Dice */
+.dice svg:first-child {
+  margin: 4px 36px;
+}
+.dice svg {
+  margin: 4px 12px;
+}
+.die {
+  margin: 6px;
+}
+.dice {
+  margin: auto;
+}
+
+/*** Players UI ***/
+/* Players Cup */
+.player__ui {
+  color: var(--modals)
+}
+.player__cup {
+  background-image: url(./assets/cupInactive.svg);
+  background-repeat: no-repeat;
+  background-position: center center;
+  height: 56%;
+  width: 213px;
+  display: flex;
+}
+.player__cup.active {
+  background-image: url(./assets/cup.svg);
+}
+
+.claim {
+  width: 161px;
+  height: 47px;
+  margin-bottom: -1px;
+  background-color: var(--primary-color);
+  color: var(--modals);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+}
+.claim span {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-left: 10px;
+  font-weight: 400;
+}
+
+
 
 /* Metamask svg */
 .st0{fill:#E2761B;stroke:#E2761B;stroke-linecap:round;stroke-linejoin:round;}

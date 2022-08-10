@@ -1,35 +1,47 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { user, claim } from '../types/index.d'
 import SideBar from './sidebar'
-import { user } from '../../types/index.d'
+import GameTable from './gameTable'
 
-interface MainRoomProps {
-}
+interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
-  const activePlayers: user[] = []
+  const currentClaim: { address: string; claim: claim } = {
+    address: '0x39249126d90671284cd06495d19C04DD0e54d33',
+    claim: { number: 1, suite: 4 },
+  }
+  const currentPlayerAddress: string =
+    '0x39249126d90671284cd06495d19C04DD0e54d33'
+  const activePlayers: user[] = [
+    {
+      address: '0x39249126d90671284cd06495d19C04DD0e54d33',
+      active: true,
+      dice: [1, 2, 3, 4, 5],
+      out: 3,
+      claim: { number: 1, suite: 4 },
+    },
+    {
+      address: '0x39249126d90671284cd06495d19C04DD0e54d371',
+      active: true,
+      dice: [1, 2, 3, 4, 5],
+      out: 2,
+      claim: { number: 2, suite: 5 },
+    },
+  ]
   const waitingPlayers: user[] = []
 
   return (
     <div
       style={{
-        height: '100%',
         width: '100%',
         display: 'flex',
         justifyContent: 'start',
         alignItems: 'center',
+        maxWidth: '100vw',
       }}
+      id="mainRoom"
     >
       <SideBar activePlayers={activePlayers} waitingPlayers={waitingPlayers} />
-      <div
-        style={{
-          height: '100%',
-          width: 'fit-content',
-          backgroundColor: 'var(--primary-color)',
-          display: 'flex',
-          justifyContent: 'start',
-          alignItems: 'center',
-        }}
-      >
-      </div>
+      <GameTable activePlayers={activePlayers} currentPlayerAddress={currentPlayerAddress} currentClaim={currentClaim} />
     </div>
   )
 }

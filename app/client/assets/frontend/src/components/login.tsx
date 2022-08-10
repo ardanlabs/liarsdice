@@ -6,13 +6,15 @@ import MainRoom from './mainRoom'
 
 export default function Login() {
   const { account, activateBrowserWallet } = useEthers()
+  console.log(account)
   function handleConnectWallet() {
     activateBrowserWallet();
   }
 
-  return account ? (
-    <div style={{height: '100%', width: '100%'}}>
+  return account?.length ? (
+    <div style={{width: '100%'}}>
       <MainRoom />
+      {  account }
     </div>
   ) : (
     <div

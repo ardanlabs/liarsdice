@@ -1,4 +1,4 @@
-import { user } from '../../types/index.d'
+import { user } from '../types/index.d'
 
 interface PlayersListProps {
   players: user[]
@@ -10,10 +10,18 @@ const PlayersList = (props: PlayersListProps) => {
 
   const playersElements: JSX.Element[] = []
   players.forEach((player) => {
-    return playersElements.push(<li> {player.address.slice(0, 7)}... </li>)
+    return playersElements.push(
+      <li style={{ textAlign: 'start' }}>
+        {player.address.slice(0, 7)}...
+        {player.address.slice(player.address.length - 7, player.address.length)}
+      </li>,
+    )
   })
   return (
-    <div className="list_of__players" style={{ height: '50%', flexGrow: '1' }}>
+    <div
+      className="list_of__players"
+      style={{ height: '50%', flexGrow: '1', textAlign: 'start' }}
+    >
       <span>
         {title} ({players.length})
       </span>

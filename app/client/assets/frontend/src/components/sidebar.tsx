@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-import Button from './button'
-import { user } from '../../types/index.d'
+import React from 'react'
+import { user } from '../types/index.d'
 import SidebarDetails from './sidebarDetails'
 import Players from './players'
 

@@ -5,9 +5,9 @@ import Footer from './components/footer'
 
 export function App(){
   return (
-    <div className="App">
+    <div className="App" style={{scrollSnapType: 'y mandatory'}}>
       <header className="App-header">Ardan's Liar's Dice</header>
-      <div className="container-fluid d-flex align-items-center justify-content-center px-0" style={{height: '100vh'}}>
+      <div className="container-fluid d-flex align-items-center justify-content-center px-0">
         <Login />
       </div>
       <Footer />

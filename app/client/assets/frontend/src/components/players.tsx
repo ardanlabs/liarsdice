@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Button from './button'
-import { user } from '../../types/index.d'
+import { user } from '../types/index.d'
 import PlayersList from './playersList'
 
 interface PlayersProps {
