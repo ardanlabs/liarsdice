@@ -41,7 +41,7 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	if err := h.Game.AddPlayer(p.Wallet); err != nil {
+	if err := h.Game.AddAccount(p.Wallet); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -135,23 +135,22 @@ func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 func gameToResponse(game *game.Game) Game {
 	g := Game{
-		Status:        game.Status,
-		Round:         game.Round,
-		CurrentPlayer: game.CurrentPlayer,
+		Status: game.Status,
+		Round:  game.Round,
 	}
-	g.Players = playerToResponse(game.Players)
+	g.Players = playerToResponse(game.Cups)
 
 	return g
 }
 
-func playerToResponse(players []game.Player) []Player {
+func playerToResponse(cups map[string]game.Cup) []Player {
 	var playerList []Player
 
-	for _, player := range players {
+	for _, cup := range cups {
 		p := Player{
-			Wallet: player.Wallet,
-			Outs:   player.Outs,
-			Dice:   player.Dice,
+			Wallet: cup.Account,
+			Outs:   cup.Outs,
+			Dice:   cup.Dice,
 		}
 		playerList = append(playerList, p)
 	}

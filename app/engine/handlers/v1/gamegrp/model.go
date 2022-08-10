@@ -2,10 +2,9 @@ package gamegrp
 
 // Game exposes the required Game data for the HTTP responses.
 type Game struct {
-	Status        string   `json:"status"`
-	Round         int      `json:"round"`
-	CurrentPlayer int      `json:"current_player"` // maybe necessary for the FE.
-	Players       []Player `json:"players,omitempty"`
+	Status  string   `json:"status"`
+	Round   int      `json:"round"`
+	Players []Player `json:"players,omitempty"`
 }
 
 // Player exposes the required Player data for the HTTP responses.
