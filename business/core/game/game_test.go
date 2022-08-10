@@ -1,6 +1,8 @@
 package game
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestNextCup(t *testing.T) {
 	g := New(nil)
@@ -55,5 +57,18 @@ func TestNextCupRemovingPlayers(t *testing.T) {
 	}
 	if g.CupsOrder[g.currentCup] != expectedValue {
 		t.Fatalf("expecting %s; got %s", expectedValue, g.CupsOrder[g.currentCup])
+	}
+}
+
+func TestNextCupInfiniteLoop(t *testing.T) {
+	g := New(nil)
+
+	g.AddAccount("a")
+
+	g.RemoveAccount("a")
+
+	err := g.nextCup()
+	if err == nil {
+		t.Fatal("expecting error; got nil")
 	}
 }

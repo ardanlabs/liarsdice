@@ -208,7 +208,9 @@ func (g *Game) Claim(account string, claim Claim) error {
 
 	g.Claims = append(g.Claims, claim)
 
-	g.nextCup()
+	if err := g.nextCup(); err != nil {
+		return err
+	}
 
 	g.Round++
 
@@ -346,11 +348,16 @@ func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, an
 //==============================================================================
 
 // nextCup will look for the next available player.
-func (g *Game) nextCup() {
-	for {
+func (g *Game) nextCup() error {
+	var control int
+
+	for control <= len(g.CupsOrder) {
+		control++
 		g.currentCup = (g.currentCup + 1) % len(g.CupsOrder)
 		if g.CupsOrder[g.currentCup] != "" {
-			break
+			return nil
 		}
 	}
+
+	return errors.New("no player available")
 }
