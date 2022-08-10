@@ -17,8 +17,8 @@ type Bank struct {
 	contract *contract.Contract
 }
 
-// NewBank returns a new bank with the ability to manage the game money.
-func NewBank(ctx context.Context, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
+// New returns a new bank with the ability to manage the game money.
+func New(ctx context.Context, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
 	client, err := smart.Connect(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return nil, err
@@ -37,8 +37,8 @@ func NewBank(ctx context.Context, network string, keyPath string, passPhrase str
 	return &bank, nil
 }
 
-// PlayerBalance will return the specified address balance.
-func (b *Bank) PlayerBalance(ctx context.Context, address string) (*big.Int, error) {
+// Balance will return the specified address balance.
+func (b *Bank) Balance(ctx context.Context, address string) (*big.Int, error) {
 	tranOpts, err := b.client.NewCallOpts(ctx)
 	if err != nil {
 		return nil, err

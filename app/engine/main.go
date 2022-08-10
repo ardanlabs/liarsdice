@@ -170,7 +170,7 @@ func run(log *zap.SugaredLogger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	bank, err := bank.NewBank(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, contractID)
+	bank, err := bank.New(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, contractID)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}

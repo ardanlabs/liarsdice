@@ -22,7 +22,7 @@ const (
 
 // Banker interface declares the bank behaviour.
 type Banker interface {
-	PlayerBalance(ctx context.Context, address string) (*big.Int, error)
+	Balance(ctx context.Context, address string) (*big.Int, error)
 	Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error
 }
 
@@ -122,7 +122,7 @@ func (g *Game) RemovePlayer(wallet string) error {
 }
 
 // CallLiar checks all the claims made so far in the round and defines a winner
-//and a loser.
+// and a loser.
 func (g *Game) CallLiar(wallet string) (string, string, error) {
 	if wallet == "" {
 		return "", "", errors.New("invalid wallet address")
@@ -311,7 +311,7 @@ func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, erro
 		return nil, errors.New("invalid wallet address")
 	}
 
-	return g.banker.PlayerBalance(ctx, wallet)
+	return g.banker.Balance(ctx, wallet)
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
