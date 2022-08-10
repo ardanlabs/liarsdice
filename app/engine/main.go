@@ -161,8 +161,16 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Start Game and Bank Services
 
-	ctx := context.Background()
-	bank, err := bank.NewBank(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
+	data, err := os.ReadFile("zarf/contract/id.env")
+	if err != nil {
+		return fmt.Errorf("readfile: %w", err)
+	}
+	contractID := string(data)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	bank, err := bank.NewBank(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, contractID)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
