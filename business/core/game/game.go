@@ -22,8 +22,8 @@ const (
 
 // Banker interface declares the bank behaviour.
 type Banker interface {
-	Balance(ctx context.Context, address string) (*big.Int, error)
-	Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error
+	Balance(ctx context.Context, account string) (*big.Int, error)
+	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante uint, gameFee uint) error
 }
 
 // =============================================================================
