@@ -175,7 +175,7 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
 
-	game := game.NewGame(bank)
+	game := game.New(bank)
 
 	// =========================================================================
 	// Start Debug Service

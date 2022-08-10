@@ -19,7 +19,7 @@ type Handlers struct {
 
 // Start starts the game.
 func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if err := h.Game.StartGame(); err != nil {
+	if err := h.Game.Start(); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 

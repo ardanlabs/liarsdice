@@ -7,20 +7,26 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
+	"sync"
 
 	"github.com/google/uuid"
 )
 
+// Represents the different game statues.
 const (
-	STATUSROUNDOVER = "roundover"
-	STATUSPLAYING   = "playing"
-	STATUSOPEN      = "open"
-	NUMBERPLAYERS   = 2
+	StatusRoundOver = "roundover"
+	StatusPlaying   = "playing"
+	StatusOpen      = "open"
 )
+
+// MinNumberPlayers represents the minimum number of players required
+// to play a game.
+const MinNumberPlayers = 2
 
 // =============================================================================
 
-// Banker interface declares the bank behaviour.
+// Banker represents the ability to manage money for the game. Deposits and
+// Withdrawls happen outside of game play.
 type Banker interface {
 	Balance(ctx context.Context, account string) (*big.Int, error)
 	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante uint, gameFee uint) error
@@ -28,95 +34,125 @@ type Banker interface {
 
 // =============================================================================
 
-// Player represents a person playing the game.
-type Player struct {
-	Wallet string
-	Outs   uint8
-	Dice   []int
+// Cup represents an individual cup being held by a player.
+type Cup struct {
+	Account string
+	Outs    uint8
+	Dice    []int
 }
 
 // Claim represents a claim of dice on the table.
 type Claim struct {
-	player *Player
-	Number int
-	Suite  int
+	Account string
+	Number  int
+	Suite   int
 }
 
 // =============================================================================
 
 // Game represents a single game that is being played.
 type Game struct {
-	id            string
+	ID            string
 	Status        string
 	banker        Banker
-	lastOut       *Player
-	lastWin       *Player
+	lastOutAcct   string
+	lastWinAcct   string
 	CurrentPlayer int
 	Round         int
-	Players       []Player
-	claims        []Claim
+	Cups          map[string]Cup
+	Claims        []Claim
+
+	mu sync.RWMutex
 }
 
-// NewGame creates a new game.
-func NewGame(banker Banker) *Game {
+// New creates a new game.
+func New(banker Banker) *Game {
 	return &Game{
-		id:      uuid.NewString(),
-		Status:  STATUSOPEN,
-		Players: []Player{},
-		banker:  banker,
+		ID:     uuid.NewString(),
+		Status: StatusOpen,
+		banker: banker,
+		Cups:   make(map[string]Cup),
 	}
 }
 
-// StartGame will check if the current game can be started and update its status.
-func (g *Game) StartGame() error {
-	if g.Status != STATUSOPEN {
+// Start will check if the current game can be started and update its status.
+func (g *Game) Start() error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if g.Status != StatusOpen {
 		return errors.New("game cannot be started")
 	}
 
-	if len(g.Players) < NUMBERPLAYERS {
+	if len(g.Cups) < MinNumberPlayers {
 		return errors.New("not enough players to start game")
 	}
 
 	g.Round = 1
-	g.Status = STATUSPLAYING
+	g.Status = StatusPlaying
 
 	return nil
 }
 
-// AddPlayer adds the player to the game. The player will not be added twice.
-func (g *Game) AddPlayer(wallet string) error {
-	if wallet == "" {
-		return errors.New("invalid wallet address")
+// AddAccount adds a player to the game. If the account already exists, the
+// function will return an error.
+func (g *Game) AddAccount(account string) error {
+	if account == "" {
+		return errors.New("invalid account information")
 	}
 
-	// Check if player wallet was already added to the game.
-	_, _, found := g.findPlayer(wallet)
-	if found {
-		return fmt.Errorf("player [%s] is already in the game", wallet)
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if _, exists := g.Cups[account]; exists {
+		return fmt.Errorf("player [%s] is already in the game", account)
 	}
 
-	// Create a player based on the wallet address.
-	player := Player{
-		Wallet: wallet,
-	}
-
-	g.Players = append(g.Players, player)
+	g.Cups[account] = Cup{Account: account}
 
 	return nil
 }
 
-// RemovePlayer removes a player from the game.
-func (g *Game) RemovePlayer(wallet string) error {
-	if wallet == "" {
-		return errors.New("invalid wallet address")
+// RemoveAccount removes a player from the game. If the account does not exist,
+// the function will return an error.
+func (g *Game) RemoveAccount(account string) error {
+	if account == "" {
+		return errors.New("invalid account information")
 	}
 
-	_, i, found := g.findPlayer(wallet)
-	if !found {
-		return errors.New("player not found")
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if _, exists := g.Cups[account]; !exists {
+		return fmt.Errorf("player [%s] does not exist in the game", account)
 	}
 
-	g.Players = append(g.Players[:i], g.Players[i+1:]...)
+	delete(g.Cups, account)
+
+	return nil
+}
+
+// RollDice will generate 5 new random integers for the players cup.
+func (g *Game) RollDice(account string) error {
+	if g.Status != StatusPlaying {
+		return errors.New("game is not started")
+	}
+
+	if account == "" {
+		return errors.New("invalid account information")
+	}
+
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	cup, exists := g.Cups[account]
+	if !exists {
+		return fmt.Errorf("player [%s] does not exist in the game", account)
+	}
+
+	for i := range cup.Dice {
+		cup.Dice[i] = rand.Intn(6) + 1
+	}
 
 	return nil
 }
@@ -270,40 +306,6 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 	return nil
 }
 
-// RollDice will generate 5 random integer and add to the player's dice list.
-func (g *Game) RollDice(wallet string) error {
-	if wallet == "" {
-		return errors.New("invalid wallet address")
-	}
-
-	// The game should be in the playing state.
-	if g.Status != STATUSPLAYING {
-		return errors.New("game is not started")
-	}
-
-	// Look for the player and roll the dice.
-	var found bool
-	for i := range g.Players {
-		if g.Players[i].Wallet == wallet {
-			found = true
-
-			dice := make([]int, 5)
-			for i := range dice {
-				dice[i] = rand.Intn(6) + 1
-			}
-
-			g.Players[i].Dice = dice
-			break
-		}
-	}
-
-	if !found {
-		return fmt.Errorf("player [%s] not found in this game", wallet)
-	}
-
-	return nil
-}
-
 // PlayerBalance returns the player's balance, by calling the banks contract
 // method.
 func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, error) {
@@ -317,17 +319,4 @@ func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, erro
 // Reconcile calculates the game pot and make the transfer to the winner.
 func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
 	return nil
-}
-
-//==============================================================================
-
-// helper function to return the player, index and found values.
-func (g *Game) findPlayer(wallet string) (*Player, int, bool) {
-	for i := range g.Players {
-		if g.Players[i].Wallet == wallet {
-			return &g.Players[i], i, true
-		}
-	}
-
-	return nil, 0, false
 }
