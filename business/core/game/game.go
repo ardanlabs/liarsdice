@@ -59,6 +59,7 @@ type Game struct {
 	lastWinAcct   string
 	CurrentPlayer string
 	Round         int
+	currentCup    int
 	Cups          map[string]Cup
 	CupsOrder     []string
 	Claims        []Claim
@@ -109,7 +110,11 @@ func (g *Game) AddAccount(account string) error {
 		return fmt.Errorf("player [%s] is already in the game", account)
 	}
 
-	g.Cups[account] = Cup{Account: account}
+	g.Cups[account] = Cup{
+		Account: account,
+		Dice:    make([]int, 5),
+	}
+
 	g.CupsOrder = append(g.CupsOrder, account)
 
 	return nil
@@ -165,6 +170,51 @@ func (g *Game) RollDice(account string) error {
 	return nil
 }
 
+// Claim checks if the claim is valid and made by the correct player before
+// adding it to the list of claims for the current game.
+func (g *Game) Claim(account string, claim Claim) error {
+	if account == "" {
+		return errors.New("invalid account information")
+	}
+
+	// Get the current cup account.
+	currentAccount := g.CupsOrder[g.currentCup]
+
+	// Validate if it is the player's turn.
+	if g.Cups[currentAccount].Account != account {
+		return fmt.Errorf("player [%s] can't make a claim now", account)
+	}
+
+	// Validate this player have rolled the dice.
+	if g.Cups[account].Dice == nil {
+		return fmt.Errorf("player [%s] didn't roll dice yet", account)
+	}
+
+	// If this is not the first claim, validate it against the previous claim.
+	if len(g.Claims) != 0 {
+		lastClaim := g.Claims[len(g.Claims)-1]
+
+		if claim.Number < lastClaim.Number {
+			return errors.New("claim number must be greater or equal to the last claim")
+		}
+
+		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
+			return errors.New("claim suite must be greater that the last claim")
+		}
+	}
+
+	// Specify who made the claim.
+	claim.Account = account
+
+	g.Claims = append(g.Claims, claim)
+
+	g.nextCup()
+
+	g.Round++
+
+	return nil
+}
+
 // CallLiar checks all the claims made so far in the round and defines a winner
 // and a loser.
 func (g *Game) CallLiar(account string) (string, string, error) {
@@ -172,8 +222,15 @@ func (g *Game) CallLiar(account string) (string, string, error) {
 		return "", "", errors.New("invalid account information")
 	}
 
+	if g.Status != StatusPlaying {
+		return "", "", errors.New("cannot call liar when game is not playable")
+	}
+
+	// Get the current cup account.
+	currentAccount := g.CupsOrder[g.currentCup]
+
 	// Validate if it is the player's turn.
-	if g.Cups[account].Account != account {
+	if g.Cups[currentAccount].Account != account {
 		return "", "", fmt.Errorf("player [%s] can't make a claim now", account)
 	}
 
@@ -193,7 +250,7 @@ func (g *Game) CallLiar(account string) (string, string, error) {
 	// Find player who called the last claim.
 	lastClaimPlayer := g.Cups[lastClaim.Account]
 
-	// Find player who called a liar.
+	// Find player who called liar.
 	callPlayer := g.Cups[account]
 
 	// The player who made the last claim loses the round.
@@ -206,7 +263,7 @@ func (g *Game) CallLiar(account string) (string, string, error) {
 		// Update the player data because of the outs count.
 		g.Cups[lastClaim.Account] = lastClaimPlayer
 
-		return g.lastOutAcct, g.lastWinAcct, nil
+		return g.lastWinAcct, g.lastOutAcct, nil
 	}
 
 	// The player who made the call loses the round.
@@ -271,49 +328,6 @@ func (g *Game) NewRound() (int, error) {
 	return len(g.Cups), nil
 }
 
-// Claim checks if the claim is valid and made by the correct player before
-// adding it to the list of claims for the current game.
-func (g *Game) Claim(account string, claim Claim) error {
-	if account == "" {
-		return errors.New("invalid account information")
-	}
-
-	// Validate if it is the player's turn.
-	if g.Cups[g.CurrentPlayer].Account != account {
-		return fmt.Errorf("player [%s] can't make a claim now", account)
-	}
-
-	// Validate this player have rolled the dice.
-	if g.Cups[account].Dice == nil {
-		return fmt.Errorf("player [%s] didn't roll dice yet", account)
-	}
-
-	// If this is not the first claim, validate it against the previous claim.
-	if len(g.Claims) != 0 {
-		lastClaim := g.Claims[len(g.Claims)-1]
-
-		if claim.Number < lastClaim.Number {
-			return errors.New("claim number must be greater or equal to the last claim")
-		}
-
-		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
-			return errors.New("claim suite must be greater that the last claim")
-		}
-	}
-
-	// Specify who made the claim.
-	claim.Account = account
-
-	g.Claims = append(g.Claims, claim)
-
-	// Update the nextPlayer index.
-	// g.nextPlayer++
-
-	g.Round++
-
-	return nil
-}
-
 // PlayerBalance returns the player's balance, by calling the banks contract
 // method.
 func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, error) {
@@ -327,4 +341,16 @@ func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, erro
 // Reconcile calculates the game pot and make the transfer to the winner.
 func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
 	return nil
+}
+
+//==============================================================================
+
+// nextCup will look for the next available player.
+func (g *Game) nextCup() {
+	for {
+		g.currentCup = (g.currentCup + 1) % len(g.CupsOrder)
+		if g.CupsOrder[g.currentCup] != "" {
+			break
+		}
+	}
 }
