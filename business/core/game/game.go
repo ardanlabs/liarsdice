@@ -57,9 +57,10 @@ type Game struct {
 	banker        Banker
 	lastOutAcct   string
 	lastWinAcct   string
-	CurrentPlayer int
+	CurrentPlayer string
 	Round         int
 	Cups          map[string]Cup
+	CupsOrder     []string
 	Claims        []Claim
 
 	mu sync.RWMutex
@@ -109,6 +110,7 @@ func (g *Game) AddAccount(account string) error {
 	}
 
 	g.Cups[account] = Cup{Account: account}
+	g.CupsOrder = append(g.CupsOrder, account)
 
 	return nil
 }
@@ -125,6 +127,12 @@ func (g *Game) RemoveAccount(account string) error {
 
 	if _, exists := g.Cups[account]; !exists {
 		return fmt.Errorf("player [%s] does not exist in the game", account)
+	}
+
+	for i, acc := range g.CupsOrder {
+		if acc == account {
+			g.CupsOrder[i] = ""
+		}
 	}
 
 	delete(g.Cups, account)
@@ -159,124 +167,130 @@ func (g *Game) RollDice(account string) error {
 
 // CallLiar checks all the claims made so far in the round and defines a winner
 // and a loser.
-func (g *Game) CallLiar(wallet string) (string, string, error) {
-	if wallet == "" {
-		return "", "", errors.New("invalid wallet address")
+func (g *Game) CallLiar(account string) (string, string, error) {
+	if account == "" {
+		return "", "", errors.New("invalid account information")
 	}
 
-	// Validate if it is the player's turn..
-	if g.Players[g.CurrentPlayer].Wallet != wallet {
-		return "", "", fmt.Errorf("player [%s] can't make a claim now", wallet)
+	// Validate if it is the player's turn.
+	if g.Cups[account].Account != account {
+		return "", "", fmt.Errorf("player [%s] can't make a claim now", account)
 	}
 
 	// Hold the sum of all the dice values.
 	dice := make([]int, 7)
-	for _, player := range g.Players {
+	for _, player := range g.Cups {
 		for _, suite := range player.Dice {
 			dice[suite]++
 		}
 	}
 
+	// This call ends the round, not allowing any more claims to be made.
+	g.Status = StatusRoundOver
+
+	lastClaim := g.Claims[len(g.Claims)-1]
+
+	// Find player who called the last claim.
+	lastClaimPlayer := g.Cups[lastClaim.Account]
+
 	// Find player who called a liar.
-	callPlayer, _, found := g.findPlayer(wallet)
-	if !found {
-		return "", "", fmt.Errorf("player [%s] was not found", wallet)
-	}
+	callPlayer := g.Cups[account]
 
-	g.Status = STATUSROUNDOVER
-
-	lastClaim := g.claims[len(g.claims)-1]
-
-	// If the last Claim is incorrect, the player who made it, gets an out.
+	// The player who made the last claim loses the round.
 	if dice[lastClaim.Suite] < lastClaim.Number {
-		lastClaim.player.Outs++
-		g.lastOut = lastClaim.player
-		g.lastWin = callPlayer
+		lastClaimPlayer.Outs++
 
-		return wallet, g.lastOut.Wallet, nil
+		g.lastOutAcct = lastClaimPlayer.Account
+		g.lastWinAcct = callPlayer.Account
+
+		// Update the player data because of the outs count.
+		g.Cups[lastClaim.Account] = lastClaimPlayer
+
+		return g.lastOutAcct, g.lastWinAcct, nil
 	}
 
+	// The player who made the call loses the round.
 	callPlayer.Outs++
-	g.lastOut = callPlayer
-	g.lastWin = lastClaim.player
+	g.Cups[account] = callPlayer
 
-	return lastClaim.player.Wallet, wallet, nil
+	g.lastOutAcct = callPlayer.Account
+	g.lastWinAcct = lastClaimPlayer.Account
+
+	return g.lastWinAcct, g.lastOutAcct, nil
 }
 
-// NewRound checks for players out count, reset players dice and game claims.
+// NewRound checks for player's out count, reset players dice and game claims.
 func (g *Game) NewRound() (int, error) {
 
 	// Check the round is over.
-	if g.Status != STATUSROUNDOVER {
+	if g.Status != StatusRoundOver {
 		return 0, errors.New("current round is not over")
 	}
 
-	g.Round++
-
 	// Figure out which players are left in the game from the close of
 	// the previous round.
-	for _, player := range g.Players {
+	for account, player := range g.Cups {
 		if player.Outs == 3 {
-			g.RemovePlayer(player.Wallet)
+			delete(g.Cups, account)
 		}
 	}
 
 	// If there is only 1 player left we have a winner.
-	if len(g.Players) == 1 {
-		g.Status = STATUSOPEN
+	if len(g.Cups) == 1 {
+		g.Status = StatusOpen
 		return 1, nil
 	}
 
 	// Figure out who starts the round. The person who was last out should
 	// start the round.
-	_, i, found := g.findPlayer(g.lastOut.Wallet)
-	if found {
-		g.CurrentPlayer = i
+	var found bool
+	if g.lastOutAcct != "" {
+		g.CurrentPlayer = g.lastOutAcct
 	}
 
 	// If the person who was last out is no longer in the game, then the
 	// player who won the last round starts.
 	if !found {
-		_, i, found := g.findPlayer(g.lastWin.Wallet)
-		if found {
-			g.CurrentPlayer = i
-		}
+		g.CurrentPlayer = g.lastWinAcct
 	}
 
 	// Reset players dice.
-	for i := range g.Players {
-		g.Players[i].Dice = []int{}
+	for account, player := range g.Cups {
+		player.Dice = make([]int, 5)
+		g.Cups[account] = player
 	}
 
 	// Reset the claims to start over.
-	g.claims = []Claim{}
+	g.Claims = make([]Claim, 0)
 
-	g.Status = STATUSPLAYING
+	g.Status = StatusPlaying
+
+	g.Round++
 
 	// Return the number of players for this round.
-	return len(g.Players), nil
+	return len(g.Cups), nil
 }
 
 // Claim checks if the claim is valid and made by the correct player before
 // adding it to the list of claims for the current game.
-func (g *Game) Claim(wallet string, claim Claim) error {
-	if wallet == "" {
-		return errors.New("invalid wallet address")
+func (g *Game) Claim(account string, claim Claim) error {
+	if account == "" {
+		return errors.New("invalid account information")
 	}
 
 	// Validate if it is the player's turn.
-	if g.Players[g.CurrentPlayer].Wallet != wallet {
-		return fmt.Errorf("player [%s] can't make a claim now", wallet)
+	if g.Cups[g.CurrentPlayer].Account != account {
+		return fmt.Errorf("player [%s] can't make a claim now", account)
 	}
 
 	// Validate this player have rolled the dice.
-	if g.Players[g.CurrentPlayer].Dice == nil {
-		return fmt.Errorf("player [%s] didn't roll dice yet", wallet)
+	if g.Cups[account].Dice == nil {
+		return fmt.Errorf("player [%s] didn't roll dice yet", account)
 	}
 
 	// If this is not the first claim, validate it against the previous claim.
-	if len(g.claims) != 0 {
-		lastClaim := g.claims[len(g.claims)-1]
+	if len(g.Claims) != 0 {
+		lastClaim := g.Claims[len(g.Claims)-1]
 
 		if claim.Number < lastClaim.Number {
 			return errors.New("claim number must be greater or equal to the last claim")
@@ -287,19 +301,13 @@ func (g *Game) Claim(wallet string, claim Claim) error {
 		}
 	}
 
-	player, _, found := g.findPlayer(wallet)
-	if !found {
-		return fmt.Errorf("player [%s] was not found", wallet)
-	}
-
 	// Specify who made the claim.
-	claim.player = player
+	claim.Account = account
 
-	g.claims = append(g.claims, claim)
+	g.Claims = append(g.Claims, claim)
 
-	// Update the CurrentPlayer index.
-	g.CurrentPlayer++
-	g.CurrentPlayer = g.CurrentPlayer % len(g.Players)
+	// Update the nextPlayer index.
+	// g.nextPlayer++
 
 	g.Round++
 

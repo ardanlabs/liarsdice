@@ -213,7 +213,7 @@ func run(log *zap.SugaredLogger) error {
 		Auth:     auth,
 		DB:       db,
 		Game:     game,
-	})
+	}, handlers.WithCORS("*"))
 
 	// Construct a server to service the requests against the mux.
 	api := http.Server{
