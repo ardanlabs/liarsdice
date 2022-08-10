@@ -37,20 +37,18 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 	return &bank, nil
 }
 
-// Balance will return the specified address balance.
-func (b *Bank) Balance(ctx context.Context, address string) (*big.Int, error) {
+// Balance will return the balance for the specified account.
+func (b *Bank) Balance(ctx context.Context, account string) (*big.Int, error) {
 	tranOpts, err := b.client.NewCallOpts(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	player := common.HexToAddress(address)
-
-	return b.contract.PlayerBalance(tranOpts, player)
+	return b.contract.PlayerBalance(tranOpts, common.HexToAddress(account))
 }
 
-// Reconcile will apply with ante to the winner and losers and provide the
-// house the game fee.
-func (b *Bank) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
+// Reconcile will apply with ante to the winner and loser accounts, plus provide
+// the house the game fee.
+func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante uint, gameFee uint) error {
 	return nil
 }
