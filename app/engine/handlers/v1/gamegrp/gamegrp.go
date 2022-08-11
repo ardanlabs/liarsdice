@@ -5,16 +5,67 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"time"
 
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
+	"github.com/gorilla/websocket"
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
 	Game *game.Game
+	WS   websocket.Upgrader
+	Evts *events.Events
+}
+
+// Events handles a web socket to provide events to a client.
+func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	// Need this to handle CORS on the websocket.
+	h.WS.CheckOrigin = func(r *http.Request) bool { return true }
+
+	// This upgrades the HTTP connection to a websocket connection.
+	c, err := h.WS.Upgrade(w, r, nil)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	// This provides a channel for receiving events from the blockchain.
+	ch := h.Evts.Acquire(v.TraceID)
+	defer h.Evts.Release(v.TraceID)
+
+	// Starting a ticker to send a ping message over the websocket.
+	ticker := time.NewTicker(time.Second)
+
+	// Block waiting for events from the blockchain or ticker.
+	for {
+		select {
+		case msg, wd := <-ch:
+
+			// If the channel is closed, release the websocket.
+			if !wd {
+				return nil
+			}
+
+			if err := c.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
+				return err
+			}
+
+		case <-ticker.C:
+			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
+				return nil
+			}
+		}
+	}
 }
 
 // Start starts the game.
@@ -23,7 +74,19 @@ func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	return web.Respond(ctx, w, gameToResponse(h.Game), http.StatusOK)
+	resp := struct {
+		Status        string   `json:"status"`
+		Round         int      `json:"round"`
+		CurrentPlayer string   `json:"current_player,omitempty"`
+		PlayerOrder   []string `json:"player_order"`
+	}{
+		Status:        h.Game.Status,
+		Round:         h.Game.Round,
+		CurrentPlayer: h.Game.CurrentPlayer,
+		PlayerOrder:   h.Game.CupsOrder,
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // Status will return information about the game.
@@ -45,7 +108,19 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	return web.Respond(ctx, w, gameToResponse(h.Game), http.StatusOK)
+	resp := struct {
+		Status        string   `json:"status"`
+		Round         int      `json:"round"`
+		CurrentPlayer string   `json:"current_player,omitempty"`
+		PlayerOrder   []string `json:"player_order"`
+	}{
+		Status:        h.Game.Status,
+		Round:         h.Game.Round,
+		CurrentPlayer: h.Game.CurrentPlayer,
+		PlayerOrder:   h.Game.CupsOrder,
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // RollDice will roll 5 dice for the given player and game.
@@ -56,7 +131,24 @@ func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.R
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	return web.Respond(ctx, w, gameToResponse(h.Game), http.StatusOK)
+	// Find the player to show only this player's rolled dice.
+	var player Player
+	for _, cup := range h.Game.Cups {
+		if cup.Account == wallet {
+			player.Wallet = cup.Account
+			player.Dice = cup.Dice
+			player.Outs = cup.Outs
+			break
+		}
+	}
+
+	resp := struct {
+		Player Player `json:"player"`
+	}{
+		Player: player,
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // Claim processes a claim made by a player in a game.
@@ -87,8 +179,8 @@ func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	resp := struct {
-		Winner string
-		Loser  string
+		Winner string `json:"winner"`
+		Loser  string `json:"loser"`
 	}{
 		Winner: winner,
 		Loser:  loser,
@@ -140,12 +232,13 @@ func gameToResponse(game *game.Game) Game {
 		CurrentPlayer: game.CurrentPlayer,
 		CupsOrder:     game.CupsOrder,
 	}
-	g.Players = playerToResponse(game.Cups)
+
+	g.Players = playerToResponse(game.Cups, game.Claims)
 
 	return g
 }
 
-func playerToResponse(cups map[string]game.Cup) []Player {
+func playerToResponse(cups map[string]game.Cup, claims []game.Claim) []Player {
 	var playerList []Player
 
 	for _, cup := range cups {
@@ -153,11 +246,26 @@ func playerToResponse(cups map[string]game.Cup) []Player {
 			Wallet: cup.Account,
 			Outs:   cup.Outs,
 			Dice:   cup.Dice,
+			Claim:  claimToResponse(cup.Account, claims),
 		}
 		playerList = append(playerList, p)
 	}
 
 	return playerList
+}
+
+func claimToResponse(account string, claims []game.Claim) Claim {
+	for _, c := range claims {
+		if c.Account == account {
+			return Claim{
+				Wallet: account,
+				Number: c.Number,
+				Suite:  c.Suite,
+			}
+		}
+	}
+
+	return Claim{}
 }
 
 func claimToBusiness(claim Claim) game.Claim {

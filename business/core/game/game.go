@@ -192,6 +192,9 @@ func (g *Game) Claim(account string, claim Claim) error {
 		return fmt.Errorf("player [%s] didn't roll dice yet", account)
 	}
 
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	// If this is not the first claim, validate it against the previous claim.
 	if len(g.Claims) != 0 {
 		lastClaim := g.Claims[len(g.Claims)-1]
@@ -201,7 +204,7 @@ func (g *Game) Claim(account string, claim Claim) error {
 		}
 
 		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
-			return errors.New("claim suite must be greater that the last claim")
+			return errors.New("claim suite must be greater than the last claim suite")
 		}
 	}
 
@@ -237,6 +240,9 @@ func (g *Game) CallLiar(account string) (string, string, error) {
 	if g.Cups[currentAccount].Account != account {
 		return "", "", fmt.Errorf("player [%s] can't make a claim now", account)
 	}
+
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	// Hold the sum of all the dice values.
 	dice := make([]int, 7)

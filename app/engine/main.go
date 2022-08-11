@@ -18,6 +18,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/sys/database"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
@@ -161,6 +162,8 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Start Game and Bank Services
 
+	evts := events.New()
+
 	data, err := os.ReadFile("zarf/contract/id.env")
 	if err != nil {
 		return fmt.Errorf("readfile: %w", err)
@@ -213,6 +216,7 @@ func run(log *zap.SugaredLogger) error {
 		Auth:     auth,
 		DB:       db,
 		Game:     game,
+		Evts:     evts,
 	}, handlers.WithCORS("*"))
 
 	// Construct a server to service the requests against the mux.
@@ -246,6 +250,10 @@ func run(log *zap.SugaredLogger) error {
 	case sig := <-shutdown:
 		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
 		defer log.Infow("shutdown", "status", "shutdown complete", "signal", sig)
+
+		// Release any web sockets that are currently active.
+		log.Infow("shutdown", "status", "shutdown web socket channels")
+		evts.Shutdown()
 
 		// Give outstanding requests a deadline for completion.
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
