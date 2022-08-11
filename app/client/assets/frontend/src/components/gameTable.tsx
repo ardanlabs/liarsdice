@@ -6,13 +6,13 @@ import CurrentClaim from './currentClaim'
 import LiarsCall from './liarsCall'
 
 interface GameTableProps {
-  activePlayers: user[]
-  currentPlayerAddress: string
-  currentClaim: { address: string; claim: claim }
+  activePlayers: Set<user>
+  currentPlayerWallet: string
+  currentClaim: { wallet: string; claim: claim }
 }
 
 const GameTable: FC<GameTableProps> = (GameTableProps) => {
-  const { activePlayers, currentPlayerAddress, currentClaim } = GameTableProps
+  const { activePlayers, currentPlayerWallet, currentClaim } = GameTableProps
   return (
     <div
       style={{
@@ -26,7 +26,7 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
       <Counter />
       <Cups
         activePlayers={activePlayers}
-        currentPlayerAddress={currentPlayerAddress}
+        currentPlayerWallet={currentPlayerWallet}
       />
       <LiarsCall />
       <CurrentClaim currentClaim={currentClaim} />

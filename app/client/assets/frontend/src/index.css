@@ -124,7 +124,11 @@ code {
 /*** Players UI ***/
 /* Players Cup */
 .player__ui {
+  margin: 0 20px;
   color: var(--modals)
+}
+.player__ui .active {
+  color: var(--primary-color);
 }
 .player__cup {
   background-image: url(./assets/cupInactive.svg);

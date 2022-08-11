@@ -3,7 +3,7 @@ import Claim from './claim'
 import { claim } from '../types/index.d'
 
 interface CurrentClaimProps {
-  currentClaim: { address: string; claim: claim }
+  currentClaim: { wallet: string; claim: claim }
 }
 
 const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
@@ -25,10 +25,10 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
       }}
     >
       <span>
-        Current claim by Player {currentClaim?.address.slice(0, 7)}...
-        {currentClaim?.address.slice(
-          currentClaim?.address.length - 7,
-          currentClaim?.address.length,
+        Current claim by Player {currentClaim?.wallet.slice(0, 7)}...
+        {currentClaim?.wallet.slice(
+          currentClaim?.wallet.length - 7,
+          currentClaim?.wallet.length,
         )}
       </span>
       <div
@@ -47,7 +47,7 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
           marginBottom: '20px',
         }}
       >
-        <Claim claim={currentClaim?.claim} />
+        <Claim claim={currentClaim?.claim} fill="var(--secondary-color)" />
       </div>
     </div>
   )

@@ -1,6 +1,13 @@
 import React from 'react'
 
-const SidebarDetails = () => {
+interface SidebarDetailsProps {
+  round: number
+  ante?: number
+  pot?: number
+  diceAmount: number
+}
+const SidebarDetails = (props: SidebarDetailsProps) => {
+  const { round, ante, pot, diceAmount } = props
   return (
     <div
     className="details"
@@ -17,15 +24,15 @@ const SidebarDetails = () => {
     >
     <div className="d-flex">
       <strong className="details__title mr-6">Round:</strong>
-      1:20 Dice
+      { round ? round : '-' }: { diceAmount } Dice
     </div>
     <div className="d-flex">
       <strong className="details__title mr-6">Ante:</strong>
-      0.1 ETH
+      { ante } ETH
     </div>
     <div className="d-flex">
       <strong className="details__title mr-6">Pot:</strong>
-      0.1 ETH
+      { pot } ETH
     </div>
     </div>
   )

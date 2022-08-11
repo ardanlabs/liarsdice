@@ -1,10 +1,10 @@
-export type dice = readonly die[]
-export type die = 1 | 2 | 3 | 4 | 5 | 6
+export type dice = readonly die[] | []
+export type die = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export interface user {
-  address: string,
+  wallet: string,
   active: boolean,
   dice: dice,
-  out: number,
+  outs: number,
   claim: claim,
 }
 

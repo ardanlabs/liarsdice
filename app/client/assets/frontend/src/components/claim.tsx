@@ -4,21 +4,25 @@ import Die from './icons/die'
 
 interface ClaimProps {
   claim: claim
+  dieWidth?: string
+  dieHeight?: string
+  dieColor?: string
+  fill: string
 }
 
 const Claim: FC<ClaimProps> = (ClaimProps) => {
-  const { claim } = ClaimProps
-  return (
+  const { claim, dieWidth, dieHeight, fill } = ClaimProps
+  return claim.number ? (
     <>
       {`${claim.number} X `}
       <Die
         dieNumber={claim.suite}
-        fill="var(--secondary-color)"
-        width="59px"
-        height="60px"
+        fill={fill}
+        width={dieWidth}
+        height={dieHeight}
       />
     </>
-  )
+  ) : null
 }
 
 export default Claim

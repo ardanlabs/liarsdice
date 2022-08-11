@@ -4,18 +4,17 @@ import MetamaskLogo from './icons/metamask'
 import { useEthers } from "@usedapp/core";
 import MainRoom from './mainRoom'
 
+
 export default function Login() {
   const { account, activateBrowserWallet } = useEthers()
-  console.log(account)
+
   function handleConnectWallet() {
     activateBrowserWallet();
   }
-
   return account?.length ? (
-    <div style={{width: '100%'}}>
+    <>
       <MainRoom />
-      {  account }
-    </div>
+    </>
   ) : (
     <div
       id="login__wrapper"

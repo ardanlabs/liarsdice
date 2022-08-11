@@ -4,11 +4,14 @@ import SidebarDetails from './sidebarDetails'
 import Players from './players'
 
 interface MainRoomProps {
-  activePlayers: user[],
-  waitingPlayers: user[],
+  activePlayers: Set<user>,
+  waitingPlayers?: string[],
+  joinGame: Function,
+  currentGameStatus: any,
 }
 const MainRoom = (props: MainRoomProps) => {
-  const { activePlayers, waitingPlayers } = props
+  const { activePlayers, waitingPlayers, joinGame, currentGameStatus } = props
+  const { round, current_player } = currentGameStatus
 
   return (
     <div
@@ -20,8 +23,8 @@ const MainRoom = (props: MainRoomProps) => {
         height: '100%',
       }}
     >
-      <SidebarDetails />
-      <Players activePlayers={activePlayers} waitingPlayers={waitingPlayers}/>
+      <SidebarDetails round={round} ante={5} pot={10} diceAmount={activePlayers.size} />
+      <Players activePlayers={activePlayers} currentPlayer={current_player} waitingPlayers={waitingPlayers} joinGame={joinGame}/>
     </div>
   )
 }

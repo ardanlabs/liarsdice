@@ -2,17 +2,17 @@ import React, { FC } from 'react'
 import { user } from '../types/index.d'
 import Star from './icons/star'
 import Claim from './claim'
-import Dice from './dice'
+import Cup from './cup'
 
 interface CupsProps {
-  activePlayers: user[]
-  currentPlayerAddress: string
+  activePlayers: Set<user>
+  currentPlayerWallet: string
 }
 
 const Cups: FC<CupsProps> = (CupsProps) => {
-  const { activePlayers, currentPlayerAddress } = CupsProps
+  const { activePlayers, currentPlayerWallet } = CupsProps
   const cupsElements: JSX.Element[] = []
-  activePlayers.forEach((player, i) => {
+  Array.from(activePlayers).forEach((player, i) => {
     if (player.active) {
       cupsElements.push(
         <div
@@ -24,6 +24,7 @@ const Cups: FC<CupsProps> = (CupsProps) => {
             justifyContent: 'start',
             alignItems: 'center',
           }}
+          key={player.wallet}
           className="player__ui"
         >
           <div className="d-flex">
@@ -31,43 +32,12 @@ const Cups: FC<CupsProps> = (CupsProps) => {
             <Star fill="var(--primary-color)" />
             <Star />
           </div>
-          <h2>{`Player ${i + 1}`}</h2>
+          <h2 className={currentPlayerWallet === player.wallet ? 'active' : ''}>{`Player ${i + 1}`}</h2>
           <div className="claim">
-            Claim:
-            <Claim claim={player.claim} />
+            {player.claim.number ? 'Claim:' : '' }
+            <Claim claim={player.claim} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
           </div>
-          <div className="player__cup active">
-            <Dice
-              isPlayerTurn={currentPlayerAddress === player.address}
-              diceNumber={player.dice}
-            />
-          </div>
-        </div>,
-      )
-    } else {
-      cupsElements.push(
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '414px',
-            width: '213px',
-            justifyContent: 'start',
-            alignItems: 'center',
-          }}
-          className="player__ui"
-        >
-          <div className="d-flex">
-            <Star fill="var(--primary-color)" />
-            <Star fill="var(--primary-color)" />
-            <Star />
-          </div>
-          <h2>{`Player ${i + 1}`}</h2>
-          <div className="claim">
-            Claim:
-            <Claim claim={player.claim} />
-          </div>
-          <div className="player__cup"></div>
+          <Cup player={player} currentPlayerWallet={currentPlayerWallet}/>
         </div>,
       )
     }

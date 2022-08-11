@@ -23,7 +23,6 @@ const ardansLocalHostConfig = {
   readOnlyUrls: {
     [Localhost.chainId]: 'http://127.0.0.1:8545/',
   },
-  gasLimitBufferPercentage: 20,
 }
 
 const chainsConfig = {
