@@ -13,6 +13,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -37,6 +38,7 @@ type APIMuxConfig struct {
 	Auth     *auth.Auth
 	DB       *sqlx.DB
 	Game     *game.Game
+	Evts     *events.Events
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -85,6 +87,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 		Auth: cfg.Auth,
 		DB:   cfg.DB,
 		Game: cfg.Game,
+		Evts: cfg.Evts,
 	})
 
 	return app

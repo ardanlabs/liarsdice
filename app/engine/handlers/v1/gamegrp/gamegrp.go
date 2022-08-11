@@ -5,16 +5,67 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"time"
 
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
+	"github.com/gorilla/websocket"
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
 	Game *game.Game
+	WS   websocket.Upgrader
+	Evts *events.Events
+}
+
+// Events handles a web socket to provide events to a client.
+func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	// Need this to handle CORS on the websocket.
+	h.WS.CheckOrigin = func(r *http.Request) bool { return true }
+
+	// This upgrades the HTTP connection to a websocket connection.
+	c, err := h.WS.Upgrade(w, r, nil)
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+
+	// This provides a channel for receiving events from the blockchain.
+	ch := h.Evts.Acquire(v.TraceID)
+	defer h.Evts.Release(v.TraceID)
+
+	// Starting a ticker to send a ping message over the websocket.
+	ticker := time.NewTicker(time.Second)
+
+	// Block waiting for events from the blockchain or ticker.
+	for {
+		select {
+		case msg, wd := <-ch:
+
+			// If the channel is closed, release the websocket.
+			if !wd {
+				return nil
+			}
+
+			if err := c.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
+				return err
+			}
+
+		case <-ticker.C:
+			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
+				return nil
+			}
+		}
+	}
 }
 
 // Start starts the game.
