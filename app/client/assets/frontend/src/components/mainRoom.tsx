@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { user, claim, die } from '../types/index.d'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
@@ -11,10 +11,14 @@ const MainRoom = (props: MainRoomProps) => {
     wallet: '0x39249126d90671284cd06495d19C04DD0e54d33',
     claim: { number: 1, suite: 4 },
   }
-  const currentPlayerWallet: string = ''
-  const [activePlayers, setActivePlayers] = useState(new Set<user>())
+  const [currentPlayerWallet, setCurrentPlayerWallet] = useState('')
+  const [activePlayers, setActivePlayers]= useState([] as user[])
   const [currentGameStatus, setCurrentGameStatus] = useState({})
   const { account } = useEthers()
+  const [refresh, setRefresh] = useState(0)
+  const timerId = setInterval(() => {
+    setRefresh(refresh + 1)
+  }, 30000);
 
   useEffect(
     () => {
@@ -22,30 +26,15 @@ const MainRoom = (props: MainRoomProps) => {
         .get('http://localhost:3000/v1/game/status')
         .then(function (response: AxiosResponse) {
           if (Array.isArray(response.data.players)) {
-            response.data.players.forEach((player: any) => {
-              const user = {
-                wallet: player.wallet,
-                active: true,
-                dice: [],
-                outs: player.outs,
-                claim: {
-                  number: 0,
-                  suite: 0 as die,
-                },
-              }
-              setActivePlayers((prev) => {
-                const newSet = prev
-                newSet.add(user)
-                return newSet
-              })
-              setCurrentGameStatus(response.data)
-            })
+            setCurrentPlayerWallet(response.data.current_player)
+            setActivePlayers(response.data.players)
+            setCurrentGameStatus(response.data)
           }
         })
         .catch(function (error: AxiosError) {
           console.log(error)
         })
-    }, [activePlayers]
+    }, [refresh]
   )
   const joinGame = () => {
     console.log('Joining game...')
@@ -54,32 +43,14 @@ const MainRoom = (props: MainRoomProps) => {
         wallet: account,
       })
       .then(function (response: AxiosResponse) {
-        console.log(response)
-        response.data.players.forEach((player: any) => {
-          const user = {
-            wallet: player.wallet,
-            active: true,
-            dice: [],
-            outs: player.outs,
-            claim: {
-              number: 0,
-              suite: 0 as die,
-            },
-          }
-          setActivePlayers((prev) => {
-            const newSet = prev
-            newSet.add(user)
-            console.log(newSet)
-            return newSet
-          })
-        })
+        setRefresh(refresh + 1)
       })
       .catch(function (error: AxiosError) {
         console.log(error)
       })
   }
 
-
+  
   return (
     <div
       style={{

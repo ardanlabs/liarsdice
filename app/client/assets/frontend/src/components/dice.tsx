@@ -11,8 +11,8 @@ const Dice = (props: DiceProps) => {
   const { diceNumber, isPlayerTurn } = props
   const dice: JSX.Element[] = []
   if(diceNumber.length) {
-    diceNumber.forEach((die) => {
-      dice.push(<Die key={die} fill={isPlayerTurn ? 'var(--primary-color)' : 'var(--secondary-color)'} dieNumber={die}></Die>)
+    diceNumber.forEach((die, i) => {
+      dice.push(<Die key={i} fill={isPlayerTurn ? 'var(--primary-color)' : 'var(--secondary-color)'} dieNumber={die}></Die>)
     });
   } else {
     for (let i = 0; i < 5; i++) {

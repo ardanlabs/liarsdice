@@ -5,7 +5,7 @@ import Claim from './claim'
 import Cup from './cup'
 
 interface CupsProps {
-  activePlayers: Set<user>
+  activePlayers: user[]
   currentPlayerWallet: string
 }
 
@@ -13,7 +13,7 @@ const Cups: FC<CupsProps> = (CupsProps) => {
   const { activePlayers, currentPlayerWallet } = CupsProps
   const cupsElements: JSX.Element[] = []
   Array.from(activePlayers).forEach((player, i) => {
-    if (player.active) {
+    if (player.outs < 3) {
       cupsElements.push(
         <div
           style={{
@@ -33,10 +33,10 @@ const Cups: FC<CupsProps> = (CupsProps) => {
             <Star />
           </div>
           <h2 className={currentPlayerWallet === player.wallet ? 'active' : ''}>{`Player ${i + 1}`}</h2>
-          <div className="claim">
+          {/* <div className="claim">
             {player.claim.number ? 'Claim:' : '' }
             <Claim claim={player.claim} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
-          </div>
+          </div> */}
           <Cup player={player} currentPlayerWallet={currentPlayerWallet}/>
         </div>,
       )

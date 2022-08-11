@@ -5,7 +5,7 @@ import PlayersList from './playersList'
 import { useEthers } from '@usedapp/core'
 
 interface PlayersProps {
-  activePlayers: Set<user>
+  activePlayers: user[]
   waitingPlayers?: string[]
   joinGame: Function
   currentPlayer: string

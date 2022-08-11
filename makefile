@@ -208,7 +208,7 @@ contract-build:
 	abigen --bin=contract/sol/abi/Bank.bin --abi=contract/sol/abi/Bank.abi --pkg=contract --out=contract/sol/go/contract/contract.go
 
 # This will deploy the smart contract to the locally running Ethereum environment.
-contract-deploy: contract-build
+contract-deploy:
 	go run contract/cmd/deploy/main.go
 
 # This will show the reconcile.

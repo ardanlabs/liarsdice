@@ -24,16 +24,28 @@ const SidebarDetails = (props: SidebarDetailsProps) => {
     >
     <div className="d-flex">
       <strong className="details__title mr-6">Round:</strong>
-      { round ? round : '-' }: { diceAmount } Dice
+      { round ? round : '-' } : { diceAmount } Dice
     </div>
-    <div className="d-flex">
-      <strong className="details__title mr-6">Ante:</strong>
-      { ante } ETH
-    </div>
-    <div className="d-flex">
-      <strong className="details__title mr-6">Pot:</strong>
-      { pot } ETH
-    </div>
+      <div className="d-flex">
+        {
+          ante ? (
+            <>
+              <strong className="details__title mr-6">Ante:</strong>
+              { ante } ETH
+            </>
+          ) : ''
+        }
+      </div>
+      <div className="d-flex">
+        {
+          pot ? (
+            <>
+              <strong className="details__title mr-6">Pot:</strong>
+              { pot } ETH
+            </>
+          ) : ''
+        }
+      </div>
     </div>
   )
 }

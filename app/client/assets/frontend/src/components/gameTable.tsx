@@ -6,7 +6,7 @@ import CurrentClaim from './currentClaim'
 import LiarsCall from './liarsCall'
 
 interface GameTableProps {
-  activePlayers: Set<user>
+  activePlayers: user[]
   currentPlayerWallet: string
   currentClaim: { wallet: string; claim: claim }
 }

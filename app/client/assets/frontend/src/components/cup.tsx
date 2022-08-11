@@ -9,7 +9,7 @@ interface CupProps {
 
 const Cup: FC<CupProps> = (CupProps) => {
   const { player, currentPlayerWallet } = CupProps
-  return player.active ? (
+  return player.outs < 3 ? (
     <div className="player__cup active">
       <Dice
         isPlayerTurn={currentPlayerWallet === player.wallet}

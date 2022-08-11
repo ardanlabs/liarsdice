@@ -1,7 +1,7 @@
 import { user } from '../types/index.d'
 
 interface PlayersListProps {
-  players: Set<user> | string[]
+  players: user[] | string[]
   title: string
   currentPlayer: string
 }
@@ -9,12 +9,11 @@ interface PlayersListProps {
 const PlayersList = (props: PlayersListProps) => {
   const { players, title, currentPlayer } = props
   const playersIsSet = typeof players === 'object'
-  const playersLength = playersIsSet ? (players as Set<user>).size : (players as string[]).length
-  console.log(players, title, 'playersList')
+  const playersLength = true ? (players as user[]).length : (players as string[]).length
   
   const playersElements: JSX.Element[] = []
   if (playersIsSet && playersLength) {
-    Array.from(players as Set<user>).forEach((player) => {
+    Array.from(players as user[]).forEach((player) => {
       playersElements.push(
         <li style={{ textAlign: 'start' }} className={currentPlayer === player.wallet ? 'active' : ''} key={player.wallet}>
           {player.wallet.slice(0, 7)}...

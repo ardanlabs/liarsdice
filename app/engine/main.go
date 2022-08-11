@@ -167,7 +167,7 @@ func run(log *zap.SugaredLogger) error {
 	}
 	contractID := string(data)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	bank, err := bank.New(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, contractID)
