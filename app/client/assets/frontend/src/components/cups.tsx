@@ -1,18 +1,17 @@
-import React, { FC } from 'react'
+import React, { FC, useContext } from 'react'
 import { user } from '../types/index.d'
 import Star from './icons/star'
 import Claim from './claim'
 import Cup from './cup'
+import { GameContext } from '../gameContext'
 
-interface CupsProps {
-  activePlayers: user[]
-  currentPlayerWallet: string
-}
+interface CupsProps {}
 
 const Cups: FC<CupsProps> = (CupsProps) => {
-  const { activePlayers, currentPlayerWallet } = CupsProps
+  const { game, setGame } = useContext(GameContext)
+  const { players, current_player } = game
   const cupsElements: JSX.Element[] = []
-  Array.from(activePlayers).forEach((player, i) => {
+  Array.from(players as user[]).forEach((player, i) => {
     if (player.outs < 3) {
       cupsElements.push(
         <div
@@ -32,12 +31,12 @@ const Cups: FC<CupsProps> = (CupsProps) => {
             <Star fill="var(--primary-color)" />
             <Star />
           </div>
-          <h2 className={currentPlayerWallet === player.wallet ? 'active' : ''}>{`Player ${i + 1}`}</h2>
+          <h2 className={current_player === player.wallet ? 'active' : ''}>{`Player ${i + 1}`}</h2>
           {/* <div className="claim">
             {player.claim.number ? 'Claim:' : '' }
-            <Claim claim={player.claim} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
+            <Claim claim={player.claims[0]} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
           </div> */}
-          <Cup player={player} currentPlayerWallet={currentPlayerWallet}/>
+          <Cup player={player} currentPlayerWallet={current_player}/>
         </div>,
       )
     }

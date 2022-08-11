@@ -1,17 +1,16 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { user } from '../types/index.d'
 import SidebarDetails from './sidebarDetails'
 import Players from './players'
+import { GameContext } from '../gameContext'
 
 interface MainRoomProps {
-  activePlayers: user[],
-  waitingPlayers?: string[],
-  joinGame: Function,
-  currentGameStatus: any,
+  joinGame: Function
 }
 const MainRoom = (props: MainRoomProps) => {
-  const { activePlayers, waitingPlayers, joinGame, currentGameStatus } = props
-  const { round, current_player } = currentGameStatus
+  const { joinGame } = props
+  const { game } = useContext(GameContext)
+  const { round, players } = game
 
   return (
     <div
@@ -23,8 +22,11 @@ const MainRoom = (props: MainRoomProps) => {
         height: '100%',
       }}
     >
-      <SidebarDetails round={round} diceAmount={activePlayers.length * 5} />
-      <Players activePlayers={activePlayers} currentPlayer={current_player} waitingPlayers={waitingPlayers} joinGame={joinGame}/>
+      <SidebarDetails
+        round={round}
+        diceAmount={(players as user[]).length * 5}
+      />
+      <Players joinGame={joinGame} />
     </div>
   )
 }

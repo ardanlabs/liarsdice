@@ -10,3 +10,11 @@ export interface claim {
   number: number,
   suite: die
 }
+
+export interface game {
+  status: string,
+  round: number,
+  current_player: string,
+  player_order: string[] | null,
+  players?: user[]
+}

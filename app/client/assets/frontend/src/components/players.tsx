@@ -1,19 +1,18 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import Button from './button'
 import { user } from '../types/index.d'
 import PlayersList from './playersList'
 import { useEthers } from '@usedapp/core'
+import { GameContext } from '../gameContext'
 
 interface PlayersProps {
-  activePlayers: user[]
-  waitingPlayers?: string[]
   joinGame: Function
-  currentPlayer: string
 }
 const Players = (props: PlayersProps) => {
-  const { activePlayers, joinGame, currentPlayer } = props
+  const { joinGame } = props
   const { account } = useEthers()
-  const isUserPlaying = Array.from(activePlayers).filter((user) => {
+  const { game } = useContext(GameContext)
+  const isUserPlaying = (game.players as user[]).filter((user) => {
     return user.wallet === account
   })
 
@@ -44,10 +43,14 @@ const Players = (props: PlayersProps) => {
           width: '100%',
         }}
       >
-        <PlayersList players={activePlayers} currentPlayer={currentPlayer} title="Active players" />
+        <PlayersList title="Active players" />
         {/* <PlayersList players={waitingPlayers} title="Waiting players" /> */}
       </div>
-      <Button disabled={Boolean(isUserPlaying.length)} classes="join__buton" clickHandler={() => joinGame()}>
+      <Button
+        disabled={Boolean(isUserPlaying.length)}
+        classes="join__buton"
+        clickHandler={() => joinGame()}
+      >
         <span>Join Game</span>
       </Button>
     </div>

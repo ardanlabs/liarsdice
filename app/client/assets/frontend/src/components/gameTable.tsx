@@ -1,18 +1,13 @@
 import React, { FC } from 'react'
-import { claim, user } from '../types/index.d'
 import Counter from './counter'
 import Cups from './cups'
 import CurrentClaim from './currentClaim'
 import LiarsCall from './liarsCall'
 
-interface GameTableProps {
-  activePlayers: user[]
-  currentPlayerWallet: string
-  currentClaim: { wallet: string; claim: claim }
-}
+interface GameTableProps {}
 
 const GameTable: FC<GameTableProps> = (GameTableProps) => {
-  const { activePlayers, currentPlayerWallet, currentClaim } = GameTableProps
+
   return (
     <div
       style={{
@@ -24,12 +19,9 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
       }}
     >
       <Counter />
-      <Cups
-        activePlayers={activePlayers}
-        currentPlayerWallet={currentPlayerWallet}
-      />
+      <Cups />
       <LiarsCall />
-      <CurrentClaim currentClaim={currentClaim} />
+      <CurrentClaim currentClaim={{wallet: '', claim: {number: 1, suite: 2}}} />
     </div>
   )
 }

@@ -1,41 +1,92 @@
-import React, { useState, useEffect, useRef } from 'react'
-import { user, claim, die } from '../types/index.d'
+import React, { useEffect, useContext } from 'react'
+import { claim } from '../types/index.d'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { useEthers } from '@usedapp/core'
+import { GameContext } from '../gameContext'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
-  const currentClaim: { wallet: string; claim: claim } = {
-    wallet: '0x39249126d90671284cd06495d19C04DD0e54d33',
-    claim: { number: 1, suite: 4 },
-  }
-  const [currentPlayerWallet, setCurrentPlayerWallet] = useState('')
-  const [activePlayers, setActivePlayers]= useState([] as user[])
-  const [currentGameStatus, setCurrentGameStatus] = useState({})
   const { account } = useEthers()
-  const [refresh, setRefresh] = useState(0)
-  const timerId = setInterval(() => {
-    setRefresh(refresh + 1)
-  }, 30000);
-
-  useEffect(
-    () => {
-      axios
-        .get('http://localhost:3000/v1/game/status')
+  const { game, setGame } = useContext(GameContext)
+  
+  const connect = () => {
+    const ws = new WebSocket(`ws://${process.env.REACT_APP_GO_HOST}/events`)
+    ws.onopen = () => {
+      console.log('Socket connected')
+      try {
+        axios
+        .get(`http://${process.env.REACT_APP_GO_HOST}/status`)
         .then(function (response: AxiosResponse) {
-          if (Array.isArray(response.data.players)) {
-            setCurrentPlayerWallet(response.data.current_player)
-            setActivePlayers(response.data.players)
-            setCurrentGameStatus(response.data)
+          if (response.data) {
+            let newGame = response.data
+            newGame = newGame.players?.length ? newGame : {...newGame, players: []}
+            newGame = newGame.player_order ? newGame : {...newGame, player_order: []}
+            setGame(newGame)
           }
         })
         .catch(function (error: AxiosError) {
           console.log(error)
         })
-    }, [refresh]
-  )
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    ws.onmessage = (evt: MessageEvent) => {
+      console.log(evt)
+      if (evt.data) {
+        let response = evt.data
+      }
+      return
+    }
+    ws.onclose = (evt: CloseEvent) => {
+      console.log(
+        'Socket is closed. Reconnect will be attempted in 1 second.',
+        evt.reason,
+      )
+      setTimeout(function () {
+        setGame({
+          status: 'open',
+          round: 0,
+          current_player: '',
+          player_order: [],
+          players: [],
+        })
+        connect()
+      }, 1000)
+    }
+  
+    ws.onerror = function (err) {
+      console.error('Socket encountered error: ', err, 'Closing socket')
+      ws.close()
+    }
+  }
+
+  const updateStatus = () => {
+    axios
+      .get(`http://${process.env.REACT_APP_GO_HOST}/status`)
+      .then(function (response: AxiosResponse) {
+        if (response.data) {
+          let newGame = response.data
+          newGame = newGame.players?.length
+            ? newGame
+            : { ...newGame, players: [] }
+          newGame = newGame.player_order
+            ? newGame
+            : { ...newGame, player_order: [] }
+          setGame(newGame)
+        }
+      })
+      .catch(function (error: AxiosError) {
+        console.log(error)
+      })
+  }
+
+  useEffect(() => {
+    connect()
+  }, [])
+
   const joinGame = () => {
     console.log('Joining game...')
     axios
@@ -43,14 +94,16 @@ const MainRoom = (props: MainRoomProps) => {
         wallet: account,
       })
       .then(function (response: AxiosResponse) {
-        setRefresh(refresh + 1)
+        console.log('Welcome to the game!!')
+        updateStatus()
       })
       .catch(function (error: AxiosError) {
+        console.group('Something went wrong, try again.')
         console.log(error)
+        console.groupEnd()
       })
   }
 
-  
   return (
     <div
       style={{
@@ -62,16 +115,8 @@ const MainRoom = (props: MainRoomProps) => {
       }}
       id="mainRoom"
     >
-      <SideBar
-        activePlayers={activePlayers}
-        joinGame={joinGame}
-        currentGameStatus={currentGameStatus}
-      />
-      <GameTable
-        activePlayers={activePlayers}
-        currentPlayerWallet={currentPlayerWallet}
-        currentClaim={currentClaim}
-      />
+      <SideBar joinGame={joinGame} />
+      <GameTable />
     </div>
   )
 }

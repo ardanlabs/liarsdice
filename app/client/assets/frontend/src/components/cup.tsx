@@ -14,6 +14,7 @@ const Cup: FC<CupProps> = (CupProps) => {
       <Dice
         isPlayerTurn={currentPlayerWallet === player.wallet}
         diceNumber={player.dice}
+        playerWallet={player.wallet}
       />
     </div>
   ) : <div className="player__cup"></div>
