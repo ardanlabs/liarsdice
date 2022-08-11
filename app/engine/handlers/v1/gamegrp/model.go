@@ -11,13 +11,15 @@ type Game struct {
 
 // Player exposes the required Player data for the HTTP responses.
 type Player struct {
-	Wallet string `json:"wallet"`
+	Wallet string `json:"wallet,omitempty"`
 	Outs   uint8  `json:"outs"`
 	Dice   []int  `json:"dice,omitempty"`
+	Claim  Claim  `json:"claim,omitempty"`
 }
 
 // Claim exposes the require Claim data for the HTTP requests and responses.
 type Claim struct {
-	Number int `json:"number"`
-	Suite  int `json:"suite"`
+	Wallet string `json:"wallet"`
+	Number int    `json:"number"`
+	Suite  int    `json:"suite"`
 }
