@@ -17,9 +17,11 @@ import (
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
-	Game *game.Game
-	WS   websocket.Upgrader
-	Evts *events.Events
+	Banker game.Banker
+	WS     websocket.Upgrader
+	Evts   *events.Events
+
+	game *game.Game
 }
 
 // Events handles a web socket to provide events to a client.
@@ -70,9 +72,9 @@ func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 // Start starts the game.
 func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if err := h.Game.Start(); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
+	h.game = game.New(h.Banker)
+
+	status := h.game.Status()
 
 	resp := struct {
 		Status        string   `json:"status"`
@@ -80,10 +82,10 @@ func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		CurrentPlayer string   `json:"current_player,omitempty"`
 		PlayerOrder   []string `json:"player_order"`
 	}{
-		Status:        h.Game.Status,
-		Round:         h.Game.Round,
-		CurrentPlayer: h.Game.CurrentPlayer,
-		PlayerOrder:   h.Game.CupsOrder,
+		Status:        status.Status,
+		Round:         status.Round,
+		CurrentPlayer: status.CurrentPlayer,
+		PlayerOrder:   status.CupsOrder,
 	}
 
 	h.Evts.Send("start")

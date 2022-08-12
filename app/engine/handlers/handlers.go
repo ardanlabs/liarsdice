@@ -37,7 +37,7 @@ type APIMuxConfig struct {
 	Log      *zap.SugaredLogger
 	Auth     *auth.Auth
 	DB       *sqlx.DB
-	Game     *game.Game
+	Banker   game.Banker
 	Evts     *events.Events
 }
 
@@ -83,11 +83,11 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 
 	// Load the v1 routes.
 	v1.Routes(app, v1.Config{
-		Log:  cfg.Log,
-		Auth: cfg.Auth,
-		DB:   cfg.DB,
-		Game: cfg.Game,
-		Evts: cfg.Evts,
+		Log:    cfg.Log,
+		Auth:   cfg.Auth,
+		DB:     cfg.DB,
+		Banker: cfg.Banker,
+		Evts:   cfg.Evts,
 	})
 
 	return app

@@ -1,4 +1,6 @@
-package game
+package game_test
+
+// LET'S WRITE TESTS USING THE API AS A USER!!
 
 import (
 	"testing"

@@ -15,7 +15,6 @@ import (
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ardanlabs/liarsdice/app/engine/handlers"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/sys/database"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"
@@ -178,8 +177,6 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
 
-	game := game.New(bank)
-
 	// =========================================================================
 	// Start Debug Service
 
@@ -215,7 +212,7 @@ func run(log *zap.SugaredLogger) error {
 		Log:      log,
 		Auth:     auth,
 		DB:       db,
-		Game:     game,
+		Banker:   bank,
 		Evts:     evts,
 	}, handlers.WithCORS("*"))
 
