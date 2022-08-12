@@ -229,6 +229,27 @@ func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Re
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
+// UpdateOut replaces the current out amount of the player. This call is not
+// part of the game flow, it is used to control when a player should be removed
+// from the game.
+func (h Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	var p struct {
+		Wallet string `json:"wallet"`
+		Outs   int    `json:"outs"`
+	}
+
+	if err := web.Decode(r, &p); err != nil {
+		return fmt.Errorf("unable to decode payload: %w", err)
+	}
+
+	if err := h.Game.UpdateAccountOut(p.Wallet, p.Outs); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Evts.Send("updateout")
+	return web.Respond(ctx, w, "OK", http.StatusOK)
+}
+
 //==============================================================================
 
 func gameToResponse(game *game.Game) Game {

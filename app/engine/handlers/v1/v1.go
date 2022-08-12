@@ -35,7 +35,6 @@ func Routes(app *web.App, cfg Config) {
 		WS:   websocket.Upgrader{},
 	}
 
-	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
 	app.Handle(http.MethodGet, version, "/game/rolldice/:wallet", ggh.RollDice)
 	app.Handle(http.MethodGet, version, "/game/balance/:wallet", ggh.Balance)
@@ -45,4 +44,9 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodPost, version, "/game/start", ggh.Start)
 	app.Handle(http.MethodPost, version, "/game/claim/:wallet", ggh.Claim)
 	app.Handle(http.MethodPost, version, "/game/callliar/:wallet", ggh.CallLiar)
+
+	//==========================================================================
+	// Not part of the game flow.
+	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
+	app.Handle(http.MethodPost, version, "/game/updateout", ggh.UpdateOut)
 }

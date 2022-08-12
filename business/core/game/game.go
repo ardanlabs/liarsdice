@@ -222,6 +222,26 @@ func (g *Game) Claim(account string, claim Claim) error {
 	return nil
 }
 
+// UpdateAccountOut will update the given account out amount.
+func (g *Game) UpdateAccountOut(account string, outs int) error {
+	if account == "" {
+		return errors.New("invalid account information")
+	}
+
+	if outs <= 0 {
+		return errors.New("invalid out amount")
+	}
+
+	acc, found := g.Cups[account]
+	if !found {
+		return fmt.Errorf("player [%s] does not exist in the game", account)
+	}
+
+	acc.Outs = uint8(outs)
+	g.Cups[account] = acc
+	return nil
+}
+
 // CallLiar checks all the claims made so far in the round and defines a winner
 // and a loser.
 func (g *Game) CallLiar(account string) (string, string, error) {
