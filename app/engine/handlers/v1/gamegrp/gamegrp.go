@@ -207,7 +207,7 @@ func (h Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.R
 		PlayersLeft: playersLeft,
 	}
 
-	h.Evts.Send("callliar")
+	h.Evts.Send("newround")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
