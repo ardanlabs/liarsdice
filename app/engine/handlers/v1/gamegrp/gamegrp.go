@@ -86,6 +86,7 @@ func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		PlayerOrder:   h.Game.CupsOrder,
 	}
 
+	h.Evts.Send("start")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
@@ -120,6 +121,7 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		PlayerOrder:   h.Game.CupsOrder,
 	}
 
+	h.Evts.Send("join")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
@@ -148,6 +150,7 @@ func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.R
 		Player: player,
 	}
 
+	h.Evts.Send("rolldice")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
@@ -166,6 +169,7 @@ func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
+	h.Evts.Send("claim")
 	return web.Respond(ctx, w, gameToResponse(h.Game), http.StatusOK)
 }
 
@@ -186,6 +190,7 @@ func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.R
 		Loser:  loser,
 	}
 
+	h.Evts.Send("callliar")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
@@ -202,6 +207,7 @@ func (h Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.R
 		PlayersLeft: playersLeft,
 	}
 
+	h.Evts.Send("callliar")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
