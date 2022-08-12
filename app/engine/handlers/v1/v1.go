@@ -44,6 +44,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodPost, version, "/game/start", ggh.Start)
 	app.Handle(http.MethodPost, version, "/game/claim/:wallet", ggh.Claim)
 	app.Handle(http.MethodPost, version, "/game/callliar/:wallet", ggh.CallLiar)
+	app.Handle(http.MethodPost, version, "/game/removeplayer/:wallet", ggh.RemovePlayer)
 
 	//==========================================================================
 	// Not part of the game flow.

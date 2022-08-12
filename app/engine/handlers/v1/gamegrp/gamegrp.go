@@ -250,6 +250,18 @@ func (h Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.
 	return web.Respond(ctx, w, "OK", http.StatusOK)
 }
 
+// RemovePlayer removes the player from the game.
+func (h Handlers) RemovePlayer(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	wallet := web.Param(r, "wallet")
+
+	if err := h.Game.RemoveAccount(wallet); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Evts.Send("removeplayer")
+	return web.Respond(ctx, w, "OK", http.StatusOK)
+}
+
 //==============================================================================
 
 func gameToResponse(game *game.Game) Game {
