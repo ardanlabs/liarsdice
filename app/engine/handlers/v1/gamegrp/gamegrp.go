@@ -1,3 +1,4 @@
+// Package gamegrp provides the handlers for game play.
 package gamegrp
 
 import (
@@ -6,9 +7,9 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"strconv"
 	"time"
 
-	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/gorilla/websocket"
 
@@ -30,7 +31,7 @@ type Handlers struct {
 func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	v, err := web.GetValues(ctx)
 	if err != nil {
-		return web.NewShutdownError("web value missing from context")
+		return v1Web.NewRequestError(errors.New("web value missing from context"), http.StatusBadRequest)
 	}
 
 	// Need this to handle CORS on the websocket.
@@ -72,122 +73,162 @@ func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Req
 	}
 }
 
-// Start starts the game.
-func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	status := h.game.Status()
-	if status.Status != game.StatusOver {
-		return v1.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+// Status will return information about the game.
+func (h Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
+
+	status := h.game.Info()
+
+	resp := struct {
+		Status        string              `json:"status"`
+		LastOutAcct   string              `json:"last_out"`
+		LastWinAcct   string              `json:"last_win"`
+		CurrentPlayer string              `json:"current_player"`
+		CurrentCup    int                 `json:"current_cup"`
+		Round         int                 `json:"round"`
+		Cups          map[string]game.Cup `json:"cups"`
+		CupsOrder     []string            `json:"player_order"`
+		Claims        []game.Claim        `json:"claims"`
+	}{
+		Status:        status.Status,
+		LastOutAcct:   status.LastOutAcct,
+		LastWinAcct:   status.LastWinAcct,
+		CurrentPlayer: status.CurrentPlayer,
+		CurrentCup:    status.CurrentCup,
+		Round:         status.Round,
+		Cups:          status.Cups,
+		CupsOrder:     status.CupsOrder,
+		Claims:        status.Claims,
+	}
+
+	return web.Respond(ctx, w, resp, http.StatusOK)
+}
+
+// NewGame creates a new game if there is no game or the status of the current game
+// is GameOver.
+func (h Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game != nil {
+		status := h.game.Info()
+		if status.Status != game.StatusGameOver {
+			return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+		}
 	}
 
 	h.game = game.New(h.Banker)
 
-	resp := struct {
-		Status        string   `json:"status"`
-		Round         int      `json:"round"`
-		CurrentPlayer string   `json:"current_player,omitempty"`
-		PlayerOrder   []string `json:"player_order"`
-	}{
-		Status:        status.Status,
-		Round:         status.Round,
-		CurrentPlayer: status.CurrentPlayer,
-		PlayerOrder:   status.CupsOrder,
-	}
+	h.Evts.Send("newgame")
 
-	h.Evts.Send("start")
-	return web.Respond(ctx, w, resp, http.StatusOK)
-}
-
-// Status will return information about the game.
-func (h Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	return web.Respond(ctx, w, gameToResponse(h.Game), http.StatusOK)
+	return h.Status(ctx, w, r)
 }
 
 // Join adds the given player to the game.
 func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	var p struct {
-		Wallet string `json:"wallet"`
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
-	if err := web.Decode(r, &p); err != nil {
-		return fmt.Errorf("unable to decode payload: %w", err)
-	}
+	address := web.Param(r, "address")
 
-	if err := h.Game.AddAccount(p.Wallet); err != nil {
+	if err := h.game.AddAccount(address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	resp := struct {
-		Status        string   `json:"status"`
-		Round         int      `json:"round"`
-		CurrentPlayer string   `json:"current_player,omitempty"`
-		PlayerOrder   []string `json:"player_order"`
-	}{
-		Status:        h.Game.Status,
-		Round:         h.Game.Round,
-		CurrentPlayer: h.Game.CurrentPlayer,
-		PlayerOrder:   h.Game.CupsOrder,
+	h.Evts.Send("join:" + address)
+
+	return h.Status(ctx, w, r)
+}
+
+// Start creates a new game if there is no game or the status of the current game
+// is GameOver.
+func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
-	h.Evts.Send("join")
-	return web.Respond(ctx, w, resp, http.StatusOK)
+	status := h.game.Info()
+	if status.Status != game.StatusGameOver {
+		return v1Web.NewRequestError(errors.New("current game status doesn't allow this call"), http.StatusBadRequest)
+	}
+
+	h.game.StartPlay()
+
+	h.Evts.Send("start")
+
+	return h.Status(ctx, w, r)
 }
 
 // RollDice will roll 5 dice for the given player and game.
 func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	wallet := web.Param(r, "wallet")
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
 
-	if err := h.Game.RollDice(wallet); err != nil {
+	address := web.Param(r, "address")
+
+	if err := h.game.RollDice(address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	// Find the player to show only this player's rolled dice.
-	var player Player
-	for _, cup := range h.Game.Cups {
-		if cup.Account == wallet {
-			player.Wallet = cup.Account
-			player.Dice = cup.Dice
-			player.Outs = cup.Outs
-			break
-		}
+	status := h.game.Info()
+	cup, exists := status.Cups[address]
+	if !exists {
+		return v1Web.NewRequestError(errors.New("address not found"), http.StatusBadRequest)
 	}
+
+	h.Evts.Send("rolldice:" + address)
 
 	resp := struct {
-		Player Player `json:"player"`
+		Dice []int `json:"dice"`
 	}{
-		Player: player,
+		Dice: cup.Dice,
 	}
 
-	h.Evts.Send("rolldice")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // Claim processes a claim made by a player in a game.
 func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	wallet := web.Param(r, "wallet")
-
-	var claim Claim
-	if err := web.Decode(r, &claim); err != nil {
-		return fmt.Errorf("unable to decode payload: %w", err)
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
-	businessClaim := claimToBusiness(claim)
+	address := web.Param(r, "address")
 
-	if err := h.Game.Claim(wallet, businessClaim); err != nil {
+	number, err := strconv.Atoi(web.Param(r, "number"))
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
+	}
+
+	suite, err := strconv.Atoi(web.Param(r, "suite"))
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("converting suite: %s", err), http.StatusBadRequest)
+	}
+
+	if err := h.game.Claim(address, number, suite); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send("claim")
-	return web.Respond(ctx, w, gameToResponse(h.Game), http.StatusOK)
+
+	return h.Status(ctx, w, r)
 }
 
 // CallLiar processes the claims and defines a winner and a loser for the round.
 func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	wallet := web.Param(r, "wallet")
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
 
-	winner, loser, err := h.Game.CallLiar(wallet)
+	address := web.Param(r, "address")
+
+	winner, loser, err := h.game.CallLiar(address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
+
+	h.Evts.Send("callliar")
 
 	resp := struct {
 		Winner string `json:"winner"`
@@ -197,16 +238,21 @@ func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.R
 		Loser:  loser,
 	}
 
-	h.Evts.Send("callliar")
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
 // NewRound starts a new round reseting the required data.
 func (h Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	playersLeft, err := h.Game.NewRound()
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
+
+	playersLeft, err := h.game.NextRound()
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
+
+	h.Evts.Send("newround")
 
 	resp := struct {
 		PlayersLeft int `json:"players_left"`
@@ -214,15 +260,42 @@ func (h Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.R
 		PlayersLeft: playersLeft,
 	}
 
-	h.Evts.Send("newround")
 	return web.Respond(ctx, w, resp, http.StatusOK)
+}
+
+// UpdateOut replaces the current out amount of the player. This call is not
+// part of the game flow, it is used to control when a player should be removed
+// from the game.
+func (h Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
+
+	address := web.Param(r, "address")
+
+	outs, err := strconv.Atoi(web.Param(r, "outs"))
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
+	}
+
+	if err := h.game.ApplyOut(address, outs); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Evts.Send("outs:" + address)
+
+	return h.Status(ctx, w, r)
 }
 
 // Balance returns the player balance from the smart contract.
 func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	wallet := web.Param(r, "wallet")
+	if h.game != nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
 
-	balance, err := h.Game.PlayerBalance(ctx, wallet)
+	address := web.Param(r, "address")
+
+	balance, err := h.game.PlayerBalance(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
@@ -234,89 +307,4 @@ func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
-}
-
-// UpdateOut replaces the current out amount of the player. This call is not
-// part of the game flow, it is used to control when a player should be removed
-// from the game.
-func (h Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	var p struct {
-		Wallet string `json:"wallet"`
-		Outs   int    `json:"outs"`
-	}
-
-	if err := web.Decode(r, &p); err != nil {
-		return fmt.Errorf("unable to decode payload: %w", err)
-	}
-
-	if err := h.Game.UpdateAccountOut(p.Wallet, p.Outs); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	h.Evts.Send("updateout")
-	return web.Respond(ctx, w, "OK", http.StatusOK)
-}
-
-// RemovePlayer removes the player from the game.
-func (h Handlers) RemovePlayer(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	wallet := web.Param(r, "wallet")
-
-	if err := h.Game.RemoveAccount(wallet); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	h.Evts.Send("removeplayer")
-	return web.Respond(ctx, w, "OK", http.StatusOK)
-}
-
-//==============================================================================
-
-func gameToResponse(game *game.Game) Game {
-	g := Game{
-		Status:        game.Status,
-		Round:         game.Round,
-		CurrentPlayer: game.CurrentPlayer,
-		CupsOrder:     game.CupsOrder,
-	}
-
-	g.Players = playerToResponse(game.Cups, game.Claims)
-
-	return g
-}
-
-func playerToResponse(cups map[string]game.Cup, claims []game.Claim) []Player {
-	var playerList []Player
-
-	for _, cup := range cups {
-		p := Player{
-			Wallet: cup.Account,
-			Outs:   cup.Outs,
-			Dice:   cup.Dice,
-			Claim:  claimToResponse(cup.Account, claims),
-		}
-		playerList = append(playerList, p)
-	}
-
-	return playerList
-}
-
-func claimToResponse(account string, claims []game.Claim) Claim {
-	for _, c := range claims {
-		if c.Account == account {
-			return Claim{
-				Wallet: account,
-				Number: c.Number,
-				Suite:  c.Suite,
-			}
-		}
-	}
-
-	return Claim{}
-}
-
-func claimToBusiness(claim Claim) game.Claim {
-	return game.Claim{
-		Number: claim.Number,
-		Suite:  claim.Suite,
-	}
 }

@@ -18,10 +18,9 @@ import (
 
 // Represents the different game statues.
 const (
-	StatusRoundOver = "roundover"
 	StatusPlaying   = "playing"
-	StatusOpen      = "open"
-	StatusOver      = "over"
+	StatusRoundOver = "roundover"
+	StatusGameOver  = "gameover"
 )
 
 // minNumberPlayers represents the minimum number of players required
@@ -39,38 +38,39 @@ type Banker interface {
 
 // =============================================================================
 
-// StatusInfo represents a copy of the game status.
-type StatusInfo struct {
+// Status represents a copy of the game status.
+type Status struct {
 	Status        string
-	Round         int
+	LastOutAcct   string
+	LastWinAcct   string
 	CurrentPlayer string
+	CurrentCup    int
+	Round         int
+	Cups          map[string]Cup
 	CupsOrder     []string
+	Claims        []Claim
 }
 
-// =============================================================================
-
-// Cup represents an individual cup being held by a player.
+// cup represents an individual cup being held by a player.
 type Cup struct {
-	Account string
-	Outs    int
-	Dice    []int
-
-	orderIdx int
+	OrderIdx int
+	Account  string
+	Outs     int
+	Dice     []int
 }
-
-// =============================================================================
 
 // Claim represents a claim of dice by a player.
-type claim struct {
-	account string
-	number  int
-	suite   int
+type Claim struct {
+	Account string
+	Number  int
+	Suite   int
 }
 
 // Game represents a single game that is being played.
 type Game struct {
 	id            string
 	banker        Banker
+	mu            sync.RWMutex
 	status        string
 	lastOutAcct   string
 	lastWinAcct   string
@@ -79,8 +79,7 @@ type Game struct {
 	round         int
 	cups          map[string]Cup
 	cupsOrder     []string
-	claims        []claim
-	mu            sync.RWMutex
+	claims        []Claim
 }
 
 // New creates a new game.
@@ -88,31 +87,11 @@ func New(banker Banker) *Game {
 	return &Game{
 		id:     uuid.NewString(),
 		banker: banker,
-		status: StatusOpen,
+		status: StatusGameOver,
 		round:  1,
 		cups:   make(map[string]Cup),
 	}
 }
-
-// =============================================================================
-
-// Status returns a copy of the game status.
-func (g *Game) Status() StatusInfo {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-
-	cupsOrder := make([]string, len(g.cupsOrder))
-	copy(cupsOrder, g.cupsOrder)
-
-	return StatusInfo{
-		Status:        g.status,
-		Round:         g.round,
-		CurrentPlayer: g.currentPlayer,
-		CupsOrder:     cupsOrder,
-	}
-}
-
-// =============================================================================
 
 // AddAccount adds a player to the game. If the account already exists, the
 // function will return an error.
@@ -124,8 +103,8 @@ func (g *Game) AddAccount(account string) error {
 		return errors.New("account provided is empty")
 	}
 
-	if g.status != StatusOpen {
-		return fmt.Errorf("game status is required to be open: status[%s]", g.status)
+	if g.status != StatusGameOver {
+		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
 	}
 
 	if _, exists := g.cups[account]; exists {
@@ -133,10 +112,10 @@ func (g *Game) AddAccount(account string) error {
 	}
 
 	g.cups[account] = Cup{
+		OrderIdx: len(g.cupsOrder),
 		Account:  account,
 		Outs:     0,
 		Dice:     make([]int, 5),
-		orderIdx: len(g.cupsOrder),
 	}
 
 	g.cupsOrder = append(g.cupsOrder, account)
@@ -144,8 +123,22 @@ func (g *Game) AddAccount(account string) error {
 	return nil
 }
 
-// OutAccount will apply the specified number of outs to the account.
-func (g *Game) OutAccount(account string, outs int) error {
+// StartPlay changes the status to Playing to allow the game to begin.
+func (g *Game) StartPlay() error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if g.status != StatusGameOver {
+		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
+	}
+
+	g.status = StatusPlaying
+
+	return nil
+}
+
+// ApplyOut will apply the specified number of outs to the account.
+func (g *Game) ApplyOut(account string, outs int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -223,20 +216,20 @@ func (g *Game) Claim(account string, number int, suite int) error {
 	if len(g.claims) > 0 {
 		lastClaim := g.claims[len(g.claims)-1]
 
-		if number < lastClaim.number {
-			return fmt.Errorf("claim number must be greater or equal to the last claim: number[%d] last[%d]", number, lastClaim.number)
+		if number < lastClaim.Number {
+			return fmt.Errorf("claim number must be greater or equal to the last claim: number[%d] last[%d]", number, lastClaim.Number)
 		}
 
-		if number == lastClaim.number && suite <= lastClaim.suite {
-			return fmt.Errorf("claim suite must be greater than the last claim suite: suite[%d] last[%d]", suite, lastClaim.suite)
+		if number == lastClaim.Number && suite <= lastClaim.Suite {
+			return fmt.Errorf("claim suite must be greater than the last claim suite: suite[%d] last[%d]", suite, lastClaim.Suite)
 		}
 	}
 
 	// Add the claim to the list.
-	c := claim{
-		account: account,
-		number:  number,
-		suite:   suite,
+	c := Claim{
+		Account: account,
+		Number:  number,
+		Suite:   suite,
 	}
 	g.claims = append(g.claims, c)
 
@@ -300,12 +293,12 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 
 	// Identify the winner and the loser.
 	switch {
-	case dice[lastClaim.suite] < lastClaim.number:
+	case dice[lastClaim.Suite] < lastClaim.Number:
 
 		// The account who made the last claim lost.
-		cup := g.cups[lastClaim.account]
+		cup := g.cups[lastClaim.Account]
 		cup.Outs++
-		g.cups[lastClaim.account] = cup
+		g.cups[lastClaim.Account] = cup
 
 		g.lastOutAcct = cup.Account
 		g.lastWinAcct = account
@@ -318,14 +311,15 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		g.cups[account] = cup
 
 		g.lastOutAcct = account
-		g.lastWinAcct = lastClaim.account
+		g.lastWinAcct = lastClaim.Account
 	}
 
 	return g.lastWinAcct, g.lastOutAcct, nil
 }
 
 // NextRound updates the game state for players who are out and determining
-// which player goes next.
+// which player goes next. The function returns the number of players left
+// in the game.
 func (g *Game) NextRound() (int, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -338,7 +332,7 @@ func (g *Game) NextRound() (int, error) {
 	var leftToPlay int
 	for _, cup := range g.cups {
 		if cup.Outs == 3 {
-			g.cupsOrder[cup.order] = ""
+			g.cupsOrder[cup.OrderIdx] = ""
 			continue
 		}
 
@@ -347,7 +341,7 @@ func (g *Game) NextRound() (int, error) {
 
 	// If there is only 1 player left we have a winner.
 	if leftToPlay == 1 {
-		g.status = StatusOver
+		g.status = StatusGameOver
 		return 1, nil
 	}
 
@@ -390,4 +384,33 @@ func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, erro
 // Reconcile calculates the game pot and make the transfer to the winner.
 func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
 	return nil
+}
+
+// Info returns a copy of the game status.
+func (g *Game) Info() Status {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
+	cups := make(map[string]Cup)
+	for k, v := range g.cups {
+		cups[k] = v
+	}
+
+	cupsOrder := make([]string, len(g.cupsOrder))
+	copy(cupsOrder, g.cupsOrder)
+
+	claims := make([]Claim, len(g.claims))
+	copy(claims, g.claims)
+
+	return Status{
+		Status:        g.status,
+		LastOutAcct:   g.lastOutAcct,
+		LastWinAcct:   g.lastWinAcct,
+		CurrentPlayer: g.currentPlayer,
+		CurrentCup:    g.currentCup,
+		Round:         g.round,
+		Cups:          cups,
+		CupsOrder:     cupsOrder,
+		Claims:        claims,
+	}
 }

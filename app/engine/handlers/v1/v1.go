@@ -35,19 +35,15 @@ func Routes(app *web.App, cfg Config) {
 		WS:     websocket.Upgrader{},
 	}
 
-	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
-	app.Handle(http.MethodGet, version, "/game/rolldice/:wallet", ggh.RollDice)
-	app.Handle(http.MethodGet, version, "/game/balance/:wallet", ggh.Balance)
-	app.Handle(http.MethodGet, version, "/game/newround", ggh.NewRound)
-
-	app.Handle(http.MethodPost, version, "/game/join", ggh.Join)
-	app.Handle(http.MethodPost, version, "/game/start", ggh.Start)
-	app.Handle(http.MethodPost, version, "/game/claim/:wallet", ggh.Claim)
-	app.Handle(http.MethodPost, version, "/game/callliar/:wallet", ggh.CallLiar)
-	app.Handle(http.MethodPost, version, "/game/removeplayer/:wallet", ggh.RemovePlayer)
-
-	//==========================================================================
-	// Not part of the game flow.
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
-	app.Handle(http.MethodPost, version, "/game/updateout", ggh.UpdateOut)
+	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
+	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame)
+	app.Handle(http.MethodGet, version, "/game/join/:address", ggh.Join)
+	app.Handle(http.MethodGet, version, "/game/start", ggh.Start)
+	app.Handle(http.MethodGet, version, "/game/rolldice/:address", ggh.RollDice)
+	app.Handle(http.MethodGet, version, "/game/claim/:address/:number/:suite", ggh.Claim)
+	app.Handle(http.MethodGet, version, "/game/liar/:address", ggh.CallLiar)
+	app.Handle(http.MethodGet, version, "/game/newround", ggh.NewRound)
+	app.Handle(http.MethodGet, version, "/game/out/:address/:outs", ggh.UpdateOut)
+	app.Handle(http.MethodGet, version, "/game/balance/:address", ggh.Balance)
 }
