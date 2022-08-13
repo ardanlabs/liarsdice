@@ -54,17 +54,18 @@ type Cup struct {
 	Account string
 	Outs    int
 	Dice    []int
-	order   int
-}
 
-// Claim represents a claim of dice by a player.
-type Claim struct {
-	Account string
-	Number  int
-	Suite   int
+	orderIdx int
 }
 
 // =============================================================================
+
+// Claim represents a claim of dice by a player.
+type claim struct {
+	account string
+	number  int
+	suite   int
+}
 
 // Game represents a single game that is being played.
 type Game struct {
@@ -78,7 +79,7 @@ type Game struct {
 	round         int
 	cups          map[string]Cup
 	cupsOrder     []string
-	claims        []Claim
+	claims        []claim
 	mu            sync.RWMutex
 }
 
@@ -92,6 +93,8 @@ func New(banker Banker) *Game {
 		cups:   make(map[string]Cup),
 	}
 }
+
+// =============================================================================
 
 // Status returns a copy of the game status.
 func (g *Game) Status() StatusInfo {
@@ -109,18 +112,20 @@ func (g *Game) Status() StatusInfo {
 	}
 }
 
+// =============================================================================
+
 // AddAccount adds a player to the game. If the account already exists, the
 // function will return an error.
 func (g *Game) AddAccount(account string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.status != StatusOpen {
-		return errors.New("can't add a new account to the game")
+	if account == "" {
+		return errors.New("account provided is empty")
 	}
 
-	if account == "" {
-		return errors.New("invalid account information")
+	if g.status != StatusOpen {
+		return fmt.Errorf("game status is required to be open: status[%s]", g.status)
 	}
 
 	if _, exists := g.cups[account]; exists {
@@ -128,9 +133,10 @@ func (g *Game) AddAccount(account string) error {
 	}
 
 	g.cups[account] = Cup{
-		Account: account,
-		Dice:    make([]int, 5),
-		order:   len(g.cupsOrder),
+		Account:  account,
+		Outs:     0,
+		Dice:     make([]int, 5),
+		orderIdx: len(g.cupsOrder),
 	}
 
 	g.cupsOrder = append(g.cupsOrder, account)
@@ -143,25 +149,25 @@ func (g *Game) OutAccount(account string, outs int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.status != StatusPlaying {
-		return errors.New("game is not being played")
-	}
-
 	if account == "" {
-		return errors.New("invalid account information")
+		return errors.New("account provided is empty")
 	}
 
-	if outs <= 0 || outs > 3 {
-		return errors.New("invalid out amount")
+	if outs < 0 || outs > 3 {
+		return errors.New("invalid out value")
 	}
 
-	acc, exists := g.cups[account]
+	if g.status != StatusPlaying {
+		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
+	}
+
+	cup, exists := g.cups[account]
 	if !exists {
 		return fmt.Errorf("account [%s] does not exist in the game", account)
 	}
 
-	acc.Outs = outs
-	g.cups[account] = acc
+	cup.Outs = outs
+	g.cups[account] = cup
 
 	return nil
 }
@@ -171,12 +177,12 @@ func (g *Game) RollDice(account string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.status != StatusPlaying {
-		return errors.New("game is not being played")
+	if account == "" {
+		return errors.New("account provided is empty")
 	}
 
-	if account == "" {
-		return errors.New("invalid account information")
+	if g.status != StatusPlaying {
+		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
 	cup, exists := g.cups[account]
@@ -191,47 +197,56 @@ func (g *Game) RollDice(account string) error {
 	return nil
 }
 
-// Claim accpts a claim from an account, but validates the claim is valid first.
-// If the claim is valid, it is added to the list of claims for the game. Then
+// Claim accepts a claim from an account, but validates the claim is valid first.
+// If the claim is valid, it's added to the list of claims for the game. Then
 // the next player is determined and set.
-func (g *Game) Claim(claim Claim) error {
+func (g *Game) Claim(account string, number int, suite int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
+	if account == "" {
+		return errors.New("account provided is empty")
+	}
+
 	if g.status != StatusPlaying {
-		return errors.New("game is not being played")
+		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
-	if claim.Account == "" {
-		return errors.New("invalid account information")
-	}
-
-	// Get the account who is supposed to make the next move.
-	nextMove := g.cupsOrder[g.currentCup]
-
-	// Validate the specified account matches.
-	if nextMove != claim.Account {
-		return fmt.Errorf("account [%s] can't make a claim now", claim.Account)
+	// Validate that the account who is making the claim is the account that
+	// should be making this claim.
+	currentAccount := g.cupsOrder[g.currentCup]
+	if currentAccount != account {
+		return fmt.Errorf("account [%s] can't make a claim now", account)
 	}
 
 	// If this is not the first claim, we need to validate the claim is valid.
 	if len(g.claims) > 0 {
 		lastClaim := g.claims[len(g.claims)-1]
 
-		if claim.Number < lastClaim.Number {
-			return errors.New("claim number must be greater or equal to the last claim")
+		if number < lastClaim.number {
+			return fmt.Errorf("claim number must be greater or equal to the last claim: number[%d] last[%d]", number, lastClaim.number)
 		}
 
-		if claim.Number == lastClaim.Number && claim.Suite <= lastClaim.Suite {
-			return errors.New("claim suite must be greater than the last claim suite")
+		if number == lastClaim.number && suite <= lastClaim.suite {
+			return fmt.Errorf("claim suite must be greater than the last claim suite: suite[%d] last[%d]", suite, lastClaim.suite)
 		}
 	}
 
 	// Add the claim to the list.
-	g.claims = append(g.claims, claim)
+	c := claim{
+		account: account,
+		number:  number,
+		suite:   suite,
+	}
+	g.claims = append(g.claims, c)
 
-	// Figure out who goes next.
+	return nil
+}
+
+// NextTurn determines which account make the next move.
+func (g *Game) NextTurn() {
 	l := len(g.cupsOrder)
+
 	for i := 0; i < l; i++ {
 
 		// Circle back to the beginning of the slice if we reached the end.
@@ -246,8 +261,6 @@ func (g *Game) Claim(claim Claim) error {
 			break
 		}
 	}
-
-	return nil
 }
 
 // CallLiar checks the last claim that was made and determines the winner and
@@ -256,19 +269,18 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.status != StatusPlaying {
-		return "", "", errors.New("game is not being played")
-	}
-
 	if account == "" {
-		return "", "", errors.New("invalid account information")
+		return "", "", errors.New("account provided is empty")
 	}
 
-	// Get the account who is supposed to make the next move.
-	nextMove := g.cupsOrder[g.currentCup]
+	if g.status != StatusPlaying {
+		return "", "", fmt.Errorf("game status is required to be playing: status[%s]", g.status)
+	}
 
-	// Validate the specified account matches.
-	if nextMove != account {
+	// Validate that the account who is making the claim is the account that
+	// should be making this claim.
+	currentAccount := g.cupsOrder[g.currentCup]
+	if currentAccount != account {
 		return "", "", fmt.Errorf("account [%s] can't call lair now", account)
 	}
 
@@ -288,12 +300,12 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 
 	// Identify the winner and the loser.
 	switch {
-	case dice[lastClaim.Suite] < lastClaim.Number:
+	case dice[lastClaim.suite] < lastClaim.number:
 
 		// The account who made the last claim lost.
-		cup := g.cups[lastClaim.Account]
+		cup := g.cups[lastClaim.account]
 		cup.Outs++
-		g.cups[lastClaim.Account] = cup
+		g.cups[lastClaim.account] = cup
 
 		g.lastOutAcct = cup.Account
 		g.lastWinAcct = account
@@ -306,14 +318,15 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		g.cups[account] = cup
 
 		g.lastOutAcct = account
-		g.lastWinAcct = lastClaim.Account
+		g.lastWinAcct = lastClaim.account
 	}
 
 	return g.lastWinAcct, g.lastOutAcct, nil
 }
 
-// NewRound checks for player's out count, reset players dice and game claims.
-func (g *Game) NewRound() (int, error) {
+// NextRound updates the game state for players who are out and determining
+// which player goes next.
+func (g *Game) NextRound() (int, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 

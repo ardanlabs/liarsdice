@@ -2,11 +2,13 @@ package gamegrp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
 	"time"
 
+	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/gorilla/websocket"
 
@@ -72,9 +74,12 @@ func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 // Start starts the game.
 func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	h.game = game.New(h.Banker)
-
 	status := h.game.Status()
+	if status.Status != game.StatusOver {
+		return v1.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+	}
+
+	h.game = game.New(h.Banker)
 
 	resp := struct {
 		Status        string   `json:"status"`
