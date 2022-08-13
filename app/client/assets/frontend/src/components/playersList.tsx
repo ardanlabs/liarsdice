@@ -11,7 +11,7 @@ const PlayersList = (props: PlayersListProps) => {
   const { game } = useContext(GameContext)
   const { players, current_player } = game
   const playersElements: JSX.Element[] = []
-  if (players?.length) {
+  if ((players as user[]).length) {
     Array.from(players as user[]).forEach((player) => {
       playersElements.push(
         <li
@@ -31,7 +31,7 @@ const PlayersList = (props: PlayersListProps) => {
       style={{ height: '50%', flexGrow: '1', textAlign: 'start' }}
     >
       <span>
-        {title} ({players?.length ? players.length : 0})
+        {title} ({(players as user[]).length ? (players as user[]).length : 0})
       </span>
       <ul>{playersElements}</ul>
     </div>

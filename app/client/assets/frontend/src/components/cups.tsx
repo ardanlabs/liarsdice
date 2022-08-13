@@ -32,10 +32,10 @@ const Cups: FC<CupsProps> = (CupsProps) => {
             <Star />
           </div>
           <h2 className={current_player === player.wallet ? 'active' : ''}>{`Player ${i + 1}`}</h2>
-          {/* <div className="claim">
-            {player.claim.number ? 'Claim:' : '' }
-            <Claim claim={player.claims[0]} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
-          </div> */}
+          <div className="claim">
+            {player.claim.number ? 'Claim: ' : '' }
+            <Claim claim={player.claim} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
+          </div>
           <Cup player={player} currentPlayerWallet={current_player}/>
         </div>,
       )
@@ -47,6 +47,7 @@ const Cups: FC<CupsProps> = (CupsProps) => {
         display: 'flex',
         width: '100%',
         alignItems: 'start',
+        minHeight: '414px',
       }}
       id="cupsContainer"
     >

@@ -4,6 +4,7 @@ export interface user {
   wallet: string,
   dice: dice,
   outs: number,
+  claim: claim,
 }
 
 export interface claim {
@@ -16,5 +17,5 @@ export interface game {
   round: number,
   current_player: string,
   player_order: string[] | null,
-  players?: user[]
+  players: user[],
 }

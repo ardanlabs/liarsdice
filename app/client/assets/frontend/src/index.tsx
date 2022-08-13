@@ -33,7 +33,7 @@ const chainsConfig = {
 // TODO: ADD dinamic .env support
 root.render(
   <React.StrictMode>
-    <DAppProvider config={chainsConfig['Ardans']}> 
+    <DAppProvider config={chainsConfig['EthMainnet']}> 
       <App />
     </DAppProvider>
   </React.StrictMode>

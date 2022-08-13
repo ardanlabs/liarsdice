@@ -4,29 +4,15 @@ import MetamaskLogo from './icons/metamask'
 import { useEthers } from '@usedapp/core'
 import MainRoom from './mainRoom'
 import { GameContext } from '../gameContext'
-import { game } from '../types/index.d'
 
 export default function Login() {
   const { account, activateBrowserWallet } = useEthers()
-  const [ game, setGame ] = useState({
-    status: 'open',
-    round: 0,
-    current_player: '',
-    player_order: [],
-    players: [],
-  } as game)
-
-  const providerGame = useMemo(() => ({game, setGame}), [game, setGame])
 
   function handleConnectWallet() {
     activateBrowserWallet()
   }
   return account?.length ? (
-    <GameContext.Provider
-      value={providerGame}
-    >
-      <MainRoom />
-    </GameContext.Provider>
+    <MainRoom />
   ) : (
     <div
       id="login__wrapper"
