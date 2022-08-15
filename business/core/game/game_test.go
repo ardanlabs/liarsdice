@@ -2,12 +2,26 @@ package game_test
 
 import (
 	"context"
+	"math/big"
 	"testing"
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
 )
 
-func TestGamePlay(t *testing.T) {
+type MockedBank struct {
+	value *big.Int
+	err   error
+}
+
+func (m *MockedBank) Balance(ctx context.Context, account string) (*big.Int, error) {
+	return m.value, m.err
+}
+
+func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante uint, gameFee uint) error {
+	return m.err
+}
+
+func TestSuccessGamePlay(t *testing.T) {
 	g := game.New(nil)
 	ctx := context.Background()
 
@@ -231,5 +245,104 @@ func TestGamePlay(t *testing.T) {
 
 	if g.Info().LastWinAcct != "player1" {
 		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", g.Info().LastWinAcct)
+	}
+}
+
+func TestInvalidClaim(t *testing.T) {
+	g := game.New(nil)
+	ctx := context.Background()
+
+	// =========================================================================
+	// Game Setup.
+
+	// Add players.
+	err := g.AddAccount(ctx, "player1")
+	if err != nil {
+		t.Fatalf("unexpected error adding player 1: %s", err)
+	}
+
+	err = g.AddAccount(ctx, "player2")
+	if err != nil {
+		t.Fatalf("unexpected error adding player 2: %s", err)
+	}
+
+	err = g.StartPlay()
+	if err != nil {
+		t.Fatalf("unexpected error starting game: %s", err)
+	}
+
+	// =========================================================================
+	// Mock roll dice so we can validate the winner and loser.
+
+	player1 := g.Info().Cups["player1"]
+	player1.Dice = []int{6, 5, 3, 3, 3}
+	g.Info().Cups["player1"] = player1
+
+	player2 := g.Info().Cups["player2"]
+	player2.Dice = []int{1, 1, 4, 4, 2}
+	g.Info().Cups["player2"] = player2
+
+	// =========================================================================
+	// Players make claims.
+
+	err = g.Claim("player1", 3, 3)
+	if err != nil {
+		t.Fatalf("unexpected error making claim for player1: %s", err)
+	}
+
+	g.NextTurn()
+
+	err = g.Claim("player2", 2, 6)
+	if err == nil {
+		t.Fatal("expecting error making an invalid claim")
+	}
+}
+
+func TestGameWithoutEnoughPlayers(t *testing.T) {
+	g := game.New(nil)
+
+	err := g.StartPlay()
+	if err == nil {
+		t.Fatal("expecting error trying to start a game without enough players")
+	}
+}
+
+func TestWrongPlayerTryingToPlayer(t *testing.T) {
+	g := game.New(nil)
+	ctx := context.Background()
+
+	err := g.AddAccount(ctx, "player1")
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	err = g.AddAccount(ctx, "player2")
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	err = g.StartPlay()
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	err = g.Claim("player2", 1, 1)
+	if err == nil {
+		t.Fatal("expecting error making claim with the wrong player")
+	}
+}
+
+func TestAddAccountWithoutBalance(t *testing.T) {
+	b := MockedBank{
+		value: big.NewInt(100),
+		err:   nil,
+	}
+	g := game.New(&b)
+
+	ctx := context.Background()
+
+	err := g.AddAccount(ctx, "player1")
+	if err == nil {
+		t.Fatal("expecting error adding player without balance")
 	}
 }
