@@ -131,7 +131,7 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 	address := web.Param(r, "address")
 
-	if err := h.game.AddAccount(address); err != nil {
+	if err := h.game.AddAccount(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 

@@ -95,7 +95,7 @@ func New(banker Banker) *Game {
 
 // AddAccount adds a player to the game. If the account already exists, the
 // function will return an error.
-func (g *Game) AddAccount(account string) error {
+func (g *Game) AddAccount(ctx context.Context, account string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -110,6 +110,15 @@ func (g *Game) AddAccount(account string) error {
 	if _, exists := g.cups[account]; exists {
 		return fmt.Errorf("account [%s] is already in the game", account)
 	}
+
+	// balance, err := g.banker.Balance(ctx, account)
+	// if err != nil {
+	// 	return fmt.Errorf("unable to retrieve account[%s] balance", account)
+	// }
+
+	// if balance < SOMEVALUE {
+	// 	return fmt.Errorf("account [%s] does not have enough money to play", account)
+	// }
 
 	g.cups[account] = Cup{
 		OrderIdx: len(g.cupsOrder),
