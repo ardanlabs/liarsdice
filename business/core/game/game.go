@@ -116,7 +116,12 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 	// 	return fmt.Errorf("unable to retrieve account[%s] balance", account)
 	// }
 
-	// if balance < SOMEVALUE {
+	// ante := big.NewInt(100)
+	// remaining := big.NewInt(0)
+	// remaining.Sub(balance, ante)
+	// hasBalance := remaining.Cmp(big.NewInt(0))
+
+	// if hasBalance >= 1 {
 	// 	return fmt.Errorf("account [%s] does not have enough money to play", account)
 	// }
 
