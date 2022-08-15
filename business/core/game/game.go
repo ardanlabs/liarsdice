@@ -16,7 +16,7 @@ import (
 	We could choose a random person to start in the Start API.
 */
 
-// Represents the different game statues.
+// Represents the different game status.
 const (
 	StatusPlaying   = "playing"
 	StatusRoundOver = "roundover"
@@ -139,6 +139,10 @@ func (g *Game) StartPlay() error {
 
 	if g.status != StatusGameOver {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
+	}
+
+	if len(g.cups) < minNumberPlayers {
+		return errors.New("not enough player to start the game")
 	}
 
 	g.status = StatusPlaying
