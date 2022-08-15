@@ -382,12 +382,12 @@ func (g *Game) NextRound() (int, error) {
 
 // PlayerBalance returns the player's balance, by calling the banks contract
 // method.
-func (g *Game) PlayerBalance(ctx context.Context, wallet string) (*big.Int, error) {
-	if wallet == "" {
-		return nil, errors.New("invalid wallet address")
+func (g *Game) PlayerBalance(ctx context.Context, account string) (*big.Int, error) {
+	if account == "" {
+		return nil, errors.New("account provided is empty")
 	}
 
-	return g.banker.Balance(ctx, wallet)
+	return g.banker.Balance(ctx, account)
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
