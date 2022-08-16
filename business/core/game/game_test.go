@@ -22,7 +22,12 @@ func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losin
 }
 
 func TestSuccessGamePlay(t *testing.T) {
-	g := game.New(nil, 0)
+	bank := MockedBank{
+		value: big.NewInt(100),
+		err:   nil,
+	}
+
+	g := game.New(&bank, 0)
 	ctx := context.Background()
 
 	// =========================================================================
@@ -74,14 +79,10 @@ func TestSuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error making claim for player1: %s", err)
 	}
 
-	g.NextTurn()
-
 	err = g.Claim("player2", 3, 4)
 	if err != nil {
-		t.Fatalf("unexpected error making claim fgor player2: %s", err)
+		t.Fatalf("unexpected error making claim for player2: %s", err)
 	}
-
-	g.NextTurn()
 
 	// =========================================================================
 	// Player 1 calls Player 2 a liar.
@@ -146,8 +147,6 @@ func TestSuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error making claim for player1: %s", err)
 	}
 
-	g.NextTurn()
-
 	// =========================================================================
 	// Player 2 calls Player 1 a liar.
 
@@ -203,8 +202,6 @@ func TestSuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error making claim for player2: %s", err)
 	}
 
-	g.NextTurn()
-
 	// =========================================================================
 	// Player 1 calls Player 2 a liar.
 
@@ -249,7 +246,12 @@ func TestSuccessGamePlay(t *testing.T) {
 }
 
 func TestInvalidClaim(t *testing.T) {
-	g := game.New(nil, 0)
+	bank := MockedBank{
+		value: big.NewInt(100),
+		err:   nil,
+	}
+
+	g := game.New(&bank, 0)
 	ctx := context.Background()
 
 	// =========================================================================
@@ -308,7 +310,12 @@ func TestGameWithoutEnoughPlayers(t *testing.T) {
 }
 
 func TestWrongPlayerTryingToPlayer(t *testing.T) {
-	g := game.New(nil, 0)
+	bank := MockedBank{
+		value: big.NewInt(100),
+		err:   nil,
+	}
+
+	g := game.New(&bank, 0)
 	ctx := context.Background()
 
 	err := g.AddAccount(ctx, "player1")
@@ -333,11 +340,12 @@ func TestWrongPlayerTryingToPlayer(t *testing.T) {
 }
 
 func TestAddAccountWithoutBalance(t *testing.T) {
-	b := MockedBank{
+	bank := MockedBank{
 		value: big.NewInt(100),
 		err:   nil,
 	}
-	g := game.New(&b, 101)
+
+	g := game.New(&bank, 101)
 
 	ctx := context.Background()
 
