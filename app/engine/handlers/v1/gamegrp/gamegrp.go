@@ -116,7 +116,12 @@ func (h Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	h.game = game.New(h.Banker)
+	ante, err := strconv.Atoi(web.Param(r, "ante"))
+	if err != nil {
+		return v1Web.NewRequestError(errors.New("invalid ante value"), http.StatusBadRequest)
+	}
+
+	h.game = game.New(h.Banker, ante)
 
 	h.Evts.Send("newgame")
 

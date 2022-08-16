@@ -22,7 +22,7 @@ func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losin
 }
 
 func TestSuccessGamePlay(t *testing.T) {
-	g := game.New(nil)
+	g := game.New(nil, 0)
 	ctx := context.Background()
 
 	// =========================================================================
@@ -249,7 +249,7 @@ func TestSuccessGamePlay(t *testing.T) {
 }
 
 func TestInvalidClaim(t *testing.T) {
-	g := game.New(nil)
+	g := game.New(nil, 0)
 	ctx := context.Background()
 
 	// =========================================================================
@@ -299,7 +299,7 @@ func TestInvalidClaim(t *testing.T) {
 }
 
 func TestGameWithoutEnoughPlayers(t *testing.T) {
-	g := game.New(nil)
+	g := game.New(nil, 0)
 
 	err := g.StartPlay()
 	if err == nil {
@@ -308,7 +308,7 @@ func TestGameWithoutEnoughPlayers(t *testing.T) {
 }
 
 func TestWrongPlayerTryingToPlayer(t *testing.T) {
-	g := game.New(nil)
+	g := game.New(nil, 0)
 	ctx := context.Background()
 
 	err := g.AddAccount(ctx, "player1")
@@ -337,7 +337,7 @@ func TestAddAccountWithoutBalance(t *testing.T) {
 		value: big.NewInt(100),
 		err:   nil,
 	}
-	g := game.New(&b)
+	g := game.New(&b, 101)
 
 	ctx := context.Background()
 

@@ -77,18 +77,20 @@ type Game struct {
 	currentPlayer string
 	currentCup    int
 	round         int
+	ante          int
 	cups          map[string]Cup
 	cupsOrder     []string
 	claims        []Claim
 }
 
 // New creates a new game.
-func New(banker Banker) *Game {
+func New(banker Banker, ante int) *Game {
 	return &Game{
 		id:     uuid.NewString(),
 		banker: banker,
 		status: StatusGameOver,
 		round:  1,
+		ante:   ante,
 		cups:   make(map[string]Cup),
 	}
 }
@@ -111,19 +113,17 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 		return fmt.Errorf("account [%s] is already in the game", account)
 	}
 
-	// balance, err := g.banker.Balance(ctx, account)
-	// if err != nil {
-	// 	return fmt.Errorf("unable to retrieve account[%s] balance", account)
-	// }
+	balance, err := g.banker.Balance(ctx, account)
+	if err != nil {
+		return fmt.Errorf("unable to retrieve account[%s] balance", account)
+	}
 
-	// ante := big.NewInt(100)
-	// remaining := big.NewInt(0)
-	// remaining.Sub(balance, ante)
-	// hasBalance := remaining.Cmp(big.NewInt(0))
+	ante := big.NewInt(int64(g.ante))
 
-	// if hasBalance >= 1 {
-	// 	return fmt.Errorf("account [%s] does not have enough money to play", account)
-	// }
+	// If comparison is negative, the player has no balance.
+	if balance.Cmp(ante) < 0 {
+		return fmt.Errorf("account [%s] does not have enough money to play", account)
+	}
 
 	g.cups[account] = Cup{
 		OrderIdx: len(g.cupsOrder),
