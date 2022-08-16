@@ -81,16 +81,22 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	status := h.game.Info()
 
+	var cups []Cup
+
+	for _, cup := range status.Cups {
+		cups = append(cups, Cup{Account: cup.Account, Outs: cup.Outs})
+	}
+
 	resp := struct {
-		Status        string              `json:"status"`
-		LastOutAcct   string              `json:"last_out"`
-		LastWinAcct   string              `json:"last_win"`
-		CurrentPlayer string              `json:"current_player"`
-		CurrentCup    int                 `json:"current_cup"`
-		Round         int                 `json:"round"`
-		Cups          map[string]game.Cup `json:"cups"`
-		CupsOrder     []string            `json:"player_order"`
-		Claims        []game.Claim        `json:"claims"`
+		Status        string       `json:"status"`
+		LastOutAcct   string       `json:"last_out"`
+		LastWinAcct   string       `json:"last_win"`
+		CurrentPlayer string       `json:"current_player"`
+		CurrentCup    int          `json:"current_cup"`
+		Round         int          `json:"round"`
+		Cups          []Cup        `json:"cups"`
+		CupsOrder     []string     `json:"player_order"`
+		Claims        []game.Claim `json:"claims"`
 	}{
 		Status:        status.Status,
 		LastOutAcct:   status.LastOutAcct,
@@ -98,7 +104,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		CurrentPlayer: status.CurrentPlayer,
 		CurrentCup:    status.CurrentCup,
 		Round:         status.Round,
-		Cups:          status.Cups,
+		Cups:          cups,
 		CupsOrder:     status.CupsOrder,
 		Claims:        status.Claims,
 	}
@@ -256,7 +262,7 @@ func (h *Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.
 
 	playersLeft, err := h.game.NextRound()
 	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusInternalServerError)
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send("newround")
