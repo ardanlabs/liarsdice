@@ -157,7 +157,9 @@ func (h *Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return v1Web.NewRequestError(errors.New("current game status doesn't allow this call"), http.StatusBadRequest)
 	}
 
-	h.game.StartPlay()
+	if err := h.game.StartPlay(); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
 
 	h.Evts.Send("start")
 
