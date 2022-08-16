@@ -28,7 +28,7 @@ type Handlers struct {
 }
 
 // Events handles a web socket to provide events to a client.
-func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	v, err := web.GetValues(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(errors.New("web value missing from context"), http.StatusBadRequest)
@@ -74,8 +74,8 @@ func (h Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Req
 }
 
 // Status will return information about the game.
-func (h Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -108,7 +108,7 @@ func (h Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 // NewGame creates a new game if there is no game or the status of the current game
 // is GameOver.
-func (h Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	if h.game != nil {
 		status := h.game.Info()
 		if status.Status != game.StatusGameOver {
@@ -129,8 +129,8 @@ func (h Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Re
 }
 
 // Join adds the given player to the game.
-func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -147,8 +147,8 @@ func (h Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 // Start creates a new game if there is no game or the status of the current game
 // is GameOver.
-func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -165,8 +165,8 @@ func (h Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Requ
 }
 
 // RollDice will roll 5 dice for the given player and game.
-func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -194,8 +194,8 @@ func (h Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.R
 }
 
 // Claim processes a claim made by a player in a game.
-func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -221,8 +221,8 @@ func (h Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Requ
 }
 
 // CallLiar processes the claims and defines a winner and a loser for the round.
-func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -247,8 +247,8 @@ func (h Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.R
 }
 
 // NewRound starts a new round reseting the required data.
-func (h Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -271,8 +271,8 @@ func (h Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.R
 // UpdateOut replaces the current out amount of the player. This call is not
 // part of the game flow, it is used to control when a player should be removed
 // from the game.
-func (h Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
@@ -293,8 +293,8 @@ func (h Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.
 }
 
 // Balance returns the player balance from the smart contract.
-func (h Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if h.game != nil {
+func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
 		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
