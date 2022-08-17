@@ -1,3 +1,4 @@
+// Package bank represents all the transactions necessary for the game.
 package bank
 
 import (
