@@ -51,7 +51,7 @@ type Status struct {
 	Claims        []Claim
 }
 
-// cup represents an individual cup being held by a player.
+// Cup represents an individual cup being held by a player.
 type Cup struct {
 	OrderIdx int
 	Account  string
