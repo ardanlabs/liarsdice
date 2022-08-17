@@ -122,7 +122,7 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 
 	// If comparison is negative, the player has no balance.
 	if balance.Cmp(ante) < 0 {
-		return fmt.Errorf("account [%s] does not have enough money to play", account)
+		return fmt.Errorf("account [%s] does not have enough balance to play", account)
 	}
 
 	g.cups[account] = Cup{
@@ -147,7 +147,7 @@ func (g *Game) StartPlay() error {
 	}
 
 	if len(g.cups) < minNumberPlayers {
-		return errors.New("not enough player to start the game")
+		return errors.New("not enough players to start the game")
 	}
 
 	g.status = StatusPlaying
@@ -235,7 +235,7 @@ func (g *Game) Claim(account string, number int, suite int) error {
 		lastClaim := g.claims[len(g.claims)-1]
 
 		if number < lastClaim.Number {
-			return fmt.Errorf("claim number must be greater or equal to the last claim: number[%d] last[%d]", number, lastClaim.Number)
+			return fmt.Errorf("claim number must be greater or equal to the last claim number: number[%d] last[%d]", number, lastClaim.Number)
 		}
 
 		if number == lastClaim.Number && suite <= lastClaim.Suite {
@@ -293,7 +293,7 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 	// should be making this claim.
 	currentAccount := g.cupsOrder[g.currentCup]
 	if currentAccount != account {
-		return "", "", fmt.Errorf("account [%s] can't call lair now", account)
+		return "", "", fmt.Errorf("account [%s] can't call liar now", account)
 	}
 
 	// This call ends the round, not allowing any more claims to be made.
