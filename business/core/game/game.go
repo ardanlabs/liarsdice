@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -85,6 +86,8 @@ type Game struct {
 
 // New creates a new game.
 func New(banker Banker, ante int) *Game {
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	return &Game{
 		id:     uuid.NewString(),
 		banker: banker,
@@ -370,15 +373,6 @@ func (g *Game) NextRound() (int, error) {
 		g.currentPlayer = g.lastOutAcct
 	} else {
 		g.currentPlayer = g.lastWinAcct
-	}
-
-	// Roll new dice for each active player.
-	for _, cup := range g.cups {
-		if cup.Outs != 3 {
-			for i := range cup.Dice {
-				cup.Dice[i] = rand.Intn(6) + 1
-			}
-		}
 	}
 
 	// Reset the game state.
