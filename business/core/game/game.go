@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -85,6 +86,8 @@ type Game struct {
 
 // New creates a new game.
 func New(banker Banker, ante int) *Game {
+	rand.Seed(time.Now().UTC().UnixNano())
+
 	return &Game{
 		id:     uuid.NewString(),
 		banker: banker,
