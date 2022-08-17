@@ -8,10 +8,17 @@ import { GameContext } from '../gameContext'
 interface CupsProps {}
 
 const Cups: FC<CupsProps> = (CupsProps) => {
-  const { game, setGame } = useContext(GameContext)
-  const { players, current_player } = game
+  const { game } = useContext(GameContext)
+  const { cups, current_player } = game
   const cupsElements: JSX.Element[] = []
-  Array.from(players as user[]).forEach((player, i) => {
+
+  Array.from(cups as user[]).forEach((player, i) => {
+    const stars: JSX.Element[] = []
+    for (let i = 1; i <= 3; i++) {
+      stars.push(
+        <Star fill={i < player.outs ? 'var(--primary-color)' : '#F0EAD6'} />,
+      )
+    }
     if (player.outs < 3) {
       cupsElements.push(
         <div
@@ -23,20 +30,23 @@ const Cups: FC<CupsProps> = (CupsProps) => {
             justifyContent: 'start',
             alignItems: 'center',
           }}
-          key={player.wallet}
+          key={player.account}
           className="player__ui"
         >
-          <div className="d-flex">
-            <Star fill="var(--primary-color)" />
-            <Star fill="var(--primary-color)" />
-            <Star />
-          </div>
-          <h2 className={current_player === player.wallet ? 'active' : ''}>{`Player ${i + 1}`}</h2>
+          <div className="d-flex">{stars}</div>
+          <h2
+            className={current_player === player.account ? 'active' : ''}
+          >{`Player ${i + 1}`}</h2>
           <div className="claim">
-            {player.claim.number ? 'Claim: ' : '' }
-            <Claim claim={player.claim} dieWidth="27" dieHeight='27' fill='var(--modals)'/>
+            {/* {player.claim.number ? 'Claim: ' : ''}
+            <Claim
+              claim={player.claim}
+              dieWidth="27"
+              dieHeight="27"
+              fill="var(--modals)"
+            /> */}
           </div>
-          <Cup player={player} currentPlayerWallet={current_player}/>
+          <Cup player={player} />
         </div>,
       )
     }

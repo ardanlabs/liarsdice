@@ -1,14 +1,13 @@
-import React, { useMemo, useState } from 'react'
+import React from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
 import { useEthers } from '@usedapp/core'
 import MainRoom from './mainRoom'
-import { GameContext } from '../gameContext'
 
 export default function Login() {
   const { account, activateBrowserWallet } = useEthers()
 
-  function handleConnectWallet() {
+  function handleConnectAccount() {
     activateBrowserWallet()
   }
   return account?.length ? (
@@ -16,7 +15,7 @@ export default function Login() {
   ) : (
     <div
       id="login__wrapper"
-      className="d-flex align-items-start justify-content-center flex-column"
+      className="d-flex align-items-start justify-content-center flex-column mt-10"
     >
       <h2>
         <strong> Connect your wallet </strong>
@@ -26,7 +25,7 @@ export default function Login() {
         <Button
           {...{
             id: 'metamask__wrapper',
-            clickHandler: handleConnectWallet,
+            clickHandler: handleConnectAccount,
             classes: 'd-flex align-items-center pa-4',
           }}
         >

@@ -1,21 +1,25 @@
 export type dice = readonly die[] | []
 export type die = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export interface user {
-  wallet: string,
-  dice: dice,
-  outs: number,
-  claim: claim,
+  account: string
+  dice: dice
+  outs: number
+  claim: claim
 }
 
 export interface claim {
-  number: number,
+  number: number
   suite: die
 }
 
 export interface game {
-  status: string,
-  round: number,
-  current_player: string,
-  player_order: string[] | null,
-  players: user[],
+  status: string
+  last_out: string
+  last_win: string
+  current_player: string
+  current_cup: number
+  round: number
+  cups: user[]
+  player_order: string[] | null
+  claims: []
 }

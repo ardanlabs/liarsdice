@@ -10,7 +10,7 @@ interface MainRoomProps {
 const MainRoom = (props: MainRoomProps) => {
   const { joinGame } = props
   const { game } = useContext(GameContext)
-  const { round, players } = game
+  const { round, cups } = game
 
   return (
     <div
@@ -22,10 +22,7 @@ const MainRoom = (props: MainRoomProps) => {
         height: '100%',
       }}
     >
-      <SidebarDetails
-        round={round}
-        diceAmount={(players as user[]).length * 5}
-      />
+      <SidebarDetails round={round} diceAmount={(cups as user[]).length * 5} />
       <Players joinGame={joinGame} />
     </div>
   )

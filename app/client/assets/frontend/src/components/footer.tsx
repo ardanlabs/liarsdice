@@ -1,33 +1,35 @@
-import React, { useContext } from 'react'
+import React, { BaseSyntheticEvent, useContext, useState } from 'react'
 import Button from './button'
 import LogOutIcon from './icons/logout'
 import { useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
+import Transaction from './transaction'
 
 function Footer() {
   const { account } = useEthers()
   const { deactivate } = useEthers()
-  function handleDisconnectWallet() {
+  function handleDisconnectAccount() {
     deactivate()
   }
   const { game, setGame } = useContext(GameContext)
+  const [number, setNumber] = useState(1)
+  const [suite, setSuite] = useState(1)
 
   const setNewGame = (data: game) => {
     let newGame = data
-    newGame = newGame.players ? newGame : { ...newGame, players: [] }
-    newGame = newGame.player_order
-      ? newGame
-      : { ...newGame, player_order: [] }
+    newGame = newGame.cups ? newGame : { ...newGame, cups: [] }
+    newGame = newGame.player_order ? newGame : { ...newGame, player_order: [] }
     setGame(newGame)
   }
 
   const sendClaim = () => {
     axios
-      .post(`http://${process.env.REACT_APP_GO_HOST}/claim/${account}`)
-      // Add the data that is sent to the backend this will be done with the handleInput method
-      // This is the only step left to make the game functional, the next step after that will be adding the timer.
+      .post(`http://${process.env.REACT_APP_GO_HOST}/claim/${account}`, {
+        number,
+        suite,
+      })
       .then(function (response: AxiosResponse) {
         console.log('New round!')
         if (response.data) {
@@ -40,13 +42,22 @@ function Footer() {
   }
   const callLiar = () => {
     axios
-      .post(`http://${process.env.REACT_APP_GO_HOST}/callliar/${account}`)  
+      .post(`http://${process.env.REACT_APP_GO_HOST}/callliar/${account}`)
       .then(function (response: AxiosResponse) {
         console.log('New round!')
       })
       .catch(function (error: AxiosError) {
         console.log(error)
       })
+  }
+
+  const handleForm = (event: BaseSyntheticEvent) => {
+    if (event.target.id === 'claim__number') {
+      setNumber(event.target.value)
+    }
+    if (event.target.id === 'claim__suite') {
+      setSuite(event.target.value)
+    }
   }
 
   return account ? (
@@ -65,7 +76,7 @@ function Footer() {
       <Button
         {...{
           id: 'metamask__wrapper',
-          clickHandler: handleDisconnectWallet,
+          clickHandler: handleDisconnectAccount,
           classes: 'd-flex align-items-center pa-4',
         }}
       >
@@ -87,13 +98,17 @@ function Footer() {
               className="form-control"
               id="claim__number"
               placeholder="1"
+              onChange={handleForm}
             />
           </div>
           <div className="form-group mx-2 mt-2">
-            <select className="form-control" id="claim__suite">
-              <option selected value="1">
-                1
-              </option>
+            <select
+              defaultValue="1"
+              className="form-control"
+              id="claim__suite"
+              onChange={handleForm}
+            >
+              <option value="1">1</option>
               <option value="2">2</option>
               <option value="3">3</option>
               <option value="4">4</option>
@@ -108,9 +123,7 @@ function Footer() {
               classes: 'd-flex align-items-center pa-4',
             }}
           >
-            <>
-              Make Claim
-            </>
+            <>Make Claim</>
           </Button>
           <Button
             {...{
@@ -119,14 +132,18 @@ function Footer() {
               classes: 'd-flex align-items-center pa-4',
             }}
           >
-            <>
-              Call Liar
-            </>
+            <>Call Liar</>
           </Button>
         </div>
       ) : (
-        ''
+        <div
+          style={{
+            display: 'flex',
+            flexGrow: '1',
+          }}
+        ></div>
       )}
+      <Transaction {...{ buttonText: 'Deposit', action: 'Deposit' }} />
     </footer>
   ) : null
 }

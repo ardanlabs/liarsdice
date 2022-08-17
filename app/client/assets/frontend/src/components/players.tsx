@@ -12,8 +12,8 @@ const Players = (props: PlayersProps) => {
   const { joinGame } = props
   const { account } = useEthers()
   const { game } = useContext(GameContext)
-  const isUserPlaying = (game.players as user[]).filter((user) => {
-    return user.wallet === account
+  const isUserPlaying = (game.cups as user[]).filter((user) => {
+    return user.account === account
   })
 
   return (
