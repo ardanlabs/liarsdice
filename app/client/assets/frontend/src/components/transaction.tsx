@@ -20,6 +20,7 @@ type getExchangeRateResponse = {
 type transactionProps = {
   buttonText: string
   action: 'Deposit' | 'Withdraw'
+  updateBalance: Function
 }
 
 const Transaction = (props: transactionProps) => {
@@ -40,7 +41,7 @@ const Transaction = (props: transactionProps) => {
       }
     }
   }
-  const { buttonText, action } = props
+  const { buttonText, action, updateBalance } = props
   // Sets local state
   const [transactionAmount, setTransactionAmount] = useState(0)
   // Creates the interface with the contract aby
@@ -55,7 +56,6 @@ const Transaction = (props: transactionProps) => {
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTransactionAmount(parseFloat(event.target.value))
   }
-
   const sendTransaction = () => {
     getExchangeRate().then((response) => {
       let responseEth = response as getExchangeRateResponse
@@ -65,9 +65,8 @@ const Transaction = (props: transactionProps) => {
           parseInt(responseEth.data.amount) /
           0.000000000000000001
         send({ value: BigNumber.from(`${Math.round(priceInWei)}`) }).then(
-          (response: any) => {
-            // To add balance display
-            console.log(response)
+          (response) => {
+            updateBalance()
           },
         )
       } else {
@@ -96,7 +95,7 @@ const Transaction = (props: transactionProps) => {
           alignItems: 'center',
         }}
       >
-        <span className="mr-3" style={{ color: 'var(--secondary-color)' }}>
+        <span className="mr-3" style={{ color: 'var(--modals)' }}>
           U$D
         </span>
         <input
@@ -108,10 +107,10 @@ const Transaction = (props: transactionProps) => {
           {...{
             id: 'transaction',
             clickHandler: sendTransaction,
-            classes: 'd-flex align-items-center pa-4',
+            classes: 'd-flex align-items-center pa-4 justify-content-center',
           }}
         >
-          <span style={{ color: 'var(--secondary-color)' }}>
+          <span style={{ color: 'var(--modals)', textAlign: 'center' }}>
             {buttonText || action}
           </span>
         </Button>

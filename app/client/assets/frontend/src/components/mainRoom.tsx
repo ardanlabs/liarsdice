@@ -43,7 +43,7 @@ const MainRoom = (props: MainRoomProps) => {
       }
     },
     // Timer time in seconds
-    timeoutTime = 10000,
+    timeoutTime = 30,
     // Get the timer that's set inside the sessionStorage
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
@@ -263,7 +263,9 @@ const MainRoom = (props: MainRoomProps) => {
   }
   useEffect(() => {
     window.sessionStorage.setItem('round_timer', `${timer}`)
+    console.log(window.sessionStorage.getItem('round_timer'))
   }, [timer])
+
   useEffect(() => {
     if (
       (game.player_order as string[])[game.current_cup] === account &&
@@ -288,6 +290,7 @@ const MainRoom = (props: MainRoomProps) => {
 
   useEffect(() => {
     connect()
+    window.sessionStorage.removeItem('round_timer')
     wsStatus.current = 'attemptingConnection'
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

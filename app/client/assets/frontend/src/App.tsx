@@ -4,6 +4,7 @@ import Login from './components/login'
 import Footer from './components/footer'
 import { GameContext } from './gameContext'
 import { game } from './types/index.d'
+import AppHeader from './components/appHeader'
 
 export function App() {
   const [game, setGame] = useState({
@@ -23,7 +24,7 @@ export function App() {
   return (
     <div className="App" style={{ scrollSnapType: 'y mandatory' }}>
       <GameContext.Provider value={providerGame}>
-        <header className="App-header">Ardan's Liar's Dice</header>
+        <AppHeader show={true} />
         <div className="container-fluid d-flex align-items-center justify-content-center px-0">
           <Login />
         </div>

@@ -5,7 +5,6 @@ import { useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
-import Transaction from './transaction'
 
 function Footer() {
   const { account } = useEthers()
@@ -149,7 +148,6 @@ function Footer() {
           }}
         ></div>
       )}
-      <Transaction {...{ buttonText: 'Deposit', action: 'Deposit' }} />
     </footer>
   ) : null
 }
