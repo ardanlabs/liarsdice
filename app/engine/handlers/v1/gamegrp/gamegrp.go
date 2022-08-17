@@ -82,21 +82,25 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	status := h.game.Info()
 
 	var cups []Cup
-
 	for _, cup := range status.Cups {
 		cups = append(cups, Cup{Account: cup.Account, Outs: cup.Outs})
 	}
 
+	var claims []Claim
+	for _, claim := range status.Claims {
+		claims = append(claims, Claim{Account: claim.Account, Number: claim.Number, Suite: claim.Suite})
+	}
+
 	resp := struct {
-		Status        string       `json:"status"`
-		LastOutAcct   string       `json:"last_out"`
-		LastWinAcct   string       `json:"last_win"`
-		CurrentPlayer string       `json:"current_player"`
-		CurrentCup    int          `json:"current_cup"`
-		Round         int          `json:"round"`
-		Cups          []Cup        `json:"cups"`
-		CupsOrder     []string     `json:"player_order"`
-		Claims        []game.Claim `json:"claims"`
+		Status        string   `json:"status"`
+		LastOutAcct   string   `json:"last_out"`
+		LastWinAcct   string   `json:"last_win"`
+		CurrentPlayer string   `json:"current_player"`
+		CurrentCup    int      `json:"current_cup"`
+		Round         int      `json:"round"`
+		Cups          []Cup    `json:"cups"`
+		CupsOrder     []string `json:"player_order"`
+		Claims        []Claim  `json:"claims"`
 	}{
 		Status:        status.Status,
 		LastOutAcct:   status.LastOutAcct,
@@ -106,7 +110,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		Round:         status.Round,
 		Cups:          cups,
 		CupsOrder:     status.CupsOrder,
-		Claims:        status.Claims,
+		Claims:        claims,
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
