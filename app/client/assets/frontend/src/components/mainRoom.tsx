@@ -4,25 +4,46 @@ import GameTable from './gameTable'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
-import { game, user } from '../types/index.d'
+import { dice, game, user } from '../types/index.d'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
   const { account } = useEthers()
   let { game, setGame } = useContext(GameContext)
+  let [playerDice, setPlayerDice] = useState([] as dice)
+
+  useEffect(() => {
+    setPlayerDice(
+      JSON.parse(window.localStorage.getItem('playerDice') as string),
+    )
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
+  }, [playerDice])
+
   const setNewGame = (data: game) => {
       let newGame = data
+      newGame = newGame.claims ? newGame : { ...newGame, claims: [] }
       newGame = newGame.cups ? newGame : { ...newGame, cups: [] }
       newGame = newGame.player_order
         ? newGame
         : { ...newGame, player_order: [] }
       setGame(newGame)
-      if (newGame.cups.length >= 2 && newGame.status === 'open') {
-        startGame()
+
+      if (getActivePlayersLength(newGame) >= 2) {
+        switch (newGame.status) {
+          case 'roundover':
+            newRound()
+            break
+          case 'gameover':
+            startGame()
+            break
+        }
       }
     },
     // Timer time in seconds
-    timeoutTime = 30,
+    timeoutTime = 10000,
     // Get the timer that's set inside the sessionStorage
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
@@ -40,7 +61,13 @@ const MainRoom = (props: MainRoomProps) => {
         }
       })
       .catch(function (error: AxiosError) {
-        console.log(error)
+        if (
+          error.response &&
+          (error as any).response.data.error === 'no game exists'
+        ) {
+          createNewGame()
+        }
+        console.error(error)
       })
   }
 
@@ -49,10 +76,10 @@ const MainRoom = (props: MainRoomProps) => {
       axios
         .get(`http://${process.env.REACT_APP_GO_HOST}/start`)
         .then(function () {
-          console.log('Game has started!')
+          console.info('Game has started!')
         })
         .catch(function (error: AxiosError) {
-          console.log(error)
+          console.error(error)
         })
     }
   }
@@ -61,17 +88,17 @@ const MainRoom = (props: MainRoomProps) => {
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/rolldice/${account}`)
       .then(function (response: AxiosResponse) {
-        console.log('Rolling the dice')
+        console.info('Rolling the dice')
         if (response.data) {
-          setNewGame(response.data)
+          setPlayerDice(response.data.dice)
         }
       })
       .catch(function (error: AxiosError) {
-        console.log(error)
+        console.error(error)
       })
   }
 
-  const createNewGame = (ante: number = 10000) => {
+  const createNewGame = (ante: number = 1) => {
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/new/${ante}`)
       .then(function (response: AxiosResponse) {
@@ -80,7 +107,7 @@ const MainRoom = (props: MainRoomProps) => {
         }
       })
       .catch(function (error: AxiosError) {
-        console.log(error)
+        console.error(error)
       })
   }
 
@@ -88,28 +115,32 @@ const MainRoom = (props: MainRoomProps) => {
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/newround`)
       .then(function (response: AxiosResponse) {
-        console.log('New round!')
+        console.info('New round!')
         if (response.data) {
-          setNewGame(response.data)
+          rolldice()
+          updateStatus()
         }
       })
       .catch(function (error: AxiosError) {
-        console.log(error)
+        console.error(error)
       })
   }
 
+  const getActivePlayersLength = (gameToFilter = game) => {
+    return gameToFilter.player_order.filter((player: string) => player.length)
+      .length
+  }
+
   const connect = () => {
-    // console.log(wsStatus)
     const ws = new WebSocket(`ws://${process.env.REACT_APP_GO_HOST}/events`)
     if (
       wsStatus.current !== 'open' &&
       wsStatus.current !== 'attemptingConnection'
     ) {
       ws.onopen = () => {
-        wsStatus.current = 'open'
-        createNewGame()
         updateStatus()
-        console.log('Socket connected')
+        wsStatus.current = 'open'
+        console.info('Socket connected')
       }
       ws.onmessage = (evt: MessageEvent) => {
         updateStatus()
@@ -119,19 +150,28 @@ const MainRoom = (props: MainRoomProps) => {
             case 'start':
               rolldice()
               break
+            case 'claim':
+              window.sessionStorage.removeItem('round_timer')
+              setTimer(timeoutTime)
+              break
             case 'callliar':
-              if (game.cups.length !== 1) {
-                console.log('Game finished! Winner is ' + game.cups[0])
+              if (getActivePlayersLength() === 1) {
+                console.info('Game finished! Winner is ' + game.cups[0])
                 break
               }
               newRound()
+              break
+            case 'nextturn':
+              window.sessionStorage.removeItem('round_timer')
+              setTimer(timeoutTime)
+              updateStatus()
               break
           }
         }
         return
       }
       ws.onclose = (evt: CloseEvent) => {
-        console.log(
+        console.info(
           'Socket is closed. Reconnect will be attempted in 1 second.',
           evt.reason,
         )
@@ -161,22 +201,41 @@ const MainRoom = (props: MainRoomProps) => {
   }
 
   const joinGame = () => {
-    console.log('Joining game...')
+    console.info('Joining game...')
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/join/${account}`)
       .then(function (response: AxiosResponse) {
-        console.log('Welcome to the game!!')
+        console.info('Welcome to the game!!')
         updateStatus()
       })
       .catch(function (error: AxiosError) {
         console.group('Something went wrong, try again.')
-        console.log(error)
+        console.error(error.message)
+        console.error('Error:', (error as any).response.data.error)
+
         console.groupEnd()
       })
   }
 
-  const addOut = (accountToOut = game.current_player) => {
-    console.log('Player timed out and got striked')
+  const nextTurn = () => {
+    console.info('Next turn')
+    axios
+      .get(`http://${process.env.REACT_APP_GO_HOST}/next/${account}`)
+      .then(function (response: AxiosResponse) {
+        updateStatus()
+      })
+      .catch(function (error: AxiosError) {
+        console.group('Something went wrong, try again.')
+        console.error(error.message)
+        console.error('Error:', (error as any).response.data.error)
+
+        console.groupEnd()
+      })
+  }
+
+  const addOut = (
+    accountToOut = (game.player_order as string[])[game.current_cup],
+  ) => {
     const player = game.cups.filter((player: user) => {
       return player.account === accountToOut
     })
@@ -187,12 +246,12 @@ const MainRoom = (props: MainRoomProps) => {
         }`,
       )
       .then(function (response: AxiosResponse) {
-        console.log('Welcome to the game!!')
-        updateStatus()
+        console.info('Player timed out and got striked')
+        nextTurn()
       })
       .catch(function (error: AxiosError) {
         console.group('Something went wrong, try again.')
-        console.log(error)
+        console.error(error)
         console.groupEnd()
       })
   }
@@ -202,12 +261,18 @@ const MainRoom = (props: MainRoomProps) => {
       return prevState - 1
     })
   }
-
   useEffect(() => {
-    if (game.current_player === account) {
+    window.sessionStorage.setItem('round_timer', `${timer}`)
+  }, [timer])
+  useEffect(() => {
+    if (
+      (game.player_order as string[])[game.current_cup] === account &&
+      game.status === 'playing'
+    ) {
+      clearInterval(roundInterval)
       // eslint-disable-next-line react-hooks/exhaustive-deps
       roundInterval = setInterval(() => {
-        if (timer > 0) {
+        if (timer > 0 || game.status !== 'playing') {
           decreaseTimer()
         } else {
           addOut()
@@ -215,9 +280,11 @@ const MainRoom = (props: MainRoomProps) => {
           clearInterval(roundInterval)
         }
       }, 1000)
+    } else {
+      clearInterval(roundInterval)
     }
     return () => clearInterval(roundInterval)
-  }, [timer, account, game.current_player])
+  }, [timer, account, game.player_order, game.current_cup, game.status])
 
   useEffect(() => {
     connect()
@@ -238,7 +305,7 @@ const MainRoom = (props: MainRoomProps) => {
       id="mainRoom"
     >
       <SideBar joinGame={joinGame} />
-      <GameTable timer={timer} />
+      <GameTable playerDice={playerDice} timer={timer} />
     </div>
   )
 }

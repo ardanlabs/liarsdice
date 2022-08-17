@@ -1,13 +1,15 @@
 import React, { FC } from 'react'
 import Claim from './claim'
 import { claim } from '../types/index.d'
+import { shortenAddress } from '@usedapp/core'
 
 interface CurrentClaimProps {
-  currentClaim: { account: string; claim: claim }
+  currentClaim: claim
 }
 
 const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
   const { currentClaim } = CurrentClaimProps
+
   return (
     <div
       style={{
@@ -24,13 +26,13 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
         height: '100%',
       }}
     >
-      <span>
-        Current claim by Player {currentClaim?.account.slice(0, 7)}...
-        {currentClaim?.account.slice(
-          currentClaim?.account.length - 7,
-          currentClaim?.account.length,
-        )}
-      </span>
+      {currentClaim.account?.length ? (
+        <span>
+          Current claim by Player {shortenAddress(currentClaim.account)}
+        </span>
+      ) : (
+        ''
+      )}
       <div
         style={{
           color: 'var(--secondary-color)',
@@ -47,7 +49,7 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
           marginBottom: '20px',
         }}
       >
-        <Claim claim={currentClaim?.claim} fill="var(--secondary-color)" />
+        <Claim claim={currentClaim} fill="var(--secondary-color)" />
       </div>
     </div>
   )

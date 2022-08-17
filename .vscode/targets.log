@@ -1,0 +1,612 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 4.2.1
+# Built for x86_64-pc-linux-gnu
+# Copyright (C) 1988-2016 Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+
+# Make data base, printed on Wed Aug 17 08:03:08 2022
+
+# Variables
+
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# environment
+WSLENV = VSCODE_WSL_EXT_LOCATION/up
+# default
+.SHELLFLAGS := -c
+# environment
+NVM_INC = /home/bruno/.nvm/versions/node/v16.16.0/include/node
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# makefile
+CURDIR := /home/bruno/projects/liarsdice
+# makefile
+SHELL = /bin/sh
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en","availableLanguages":{}}
+# environment
+_ = /home/bruno/.vscode-server/bin/6d9b74a70ca9c7733b29f0456fd8195364076dda/node
+# makefile (from 'makefile', line 1)
+MAKEFILE_LIST :=  makefile
+# 'override' directive
+GNUMAKEFLAGS := 
+# environment
+XDG_DATA_DIRS = /usr/local/share:/usr/share:/var/lib/snapd/desktop
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# makefile (from 'makefile', line 47)
+VERSION := 1.0
+# environment
+INFOPATH = /home/linuxbrew/.linuxbrew/share/info:
+# environment
+LESSOPEN = | /usr/bin/lesspipe %s
+# environment
+VSCODE_CWD = /mnt/c/Users/bruno/AppData/Local/Programs/Microsoft VS Code
+# environment
+GOPROXY = https://proxy.golang.org,direct
+# default
+MAKE_HOST := x86_64-pc-linux-gnu
+# environment
+PATH = /usr/local/go-1.18.3/bin:/home/bruno/.vscode-server/bin/6d9b74a70ca9c7733b29f0456fd8195364076dda/bin/remote-cli:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:/home/bruno/.nvm/versions/node/v16.16.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Windows/system32:/mnt/c/Windows:/mnt/c/Windows/System32/Wbem:/mnt/c/Windows/System32/WindowsPowerShell/v1.0/:/mnt/c/Windows/System32/OpenSSH/:/mnt/c/ProgramData/chocolatey/bin:/mnt/c/Program Files (x86)/Calibre2/:/mnt/c/Users/bruno/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/bruno/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/tools/neovim/Neovim/bin:/snap/bin:/home/bruno/projects/go/bin
+# environment
+XDG_RUNTIME_DIR = /mnt/wslg/runtime-dir
+# environment
+GOPATH = /home/bruno/projects/go
+# environment
+NVM_BIN = /home/bruno/.nvm/versions/node/v16.16.0/bin
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# environment
+VSCODE_IPC_HOOK_CLI = /mnt/wslg/runtime-dir/vscode-ipc-2fe26019-4f1b-4a40-8bd6-06e31a3faac2.sock
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
+# environment
+LS_COLORS = rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:
+# automatic
+%F = $(notdir $%)
+# environment
+GOBIN = /home/bruno/projects/go/bin
+# environment
+DISPLAY = :0
+# environment
+PWD = /home/bruno/projects/liarsdice
+# default
+.LOADED := 
+# environment
+WSL_INTEROP = /run/WSL/11_interop
+# environment
+PULSE_SERVER = /mnt/wslg/PulseServer
+# environment
+MANPATH = /home/linuxbrew/.linuxbrew/share/man:
+# environment
+GOMODCACHE = /home/bruno/projects/go/pkg/mod
+# environment
+HOME = /home/bruno
+# environment
+HOMEBREW_CELLAR = /home/linuxbrew/.linuxbrew/Cellar
+# environment
+LOGNAME = bruno
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# environment
+NVM_CD_FLAGS = 
+# environment
+LESSCLOSE = /usr/bin/lesspipe %s %s
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+MAKELEVEL := 0
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+SHLVL = 0
+# default
+MAKE_VERSION := 4.2.1
+# environment
+USER = bruno
+# makefile
+.DEFAULT_GOAL := dev.setup
+# environment
+GOROOT = /usr/local/go-1.18.3
+# environment
+NAME = Marta
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+VSCODE_WSL_EXT_LOCATION = /mnt/c/Users/bruno/.vscode/extensions/ms-vscode-remote.remote-wsl-0.66.3
+# default
+MAKE_COMMAND := make
+# default
+.VARIABLES := 
+# automatic
+*F = $(notdir $*)
+# makefile
+MAKEFLAGS = pqrR
+# environment
+MFLAGS = -pqrR
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+NVM_DIR = /home/bruno/.nvm
+# environment
+HOMEBREW_PREFIX = /home/linuxbrew/.linuxbrew
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# automatic
++F = $(notdir $+)
+# makefile (from 'makefile', line 60)
+KIND_CLUSTER := ardan-engine-cluster
+# environment
+HOMEBREW_REPOSITORY = /home/linuxbrew/.linuxbrew/Homebrew
+# environment
+VSCODE_HANDLES_SIGPIPE = true
+# default
+MAKEFILES := 
+# automatic
+<F = $(notdir $<)
+# environment
+LC_ALL = C
+# environment
+HOSTTYPE = x86_64
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# environment
+WAYLAND_DISPLAY = wayland-0
+# default
+.INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
+# default
+.RECIPEPREFIX := 
+# environment
+LANG = C
+# environment
+TERM = xterm-256color
+# environment
+WSL_DISTRO_NAME = Ubuntu
+# environment
+MOTD_SHOWN = update-motd
+# variable set hash-table stats:
+# Load=84/1024=8%, Rehash=0, Collisions=7/109=6%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 2080, inode 365267): 18 files, no impossibilities.
+
+# 18 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+kind-logs:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 97):
+	kubectl logs -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+
+kind-restart:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 90):
+	kubectl rollout restart deployment engine-pod
+
+kind-load:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 77):
+	cd zarf/k8s/kind/engine-pod; kustomize edit set image engine-image=liars-game-engine:$(VERSION)
+	kind load docker-image liars-game-engine:$(VERSION) --name $(KIND_CLUSTER)
+
+contract-reconcile:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 216):
+	go run contract/cmd/reconcile/main.go
+
+kind-logs-db:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 103):
+	kubectl logs -l app=database --namespace=database-system --all-containers=true -f --tail=100
+
+kind-logs-engine:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 100):
+	kubectl logs -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go -service=engine-API
+
+# Not a target:
+all:
+#  Command line target.
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+
+contract-build:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 206):
+	solc --abi contract/sol/src/contract.sol -o contract/sol/abi --overwrite
+	solc --bin contract/sol/src/contract.sol -o contract/sol/abi --overwrite
+	abigen --bin=contract/sol/abi/Bank.bin --abi=contract/sol/abi/Bank.abi --pkg=contract --out=contract/sol/go/contract/contract.go
+
+kind-context-engine:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 135):
+	kubectl config set-context --current --namespace=engine-system
+
+kind-update-apply: build-engine kind-load kind-apply
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+contract-deploy:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 212):
+	go run contract/cmd/deploy/main.go
+
+ 
+make: *** No rule to make target 'all'.  Stop.
+
+kind-describe-deployment:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 122):
+	kubectl describe deployment engine-pod
+
+test:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 172):
+	go test ./... -count=1
+	staticcheck -checks=all ./...
+
+# Not a target:
+makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-08-16 20:59:18.9935839
+#  File has been updated.
+#  Successfully updated.
+
+kind-events:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 129):
+	kubectl get ev --sort-by metadata.creationTimestamp
+
+seed: migrate
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 166):
+	go run app/tooling/engine-admin/main.go seed
+
+geth-up:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 237):
+	geth --dev --ipcpath zarf/ethereum/geth.ipc --http.corsdomain '*' --http --allow-insecure-unlock --rpc.allow-unprotected-txs --mine --miner.threads 1 --verbosity 5 --datadir "zarf/ethereum/" --unlock 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd --password zarf/ethereum/password
+
+build-engine:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 50):
+	docker build \
+		-f zarf/docker/dockerfile.engine \
+		-t liars-game-engine:$(VERSION) \
+		--build-arg BUILD_REF=$(VERSION) \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		.
+
+game-run:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 148):
+	go run app/engine/main.go
+
+geth-down:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 241):
+	kill -INT $(shell ps | grep "geth " | grep -v grep | sed -n 1,1p | cut -c1-5)
+
+kind-describe-replicaset:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 125):
+	kubectl get rs
+	kubectl describe rs -l app=engine
+
+migrate:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 163):
+	go run app/tooling/engine-admin/main.go migrate
+
+contract-playerbalance:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 220):
+	go run contract/cmd/playerbalance/main.go
+
+react-install:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 267):
+	npm install --prefix app/client/assets/frontend/
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+geth-reset:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 245):
+	rm -rf zarf/ethereum/geth/
+
+kind-events-warn:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 132):
+	kubectl get ev --field-selector type=Warning --sort-by metadata.creationTimestamp
+
+kind-apply:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 81):
+	kustomize build zarf/k8s/kind/database-pod | kubectl apply -f -
+	kubectl wait --namespace=database-system --timeout=120s --for=condition=Available deployment/database-pod
+	kustomize build zarf/k8s/kind/engine-pod | kubectl apply -f -
+
+kind-shell:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 138):
+	kubectl exec -it $(shell kubectl get pods | grep engine | cut -c1-26) --container engine-api -- /bin/sh
+
+kind-describe:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 117):
+	kubectl describe nodes
+	kubectl describe svc
+	kubectl describe pod -l app=engine
+
+react-start:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 269):
+	PORT=3001 npm start --prefix app/client/assets/frontend/
+
+list:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 197):
+	go list -mod=mod all
+
+contract-deposit:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 224):
+	go run contract/cmd/deposit/main.go
+
+tidy:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 184):
+	go mod tidy
+	go mod vendor
+
+kind-status:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 106):
+	kubectl get nodes -o wide
+	kubectl get svc -o wide
+	kubectl get pods -o wide --watch --all-namespaces
+
+geth-new-account:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 254):
+	geth --datadir zarf/ethereum/ account new
+
+geth-attach:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 249):
+	geth attach --datadir zarf/ethereum/
+
+dev.setup:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 37):
+	brew update
+	brew list kind || brew install kind
+	brew list kubectl || brew install kubectl
+	brew list kustomize || brew install kustomize
+	brew list geth || brew install geth
+
+client-view:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 157):
+	python -m webbrowser "http://localhost"
+
+kind-status-db:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 114):
+	kubectl get pods -o wide --watch --namespace=database-system
+
+kind-status-engine:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 111):
+	kubectl get pods -o wide --watch --namespace=engine-system
+
+geth-deposit:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 259):
+	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x3c11fDf93a2Ec67E455C67DaaAdA0550C4bDA4FC", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8e113078adf6888b7ba84967f299f29aece24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+
+client-run:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 154):
+	go run app/client/main.go | go run app/tooling/logfmt/main.go
+
+kind-up:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 67):
+	kind create cluster \
+		--image kindest/node:v1.24.0@sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e \
+		--name $(KIND_CLUSTER) \
+		--config zarf/k8s/kind/kind-config.yaml
+	kubectl config set-context --current --namespace=engine-system
+
+kind-database:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 141):
+	# ./admin --db-disable-tls=1 migrate
+	# ./admin --db-disable-tls=1 seed
+
+kind-services-delete:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 86):
+	kustomize build zarf/k8s/kind/engine-pod | kubectl delete -f -
+	kustomize build zarf/k8s/kind/database-pod | kubectl delete -f -
+
+kind-down:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 74):
+	kind delete cluster --name $(KIND_CLUSTER)
+
+deps-reset:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 179):
+	git checkout -- go.mod
+	go mod tidy
+ 
+	go mod vendor
+
+kind-update: build-engine kind-load kind-restart
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+deps-cleancache:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 194):
+	go clean -modcache
+
+contract-withdraw:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 228):
+	go run contract/cmd/withdraw/main.go
+
+deps-upgrade:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'makefile', line 188):
+	# go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
+	go get -u -v ./...
+	go mod tidy
+	go mod vendor
+
+# files hash-table stats:
+# Load=53/1024=5%, Rehash=0, Collisions=2/70=3%
+# VPATH Search Paths
+
+# No 'vpath' search paths.
+
+# No general ('VPATH' variable) search path.
+
+# strcache buffers: 1 (0) / strings = 72 / storage = 852 B / avg = 11 B
+# current buf: size = 8162 B / used = 852 B / count = 72 / avg = 11 B
+
+# strcache performance: lookups = 132 / hit rate = 45%
+# hash-table stats:
+# Load=72/8192=1%, Rehash=0, Collisions=1/132=1%
+# Finished Make data base on Wed Aug 17 08:03:08 2022
+
+ 

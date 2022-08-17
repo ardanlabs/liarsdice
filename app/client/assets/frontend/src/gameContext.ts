@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { game } from './types/index.d'
+import { claim, game } from './types/index.d'
 
 export const GameContext = createContext({
   game: {
@@ -11,7 +11,7 @@ export const GameContext = createContext({
     round: 1,
     cups: [],
     player_order: [],
-    claims: [],
+    claims: [] as claim[],
   } as game,
   setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
 })

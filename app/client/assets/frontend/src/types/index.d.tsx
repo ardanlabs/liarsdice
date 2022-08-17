@@ -8,6 +8,7 @@ export interface user {
 }
 
 export interface claim {
+  account: string
   number: number
   suite: die
 }
@@ -20,6 +21,6 @@ export interface game {
   current_cup: number
   round: number
   cups: user[]
-  player_order: string[] | null
-  claims: []
+  player_order: string[]
+  claims: claim[]
 }

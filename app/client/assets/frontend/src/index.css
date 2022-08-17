@@ -34,7 +34,7 @@ code {
 #metamask__wrapper {
   font-family: 'Euclid Circular B Medium', sans-serif;
   font-weight: 700;
-  width: fit-content;
+  width: 100%;
 }
 #login__wrapper {
   font-weight: 400;

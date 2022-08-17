@@ -26,28 +26,27 @@ function Footer() {
 
   const sendClaim = () => {
     axios
-      .post(`http://${process.env.REACT_APP_GO_HOST}/claim/${account}`, {
-        number,
-        suite,
-      })
+      .get(
+        `http://${process.env.REACT_APP_GO_HOST}/claim/${account}/${number}/${suite}`,
+      )
       .then(function (response: AxiosResponse) {
-        console.log('New round!')
+        console.info('Claim made!')
         if (response.data) {
           setNewGame(response.data)
         }
       })
       .catch(function (error: AxiosError) {
-        console.log(error)
+        console.error(error)
       })
   }
   const callLiar = () => {
     axios
-      .post(`http://${process.env.REACT_APP_GO_HOST}/callliar/${account}`)
+      .get(`http://${process.env.REACT_APP_GO_HOST}/liar/${account}`)
       .then(function (response: AxiosResponse) {
-        console.log('New round!')
+        console.info('Liar called!')
       })
       .catch(function (error: AxiosError) {
-        console.log(error)
+        console.error(error)
       })
   }
 
@@ -73,35 +72,42 @@ function Footer() {
         alignItems: 'center',
       }}
     >
-      <Button
-        {...{
-          id: 'metamask__wrapper',
-          clickHandler: handleDisconnectAccount,
-          classes: 'd-flex align-items-center pa-4',
+      <div
+        style={{
+          width: 'fit-content',
         }}
       >
-        <LogOutIcon />
-      </Button>
-      {game.current_player === account ? (
+        <Button
+          {...{
+            id: 'metamask__wrapper',
+            clickHandler: handleDisconnectAccount,
+            classes: 'd-flex align-items-center pa-4',
+          }}
+        >
+          <LogOutIcon />
+        </Button>
+      </div>
+      {(game.player_order as string[])[game.current_cup] === account &&
+      game.status === 'playing' ? (
         <div
           style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
+            width: '100%',
           }}
         >
           <strong>My Claim: </strong>
-          <div className="form-group mx-2 mt-2">
+          <div className="form-group mx-2 my-2">
             <input
               type="number"
               min={1}
               className="form-control"
               id="claim__number"
-              placeholder="1"
               onChange={handleForm}
             />
           </div>
-          <div className="form-group mx-2 mt-2">
+          <div className="form-group mx-2 my-2">
             <select
               defaultValue="1"
               className="form-control"
@@ -118,7 +124,7 @@ function Footer() {
           </div>
           <Button
             {...{
-              id: 'metamask__wrapper',
+              style: { width: 'fit-content' },
               clickHandler: sendClaim,
               classes: 'd-flex align-items-center pa-4',
             }}
@@ -127,7 +133,7 @@ function Footer() {
           </Button>
           <Button
             {...{
-              id: 'metamask__wrapper',
+              style: { width: 'fit-content', margin: 0 },
               clickHandler: callLiar,
               classes: 'd-flex align-items-center pa-4',
             }}

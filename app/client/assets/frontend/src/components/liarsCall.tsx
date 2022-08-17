@@ -1,13 +1,16 @@
-import React, { FC } from 'react'
+import { shortenAddress } from '@usedapp/core'
+import React, { FC, useContext } from 'react'
+import { GameContext } from '../gameContext'
 
 interface LiarsCallProps {}
 
 const LiarsCall: FC<LiarsCallProps> = (LiarsCallProps) => {
+  const { game } = useContext(GameContext)
   return (
     <div
       style={{
         display: 'flex',
-        height: '70px',
+        height: '80px',
         width: '60%',
         justifyContent: 'center',
         textAlign: 'center',
@@ -20,7 +23,14 @@ const LiarsCall: FC<LiarsCallProps> = (LiarsCallProps) => {
         padding: '8px',
       }}
     >
-      <span>Player two called Player one a liar and got striked</span>
+      {game.last_win && game.last_out ? (
+        <span>
+          Player {shortenAddress(game.last_win)} called Player{' '}
+          {shortenAddress(game.last_out)} a liar and got striked
+        </span>
+      ) : (
+        ''
+      )}
     </div>
   )
 }

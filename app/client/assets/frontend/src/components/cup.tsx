@@ -1,22 +1,28 @@
 import React, { FC, useContext } from 'react'
 import { GameContext } from '../gameContext'
-import { user } from '../types/index.d'
+import { dice, user } from '../types/index.d'
 import Dice from './dice'
 
 interface CupProps {
   player: user
+  playerDice: dice
 }
 
 const Cup: FC<CupProps> = (CupProps) => {
-  const { player } = CupProps
+  const { player, playerDice } = CupProps
   const { game } = useContext(GameContext)
-  const { current_player } = game
+  const { current_cup, player_order, status } = game
 
   return player.outs < 3 ? (
     <div className="player__cup active">
       <Dice
-        isPlayerTurn={current_player === player.account}
-        diceNumber={player.dice ? player.dice : [0, 0, 0, 0, 0]}
+        isPlayerTurn={
+          (player_order as string[])[current_cup] === player.account &&
+          status === 'playing'
+        }
+        diceNumber={
+          playerDice && status === 'playing' ? playerDice : [0, 0, 0, 0, 0]
+        }
         playerAccount={player.account}
       />
     </div>

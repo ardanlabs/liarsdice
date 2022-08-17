@@ -10,14 +10,19 @@ interface PlayersListProps {
 const PlayersList = (props: PlayersListProps) => {
   const { title } = props
   const { game } = useContext(GameContext)
-  const { cups, current_player } = game
+  const { cups, player_order, current_cup, status } = game
   const playersElements: JSX.Element[] = []
   if ((cups as user[]).length) {
     Array.from(cups as user[]).forEach((player) => {
       playersElements.push(
         <li
           style={{ textAlign: 'start' }}
-          className={current_player === player.account ? 'active' : ''}
+          className={
+            (player_order as string[])[current_cup] === player.account &&
+            status === 'playing'
+              ? 'active'
+              : ''
+          }
           key={player.account}
         >
           {shortenAddress(player.account)}

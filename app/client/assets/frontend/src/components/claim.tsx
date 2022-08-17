@@ -12,7 +12,8 @@ interface ClaimProps {
 
 const Claim: FC<ClaimProps> = (ClaimProps) => {
   const { claim, dieWidth, dieHeight, fill } = ClaimProps
-  return claim.number ? (
+
+  return claim ? (
     <>
       {`${claim.number} X `}
       <Die

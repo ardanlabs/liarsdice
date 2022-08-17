@@ -32,10 +32,10 @@ const Transaction = (props: transactionProps) => {
       return data
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.log('error message: ', error.message)
+        console.error('error message: ', error.message)
         return error.message
       } else {
-        console.log('unexpected error: ', error)
+        console.error('unexpected error: ', error)
         return 'An unexpected error occurred'
       }
     }
@@ -66,11 +66,12 @@ const Transaction = (props: transactionProps) => {
           0.000000000000000001
         send({ value: BigNumber.from(`${Math.round(priceInWei)}`) }).then(
           (response: any) => {
+            // To add balance display
             console.log(response)
           },
         )
       } else {
-        console.log(response)
+        console.error(response)
       }
     })
   }
@@ -95,7 +96,14 @@ const Transaction = (props: transactionProps) => {
           alignItems: 'center',
         }}
       >
-        <input type="number" onChange={handleAmountChange} />
+        <span className="mr-3" style={{ color: 'var(--secondary-color)' }}>
+          U$D
+        </span>
+        <input
+          className="form-control"
+          type="number"
+          onChange={handleAmountChange}
+        />
         <Button
           {...{
             id: 'transaction',
