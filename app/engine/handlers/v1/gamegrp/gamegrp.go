@@ -276,6 +276,19 @@ func (h *Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
+// NextTurn changes the account that will make the next move.
+func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if h.game == nil {
+		return v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+	}
+
+	h.game.NextTurn()
+
+	h.Evts.Send("nextturn")
+
+	return h.Status(ctx, w, r)
+}
+
 // UpdateOut replaces the current out amount of the player. This call is not
 // part of the game flow, it is used to control when a player should be removed
 // from the game.

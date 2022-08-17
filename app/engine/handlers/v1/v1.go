@@ -44,6 +44,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/claim/:address/:number/:suite", ggh.Claim)
 	app.Handle(http.MethodGet, version, "/game/liar/:address", ggh.CallLiar)
 	app.Handle(http.MethodGet, version, "/game/newround", ggh.NewRound)
+	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn)
 	app.Handle(http.MethodGet, version, "/game/out/:address/:outs", ggh.UpdateOut)
 	app.Handle(http.MethodGet, version, "/game/balance/:address", ggh.Balance)
 }
