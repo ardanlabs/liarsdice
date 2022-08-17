@@ -372,15 +372,6 @@ func (g *Game) NextRound() (int, error) {
 		g.currentPlayer = g.lastWinAcct
 	}
 
-	// Roll new dice for each active player.
-	for _, cup := range g.cups {
-		if cup.Outs != 3 {
-			for i := range cup.Dice {
-				cup.Dice[i] = rand.Intn(6) + 1
-			}
-		}
-	}
-
 	// Reset the game state.
 	g.claims = []Claim{}
 	g.status = StatusPlaying
