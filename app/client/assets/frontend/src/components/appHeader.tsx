@@ -39,7 +39,10 @@ const AppHeader: FC<AppHeaderProps> = (AppHeaderProps) => {
               right: '18px',
             }}
           >
-            <div style={{ width: '80%' }}>Current Balance: {balance}</div>
+            <div style={{ width: '80%' }}>
+              Current Balance:{' '}
+              {parseFloat(`${balance / 1000000000000000000}`).toFixed(2)} ETH
+            </div>
             <Transaction
               {...{ buttonText: 'Deposit', action: 'Deposit', updateBalance }}
             />

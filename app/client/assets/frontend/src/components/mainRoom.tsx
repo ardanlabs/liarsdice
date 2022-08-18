@@ -35,20 +35,6 @@ const MainRoom = (props: MainRoomProps) => {
         ? newGame
         : { ...newGame, player_order: [] }
       setGame(newGame)
-      // We check if players_order has 2 or more players
-      switch (newGame.status) {
-        case 'roundover':
-          newRound()
-          break
-        case 'playing':
-          nextTurn()
-          break
-        case 'gameover':
-          if (getActivePlayersLength(newGame) >= 2) {
-            startGame()
-          }
-          break
-      }
     },
     // Timer time in seconds
     timeoutTime = 2,
@@ -67,6 +53,25 @@ const MainRoom = (props: MainRoomProps) => {
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
+          switch (response.data.status) {
+            case 'roundover':
+              newRound()
+              break
+            case 'gameover':
+              if (getActivePlayersLength(response.data) >= 2) {
+                startGame()
+              } else if (getActivePlayersLength(response.data) === 1) {
+                axios
+                  .get(`http://${process.env.REACT_APP_GO_HOST}/reconcile`)
+                  .then((response: AxiosResponse) => {
+                    console.info(response)
+                  })
+                  .catch((error: AxiosError) => {
+                    console.error(error)
+                  })
+              }
+              break
+          }
         }
       })
       .catch(function (error: AxiosError) {
@@ -254,7 +259,10 @@ const MainRoom = (props: MainRoomProps) => {
       .then(function (response: AxiosResponse) {
         console.info('Player timed out and got striked')
         console.log(response.data)
-        setGame(response.data)
+        setNewGame(response.data)
+        if (response.data.status === 'playing') {
+          nextTurn()
+        }
       })
       .catch(function (error: AxiosError) {
         console.group('Something went wrong, try again.')
