@@ -39,7 +39,7 @@ const AppHeader: FC<AppHeaderProps> = (AppHeaderProps) => {
               right: '18px',
             }}
           >
-            <div>Current Balance: {balance}</div>
+            <div style={{ width: '80%' }}>Current Balance: {balance}</div>
             <Transaction
               {...{ buttonText: 'Deposit', action: 'Deposit', updateBalance }}
             />

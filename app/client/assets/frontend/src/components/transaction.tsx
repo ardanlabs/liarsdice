@@ -91,6 +91,7 @@ const Transaction = (props: transactionProps) => {
         style={{
           display: 'flex',
           alignItems: 'center',
+          width: '80%',
         }}
       >
         <span className="mr-3" style={{ color: 'var(--modals)' }}>

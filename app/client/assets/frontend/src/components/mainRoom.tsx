@@ -35,20 +35,23 @@ const MainRoom = (props: MainRoomProps) => {
         ? newGame
         : { ...newGame, player_order: [] }
       setGame(newGame)
-
-      if (getActivePlayersLength(newGame) >= 2) {
-        switch (newGame.status) {
-          case 'roundover':
-            newRound()
-            break
-          case 'gameover':
+      // We check if players_order has 2 or more players
+      switch (newGame.status) {
+        case 'roundover':
+          newRound()
+          break
+        case 'playing':
+          nextTurn()
+          break
+        case 'gameover':
+          if (getActivePlayersLength(newGame) >= 2) {
             startGame()
-            break
-        }
+          }
+          break
       }
     },
     // Timer time in seconds
-    timeoutTime = 30,
+    timeoutTime = 2,
     // Get the timer that's set inside the sessionStorage
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
@@ -123,8 +126,8 @@ const MainRoom = (props: MainRoomProps) => {
       .then(function (response: AxiosResponse) {
         console.info('New round!')
         if (response.data) {
-          rolldice()
           updateStatus()
+          rolldice()
         }
       })
       .catch(function (error: AxiosError) {
@@ -166,11 +169,6 @@ const MainRoom = (props: MainRoomProps) => {
                 break
               }
               newRound()
-              break
-            case 'nextturn':
-              window.sessionStorage.removeItem('round_timer')
-              setTimer(timeoutTime)
-              updateStatus()
               break
           }
         }
@@ -226,8 +224,10 @@ const MainRoom = (props: MainRoomProps) => {
   const nextTurn = () => {
     console.info('Next turn')
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/next/${account}`)
+      .get(`http://${process.env.REACT_APP_GO_HOST}/next`)
       .then(function (response: AxiosResponse) {
+        window.sessionStorage.removeItem('round_timer')
+        setTimer(timeoutTime)
         updateStatus()
       })
       .catch(function (error: AxiosError) {
@@ -253,7 +253,8 @@ const MainRoom = (props: MainRoomProps) => {
       )
       .then(function (response: AxiosResponse) {
         console.info('Player timed out and got striked')
-        nextTurn()
+        console.log(response.data)
+        setGame(response.data)
       })
       .catch(function (error: AxiosError) {
         console.group('Something went wrong, try again.')
@@ -269,7 +270,6 @@ const MainRoom = (props: MainRoomProps) => {
   }
   useEffect(() => {
     window.sessionStorage.setItem('round_timer', `${timer}`)
-    console.log(window.sessionStorage.getItem('round_timer'))
   }, [timer])
 
   useEffect(() => {
@@ -280,7 +280,7 @@ const MainRoom = (props: MainRoomProps) => {
       clearInterval(roundInterval)
       // eslint-disable-next-line react-hooks/exhaustive-deps
       roundInterval = setInterval(() => {
-        if (timer > 0 || game.status !== 'playing') {
+        if (timer > 0 && game.status === 'playing') {
           decreaseTimer()
         } else {
           addOut()
