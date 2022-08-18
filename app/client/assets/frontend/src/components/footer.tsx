@@ -96,7 +96,14 @@ function Footer() {
             width: '100%',
           }}
         >
-          <strong>My Claim: </strong>
+          <strong
+            style={{
+              fontSize: '24px',
+              color: 'var(--secondary-color)',
+            }}
+          >
+            My Claim:{' '}
+          </strong>
           <div className="form-group mx-2 my-2">
             <input
               type="number"
@@ -104,6 +111,10 @@ function Footer() {
               className="form-control"
               id="claim__number"
               onChange={handleForm}
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: '1px solid var(--secondary-color)',
+              }}
             />
           </div>
           <div className="form-group mx-2 my-2">
@@ -112,6 +123,10 @@ function Footer() {
               className="form-control"
               id="claim__suite"
               onChange={handleForm}
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: '1px solid var(--secondary-color)',
+              }}
             >
               <option value="1">1</option>
               <option value="2">2</option>
@@ -123,7 +138,13 @@ function Footer() {
           </div>
           <Button
             {...{
-              style: { width: 'fit-content' },
+              style: {
+                margin: '0 8px',
+                width: 'fit-content',
+                backgroundColor: 'var(--primary-color)',
+                color: 'white',
+                fontWeight: '600',
+              },
               clickHandler: sendClaim,
               classes: 'd-flex align-items-center pa-4',
             }}
@@ -132,7 +153,13 @@ function Footer() {
           </Button>
           <Button
             {...{
-              style: { width: 'fit-content', margin: 0 },
+              style: {
+                width: 'fit-content',
+                margin: '0 8px',
+                backgroundColor: 'var(--primary-color)',
+                color: 'white',
+                fontWeight: '600',
+              },
               clickHandler: callLiar,
               classes: 'd-flex align-items-center pa-4',
             }}

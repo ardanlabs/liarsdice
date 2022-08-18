@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState, useRef } from 'react'
+import React, { useEffect, useContext, useState, useRef, useMemo } from 'react'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
 import axios, { AxiosError, AxiosResponse } from 'axios'
@@ -9,7 +9,12 @@ import { dice, game, user } from '../types/index.d'
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
   const { account } = useEthers()
+  const gameAnte = 10
   let { game, setGame } = useContext(GameContext)
+  const gamePot = useMemo(
+    () => gameAnte * game.cups.length,
+    [game.cups.length, gameAnte],
+  )
   let [playerDice, setPlayerDice] = useState([] as dice)
 
   useEffect(() => {
@@ -48,6 +53,7 @@ const MainRoom = (props: MainRoomProps) => {
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
       : timeoutTime
+
   let wsStatus = useRef('closed'),
     roundInterval: NodeJS.Timer,
     [timer, setTimer] = useState(sessionTimer)
@@ -98,7 +104,7 @@ const MainRoom = (props: MainRoomProps) => {
       })
   }
 
-  const createNewGame = (ante: number = 1) => {
+  const createNewGame = (ante: number = gameAnte) => {
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/new/${ante}`)
       .then(function (response: AxiosResponse) {
@@ -307,7 +313,7 @@ const MainRoom = (props: MainRoomProps) => {
       }}
       id="mainRoom"
     >
-      <SideBar joinGame={joinGame} />
+      <SideBar ante={gameAnte} gamePot={gamePot} joinGame={joinGame} />
       <GameTable playerDice={playerDice} timer={timer} />
     </div>
   )

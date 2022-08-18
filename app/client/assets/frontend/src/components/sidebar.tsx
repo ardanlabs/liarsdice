@@ -5,9 +5,11 @@ import { GameContext } from '../gameContext'
 
 interface MainRoomProps {
   joinGame: Function
+  ante: number
+  gamePot: number
 }
 const MainRoom = (props: MainRoomProps) => {
-  const { joinGame } = props
+  const { joinGame, ante, gamePot } = props
   const { game } = useContext(GameContext)
   const { round } = game
 
@@ -21,7 +23,7 @@ const MainRoom = (props: MainRoomProps) => {
         height: '100%',
       }}
     >
-      <SidebarDetails round={round} />
+      <SidebarDetails ante={ante} round={round} pot={gamePot} />
       <Players joinGame={joinGame} />
     </div>
   )

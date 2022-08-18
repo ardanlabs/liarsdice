@@ -26,7 +26,7 @@ const Players = (props: PlayersProps) => {
         backgroundColor: 'var(--modals)',
         borderRadius: '0 8px 8px 0',
         margin: '42px 0 0 0',
-        minHeight: '550px',
+        minHeight: '450px',
         aspectRatio: '2/4',
         position: 'relative',
       }}

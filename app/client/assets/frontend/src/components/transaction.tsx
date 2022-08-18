@@ -83,15 +83,13 @@ const Transaction = (props: transactionProps) => {
         height: '100%',
         color: 'black',
         display: 'flex',
-        justifyContent: 'center',
         alignItems: 'center',
+        justifyContent: 'flex-end',
       }}
     >
       <div
-        id="players-list"
         style={{
           display: 'flex',
-          justifyContent: 'center',
           alignItems: 'center',
         }}
       >
