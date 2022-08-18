@@ -1,5 +1,5 @@
 import axios from 'axios'
-let fetchedAddress = '0x5c63E35252A807815E1dF566b0eF04DeB1372464'
+let fetchedAddress = '0x87A061ED19dcA76EC5B01643b054f5eae2730a85'
 
 axios
   .get('id.env')

@@ -37,7 +37,7 @@ const MainRoom = (props: MainRoomProps) => {
       setGame(newGame)
     },
     // Timer time in seconds
-    timeoutTime = 2,
+    timeoutTime = 30,
     // Get the timer that's set inside the sessionStorage
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
@@ -131,6 +131,9 @@ const MainRoom = (props: MainRoomProps) => {
       .then(function (response: AxiosResponse) {
         console.info('New round!')
         if (response.data) {
+          window.sessionStorage.removeItem('round_timer')
+          setTimer(timeoutTime)
+          clearInterval(roundInterval)
           updateStatus()
           rolldice()
         }
