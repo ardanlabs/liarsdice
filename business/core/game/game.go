@@ -253,6 +253,7 @@ func (g *Game) Claim(account string, number int, suite int) error {
 		Suite:   suite,
 	}
 	g.claims = append(g.claims, c)
+
 	g.NextTurn()
 
 	return nil
