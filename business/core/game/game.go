@@ -159,6 +159,8 @@ func (g *Game) StartPlay() error {
 }
 
 // ApplyOut will apply the specified number of outs to the account.
+// If an account is out, it will check the number of active accounts, and end
+// the round if there is only 1 left.
 func (g *Game) ApplyOut(account string, outs int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -182,6 +184,25 @@ func (g *Game) ApplyOut(account string, outs int) error {
 
 	cup.Outs = outs
 	g.cups[account] = cup
+
+	// After 3 outs, an account is out of the game.
+	// We need to check if there is only 1 account left, end the round.
+	if outs == 3 {
+		g.cupsOrder[cup.OrderIdx] = ""
+
+		// Look for active players.
+		var activePlayers int
+
+		for _, v := range g.cupsOrder {
+			if v != "" {
+				activePlayers++
+			}
+		}
+
+		if activePlayers == 1 {
+			g.status = StatusRoundOver
+		}
+	}
 
 	return nil
 }
