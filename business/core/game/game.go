@@ -293,6 +293,10 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		return "", "", fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
+	if len(g.claims) == 0 {
+		return "", "", errors.New("no claims have been made yet")
+	}
+
 	// Validate that the account who is making the claim is the account that
 	// should be making this claim.
 	currentAccount := g.cupsOrder[g.currentCup]
