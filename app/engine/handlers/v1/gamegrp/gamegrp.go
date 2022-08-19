@@ -149,7 +149,7 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 		}
 	}
 
-	ante, err := strconv.Atoi(web.Param(r, "ante"))
+	ante, err := strconv.ParseInt(web.Param(r, "ante"), 10, 64)
 	if err != nil {
 		return v1Web.NewRequestError(errors.New("invalid ante value"), http.StatusBadRequest)
 	}
