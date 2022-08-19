@@ -370,3 +370,18 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
+
+// Reconcile calls the smart contract reconcile method.
+func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	g, err := h.getGame()
+	if err != nil {
+		return err
+	}
+
+	err = g.Reconcile(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusInternalServerError)
+	}
+
+	return h.Status(ctx, w, r)
+}

@@ -421,8 +421,26 @@ func (g *Game) PlayerBalance(ctx context.Context, account string) (*big.Int, err
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
-func (g *Game) Reconcile(ctx context.Context, winner string, losers []string, ante uint, gameFee uint) error {
-	return nil
+func (g *Game) Reconcile(ctx context.Context) error {
+	var winner string
+	var losers []string
+
+	// Find the winner.
+	// cupsOrders holds the remaining (winner) account, the others are "".
+	for _, cup := range g.cupsOrder {
+		if _, found := g.cups[cup]; found {
+			winner = cup
+		}
+	}
+
+	// Find the losers.
+	for _, cup := range g.cups {
+		if winner != cup.Account {
+			losers = append(losers, cup.Account)
+		}
+	}
+
+	return g.banker.Reconcile(ctx, winner, losers, uint(g.ante), uint(10))
 }
 
 // Info returns a copy of the game status.
