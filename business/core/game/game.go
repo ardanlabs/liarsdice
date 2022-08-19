@@ -34,7 +34,7 @@ const minNumberPlayers = 2
 // Withdrawls happen outside of game play.
 type Banker interface {
 	Balance(ctx context.Context, account string) (*big.Int, error)
-	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante uint, gameFee uint) error
+	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante int64, gameFee int64) error
 }
 
 // =============================================================================
@@ -78,14 +78,14 @@ type Game struct {
 	currentPlayer string
 	currentCup    int
 	round         int
-	ante          int
+	ante          int64
 	cups          map[string]Cup
 	cupsOrder     []string
 	claims        []Claim
 }
 
 // New creates a new game.
-func New(banker Banker, ante int) *Game {
+func New(banker Banker, ante int64) *Game {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	return &Game{
@@ -440,7 +440,7 @@ func (g *Game) Reconcile(ctx context.Context) error {
 		}
 	}
 
-	return g.banker.Reconcile(ctx, winner, losers, uint(g.ante), uint(10))
+	return g.banker.Reconcile(ctx, winner, losers, g.ante, 10)
 }
 
 // Info returns a copy of the game status.
