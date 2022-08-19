@@ -5,6 +5,8 @@ import Footer from './components/footer'
 import { GameContext } from './gameContext'
 import { game } from './types/index.d'
 import AppHeader from './components/appHeader'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export function App() {
   const [game, setGame] = useState({
@@ -21,9 +23,31 @@ export function App() {
 
   const providerGame = useMemo(() => ({ game, setGame }), [game, setGame])
 
+  const hideDropdowns = (event: React.MouseEvent<HTMLElement>) => {
+    if (!(event.target as HTMLElement).classList.contains('dropdown-content')) {
+      const dropdown = document.querySelector('.dropdown-menu') as HTMLElement
+      if (dropdown) {
+        dropdown.style.display = 'none'
+      }
+    }
+  }
+
   return (
-    <div className="App" style={{ scrollSnapType: 'y mandatory' }}>
+    <div
+      className="App"
+      style={{ scrollSnapType: 'y mandatory' }}
+      onClick={hideDropdowns}
+    >
       <GameContext.Provider value={providerGame}>
+        <ToastContainer
+          position="top-left"
+          autoClose={1000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          draggable
+        />
         <AppHeader show={true} />
         <div className="container-fluid d-flex align-items-center justify-content-center px-0">
           <Login />

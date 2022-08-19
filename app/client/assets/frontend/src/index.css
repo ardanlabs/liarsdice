@@ -31,6 +31,10 @@ code {
     monospace;
 }
 
+.dropdown-item:focus, .dropdown-item:hover {
+  background-color: var(--modals);
+}
+
 #metamask__wrapper {
   font-family: 'Euclid Circular B Medium', sans-serif;
   font-weight: 700;

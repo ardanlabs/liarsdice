@@ -1,9 +1,11 @@
 import axios from 'axios'
-let fetchedAddress = '0x87A061ED19dcA76EC5B01643b054f5eae2730a85'
+let fetchedAddress = '0x0BA052bAeb8925Ac8b480a291F75Ff0dD2c4297c'
 
 axios
   .get('id.env')
-  .then((res) => (fetchedAddress = res.data))
+  .then((res) => {
+    fetchedAddress = res.data
+  })
   .catch((err) => console.log(err))
 
 export const contractAddress = fetchedAddress

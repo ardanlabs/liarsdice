@@ -2,14 +2,17 @@ import React, { useEffect, useContext, useState, useRef, useMemo } from 'react'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import { useEthers } from '@usedapp/core'
+import { shortenAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import { dice, game, user } from '../types/index.d'
+import { toast } from 'react-toastify'
+import { capitalize } from '../utils/capitalize'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
   const { account } = useEthers()
   const gameAnte = 10
+  const [timeoutsCount, setTimeoutsCount] = useState(0)
   let { game, setGame } = useContext(GameContext)
   const gamePot = useMemo(
     () => gameAnte * game.cups.length,
@@ -37,7 +40,7 @@ const MainRoom = (props: MainRoomProps) => {
       setGame(newGame)
     },
     // Timer time in seconds
-    timeoutTime = 30,
+    timeoutTime = 15,
     // Get the timer that's set inside the sessionStorage
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
@@ -60,7 +63,10 @@ const MainRoom = (props: MainRoomProps) => {
             case 'gameover':
               if (getActivePlayersLength(response.data) >= 2) {
                 startGame()
-              } else if (getActivePlayersLength(response.data) === 1) {
+              } else if (
+                getActivePlayersLength(response.data) === 1 &&
+                game.last_win !== ''
+              ) {
                 axios
                   .get(`http://${process.env.REACT_APP_GO_HOST}/reconcile`)
                   .then((response: AxiosResponse) => {
@@ -89,9 +95,7 @@ const MainRoom = (props: MainRoomProps) => {
     if (game.status === 'gameover') {
       axios
         .get(`http://${process.env.REACT_APP_GO_HOST}/start`)
-        .then(function () {
-          console.info('Game has started!')
-        })
+        .then(function () {})
         .catch(function (error: AxiosError) {
           console.error(error)
         })
@@ -102,7 +106,6 @@ const MainRoom = (props: MainRoomProps) => {
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/rolldice/${account}`)
       .then(function (response: AxiosResponse) {
-        console.info('Rolling the dice')
         if (response.data) {
           setPlayerDice(response.data.dice)
         }
@@ -129,10 +132,10 @@ const MainRoom = (props: MainRoomProps) => {
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/newround`)
       .then(function (response: AxiosResponse) {
-        console.info('New round!')
         if (response.data) {
           window.sessionStorage.removeItem('round_timer')
           setTimer(timeoutTime)
+          setTimeoutsCount(0)
           clearInterval(roundInterval)
           updateStatus()
           rolldice()
@@ -157,25 +160,50 @@ const MainRoom = (props: MainRoomProps) => {
       ws.onopen = () => {
         updateStatus()
         wsStatus.current = 'open'
-        console.info('Socket connected')
+        toast.info('Connection established')
       }
       ws.onmessage = (evt: MessageEvent) => {
         updateStatus()
         if (evt.data) {
           let message = evt.data
-          switch (message) {
-            case 'start':
+          switch (true) {
+            case message === 'start':
+              toast.info('Game has started!')
               rolldice()
               break
-            case 'claim':
+            case message === 'rolldice':
+              toast.info(`Rolling dice's`)
+              break
+            case message.startsWith('join:'):
+              const joinStart = 'join:'
+              const joinAccount = shortenAddress(
+                message.substring(joinStart.length),
+              )
+              toast.info(`Account ${joinAccount} just joined`)
+              break
+            case message === 'claim':
               window.sessionStorage.removeItem('round_timer')
               setTimer(timeoutTime)
               break
-            case 'callliar':
+            case message === 'newround':
+              toast.info('New round!')
+              break
+            case message === 'nextturn':
+              toast.info('Next turn!')
+              break
+            case message.startsWith('outs:'):
+              const outsStart = 'join:'
+              const strikedAccount = shortenAddress(
+                message.substring(outsStart.length),
+              )
+              toast.info(`Player ${strikedAccount} timed out and got striked`)
+              break
+            case message === 'callliar':
               if (getActivePlayersLength() === 1) {
-                console.info('Game finished! Winner is ' + game.cups[0])
+                toast.info('Game finished! Winner is ' + game.cups[0])
                 break
               }
+              toast.info('A player was called a liar and loose!')
               newRound()
               break
           }
@@ -183,9 +211,9 @@ const MainRoom = (props: MainRoomProps) => {
         return
       }
       ws.onclose = (evt: CloseEvent) => {
-        console.info(
-          'Socket is closed. Reconnect will be attempted in 1 second.',
-          evt.reason,
+        toast.error(
+          'Connection is closed. Reconnect will be attempted in 1 second. ' +
+            evt.reason,
         )
         wsStatus.current = 'closed'
         setTimeout(function () {
@@ -213,37 +241,41 @@ const MainRoom = (props: MainRoomProps) => {
   }
 
   const joinGame = () => {
-    console.info('Joining game...')
+    toast.info('Joining game...')
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/join/${account}`)
       .then(function (response: AxiosResponse) {
-        console.info('Welcome to the game!!')
+        toast.info('Welcome to the game')
         updateStatus()
       })
       .catch(function (error: AxiosError) {
-        console.group('Something went wrong, try again.')
-        console.error(error.message)
+        let errorMessage = (error as any).response.data.error.replace(
+          / \[.+\]/gm,
+          '',
+        )
+        toast.error(
+          <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
+        )
+        console.group()
         console.error('Error:', (error as any).response.data.error)
-
         console.groupEnd()
       })
   }
 
   const nextTurn = () => {
-    console.info('Next turn')
     axios
       .get(`http://${process.env.REACT_APP_GO_HOST}/next`)
       .then(function (response: AxiosResponse) {
         window.sessionStorage.removeItem('round_timer')
         setTimer(timeoutTime)
-        updateStatus()
+        if (getActivePlayersLength(response.data) - 1 === timeoutsCount) {
+          newRound()
+        } else {
+          updateStatus()
+        }
       })
       .catch(function (error: AxiosError) {
-        console.group('Something went wrong, try again.')
-        console.error(error.message)
-        console.error('Error:', (error as any).response.data.error)
-
-        console.groupEnd()
+        // To be discused
       })
   }
 
@@ -260,8 +292,7 @@ const MainRoom = (props: MainRoomProps) => {
         }`,
       )
       .then(function (response: AxiosResponse) {
-        console.info('Player timed out and got striked')
-        console.log(response.data)
+        setTimeoutsCount((prev) => prev + 1)
         setNewGame(response.data)
         if (response.data.status === 'playing') {
           nextTurn()

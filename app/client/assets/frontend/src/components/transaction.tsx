@@ -8,6 +8,7 @@ import contractAbi from '../abi/Contract.json'
 import { useContractFunction, useEthers } from '@usedapp/core'
 import { Contract } from '@ethersproject/contracts'
 import { utils, BigNumber } from 'ethers'
+import { toast } from 'react-toastify'
 
 type getExchangeRateResponse = {
   data: {
@@ -53,7 +54,9 @@ const Transaction = (props: transactionProps) => {
     gasLimitBufferPercentage: 100,
   })
   const { account } = useEthers()
+  const [inputValue, setInputValue] = useState('')
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value)
     setTransactionAmount(parseFloat(event.target.value))
   }
   const sendTransaction = () => {
@@ -64,11 +67,19 @@ const Transaction = (props: transactionProps) => {
           transactionAmount /
           parseInt(responseEth.data.amount) /
           0.000000000000000001
-        send({ value: BigNumber.from(`${Math.round(priceInWei)}`) }).then(
-          (response) => {
-            updateBalance()
-          },
-        )
+        const sendValue =
+          action === 'Deposit'
+            ? { value: BigNumber.from(`${Math.round(priceInWei)}`) }
+            : {}
+        send(sendValue).then((response) => {
+          if (response === undefined) {
+            toast.error(`${action} failed`)
+          } else {
+            setInputValue('')
+            toast.info(`${action} successful`)
+          }
+          updateBalance()
+        })
       } else {
         console.error(response)
       }
@@ -79,37 +90,57 @@ const Transaction = (props: transactionProps) => {
     <p>Please connect your wallet account to proceed.</p>
   ) : (
     <div
+      className="dropdown-content"
       style={{
         height: '100%',
-        color: 'black',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-end',
+        marginBottom: '10px',
       }}
     >
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          width: '80%',
         }}
       >
-        <span className="mr-3" style={{ color: 'var(--modals)' }}>
-          U$D
-        </span>
-        <input
-          className="form-control"
-          type="number"
-          onChange={handleAmountChange}
-        />
+        {action === 'Deposit' ? (
+          <>
+            <span
+              className="mr-3 dropdown-content"
+              style={{ color: 'var(--secondary-color)' }}
+            >
+              U$D
+            </span>
+            <input
+              className="form-control dropdown-content"
+              id="transaction-input"
+              type="number"
+              value={inputValue}
+              onChange={handleAmountChange}
+            />
+          </>
+        ) : (
+          ''
+        )}
         <Button
           {...{
             id: 'transaction',
             clickHandler: sendTransaction,
-            classes: 'd-flex align-items-center pa-4 justify-content-center',
+            classes:
+              'd-flex align-items-center pa-4 justify-content-center dropdown-content',
+            style: {
+              ...{
+                border: '1px solid var(--secondary-color)',
+                margin: '0 10px',
+              },
+            },
           }}
         >
-          <span style={{ color: 'var(--modals)', textAlign: 'center' }}>
+          <span
+            style={{ color: 'var(--secondary-color)', textAlign: 'center' }}
+          >
             {buttonText || action}
           </span>
         </Button>
