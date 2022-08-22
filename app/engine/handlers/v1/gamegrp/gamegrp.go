@@ -3,6 +3,7 @@ package gamegrp
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/gorilla/websocket"
 
@@ -399,6 +401,14 @@ func (h *Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	fmt.Println("*********************************************")
 	fmt.Printf("%#v\n", dt)
+	fmt.Println("*********************************************")
+
+	sig, err := hex.DecodeString(dt.Signature[2:])
+	if err != nil {
+		return v1.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	fmt.Println("SIGL:", len(sig), "SIGB:", sig)
 	fmt.Println("*********************************************")
 
 	return web.Respond(ctx, w, dt, http.StatusOK)
