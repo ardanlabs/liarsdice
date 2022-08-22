@@ -12,12 +12,12 @@ import (
 	"sync"
 	"time"
 
-	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/gorilla/websocket"
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/signature"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
@@ -405,10 +405,26 @@ func (h *Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	sig, err := hex.DecodeString(dt.Signature[2:])
 	if err != nil {
-		return v1.NewRequestError(err, http.StatusBadRequest)
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
 	fmt.Println("SIGL:", len(sig), "SIGB:", sig)
+	fmt.Println("*********************************************")
+
+	data := struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	}{
+		Name:   dt.Name,
+		Status: dt.Status,
+	}
+
+	address, err := signature.FromAddress(data, dt.Signature)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	fmt.Println("ADDR:", address)
 	fmt.Println("*********************************************")
 
 	return web.Respond(ctx, w, dt, http.StatusOK)
