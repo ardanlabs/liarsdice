@@ -5,6 +5,7 @@ import { useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
+import { axiosConfig } from '../utils/axiosConfig'
 
 function Footer() {
   const { account } = useEthers()
@@ -29,7 +30,7 @@ function Footer() {
 
   const sendClaim = () => {
     axios
-      .get(`http://${apiUrl}/claim/${account}/${number}/${suite}`)
+      .get(`http://${apiUrl}/claim/${number}/${suite}`, axiosConfig)
       .then(function (response: AxiosResponse) {
         console.info('Claim made!')
         if (response.data) {
@@ -42,7 +43,7 @@ function Footer() {
   }
   const callLiar = () => {
     axios
-      .get(`http://${apiUrl}/liar/${account}`)
+      .get(`http://${apiUrl}/liar`, axiosConfig)
       .then(function (response: AxiosResponse) {
         console.info('Liar called!')
       })

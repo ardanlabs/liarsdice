@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import Claim from './claim'
 import { claim } from '../types/index.d'
-import { shortenAddress } from '@usedapp/core'
+import { shortenIfAddress } from '@usedapp/core'
 
 interface CurrentClaimProps {
   currentClaim: claim
@@ -28,7 +28,7 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
     >
       {currentClaim.account?.length ? (
         <span>
-          Current claim by Player {shortenAddress(currentClaim.account)}
+          Current claim by Player {shortenIfAddress(currentClaim.account)}
         </span>
       ) : (
         ''

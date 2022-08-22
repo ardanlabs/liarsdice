@@ -1,6 +1,7 @@
 import { useEthers } from '@usedapp/core'
 import axios, { AxiosResponse } from 'axios'
 import React, { FC, useCallback, useEffect, useState } from 'react'
+import { axiosConfig } from '../utils/axiosConfig'
 import Transaction from './transaction'
 
 interface AppHeaderProps {
@@ -18,7 +19,7 @@ const AppHeader: FC<AppHeaderProps> = (AppHeaderProps) => {
   const updateBalance = useCallback(() => {
     if (account)
       axios
-        .get(`http://${apiUrl}/balance/${account}`)
+        .get(`http://${apiUrl}/balance`, axiosConfig)
         .then((response: AxiosResponse) => {
           setBalance(response.data.balance)
         })

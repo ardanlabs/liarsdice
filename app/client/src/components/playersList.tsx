@@ -1,4 +1,4 @@
-import { shortenAddress } from '@usedapp/core'
+import { shortenIfAddress } from '@usedapp/core'
 import { useContext } from 'react'
 import { GameContext } from '../gameContext'
 import { user } from '../types/index.d'
@@ -25,7 +25,7 @@ const PlayersList = (props: PlayersListProps) => {
           }
           key={player.account}
         >
-          {shortenAddress(player.account)}
+          {shortenIfAddress(player.account)}
         </li>,
       )
     })

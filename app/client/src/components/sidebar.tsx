@@ -3,13 +3,12 @@ import SidebarDetails from './sidebarDetails'
 import Players from './players'
 import { GameContext } from '../gameContext'
 
-interface MainRoomProps {
-  joinGame: Function
+interface SideBarProps {
   ante: number
   gamePot: number
 }
-const MainRoom = (props: MainRoomProps) => {
-  const { joinGame, ante, gamePot } = props
+const SideBar = (props: SideBarProps) => {
+  const { ante, gamePot } = props
   const { game } = useContext(GameContext)
   const { round } = game
 
@@ -24,9 +23,9 @@ const MainRoom = (props: MainRoomProps) => {
       }}
     >
       <SidebarDetails ante={ante} round={round} pot={gamePot} />
-      <Players joinGame={joinGame} />
+      <Players />
     </div>
   )
 }
 
-export default MainRoom
+export default SideBar

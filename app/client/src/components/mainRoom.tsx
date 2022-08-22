@@ -2,12 +2,11 @@ import React, { useEffect, useContext, useState, useRef, useMemo } from 'react'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import { shortenAddress, useEthers } from '@usedapp/core'
+import { shortenIfAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import { dice, game, user } from '../types/index.d'
 import { toast } from 'react-toastify'
-import { capitalize } from '../utils/capitalize'
-import Test from './test'
+import { axiosConfig } from '../utils/axiosConfig'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
@@ -56,23 +55,24 @@ const MainRoom = (props: MainRoomProps) => {
 
   const updateStatus = () => {
     axios
-      .get(`http://${apiUrl}/status`)
+      .get(`http://${apiUrl}/status`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
           switch (response.data.status) {
-            case 'roundover':
-              newRound()
-              break
+            // Keeping in case of edge cases
+            // case 'roundover':
+            //   newRound()
+            //   break
             case 'gameover':
               if (getActivePlayersLength(response.data) >= 2) {
                 startGame()
               } else if (
                 getActivePlayersLength(response.data) === 1 &&
-                game.last_win !== ''
+                game.last_win === account
               ) {
                 axios
-                  .get(`http://${apiUrl}/reconcile`)
+                  .get(`http://${apiUrl}/reconcile`, axiosConfig)
                   .then((response: AxiosResponse) => {
                     console.info(response)
                   })
@@ -85,20 +85,14 @@ const MainRoom = (props: MainRoomProps) => {
         }
       })
       .catch(function (error: AxiosError) {
-        if (
-          error.response &&
-          (error as any).response.data.error === 'no game exists'
-        ) {
-          createNewGame()
-        }
-        console.error(error)
+        console.error((error as any).response.data.error)
       })
   }
 
   const startGame = () => {
     if (game.status === 'gameover') {
       axios
-        .get(`http://${apiUrl}/start`)
+        .get(`http://${apiUrl}/start`, axiosConfig)
         .then(function () {})
         .catch(function (error: AxiosError) {
           console.error(error)
@@ -108,7 +102,7 @@ const MainRoom = (props: MainRoomProps) => {
 
   const rolldice = () => {
     axios
-      .get(`http://${apiUrl}/rolldice/${account}`)
+      .get(`http://${apiUrl}/rolldice`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setPlayerDice(response.data.dice)
@@ -118,23 +112,23 @@ const MainRoom = (props: MainRoomProps) => {
         console.error(error)
       })
   }
-
-  const createNewGame = (ante: number = gameAnte) => {
-    axios
-      .get(`http://${apiUrl}/new/${ante}`)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          setNewGame(response.data)
-        }
-      })
-      .catch(function (error: AxiosError) {
-        console.error(error)
-      })
-  }
+  // Saving for the future when we have multiple rooms
+  // const createNewGame = (ante: number = gameAnte) => {
+  //   axios
+  //     .get(`http://${apiUrl}/new/${ante}`)
+  //     .then(function (response: AxiosResponse) {
+  //       if (response.data) {
+  //         setNewGame(response.data)
+  //       }
+  //     })
+  //     .catch(function (error: AxiosError) {
+  //       console.error(error)
+  //     })
+  // }
 
   const newRound = () => {
     axios
-      .get(`http://${apiUrl}/newround`)
+      .get(`http://${apiUrl}/newround`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           window.sessionStorage.removeItem('round_timer')
@@ -179,7 +173,7 @@ const MainRoom = (props: MainRoomProps) => {
               break
             case message.startsWith('join:'):
               const joinStart = 'join:'
-              const joinAccount = shortenAddress(
+              const joinAccount = shortenIfAddress(
                 message.substring(joinStart.length),
               )
               toast.info(`Account ${joinAccount} just joined`)
@@ -196,7 +190,7 @@ const MainRoom = (props: MainRoomProps) => {
               break
             case message.startsWith('outs:'):
               const outsStart = 'join:'
-              const strikedAccount = shortenAddress(
+              const strikedAccount = shortenIfAddress(
                 message.substring(outsStart.length),
               )
               toast.info(`Player ${strikedAccount} timed out and got striked`)
@@ -243,31 +237,9 @@ const MainRoom = (props: MainRoomProps) => {
     }
   }
 
-  const joinGame = () => {
-    toast.info('Joining game...')
-    axios
-      .get(`http://${apiUrl}/join/${account}`)
-      .then(function (response: AxiosResponse) {
-        toast.info('Welcome to the game')
-        updateStatus()
-      })
-      .catch(function (error: AxiosError) {
-        let errorMessage = (error as any).response.data.error.replace(
-          / \[.+\]/gm,
-          '',
-        )
-        toast.error(
-          <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
-        )
-        console.group()
-        console.error('Error:', (error as any).response.data.error)
-        console.groupEnd()
-      })
-  }
-
   const nextTurn = () => {
     axios
-      .get(`http://${apiUrl}/next`)
+      .get(`http://${apiUrl}/next`, axiosConfig)
       .then(function (response: AxiosResponse) {
         window.sessionStorage.removeItem('round_timer')
         setTimer(timeoutTime)
@@ -289,7 +261,7 @@ const MainRoom = (props: MainRoomProps) => {
       return player.account === accountToOut
     })
     axios
-      .get(`http://${apiUrl}/out/${accountToOut}/${player[0].outs + 1}`)
+      .get(`http://${apiUrl}/out/${player[0].outs + 1}`, axiosConfig)
       .then(function (response: AxiosResponse) {
         setTimeoutsCount((prev) => prev + 1)
         setNewGame(response.data)
@@ -354,8 +326,7 @@ const MainRoom = (props: MainRoomProps) => {
       }}
       id="mainRoom"
     >
-      <SideBar ante={gameAnte} gamePot={gamePot} joinGame={joinGame} />
-      <Test />
+      <SideBar ante={gameAnte} gamePot={gamePot} />
       <GameTable playerDice={playerDice} timer={timer} />
     </div>
   )

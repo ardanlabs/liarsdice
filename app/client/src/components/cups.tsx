@@ -4,7 +4,7 @@ import Star from './icons/star'
 import Claim from './claim'
 import Cup from './cup'
 import { GameContext } from '../gameContext'
-import { shortenAddress } from '@usedapp/core'
+import { shortenIfAddress } from '@usedapp/core'
 
 interface CupsProps {
   playerDice: dice
@@ -50,7 +50,7 @@ const Cups: FC<CupsProps> = (CupsProps) => {
               ? 'active'
               : ''
           }
-        >{`Player ${shortenAddress(player.account)}`}</h2>
+        >{`Player ${shortenIfAddress(player.account)}`}</h2>
         <div className="claim">
           {claims[0] ? 'Claim: ' : ''}
           <Claim

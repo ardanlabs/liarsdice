@@ -1,15 +1,12 @@
 import React, { useContext } from 'react'
-import Button from './button'
 import { user } from '../types/index.d'
 import PlayersList from './playersList'
 import { useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
+import Join from './Join'
 
-interface PlayersProps {
-  joinGame: Function
-}
+interface PlayersProps {}
 const Players = (props: PlayersProps) => {
-  const { joinGame } = props
   const { account } = useEthers()
   const { game } = useContext(GameContext)
   const isUserPlaying = (game.cups as user[]).filter((user) => {
@@ -46,13 +43,7 @@ const Players = (props: PlayersProps) => {
         <PlayersList title="Active players" />
         {/* <PlayersList players={waitingPlayers} title="Waiting players" /> */}
       </div>
-      <Button
-        disabled={Boolean(isUserPlaying.length)}
-        classes="join__buton"
-        clickHandler={() => joinGame()}
-      >
-        <span>Join Game</span>
-      </Button>
+      <Join disabled={Boolean(isUserPlaying.length)} />
     </div>
   )
 }

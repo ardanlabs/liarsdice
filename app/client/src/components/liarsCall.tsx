@@ -1,4 +1,4 @@
-import { shortenAddress } from '@usedapp/core'
+import { shortenIfAddress } from '@usedapp/core'
 import React, { FC, useContext } from 'react'
 import { GameContext } from '../gameContext'
 
@@ -25,8 +25,8 @@ const LiarsCall: FC<LiarsCallProps> = (LiarsCallProps) => {
     >
       {game.last_win && game.last_out ? (
         <span>
-          Player {shortenAddress(game.last_win)} called Player{' '}
-          {shortenAddress(game.last_out)} a liar and got striked
+          Player {shortenIfAddress(game.last_win)} called Player{' '}
+          {shortenIfAddress(game.last_out)} a liar and got striked
         </span>
       ) : (
         ''
