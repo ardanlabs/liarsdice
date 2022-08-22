@@ -57,6 +57,8 @@ func FromAddress(value any, signature string) (string, error) {
 		return "", err
 	}
 
+	sig[64] = sig[64] - EthID
+
 	// Capture the public key associated with this data and signature.
 	publicKey, err := crypto.SigToPub(data, sig)
 	if err != nil {
