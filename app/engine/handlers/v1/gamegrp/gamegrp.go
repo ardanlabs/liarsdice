@@ -172,11 +172,6 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // Join adds the given player to the game.
 func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame()
-	if err != nil {
-		return err
-	}
-
 	address, err := validateSignature(r)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
@@ -185,6 +180,13 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	token, err := generateToken(h.Auth, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	// Create a game if it does not exit.
+	g, err := h.getGame()
+	if err != nil {
+		g = game.New(h.Banker, address, 1)
+		h.setGame(g)
 	}
 
 	if err := g.AddAccount(ctx, address); err != nil {
