@@ -11,15 +11,18 @@ const AppHeader: FC<AppHeaderProps> = (AppHeaderProps) => {
   const { show } = AppHeaderProps
   const { account } = useEthers()
   const [balance, setBalance] = useState(0)
+  const apiUrl = process.env.REACT_APP_GO_HOST
+    ? process.env.REACT_APP_GO_HOST
+    : 'localhost:3000/v1/game'
 
   const updateBalance = useCallback(() => {
     if (account)
       axios
-        .get(`http://${process.env.REACT_APP_GO_HOST}/balance/${account}`)
+        .get(`http://${apiUrl}/balance/${account}`)
         .then((response: AxiosResponse) => {
           setBalance(response.data.balance)
         })
-  }, [account])
+  }, [account, apiUrl])
 
   const toggle = () => {
     const dropdown = document.querySelector('.dropdown-menu') as HTMLElement

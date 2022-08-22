@@ -7,6 +7,7 @@ import { GameContext } from '../gameContext'
 import { dice, game, user } from '../types/index.d'
 import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
+import Test from './test'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
@@ -19,6 +20,9 @@ const MainRoom = (props: MainRoomProps) => {
     [game.cups.length, gameAnte],
   )
   let [playerDice, setPlayerDice] = useState([] as dice)
+  const apiUrl = process.env.REACT_APP_GO_HOST
+    ? process.env.REACT_APP_GO_HOST
+    : 'localhost:3000/v1/game'
 
   useEffect(() => {
     setPlayerDice(
@@ -40,7 +44,7 @@ const MainRoom = (props: MainRoomProps) => {
       setGame(newGame)
     },
     // Timer time in seconds
-    timeoutTime = 15,
+    timeoutTime = 30,
     // Get the timer that's set inside the sessionStorage
     sessionTimer = window.sessionStorage.getItem('round_timer')
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
@@ -52,7 +56,7 @@ const MainRoom = (props: MainRoomProps) => {
 
   const updateStatus = () => {
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/status`)
+      .get(`http://${apiUrl}/status`)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
@@ -68,7 +72,7 @@ const MainRoom = (props: MainRoomProps) => {
                 game.last_win !== ''
               ) {
                 axios
-                  .get(`http://${process.env.REACT_APP_GO_HOST}/reconcile`)
+                  .get(`http://${apiUrl}/reconcile`)
                   .then((response: AxiosResponse) => {
                     console.info(response)
                   })
@@ -94,7 +98,7 @@ const MainRoom = (props: MainRoomProps) => {
   const startGame = () => {
     if (game.status === 'gameover') {
       axios
-        .get(`http://${process.env.REACT_APP_GO_HOST}/start`)
+        .get(`http://${apiUrl}/start`)
         .then(function () {})
         .catch(function (error: AxiosError) {
           console.error(error)
@@ -104,7 +108,7 @@ const MainRoom = (props: MainRoomProps) => {
 
   const rolldice = () => {
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/rolldice/${account}`)
+      .get(`http://${apiUrl}/rolldice/${account}`)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setPlayerDice(response.data.dice)
@@ -117,7 +121,7 @@ const MainRoom = (props: MainRoomProps) => {
 
   const createNewGame = (ante: number = gameAnte) => {
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/new/${ante}`)
+      .get(`http://${apiUrl}/new/${ante}`)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
@@ -130,13 +134,12 @@ const MainRoom = (props: MainRoomProps) => {
 
   const newRound = () => {
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/newround`)
+      .get(`http://${apiUrl}/newround`)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           window.sessionStorage.removeItem('round_timer')
           setTimer(timeoutTime)
           setTimeoutsCount(0)
-          clearInterval(roundInterval)
           updateStatus()
           rolldice()
         }
@@ -152,7 +155,7 @@ const MainRoom = (props: MainRoomProps) => {
   }
 
   const connect = () => {
-    const ws = new WebSocket(`ws://${process.env.REACT_APP_GO_HOST}/events`)
+    const ws = new WebSocket(`ws://${apiUrl}/events`)
     if (
       wsStatus.current !== 'open' &&
       wsStatus.current !== 'attemptingConnection'
@@ -243,7 +246,7 @@ const MainRoom = (props: MainRoomProps) => {
   const joinGame = () => {
     toast.info('Joining game...')
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/join/${account}`)
+      .get(`http://${apiUrl}/join/${account}`)
       .then(function (response: AxiosResponse) {
         toast.info('Welcome to the game')
         updateStatus()
@@ -264,7 +267,7 @@ const MainRoom = (props: MainRoomProps) => {
 
   const nextTurn = () => {
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/next`)
+      .get(`http://${apiUrl}/next`)
       .then(function (response: AxiosResponse) {
         window.sessionStorage.removeItem('round_timer')
         setTimer(timeoutTime)
@@ -286,11 +289,7 @@ const MainRoom = (props: MainRoomProps) => {
       return player.account === accountToOut
     })
     axios
-      .get(
-        `http://${process.env.REACT_APP_GO_HOST}/out/${accountToOut}/${
-          player[0].outs + 1
-        }`,
-      )
+      .get(`http://${apiUrl}/out/${accountToOut}/${player[0].outs + 1}`)
       .then(function (response: AxiosResponse) {
         setTimeoutsCount((prev) => prev + 1)
         setNewGame(response.data)
@@ -356,6 +355,7 @@ const MainRoom = (props: MainRoomProps) => {
       id="mainRoom"
     >
       <SideBar ante={gameAnte} gamePot={gamePot} joinGame={joinGame} />
+      <Test />
       <GameTable playerDice={playerDice} timer={timer} />
     </div>
   )

@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import axios from 'axios'
 import Button from './button'
 // Contract and contract Abi
-import { contractAddress } from '../contracts'
+import { getContractAddress } from '../contracts'
 import contractAbi from '../abi/Contract.json'
 // Contract utils from DApp library
 import { useContractFunction, useEthers } from '@usedapp/core'
@@ -47,6 +47,7 @@ const Transaction = (props: transactionProps) => {
   const [transactionAmount, setTransactionAmount] = useState(0)
   // Creates the interface with the contract aby
   const contractInterface = new utils.Interface(contractAbi)
+  const contractAddress = getContractAddress()
   // Creates a new contract object
   const contract = new Contract(contractAddress, contractInterface)
   // Extracts the functions from the contract

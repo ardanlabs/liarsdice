@@ -9,6 +9,10 @@ import { game } from '../types/index.d'
 function Footer() {
   const { account } = useEthers()
   const { deactivate } = useEthers()
+  const apiUrl = process.env.REACT_APP_GO_HOST
+    ? process.env.REACT_APP_GO_HOST
+    : 'localhost:3000/v1/game'
+
   function handleDisconnectAccount() {
     deactivate()
   }
@@ -25,9 +29,7 @@ function Footer() {
 
   const sendClaim = () => {
     axios
-      .get(
-        `http://${process.env.REACT_APP_GO_HOST}/claim/${account}/${number}/${suite}`,
-      )
+      .get(`http://${apiUrl}/claim/${account}/${number}/${suite}`)
       .then(function (response: AxiosResponse) {
         console.info('Claim made!')
         if (response.data) {
@@ -40,7 +42,7 @@ function Footer() {
   }
   const callLiar = () => {
     axios
-      .get(`http://${process.env.REACT_APP_GO_HOST}/liar/${account}`)
+      .get(`http://${apiUrl}/liar/${account}`)
       .then(function (response: AxiosResponse) {
         console.info('Liar called!')
       })
