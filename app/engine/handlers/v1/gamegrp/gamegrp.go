@@ -385,3 +385,21 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 	return h.Status(ctx, w, r)
 }
+
+func (h *Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	var dt struct {
+		Name      string `json:"name"`
+		Status    string `json:"status"`
+		Signature string `json:"sig"`
+	}
+
+	if err := web.Decode(r, &dt); err != nil {
+		return fmt.Errorf("unable to decode payload: %w", err)
+	}
+
+	fmt.Println("*********************************************")
+	fmt.Printf("%#v\n", dt)
+	fmt.Println("*********************************************")
+
+	return web.Respond(ctx, w, dt, http.StatusOK)
+}

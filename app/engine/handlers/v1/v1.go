@@ -35,6 +35,7 @@ func Routes(app *web.App, cfg Config) {
 		WS:     websocket.Upgrader{},
 	}
 
+	app.Handle(http.MethodPost, version, "/game/test", ggh.Test)
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
 	app.Handle(http.MethodGet, version, "/game/new/:ante", ggh.NewGame)
