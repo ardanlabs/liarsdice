@@ -263,7 +263,9 @@ geth-deposit:
 # This will start the React Frontend
 # You need to first run react-install to install all dependecies, and then once that is done run react-start
 # Your default localhost will open at http://localhost:3001
+
 react-install:
-	npm install --prefix app/client/assets/frontend/
+	npm install --prefix app/client/
+
 react-start:
-	PORT=3001 npm start --prefix app/client/assets/frontend/
+	PORT=3001 npm start --prefix app/client/

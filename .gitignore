@@ -1,7 +1,7 @@
+app/client/node_modules
 zarf/ethereum/geth
 zarf/contract
 etherscan.env
-geth.ipc
 history
 
 # Binaries for programs and plugins
