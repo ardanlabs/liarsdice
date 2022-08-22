@@ -72,6 +72,7 @@ type Game struct {
 	id            string
 	banker        Banker
 	mu            sync.RWMutex
+	owner         string
 	status        string
 	lastOutAcct   string
 	lastWinAcct   string
@@ -85,12 +86,13 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(banker Banker, ante int64) *Game {
+func New(banker Banker, owner string, ante int64) *Game {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	return &Game{
 		id:     uuid.NewString(),
 		banker: banker,
+		owner:  owner,
 		status: StatusGameOver,
 		round:  1,
 		ante:   ante,
@@ -141,12 +143,16 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 }
 
 // StartPlay changes the status to Playing to allow the game to begin.
-func (g *Game) StartPlay() error {
+func (g *Game) StartPlay(owner string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	if g.status != StatusGameOver {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
+	}
+
+	if g.owner != owner {
+		return fmt.Errorf("only the game owner can start the game: owner[%s] caller[%s]", g.owner, owner)
 	}
 
 	if len(g.cups) < minNumberPlayers {
@@ -421,7 +427,10 @@ func (g *Game) PlayerBalance(ctx context.Context, account string) (*big.Int, err
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
-func (g *Game) Reconcile(ctx context.Context) error {
+func (g *Game) Reconcile(ctx context.Context, winningAccount string) error {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	var winner string
 	var losers []string
 
@@ -431,6 +440,10 @@ func (g *Game) Reconcile(ctx context.Context) error {
 		if _, found := g.cups[cup]; found {
 			winner = cup
 		}
+	}
+
+	if winner != winningAccount {
+		return fmt.Errorf("only winning account can reconcile the game, winner[%s]", winner)
 	}
 
 	// Find the losers.

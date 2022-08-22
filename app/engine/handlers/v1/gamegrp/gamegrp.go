@@ -133,76 +133,41 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 		}
 	}
 
+	address, err := validateSignature(r)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	token, err := generateToken(h.Auth, address)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
 	ante, err := strconv.ParseInt(web.Param(r, "ante"), 10, 64)
 	if err != nil {
 		return v1Web.NewRequestError(errors.New("invalid ante value"), http.StatusBadRequest)
 	}
 
-	h.setGame(game.New(h.Banker, ante))
+	h.setGame(game.New(h.Banker, address, ante))
 
-	h.Evts.Send("newgame")
-
-	return h.Status(ctx, w, r)
-}
-
-// Start creates a new game if there is no game or the status of the current game
-// is GameOver.
-func (h *Handlers) Start(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
 	}
 
-	status := g.Info()
-	if status.Status != game.StatusGameOver {
-		return v1Web.NewRequestError(errors.New("current game status doesn't allow this call"), http.StatusBadRequest)
-	}
-
-	if err := g.StartPlay(); err != nil {
+	if err := g.AddAccount(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("start")
+	h.Evts.Send("newgame:" + address)
 
-	return h.Status(ctx, w, r)
-}
-
-// Reconcile calls the smart contract reconcile method.
-func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame()
-	if err != nil {
-		return err
-	}
-
-	err = g.Reconcile(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusInternalServerError)
-	}
-
-	return h.Status(ctx, w, r)
-}
-
-// NewRound starts a new round reseting the required data.
-func (h *Handlers) NewRound(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame()
-	if err != nil {
-		return err
-	}
-
-	playersLeft, err := g.NextRound()
-	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	h.Evts.Send("newround")
-
-	resp := struct {
-		PlayersLeft int `json:"players_left"`
+	data := struct {
+		Token string `json:"token"`
 	}{
-		PlayersLeft: playersLeft,
+		Token: token,
 	}
 
-	return web.Respond(ctx, w, resp, http.StatusOK)
+	return web.Respond(ctx, w, data, http.StatusOK)
 }
 
 // Join adds the given player to the game.
@@ -212,7 +177,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	address, err := validateCall(r)
+	address, err := validateSignature(r)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
@@ -229,12 +194,34 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	h.Evts.Send("join:" + address)
 
 	data := struct {
-		Token string
+		Token string `json:"token"`
 	}{
 		Token: token,
 	}
 
 	return web.Respond(ctx, w, data, http.StatusOK)
+}
+
+// StartGame changes the status of the game so players can begin to play.
+func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	g, err := h.getGame()
+	if err != nil {
+		return err
+	}
+
+	claims, err := auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
+	}
+	address := claims.Subject
+
+	if err := g.StartPlay(address); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Evts.Send("start:" + address)
+
+	return h.Status(ctx, w, r)
 }
 
 // RollDice will roll 5 dice for the given player and game.
@@ -316,28 +303,22 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 	address := claims.Subject
 
-	winner, loser, err := g.CallLiar(address)
+	if _, _, err := g.CallLiar(address); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	playersLeft, err := g.NextRound()
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("callliar")
+	h.Evts.Send(fmt.Sprintf("callliar:%d", playersLeft))
 
-	resp := struct {
-		Winner string `json:"winner"`
-		Loser  string `json:"loser"`
-	}{
-		Winner: winner,
-		Loser:  loser,
-	}
-
-	return web.Respond(ctx, w, resp, http.StatusOK)
+	return h.Status(ctx, w, r)
 }
 
-// UpdateOut replaces the current out amount of the player. This call is not
-// part of the game flow, it is used to control when a player should be removed
-// from the game.
-func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// Reconcile calls the smart contract reconcile method.
+func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -349,16 +330,10 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 	}
 	address := claims.Subject
 
-	outs, err := strconv.Atoi(web.Param(r, "outs"))
+	err = g.Reconcile(ctx, address)
 	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
+		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
-
-	if err := g.ApplyOut(address, outs); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	h.Evts.Send("outs:" + address)
 
 	return h.Status(ctx, w, r)
 }
@@ -410,6 +385,35 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 	return h.Status(ctx, w, r)
 }
 
+// UpdateOut replaces the current out amount of the player. This call is not
+// part of the game flow, it is used to control when a player should be removed
+// from the game.
+func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	g, err := h.getGame()
+	if err != nil {
+		return err
+	}
+
+	claims, err := auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
+	}
+	address := claims.Subject
+
+	outs, err := strconv.Atoi(web.Param(r, "outs"))
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
+	}
+
+	if err := g.ApplyOut(address, outs); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Evts.Send("outs:" + address)
+
+	return h.Status(ctx, w, r)
+}
+
 // =============================================================================
 
 // SetGame safely sets a game pointer.
@@ -434,7 +438,7 @@ func (h *Handlers) getGame() (*game.Game, error) {
 
 // =============================================================================
 
-func validateCall(r *http.Request) (string, error) {
+func validateSignature(r *http.Request) (string, error) {
 	var dt struct {
 		DateTime  string `json:"date_time"` // YYYYMMDDHHMMSS
 		Signature string `json:"sig"`

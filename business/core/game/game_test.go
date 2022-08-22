@@ -25,7 +25,7 @@ func TestSuccessGamePlay(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, 0)
+	g := New(&bank, "owner", 0)
 	ctx := context.Background()
 
 	// =========================================================================
@@ -48,7 +48,7 @@ func TestSuccessGamePlay(t *testing.T) {
 	}
 
 	// Start the game.
-	err = g.StartPlay()
+	err = g.StartPlay("owner")
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
@@ -249,7 +249,7 @@ func TestInvalidClaim(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, 0)
+	g := New(&bank, "owner", 0)
 	ctx := context.Background()
 
 	// =========================================================================
@@ -266,7 +266,7 @@ func TestInvalidClaim(t *testing.T) {
 		t.Fatalf("unexpected error adding player 2: %s", err)
 	}
 
-	err = g.StartPlay()
+	err = g.StartPlay("owner")
 	if err != nil {
 		t.Fatalf("unexpected error starting game: %s", err)
 	}
@@ -299,9 +299,9 @@ func TestInvalidClaim(t *testing.T) {
 }
 
 func TestGameWithoutEnoughPlayers(t *testing.T) {
-	g := New(nil, 0)
+	g := New(nil, "owner", 0)
 
-	err := g.StartPlay()
+	err := g.StartPlay("owner")
 	if err == nil {
 		t.Fatal("expecting error trying to start a game without enough players")
 	}
@@ -313,7 +313,7 @@ func TestWrongPlayerTryingToPlayer(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, 0)
+	g := New(&bank, "owner", 0)
 	ctx := context.Background()
 
 	err := g.AddAccount(ctx, "player1")
@@ -326,7 +326,7 @@ func TestWrongPlayerTryingToPlayer(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	err = g.StartPlay()
+	err = g.StartPlay("owner")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -343,7 +343,7 @@ func TestAddAccountWithoutBalance(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, 101)
+	g := New(&bank, "owner", 101)
 
 	ctx := context.Background()
 
