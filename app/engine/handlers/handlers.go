@@ -15,7 +15,6 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +35,6 @@ type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	Log      *zap.SugaredLogger
 	Auth     *auth.Auth
-	DB       *sqlx.DB
 	Banker   game.Banker
 	Evts     *events.Events
 }
@@ -85,7 +83,6 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 	v1.Routes(app, v1.Config{
 		Log:    cfg.Log,
 		Auth:   cfg.Auth,
-		DB:     cfg.DB,
 		Banker: cfg.Banker,
 		Evts:   cfg.Evts,
 	})
@@ -115,14 +112,13 @@ func DebugStandardLibraryMux() *http.ServeMux {
 // debug application routes for the service. This bypassing the use of the
 // DefaultServerMux. Using the DefaultServerMux would be a security risk since
 // a dependency could inject a handler into our service without us knowing it.
-func DebugMux(build string, log *zap.SugaredLogger, db *sqlx.DB) http.Handler {
+func DebugMux(build string, log *zap.SugaredLogger) http.Handler {
 	mux := DebugStandardLibraryMux()
 
 	// Register debug check endpoints.
 	cgh := checkgrp.Handlers{
 		Build: build,
 		Log:   log,
-		DB:    db,
 	}
 	mux.HandleFunc("/debug/readiness", cgh.Readiness)
 	mux.HandleFunc("/debug/liveness", cgh.Liveness)

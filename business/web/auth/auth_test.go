@@ -42,7 +42,6 @@ func Test_Auth(t *testing.T) {
 					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 				},
-				Roles: []string{auth.RoleAdmin},
 			}
 
 			token, err := a.GenerateToken(claims)
@@ -57,19 +56,12 @@ func Test_Auth(t *testing.T) {
 			}
 			t.Logf("\t%s\tTest %d:\tShould be able to parse the claims.", success, testID)
 
-			if exp, got := len(claims.Roles), len(parsedClaims.Roles); exp != got {
-				t.Logf("\t\tTest %d:\texp: %d", testID, exp)
-				t.Logf("\t\tTest %d:\tgot: %d", testID, got)
-				t.Fatalf("\t%s\tTest %d:\tShould have the expected number of roles: %v", failed, testID, err)
-			}
-			t.Logf("\t%s\tTest %d:\tShould have the expected number of roles.", success, testID)
-
-			if exp, got := claims.Roles[0], parsedClaims.Roles[0]; exp != got {
+			if exp, got := claims.Subject, parsedClaims.Subject; exp != got {
 				t.Logf("\t\tTest %d:\texp: %v", testID, exp)
 				t.Logf("\t\tTest %d:\tgot: %v", testID, got)
-				t.Fatalf("\t%s\tTest %d:\tShould have the expected roles: %v", failed, testID, err)
+				t.Fatalf("\t%s\tTest %d:\tShould have the expected address: %v", failed, testID, err)
 			}
-			t.Logf("\t%s\tTest %d:\tShould have the expected roles.", success, testID)
+			t.Logf("\t%s\tTest %d:\tShould have the expected address.", success, testID)
 		}
 	}
 }

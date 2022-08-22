@@ -290,7 +290,7 @@ func TestInvalidClaim(t *testing.T) {
 		t.Fatalf("unexpected error making claim for player1: %s", err)
 	}
 
-	g.NextTurn()
+	g.NextTurn("player1")
 
 	err = g.Claim("player2", 2, 6)
 	if err == nil {

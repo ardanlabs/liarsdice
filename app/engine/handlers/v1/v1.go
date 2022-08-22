@@ -8,10 +8,10 @@ import (
 	"github.com/ardanlabs/liarsdice/app/engine/handlers/v1/gamegrp"
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +19,6 @@ import (
 type Config struct {
 	Log    *zap.SugaredLogger
 	Auth   *auth.Auth
-	DB     *sqlx.DB
 	Banker game.Banker
 	Evts   *events.Events
 }
@@ -33,20 +32,22 @@ func Routes(app *web.App, cfg Config) {
 		Banker: cfg.Banker,
 		Evts:   cfg.Evts,
 		WS:     websocket.Upgrader{},
+		Auth:   cfg.Auth,
 	}
 
-	app.Handle(http.MethodPost, version, "/game/test", ggh.Test)
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
 	app.Handle(http.MethodGet, version, "/game/new/:ante", ggh.NewGame)
-	app.Handle(http.MethodGet, version, "/game/join/:address", ggh.Join) // POST
 	app.Handle(http.MethodGet, version, "/game/start", ggh.Start)
 	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile)
-	app.Handle(http.MethodGet, version, "/game/rolldice/:address", ggh.RollDice)
-	app.Handle(http.MethodGet, version, "/game/claim/:address/:number/:suite", ggh.Claim)
-	app.Handle(http.MethodGet, version, "/game/liar/:address", ggh.CallLiar)
 	app.Handle(http.MethodGet, version, "/game/newround", ggh.NewRound)
-	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn)
-	app.Handle(http.MethodGet, version, "/game/out/:address/:outs", ggh.UpdateOut)
-	app.Handle(http.MethodGet, version, "/game/balance/:address", ggh.Balance)
+
+	app.Handle(http.MethodPost, version, "/game/join", ggh.Join)
+
+	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/claim/:number/:suite", ggh.Claim, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/out/:outs", ggh.UpdateOut, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Auth))
 }

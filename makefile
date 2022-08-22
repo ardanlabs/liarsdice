@@ -13,20 +13,6 @@
 #   eth.getBlockByNumber(8)
 #   eth.getTransaction("0xaea41e7c13a7ea627169c74ade4d5ea86664ff1f740cd90e499f3f842656d4ad")
 #
-# Testing running system
-# For testing a simple query on the system. Don't forget to `make seed` first.
-# curl --user "admin@example.com:gophers" http://localhost:3000/v1/users/token
-# export TOKEN="COPY TOKEN STRING FROM LAST CALL"
-# curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/users/1/2
-#
-# Test debug endpoints
-# curl http://localhost:4000/debug/liveness
-# curl http://localhost:4000/debug/readiness
-#
-# Running pgcli client for database
-# brew install pgcli
-# pgcli postgresql://postgres:postgres@localhost
-#
 # Web3 API
 # https://web3js.readthedocs.io/en/v1.7.4/
 
@@ -35,135 +21,25 @@
 
 dev.setup:
 	brew update
-	brew list kind || brew install kind
-	brew list kubectl || brew install kubectl
-	brew list kustomize || brew install kustomize
 	brew list geth || brew install geth
 
 # ==============================================================================
-# Building containers
-
-# $(shell git rev-parse --short HEAD)
-VERSION := 1.0
-
-build-engine:
-	docker build \
-		-f zarf/docker/dockerfile.engine \
-		-t liars-game-engine:$(VERSION) \
-		--build-arg BUILD_REF=$(VERSION) \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		.
-
-# ==============================================================================
-# Running from within k8s/kind
-
-KIND_CLUSTER := ardan-engine-cluster
-
-# Upgrade to latest Kind: brew upgrade kind
-# For full Kind v0.14 release notes: https://github.com/kubernetes-sigs/kind/releases/tag/v0.14.0
-# The image used below was copied by the above link and supports both amd64 and arm64.
-
-kind-up:
-	kind create cluster \
-		--image kindest/node:v1.24.0@sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e \
-		--name $(KIND_CLUSTER) \
-		--config zarf/k8s/kind/kind-config.yaml
-	kubectl config set-context --current --namespace=engine-system
-
-kind-down:
-	kind delete cluster --name $(KIND_CLUSTER)
-
-kind-load:
-	cd zarf/k8s/kind/engine-pod; kustomize edit set image engine-image=liars-game-engine:$(VERSION)
-	kind load docker-image liars-game-engine:$(VERSION) --name $(KIND_CLUSTER)
-
-kind-apply:
-	kustomize build zarf/k8s/kind/database-pod | kubectl apply -f -
-	kubectl wait --namespace=database-system --timeout=120s --for=condition=Available deployment/database-pod
-	kustomize build zarf/k8s/kind/engine-pod | kubectl apply -f -
-
-kind-services-delete:
-	kustomize build zarf/k8s/kind/engine-pod | kubectl delete -f -
-	kustomize build zarf/k8s/kind/database-pod | kubectl delete -f -
-
-kind-restart:
-	kubectl rollout restart deployment engine-pod
-
-kind-update: build-engine kind-load kind-restart
-
-kind-update-apply: build-engine kind-load kind-apply
-
-kind-logs:
-	kubectl logs -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
-
-kind-logs-engine:
-	kubectl logs -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go -service=engine-API
-
-kind-logs-db:
-	kubectl logs -l app=database --namespace=database-system --all-containers=true -f --tail=100
-
-kind-status:
-	kubectl get nodes -o wide
-	kubectl get svc -o wide
-	kubectl get pods -o wide --watch --all-namespaces
-
-kind-status-engine:
-	kubectl get pods -o wide --watch --namespace=engine-system
-
-kind-status-db:
-	kubectl get pods -o wide --watch --namespace=database-system
-
-kind-describe:
-	kubectl describe nodes
-	kubectl describe svc
-	kubectl describe pod -l app=engine
-
-kind-describe-deployment:
-	kubectl describe deployment engine-pod
-
-kind-describe-replicaset:
-	kubectl get rs
-	kubectl describe rs -l app=engine
-
-kind-events:
-	kubectl get ev --sort-by metadata.creationTimestamp
-
-kind-events-warn:
-	kubectl get ev --field-selector type=Warning --sort-by metadata.creationTimestamp
-
-kind-context-engine:
-	kubectl config set-context --current --namespace=engine-system
-
-kind-shell:
-	kubectl exec -it $(shell kubectl get pods | grep engine | cut -c1-26) --container engine-api -- /bin/sh
-
-kind-database:
-	# ./admin --db-disable-tls=1 migrate
-	# ./admin --db-disable-tls=1 seed
-
-# ==============================================================================
-# Game API
+# Game Engine
 
 game-run:
 	go run app/engine/main.go
 
 # ==============================================================================
-# Client support
+# Browser Application
+# This will start the React Frontend
+# You need to first run react-install to install all dependecies, and then once that is done run react-start
+# Your default localhost will open at http://localhost:3001
 
-client-run:
-	go run app/client/main.go | go run app/tooling/logfmt/main.go
+react-install:
+	npm install --prefix app/client/
 
-client-view:
-	python -m webbrowser "http://localhost"
-
-# ==============================================================================
-# Administration
-
-migrate:
-	go run app/tooling/engine-admin/main.go migrate
-
-seed: migrate
-	go run app/tooling/engine-admin/main.go seed
+react-start:
+	PORT=3001 npm start --prefix app/client/
 
 # ==============================================================================
 # Running tests within the local computer
@@ -258,14 +134,3 @@ geth-new-account:
 geth-deposit:
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
-
-# ==============================================================================
-# This will start the React Frontend
-# You need to first run react-install to install all dependecies, and then once that is done run react-start
-# Your default localhost will open at http://localhost:3001
-
-react-install:
-	npm install --prefix app/client/
-
-react-start:
-	PORT=3001 npm start --prefix app/client/

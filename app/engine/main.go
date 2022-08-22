@@ -15,7 +15,6 @@ import (
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ardanlabs/liarsdice/app/engine/handlers"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/business/sys/database"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
@@ -78,15 +77,6 @@ func run(log *zap.SugaredLogger) error {
 			KeysFolder string `conf:"default:zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
-		DB struct {
-			User         string `conf:"default:postgres"`
-			Password     string `conf:"default:postgres,mask"`
-			Host         string `conf:"default:localhost"`
-			Name         string `conf:"default:postgres"`
-			MaxIdleConns int    `conf:"default:0"`
-			MaxOpenConns int    `conf:"default:0"`
-			DisableTLS   bool   `conf:"default:true"`
-		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -136,29 +126,6 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	// =========================================================================
-	// Database Support
-
-	// Create connectivity to the database.
-	log.Infow("startup", "status", "initializing database support", "host", cfg.DB.Host)
-
-	db, err := database.Open(database.Config{
-		User:         cfg.DB.User,
-		Password:     cfg.DB.Password,
-		Host:         cfg.DB.Host,
-		Name:         cfg.DB.Name,
-		MaxIdleConns: cfg.DB.MaxIdleConns,
-		MaxOpenConns: cfg.DB.MaxOpenConns,
-		DisableTLS:   cfg.DB.DisableTLS,
-	})
-	if err != nil {
-		return fmt.Errorf("connecting to db: %w", err)
-	}
-	defer func() {
-		log.Infow("shutdown", "status", "stopping database support", "host", cfg.DB.Host)
-		db.Close()
-	}()
-
-	// =========================================================================
 	// Start Game and Bank Services
 
 	evts := events.New()
@@ -186,7 +153,7 @@ func run(log *zap.SugaredLogger) error {
 	// related endpoints. This includes the standard library endpoints.
 
 	// Construct the mux for the debug calls.
-	debugMux := handlers.DebugMux(build, log, db)
+	debugMux := handlers.DebugMux(build, log)
 
 	// Start the service listening for debug requests.
 	// Not concerned with shutting this down with load shedding.
@@ -211,7 +178,6 @@ func run(log *zap.SugaredLogger) error {
 		Shutdown: shutdown,
 		Log:      log,
 		Auth:     auth,
-		DB:       db,
 		Banker:   bank,
 		Evts:     evts,
 	}, handlers.WithCORS("*"))

@@ -275,13 +275,13 @@ func (g *Game) Claim(account string, number int, suite int) error {
 	}
 	g.claims = append(g.claims, c)
 
-	g.NextTurn()
+	g.NextTurn(account)
 
 	return nil
 }
 
 // NextTurn determines which account make the next move.
-func (g *Game) NextTurn() {
+func (g *Game) NextTurn(account string) {
 	l := len(g.cupsOrder)
 
 	for i := 0; i < l; i++ {
