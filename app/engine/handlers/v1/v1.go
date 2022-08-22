@@ -39,7 +39,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
 	app.Handle(http.MethodGet, version, "/game/new/:ante", ggh.NewGame)
-	app.Handle(http.MethodGet, version, "/game/join/:address", ggh.Join)
+	app.Handle(http.MethodGet, version, "/game/join/:address", ggh.Join) // POST
 	app.Handle(http.MethodGet, version, "/game/start", ggh.Start)
 	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile)
 	app.Handle(http.MethodGet, version, "/game/rolldice/:address", ggh.RollDice)

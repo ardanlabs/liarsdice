@@ -5,8 +5,6 @@ package signature
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -20,23 +18,6 @@ const ZeroHash string = "0x00000000000000000000000000000000000000000000000000000
 const EthID = 27
 
 // =============================================================================
-
-// VerifySignature verifies the signature conforms to our standards.
-func VerifySignature(value any, v, r, s *big.Int) error {
-
-	// Check the recovery id is either 0 or 1.
-	uintV := v.Uint64() - EthID
-	if uintV != 0 && uintV != 1 {
-		return errors.New("invalid recovery id")
-	}
-
-	// Check the signature values are valid.
-	if !crypto.ValidateSignatureValues(byte(uintV), r, s, false) {
-		return errors.New("invalid signature values")
-	}
-
-	return nil
-}
 
 // FromAddress extracts the address for the account that signed the data.
 func FromAddress(value any, signature string) (string, error) {
@@ -52,11 +33,13 @@ func FromAddress(value any, signature string) (string, error) {
 		return "", err
 	}
 
+	// Convert the signature to a 65 bytes.
 	sig, err := hex.DecodeString(signature[2:])
 	if err != nil {
 		return "", err
 	}
 
+	// Decrement the Ethereum ID from the V value.
 	sig[64] = sig[64] - EthID
 
 	// Capture the public key associated with this data and signature.

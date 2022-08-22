@@ -390,8 +390,8 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 func (h *Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	var dt struct {
-		Name      string `json:"name"`
-		Status    string `json:"status"`
+		Nonce     int    `json:"nonce"`     // 1 -> 2 -> 3
+		DateTime  string `json:"date_time"` // YYYYMMDDHHMMSS
 		Signature string `json:"sig"`
 	}
 
@@ -412,11 +412,11 @@ func (h *Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	fmt.Println("*********************************************")
 
 	data := struct {
-		Name   string `json:"name"`
-		Status string `json:"status"`
+		Nonce    int    `json:"nonce"`
+		DateTime string `json:"date_time"`
 	}{
-		Name:   dt.Name,
-		Status: dt.Status,
+		Nonce:    dt.Nonce,
+		DateTime: dt.DateTime,
 	}
 
 	address, err := signature.FromAddress(data, dt.Signature)
@@ -426,6 +426,10 @@ func (h *Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	fmt.Println("ADDR:", address)
 	fmt.Println("*********************************************")
+
+	// Does this address actually joined the game
+	// Is the Nonce increased by 1
+	// Is the date now or not older than 1 minute
 
 	return web.Respond(ctx, w, dt, http.StatusOK)
 }
