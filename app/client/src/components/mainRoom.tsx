@@ -157,7 +157,6 @@ const MainRoom = (props: MainRoomProps) => {
           switch (true) {
             case message.startsWith('start:'):
               const gameStartStart = 'start:'
-
               const gameOwnerAccount = shortenIfAddress(
                 message.substring(gameStartStart.length),
               )

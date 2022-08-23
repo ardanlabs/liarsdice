@@ -31,7 +31,7 @@ const Join = (props: JoinProps) => {
   // Saving for the future when we have multiple rooms
   const createNewGame = (ante: number = 10) => {
     axios
-      .get(`http://${apiUrl}/new`)
+      .get(`http://${apiUrl}/new`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
@@ -62,16 +62,30 @@ const Join = (props: JoinProps) => {
         console.group()
         console.error('Error:', (error as any).response.data.error)
         console.groupEnd()
-        createNewGame()
       })
   }
+
+  const handleClick = () => {
+    axios
+      .get(`http://${apiUrl}/status`, axiosConfig)
+      .then(function (response: AxiosResponse) {
+        if (response.data) {
+          joinGame()
+        }
+      })
+      .catch(function (error: AxiosError) {
+        createNewGame()
+        console.error((error as any).response.data.error)
+      })
+  }
+
   return (
     <Button
-      disabled={disabled}
+      disabled={game.status === 'playing'}
       classes="join__buton"
-      clickHandler={() => joinGame()}
+      clickHandler={() => handleClick()}
     >
-      <span>{game ? 'Join Game' : 'New Game'}</span>
+      <span>{game.status === 'gameover' ? 'New Game' : 'Join Game'}</span>
     </Button>
   )
 }
