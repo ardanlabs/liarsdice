@@ -1,18 +1,16 @@
 import React, { useEffect, useContext, useState, useRef, useMemo } from 'react'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
-import axios, { AxiosError, AxiosResponse } from 'axios'
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { shortenIfAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import { dice, game, user } from '../types/index.d'
 import { toast } from 'react-toastify'
-import { axiosConfig } from '../utils/axiosConfig'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
   const { account } = useEthers()
   const gameAnte = 10
-  const [timeoutsCount, setTimeoutsCount] = useState(0)
   let { game, setGame } = useContext(GameContext)
   const gamePot = useMemo(
     () => gameAnte * game.cups.length,
@@ -22,6 +20,11 @@ const MainRoom = (props: MainRoomProps) => {
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'
+  const axiosConfig: AxiosRequestConfig = {
+    headers: {
+      authorization: window.localStorage.getItem('token') as string,
+    },
+  }
 
   useEffect(() => {
     setPlayerDice(
@@ -126,22 +129,22 @@ const MainRoom = (props: MainRoomProps) => {
   //     })
   // }
 
-  const newRound = () => {
-    axios
-      .get(`http://${apiUrl}/newround`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          window.sessionStorage.removeItem('round_timer')
-          setTimer(timeoutTime)
-          setTimeoutsCount(0)
-          updateStatus()
-          rolldice()
-        }
-      })
-      .catch(function (error: AxiosError) {
-        console.error(error)
-      })
-  }
+  // const newRound = () => {
+  //   axios
+  //     .get(`http://${apiUrl}/newround`, axiosConfig)
+  //     .then(function (response: AxiosResponse) {
+  //       if (response.data) {
+  //         window.sessionStorage.removeItem('round_timer')
+  //         setTimer(timeoutTime)
+  //         setTimeoutsCount(0)
+  //         updateStatus()
+  //         rolldice()
+  //       }
+  //     })
+  //     .catch(function (error: AxiosError) {
+  //       console.error(error)
+  //     })
+  // }
 
   const getActivePlayersLength = (gameToFilter = game) => {
     return gameToFilter.player_order.filter((player: string) => player.length)
@@ -161,11 +164,17 @@ const MainRoom = (props: MainRoomProps) => {
       }
       ws.onmessage = (evt: MessageEvent) => {
         updateStatus()
+
         if (evt.data) {
           let message = evt.data
           switch (true) {
-            case message === 'start':
-              toast.info('Game has started!')
+            case message.startsWith('start:'):
+              const gameStartStart = 'start:'
+
+              const gameOwnerAccount = shortenIfAddress(
+                message.substring(gameStartStart.length),
+              )
+              toast.info(`Game has been started by ${gameOwnerAccount}!`)
               rolldice()
               break
             case message === 'rolldice':
@@ -195,13 +204,9 @@ const MainRoom = (props: MainRoomProps) => {
               )
               toast.info(`Player ${strikedAccount} timed out and got striked`)
               break
-            case message === 'callliar':
-              if (getActivePlayersLength() === 1) {
-                toast.info('Game finished! Winner is ' + game.cups[0])
-                break
-              }
-              toast.info('A player was called a liar and loose!')
-              newRound()
+            case message.startsWith('callliar:'):
+              toast.info('A player was called a liar and lost!')
+              rolldice()
               break
           }
         }
@@ -243,11 +248,12 @@ const MainRoom = (props: MainRoomProps) => {
       .then(function (response: AxiosResponse) {
         window.sessionStorage.removeItem('round_timer')
         setTimer(timeoutTime)
-        if (getActivePlayersLength(response.data) - 1 === timeoutsCount) {
-          newRound()
-        } else {
-          updateStatus()
-        }
+        // We calculate how many players are active and if every but one timed out
+        // if (getActivePlayersLength(response.data) - 1 === timeoutsCount) {
+        //   newRound()
+        // } else {
+        updateStatus()
+        // }
       })
       .catch(function (error: AxiosError) {
         // To be discused
@@ -263,7 +269,6 @@ const MainRoom = (props: MainRoomProps) => {
     axios
       .get(`http://${apiUrl}/out/${player[0].outs + 1}`, axiosConfig)
       .then(function (response: AxiosResponse) {
-        setTimeoutsCount((prev) => prev + 1)
         setNewGame(response.data)
         if (response.data.status === 'playing') {
           nextTurn()

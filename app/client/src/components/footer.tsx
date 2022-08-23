@@ -1,11 +1,12 @@
 import React, { BaseSyntheticEvent, useContext, useState } from 'react'
 import Button from './button'
 import LogOutIcon from './icons/logout'
-import { useEthers } from '@usedapp/core'
+import { shortenIfAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
 import { axiosConfig } from '../utils/axiosConfig'
+import { toast } from 'react-toastify'
 
 function Footer() {
   const { account } = useEthers()
@@ -45,7 +46,11 @@ function Footer() {
     axios
       .get(`http://${apiUrl}/liar`, axiosConfig)
       .then(function (response: AxiosResponse) {
-        console.info('Liar called!')
+        toast.info(
+          `Game finished! Winner is ${shortenIfAddress(
+            response.data.cups[0].account,
+          )}`,
+        )
       })
       .catch(function (error: AxiosError) {
         console.error(error)

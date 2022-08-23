@@ -3,7 +3,7 @@ import { user } from '../types/index.d'
 import PlayersList from './playersList'
 import { useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
-import Join from './Join'
+import Join from './join'
 
 interface PlayersProps {}
 const Players = (props: PlayersProps) => {

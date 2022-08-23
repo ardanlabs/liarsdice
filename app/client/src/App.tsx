@@ -41,7 +41,7 @@ export function App() {
       <GameContext.Provider value={providerGame}>
         <ToastContainer
           position="top-left"
-          autoClose={1000}
+          autoClose={2000}
           hideProgressBar={false}
           newestOnTop={false}
           closeOnClick

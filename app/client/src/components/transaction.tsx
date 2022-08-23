@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import axios from 'axios'
 import Button from './button'
 // Contract and contract Abi
@@ -21,7 +21,7 @@ type getExchangeRateResponse = {
 type transactionProps = {
   buttonText: string
   action: 'Deposit' | 'Withdraw'
-  updateBalance: Function
+  // updateBalance: Function
 }
 
 const Transaction = (props: transactionProps) => {
@@ -42,12 +42,12 @@ const Transaction = (props: transactionProps) => {
       }
     }
   }
-  const { buttonText, action, updateBalance } = props
+  const { buttonText, action } = props
   // Sets local state
   const [transactionAmount, setTransactionAmount] = useState(0)
   // Creates the interface with the contract aby
   const contractInterface = new utils.Interface(contractAbi)
-  const contractAddress = getContractAddress()
+  const contractAddress = useMemo(() => getContractAddress(), [])
   // Creates a new contract object
   const contract = new Contract(contractAddress, contractInterface)
   // Extracts the functions from the contract
@@ -79,7 +79,6 @@ const Transaction = (props: transactionProps) => {
             setInputValue('')
             toast.info(`${action} successful`)
           }
-          updateBalance()
         })
       } else {
         console.error(response)

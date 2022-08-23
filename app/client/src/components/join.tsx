@@ -48,10 +48,7 @@ const Join = (props: JoinProps) => {
         .post('http://localhost:3000/v1/game/join', data)
         .then((response) => {
           toast.info('Welcome to the game')
-          window.sessionStorage.setItem(
-            'token',
-            `bearer ${response.data.token}`,
-          )
+          window.localStorage.setItem('token', `bearer ${response.data.token}`)
         })
         .catch((error: AxiosError) => {
           let errorMessage = (error as any).response.data.error.replace(

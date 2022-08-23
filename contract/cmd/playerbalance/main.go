@@ -21,8 +21,10 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
+	player := common.HexToAddress(smart.Player1Address)
+
 	const rawurl = smart.NetworkLocalhost
-	client, err := smart.Connect(ctx, rawurl, smart.Player1KeyPath, smart.Player1PassPhrase)
+	client, err := smart.Connect(ctx, rawurl, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
 	if err != nil {
 		return err
 	}
@@ -46,26 +48,19 @@ func run() error {
 
 	// =========================================================================
 
-	const gasLimit = 300000
-	const valueGwei = 40000000
-	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, valueGwei)
+	tranOpts, err := client.NewCallOpts(ctx)
 	if err != nil {
 		return err
 	}
 
 	// =========================================================================
-
-	tx, err := contract.Deposit(tranOpts)
+	fmt.Println(tranOpts)
+	amount, err := contract.PlayerBalance(tranOpts, player)
 	if err != nil {
 		return err
 	}
-	client.DisplayTransaction(tx)
 
-	receipt, err := client.WaitMined(ctx, tx)
-	if err != nil {
-		return err
-	}
-	client.DisplayTransactionReceipt(receipt, tx)
+	fmt.Println(amount)
 
 	return nil
 }
