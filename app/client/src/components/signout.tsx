@@ -13,7 +13,7 @@ const SignOut = (props: SignOutProps) => {
 
   function handleDisconnectAccount() {
     deactivate()
-    window.localStorage.removeItem('token')
+    window.sessionStorage.removeItem('token')
   }
   return account ? (
     <Button

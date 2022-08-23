@@ -4,7 +4,7 @@ import { shortenIfAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
-import { axiosConfig, token } from '../utils/axiosConfig'
+import { axiosConfig } from '../utils/axiosConfig'
 import { toast } from 'react-toastify'
 import SignOut from './signout'
 

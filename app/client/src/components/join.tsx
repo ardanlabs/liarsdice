@@ -20,7 +20,7 @@ const Join = (props: JoinProps) => {
       .get('http://localhost:3000/v1/game/join', axiosConfig)
       .then((response) => {
         toast.info('Welcome to the game')
-        window.localStorage.setItem('token', `bearer ${response.data.token}`)
+        window.sessionStorage.setItem('token', `bearer ${response.data.token}`)
       })
       .catch((error: AxiosError) => {
         let errorMessage = (error as any).response.data.error.replace(

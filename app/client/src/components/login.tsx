@@ -8,11 +8,9 @@ import { utils } from 'ethers'
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
-import SignOut from './signout'
 
 export default function Login() {
   const { account, library, activateBrowserWallet } = useEthers()
-  const [signed, setSigned] = useState(false)
 
   function handleConnectAccount() {
     activateBrowserWallet()
@@ -50,13 +48,13 @@ export default function Login() {
       axios
         .post('http://localhost:3000/v1/game/connect', data)
         .then((response) => {
-          setSigned(true)
           toast.info('Connected to game engine')
-          console.log(signed)
-          window.localStorage.setItem('token', `bearer ${response.data.token}`)
+          window.sessionStorage.setItem(
+            'token',
+            `bearer ${response.data.token}`,
+          )
         })
         .catch((error: AxiosError) => {
-          setSigned(false)
           let errorMessage = (error as any).response.data.error.replace(
             / \[.+\]/gm,
             '',
@@ -72,8 +70,7 @@ export default function Login() {
         })
     })
   }
-
-  return account && signed ? (
+  return account && token() ? (
     <MainRoom />
   ) : (
     <div
@@ -94,7 +91,7 @@ export default function Login() {
         <div id="wallets__wrapper" className="mt-4">
           {account ? (
             <div className="d-flex">
-              <span>Wallet {account} connected</span>
+              <span className="ml-2">Wallet {account} connected</span>
             </div>
           ) : (
             <Button

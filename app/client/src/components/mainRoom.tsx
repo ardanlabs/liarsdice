@@ -22,18 +22,18 @@ const MainRoom = (props: MainRoomProps) => {
     : 'localhost:3000/v1/game'
   const axiosConfig: AxiosRequestConfig = {
     headers: {
-      authorization: window.localStorage.getItem('token') as string,
+      authorization: window.sessionStorage.getItem('token') as string,
     },
   }
 
   useEffect(() => {
     setPlayerDice(
-      JSON.parse(window.localStorage.getItem('playerDice') as string),
+      JSON.parse(window.sessionStorage.getItem('playerDice') as string),
     )
   }, [])
 
   useEffect(() => {
-    window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
+    window.sessionStorage.setItem('playerDice', JSON.stringify(playerDice))
   }, [playerDice])
 
   const setNewGame = (data: game) => {
