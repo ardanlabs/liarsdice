@@ -1,5 +1,5 @@
 import axios from 'axios'
-let fetchedAddress = '0x531130464929826c57BBBF989e44085a02eeB120'
+let fetchedAddress = '0x268287f8Ad03Aa9aFA6D00FAd8ea7091ca0fD8E9'
 
 export const getContractAddress = () => {
   axios
