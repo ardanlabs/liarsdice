@@ -28,6 +28,7 @@ type Handlers struct {
 	WS     websocket.Upgrader
 	Evts   *events.Events
 	Auth   *auth.Auth
+	Ante   int
 
 	game *game.Game
 	mu   sync.RWMutex
@@ -144,43 +145,6 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 	return web.Respond(ctx, w, data, http.StatusOK)
 }
 
-// NewGame creates a new game if there is no game or the status of the current game
-// is GameOver.
-func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	if g, err := h.getGame(); err == nil {
-		status := g.Info()
-		if status.Status != game.StatusGameOver {
-			return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
-		}
-	}
-
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
-	address := claims.Subject
-
-	ante, err := strconv.ParseInt(web.Param(r, "ante"), 10, 64)
-	if err != nil {
-		return v1Web.NewRequestError(errors.New("invalid ante value"), http.StatusBadRequest)
-	}
-
-	h.setGame(game.New(h.Banker, address, ante))
-
-	g, err := h.getGame()
-	if err != nil {
-		return err
-	}
-
-	if err := g.AddAccount(ctx, address); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	h.Evts.Send("newgame:" + address)
-
-	return h.Status(ctx, w, r)
-}
-
 // Join adds the given player to the game.
 func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims, err := auth.GetClaims(ctx)
@@ -192,7 +156,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	// Create a game if it does not exit.
 	g, err := h.getGame()
 	if err != nil {
-		g = game.New(h.Banker, address, 1)
+		g = game.New(h.Banker, address, h.Ante)
 		h.setGame(g)
 	}
 

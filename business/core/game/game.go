@@ -86,7 +86,7 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(banker Banker, owner string, ante int64) *Game {
+func New(banker Banker, owner string, ante int) *Game {
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	return &Game{
@@ -95,7 +95,7 @@ func New(banker Banker, owner string, ante int64) *Game {
 		owner:  owner,
 		status: StatusGameOver,
 		round:  1,
-		ante:   ante,
+		ante:   int64(ante),
 		cups:   make(map[string]Cup),
 	}
 }
@@ -453,7 +453,10 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) error {
 		}
 	}
 
-	return g.banker.Reconcile(ctx, winner, losers, g.ante, 10)
+	// The game fee will be the ante of a single player.
+	gameFee := g.ante
+
+	return g.banker.Reconcile(ctx, winner, losers, g.ante, gameFee)
 }
 
 // Info returns a copy of the game status.
