@@ -20,6 +20,7 @@ import (
 
 // Represents the different game status.
 const (
+	StatusNewGame   = "newgame"
 	StatusPlaying   = "playing"
 	StatusRoundOver = "roundover"
 	StatusGameOver  = "gameover"
@@ -94,7 +95,7 @@ func New(banker Banker, owner string, anteUSD int) *Game {
 		id:      uuid.NewString(),
 		banker:  banker,
 		owner:   owner,
-		status:  StatusGameOver,
+		status:  StatusNewGame,
 		round:   1,
 		anteUSD: anteUSD,
 		cups:    make(map[string]Cup),
@@ -111,7 +112,7 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 		return errors.New("account provided is empty")
 	}
 
-	if g.status != StatusGameOver {
+	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
 	}
 
@@ -148,7 +149,7 @@ func (g *Game) StartPlay(owner string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if g.status != StatusGameOver {
+	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
 	}
 
