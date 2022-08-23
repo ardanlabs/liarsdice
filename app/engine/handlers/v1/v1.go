@@ -48,7 +48,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Auth))
 
 	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance)
 
 	// Timeout Situations with a player
 	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Auth))
