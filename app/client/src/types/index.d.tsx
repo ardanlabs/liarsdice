@@ -24,3 +24,11 @@ export interface game {
   player_order: string[]
   claims: claim[]
 }
+
+export type getExchangeRateResponse = {
+  data: {
+    amount: string
+    base: 'ETH'
+    currency: 'USD'
+  }
+}

@@ -1,23 +1,19 @@
 import React, { BaseSyntheticEvent, useContext, useState } from 'react'
 import Button from './button'
-import LogOutIcon from './icons/logout'
 import { shortenIfAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
-import { axiosConfig } from '../utils/axiosConfig'
+import { axiosConfig, token } from '../utils/axiosConfig'
 import { toast } from 'react-toastify'
+import SignOut from './signout'
 
 function Footer() {
   const { account } = useEthers()
-  const { deactivate } = useEthers()
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'
 
-  function handleDisconnectAccount() {
-    deactivate()
-  }
   const { game, setGame } = useContext(GameContext)
   const [number, setNumber] = useState(1)
   const [suite, setSuite] = useState(1)
@@ -84,15 +80,7 @@ function Footer() {
           width: 'fit-content',
         }}
       >
-        <Button
-          {...{
-            id: 'metamask__wrapper',
-            clickHandler: handleDisconnectAccount,
-            classes: 'd-flex align-items-center pa-4',
-          }}
-        >
-          <LogOutIcon />
-        </Button>
+        <SignOut disabled={!account} />
       </div>
       {(game.player_order as string[])[game.current_cup] === account &&
       game.status === 'playing' ? (

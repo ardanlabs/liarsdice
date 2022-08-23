@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useEthers } from '@usedapp/core'
 import axios, { AxiosResponse } from 'axios'
-import { axiosConfig } from '../utils/axiosConfig'
+import { axiosConfig, token } from '../utils/axiosConfig'
 import Transaction from './transaction'
+import { getExchangeRateResponse } from '../types/index.d'
 
 const PlayerBalance = () => {
   const { account } = useEthers()
@@ -10,13 +11,38 @@ const PlayerBalance = () => {
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'
-
+  async function getExchangeRate() {
+    try {
+      const { data } = await axios.get<getExchangeRateResponse>(
+        'https://api.coinbase.com/v2/prices/ETH-USD/spot',
+      )
+      return data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('error message: ', error.message)
+        return error.message
+      } else {
+        console.error('unexpected error: ', error)
+        return 'An unexpected error occurred'
+      }
+    }
+  }
   const updateBalance = useCallback(() => {
     if (account)
       axios
         .get(`http://${apiUrl}/balance`, axiosConfig)
-        .then((response: AxiosResponse) => {
-          setBalance(response.data.balance)
+        .then((balanceResponse: AxiosResponse) => {
+          getExchangeRate().then((response) => {
+            let responseEth = response as getExchangeRateResponse
+            if (responseEth.data.amount) {
+              setBalance(
+                (balanceResponse.data.balance / 1000000000) *
+                  parseInt(responseEth.data.amount),
+              )
+            } else {
+              console.error(response)
+            }
+          })
         })
   }, [account, apiUrl])
 
@@ -33,7 +59,7 @@ const PlayerBalance = () => {
     updateBalance()
   }, [updateBalance])
 
-  return account ? (
+  return token() ? (
     <div
       className="dropdown dropleft dropdown-content"
       style={{
@@ -74,8 +100,7 @@ const PlayerBalance = () => {
             style={{ display: 'flex', margin: '10px 0' }}
             className="dropdown-content"
           >
-            Current Balance:{' '}
-            {parseFloat(`${balance / 1000000000000000000}`).toFixed(2)} ETH
+            Current Balance: {balance.toFixed(2)} U$D
             <Transaction
               {...{
                 buttonText: 'Withdraw',

@@ -9,14 +9,7 @@ import { useContractFunction, useEthers } from '@usedapp/core'
 import { Contract } from '@ethersproject/contracts'
 import { utils, BigNumber } from 'ethers'
 import { toast } from 'react-toastify'
-
-type getExchangeRateResponse = {
-  data: {
-    amount: string
-    base: 'ETH'
-    currency: 'USD'
-  }
-}
+import { getExchangeRateResponse } from '../types/index.d'
 
 type transactionProps = {
   buttonText: string

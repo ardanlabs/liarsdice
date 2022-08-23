@@ -1,6 +1,6 @@
 import { AxiosRequestConfig } from 'axios'
 
-const token = () => {
+export const token = () => {
   // Returns the token produced when you join a game
   return (window.localStorage.getItem('token') as string)
     ? (window.localStorage.getItem('token') as string)
