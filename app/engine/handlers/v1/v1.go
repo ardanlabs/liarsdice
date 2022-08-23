@@ -42,6 +42,7 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
 
+	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Auth))
 
 	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Auth))
