@@ -37,7 +37,7 @@ type APIMuxConfig struct {
 	Auth     *auth.Auth
 	Banker   game.Banker
 	Evts     *events.Events
-	Ante     int
+	AnteUSD  int
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -82,11 +82,11 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 
 	// Load the v1 routes.
 	v1.Routes(app, v1.Config{
-		Log:    cfg.Log,
-		Auth:   cfg.Auth,
-		Banker: cfg.Banker,
-		Evts:   cfg.Evts,
-		Ante:   cfg.Ante,
+		Log:     cfg.Log,
+		Auth:    cfg.Auth,
+		Banker:  cfg.Banker,
+		Evts:    cfg.Evts,
+		AnteUSD: cfg.AnteUSD,
 	})
 
 	return app

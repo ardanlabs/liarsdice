@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"net/http"
 	"strconv"
 	"sync"
@@ -19,16 +18,17 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/signature"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
-	Banker game.Banker
-	WS     websocket.Upgrader
-	Evts   *events.Events
-	Auth   *auth.Auth
-	Ante   int
+	Banker  game.Banker
+	WS      websocket.Upgrader
+	Evts    *events.Events
+	Auth    *auth.Auth
+	AnteUSD int
 
 	game *game.Game
 	mu   sync.RWMutex
@@ -156,7 +156,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	// Create a game if it does not exit.
 	g, err := h.getGame()
 	if err != nil {
-		g = game.New(h.Banker, address, h.Ante)
+		g = game.New(h.Banker, address, h.AnteUSD)
 		h.setGame(g)
 	}
 
@@ -319,9 +319,9 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	resp := struct {
-		Balance *big.Int `json:"balance"`
+		Balance string `json:"balance"`
 	}{
-		Balance: balance,
+		Balance: smart.Wei2USD(balance),
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)

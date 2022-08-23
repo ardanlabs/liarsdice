@@ -79,7 +79,7 @@ func run(log *zap.SugaredLogger) error {
 		}
 		Game struct {
 			ContractID string `conf:"default:0x0"`
-			Ante       int    `conf:"default:5"`
+			AnteUSD    int    `conf:"default:5"`
 		}
 	}{
 		Version: conf.Version{
@@ -182,7 +182,7 @@ func run(log *zap.SugaredLogger) error {
 		Auth:     auth,
 		Banker:   bank,
 		Evts:     evts,
-		Ante:     cfg.Game.Ante,
+		AnteUSD:  cfg.Game.AnteUSD,
 	}, handlers.WithCORS("*"))
 
 	// Construct a server to service the requests against the mux.

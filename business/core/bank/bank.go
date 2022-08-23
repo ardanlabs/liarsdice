@@ -50,7 +50,7 @@ func (b *Bank) Balance(ctx context.Context, account string) (*big.Int, error) {
 
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
-func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante int64, gameFee int64) error {
+func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) error {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, 0)
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 		losers = append(losers, common.HexToAddress(loser))
 	}
 
-	if _, err := b.contract.Reconcile(tranOpts, winner, losers, big.NewInt(ante), big.NewInt(gameFee)); err != nil {
+	if _, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei); err != nil {
 		return err
 	}
 

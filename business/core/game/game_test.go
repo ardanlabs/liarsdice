@@ -15,7 +15,7 @@ func (m *MockedBank) Balance(ctx context.Context, account string) (*big.Int, err
 	return m.value, m.err
 }
 
-func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, ante int64, gameFee int64) error {
+func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) error {
 	return m.err
 }
 
