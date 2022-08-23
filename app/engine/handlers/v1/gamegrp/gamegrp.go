@@ -101,6 +101,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	resp := struct {
 		Status        string   `json:"status"`
+		AnteUSD       int      `json:"ante_usd"`
 		LastOutAcct   string   `json:"last_out"`
 		LastWinAcct   string   `json:"last_win"`
 		CurrentPlayer string   `json:"current_player"`
@@ -111,6 +112,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		Claims        []Claim  `json:"claims"`
 	}{
 		Status:        status.Status,
+		AnteUSD:       h.AnteUSD,
 		LastOutAcct:   status.LastOutAcct,
 		LastWinAcct:   status.LastWinAcct,
 		CurrentPlayer: status.CurrentPlayer,
