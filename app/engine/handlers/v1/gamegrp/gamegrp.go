@@ -205,7 +205,7 @@ func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http
 	}
 	address := claims.Subject
 
-	if err := g.StartPlay(address); err != nil {
+	if err := g.StartGame(address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 

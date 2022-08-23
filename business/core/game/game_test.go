@@ -48,7 +48,7 @@ func TestSuccessGamePlay(t *testing.T) {
 	}
 
 	// Start the game.
-	err = g.StartPlay("owner")
+	err = g.StartGame("owner")
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
@@ -266,7 +266,7 @@ func TestInvalidClaim(t *testing.T) {
 		t.Fatalf("unexpected error adding player 2: %s", err)
 	}
 
-	err = g.StartPlay("owner")
+	err = g.StartGame("owner")
 	if err != nil {
 		t.Fatalf("unexpected error starting game: %s", err)
 	}
@@ -301,7 +301,7 @@ func TestInvalidClaim(t *testing.T) {
 func TestGameWithoutEnoughPlayers(t *testing.T) {
 	g := New(nil, "owner", 0)
 
-	err := g.StartPlay("owner")
+	err := g.StartGame("owner")
 	if err == nil {
 		t.Fatal("expecting error trying to start a game without enough players")
 	}
@@ -326,7 +326,7 @@ func TestWrongPlayerTryingToPlayer(t *testing.T) {
 		t.Fatalf("unexpected error: %s", err)
 	}
 
-	err = g.StartPlay("owner")
+	err = g.StartGame("owner")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}

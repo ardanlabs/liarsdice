@@ -144,8 +144,8 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 	return nil
 }
 
-// StartPlay changes the status to Playing to allow the game to begin.
-func (g *Game) StartPlay(owner string) error {
+// StartGame changes the status to Playing to allow the game to begin.
+func (g *Game) StartGame(owner string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
