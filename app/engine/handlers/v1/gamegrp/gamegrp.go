@@ -123,6 +123,27 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
+// Connect is used to return a game token for API usage.
+func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	address, err := validateSignature(r)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	token, err := generateToken(h.Auth, address)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	data := struct {
+		Token string `json:"token"`
+	}{
+		Token: token,
+	}
+
+	return web.Respond(ctx, w, data, http.StatusOK)
+}
+
 // NewGame creates a new game if there is no game or the status of the current game
 // is GameOver.
 func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -133,15 +154,11 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 		}
 	}
 
-	address, err := validateSignature(r)
+	claims, err := auth.GetClaims(ctx)
 	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-
-	token, err := generateToken(h.Auth, address)
-	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
+	address := claims.Subject
 
 	ante, err := strconv.ParseInt(web.Param(r, "ante"), 10, 64)
 	if err != nil {
@@ -161,26 +178,16 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	h.Evts.Send("newgame:" + address)
 
-	data := struct {
-		Token string `json:"token"`
-	}{
-		Token: token,
-	}
-
-	return web.Respond(ctx, w, data, http.StatusOK)
+	return h.Status(ctx, w, r)
 }
 
 // Join adds the given player to the game.
 func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	address, err := validateSignature(r)
+	claims, err := auth.GetClaims(ctx)
 	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-
-	token, err := generateToken(h.Auth, address)
-	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
+	address := claims.Subject
 
 	// Create a game if it does not exit.
 	g, err := h.getGame()
@@ -195,13 +202,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	h.Evts.Send("join:" + address)
 
-	data := struct {
-		Token string `json:"token"`
-	}{
-		Token: token,
-	}
-
-	return web.Respond(ctx, w, data, http.StatusOK)
+	return h.Status(ctx, w, r)
 }
 
 // StartGame changes the status of the game so players can begin to play.
@@ -342,18 +343,13 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 // Balance returns the player balance from the smart contract.
 func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame()
-	if err != nil {
-		return err
-	}
-
 	claims, err := auth.GetClaims(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
 	address := claims.Subject
 
-	balance, err := g.PlayerBalance(ctx, address)
+	balance, err := h.Banker.Balance(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}

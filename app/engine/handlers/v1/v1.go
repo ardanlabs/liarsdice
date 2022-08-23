@@ -38,8 +38,10 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
 
-	app.Handle(http.MethodPost, version, "/game/new/:ante", ggh.NewGame)
-	app.Handle(http.MethodPost, version, "/game/join", ggh.Join)
+	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
+
+	app.Handle(http.MethodGet, version, "/game/new/:ante", ggh.NewGame, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Auth))
 
 	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Auth))
@@ -48,7 +50,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Auth))
 
 	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance)
+	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Auth))
 
 	// Timeout Situations with a player
 	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Auth))
