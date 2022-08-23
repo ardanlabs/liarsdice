@@ -6,10 +6,11 @@ import (
 )
 
 // These values are used to calculate Wei values in both GWei and USD.
+// https://nomics.com/markets/gwei-gwei/usd-united-states-dollar
 var (
 	GWeiConv  = big.NewInt(1_000_000_000)
-	GWeiPrice = big.NewFloat(0.00000255) // 5/26/22 at 7pm ET
-	USDPrice  = big.NewFloat(391440.31)  // $1 USD to GWei
+	GWeiPrice = big.NewFloat(0.00000255) // 8/23/22
+	USDPrice  = big.NewFloat(391424.02)  // $1 USD to GWei
 )
 
 // Wei2USD converts Wei to USD.

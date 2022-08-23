@@ -27,7 +27,7 @@ dev.setup:
 # Game Engine
 
 game-run:
-	go run app/engine/main.go
+	go run app/engine/main.go | go run app/tooling/logfmt/main.go
 
 # ==============================================================================
 # Browser Application

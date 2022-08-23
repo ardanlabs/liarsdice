@@ -77,6 +77,10 @@ func run(log *zap.SugaredLogger) error {
 			KeysFolder string `conf:"default:zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
+		Game struct {
+			ContractID string `conf:"default:0x0"`
+			AnteUSD    int    `conf:"default:5"`
+		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -84,7 +88,7 @@ func run(log *zap.SugaredLogger) error {
 		},
 	}
 
-	const prefix = "SALES"
+	const prefix = ""
 	help, err := conf.Parse(prefix, &cfg)
 	if err != nil {
 		if errors.Is(err, conf.ErrHelpWanted) {
@@ -128,18 +132,16 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Start Game and Bank Services
 
-	evts := events.New()
-
-	data, err := os.ReadFile("zarf/contract/id.env")
-	if err != nil {
-		return fmt.Errorf("readfile: %w", err)
+	if cfg.Game.ContractID == "0x0" {
+		return errors.New("smart contract id not provided")
 	}
-	contractID := string(data)
+
+	evts := events.New()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bank, err := bank.New(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, contractID)
+	bank, err := bank.New(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, cfg.Game.ContractID)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
@@ -180,6 +182,7 @@ func run(log *zap.SugaredLogger) error {
 		Auth:     auth,
 		Banker:   bank,
 		Evts:     evts,
+		AnteUSD:  cfg.Game.AnteUSD,
 	}, handlers.WithCORS("*"))
 
 	// Construct a server to service the requests against the mux.

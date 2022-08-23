@@ -56,6 +56,11 @@ func run() error {
 		return err
 	}
 
+	fmt.Println("\nContract Details")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("Contract ID:", address.Hex())
+	fmt.Println("Please export GAME_CONTRACT_ID=<ID>")
+
 	receipt, err := client.WaitMined(ctx, tx)
 	if err != nil {
 		return err

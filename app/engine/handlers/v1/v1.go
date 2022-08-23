@@ -17,10 +17,11 @@ import (
 
 // Config contains all the mandatory systems required by handlers.
 type Config struct {
-	Log    *zap.SugaredLogger
-	Auth   *auth.Auth
-	Banker game.Banker
-	Evts   *events.Events
+	Log     *zap.SugaredLogger
+	Auth    *auth.Auth
+	Banker  game.Banker
+	Evts    *events.Events
+	AnteUSD int
 }
 
 // Routes binds all the version 1 routes.
@@ -29,10 +30,11 @@ func Routes(app *web.App, cfg Config) {
 
 	// Register group endpoints.
 	ggh := gamegrp.Handlers{
-		Banker: cfg.Banker,
-		Evts:   cfg.Evts,
-		WS:     websocket.Upgrader{},
-		Auth:   cfg.Auth,
+		Banker:  cfg.Banker,
+		Evts:    cfg.Evts,
+		WS:      websocket.Upgrader{},
+		Auth:    cfg.Auth,
+		AnteUSD: cfg.AnteUSD,
 	}
 
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
@@ -40,7 +42,6 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
 
-	app.Handle(http.MethodGet, version, "/game/new/:ante", ggh.NewGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Auth))
 
 	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Auth))
