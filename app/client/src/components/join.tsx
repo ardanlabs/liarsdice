@@ -1,5 +1,4 @@
 import React, { useContext } from 'react'
-import { utils } from 'ethers'
 import { useEthers } from '@usedapp/core'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import Button from './button'
@@ -7,15 +6,15 @@ import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
 import { axiosConfig } from '../utils/axiosConfig'
 import { GameContext } from '../gameContext'
-import { game } from '../types/index.d'
+import { game, user } from '../types/index.d'
 
 interface JoinProps {
   disabled: boolean
 }
 
 const Join = (props: JoinProps) => {
-  const { disabled } = props
   const { game, setGame } = useContext(GameContext)
+  const { account } = useEthers()
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'
@@ -70,22 +69,38 @@ const Join = (props: JoinProps) => {
       .get(`http://${apiUrl}/status`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
-          joinGame()
+          if (game.status === 'newGame' || game.status === 'gameover') {
+            createNewGame()
+          } else {
+            joinGame()
+          }
         }
       })
       .catch(function (error: AxiosError) {
+        console.log('hi')
         createNewGame()
         console.error((error as any).response.data.error)
       })
   }
+  const getButtonText = () => {
+    return game.status === 'gameover' ? 'New Game' : 'Join Game'
+  }
+
+  const isPlayerInGame = () => {
+    return Boolean(
+      game.cups.filter((cup: user) => {
+        return cup.account === account
+      }).length,
+    )
+  }
 
   return (
     <Button
-      disabled={game.status === 'playing'}
+      disabled={game.status === 'playing' || isPlayerInGame()}
       classes="join__buton"
       clickHandler={() => handleClick()}
     >
-      <span>{game.status === 'gameover' ? 'New Game' : 'Join Game'}</span>
+      <span>{getButtonText()}</span>
     </Button>
   )
 }

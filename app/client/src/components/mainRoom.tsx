@@ -67,10 +67,13 @@ const MainRoom = (props: MainRoomProps) => {
             // case 'roundover':
             //   newRound()
             //   break
-            case 'gameover':
+            case 'newgame':
               if (getActivePlayersLength(response.data) >= 2) {
                 startGame()
-              } else if (
+              }
+              break
+            case 'gameover':
+              if (
                 getActivePlayersLength(response.data) === 1 &&
                 game.last_win === account
               ) {
