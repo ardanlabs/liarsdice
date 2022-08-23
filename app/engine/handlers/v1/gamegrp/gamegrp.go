@@ -179,18 +179,16 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // Join adds the given player to the game.
 func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	g, err := h.getGame()
+	if err != nil {
+		return err
+	}
+
 	claims, err := auth.GetClaims(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
 	address := claims.Subject
-
-	// Create a game if it does not exit.
-	g, err := h.getGame()
-	if err != nil {
-		g = game.New(h.Banker, address, h.AnteUSD)
-		h.setGame(g)
-	}
 
 	if err := g.AddAccount(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
