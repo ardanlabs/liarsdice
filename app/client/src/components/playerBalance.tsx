@@ -80,6 +80,7 @@ const PlayerBalance = () => {
               {...{
                 buttonText: 'Withdraw',
                 action: 'Withdraw',
+                updateBalance,
               }}
             />
           </div>
@@ -87,6 +88,7 @@ const PlayerBalance = () => {
             {...{
               buttonText: 'Deposit',
               action: 'Deposit',
+              updateBalance,
             }}
           />
         </div>

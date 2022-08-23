@@ -21,7 +21,7 @@ type getExchangeRateResponse = {
 type transactionProps = {
   buttonText: string
   action: 'Deposit' | 'Withdraw'
-  // updateBalance: Function
+  updateBalance: Function
 }
 
 const Transaction = (props: transactionProps) => {
@@ -42,7 +42,7 @@ const Transaction = (props: transactionProps) => {
       }
     }
   }
-  const { buttonText, action } = props
+  const { buttonText, action, updateBalance } = props
   // Sets local state
   const [transactionAmount, setTransactionAmount] = useState(0)
   // Creates the interface with the contract aby
@@ -80,6 +80,7 @@ const Transaction = (props: transactionProps) => {
             toast.info(`${action} successful`)
           }
         })
+        updateBalance()
       } else {
         console.error(response)
       }
