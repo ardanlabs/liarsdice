@@ -16,9 +16,7 @@ const PlayerBalance = () => {
       axios
         .get(`http://${apiUrl}/balance`, axiosConfig)
         .then((balanceResponse: AxiosResponse) => {
-          console.log(balanceResponse)
-
-          setBalance(balanceResponse.data.balance)
+          setBalance(parseFloat(balanceResponse.data.balance))
         })
   }, [account, apiUrl])
 
@@ -76,7 +74,7 @@ const PlayerBalance = () => {
             style={{ display: 'flex', margin: '10px 0' }}
             className="dropdown-content"
           >
-            Current Balance: {balance} U$D
+            Current Balance: {balance.toFixed(2)} U$D
             <Transaction
               {...{
                 buttonText: 'Withdraw',

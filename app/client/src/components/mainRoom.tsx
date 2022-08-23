@@ -10,7 +10,7 @@ import { toast } from 'react-toastify'
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
   const { account } = useEthers()
-  const gameAnte = 10
+  const gameAnte = 5
   let { game, setGame } = useContext(GameContext)
   const gamePot = useMemo(
     () => gameAnte * game.cups.length,
@@ -115,19 +115,6 @@ const MainRoom = (props: MainRoomProps) => {
         console.error(error)
       })
   }
-  // Saving for the future when we have multiple rooms
-  // const createNewGame = (ante: number = gameAnte) => {
-  //   axios
-  //     .get(`http://${apiUrl}/new/${ante}`)
-  //     .then(function (response: AxiosResponse) {
-  //       if (response.data) {
-  //         setNewGame(response.data)
-  //       }
-  //     })
-  //     .catch(function (error: AxiosError) {
-  //       console.error(error)
-  //     })
-  // }
 
   // const newRound = () => {
   //   axios
@@ -206,7 +193,11 @@ const MainRoom = (props: MainRoomProps) => {
               break
             case message.startsWith('callliar:'):
               toast.info('A player was called a liar and lost!')
-              rolldice()
+              const liarStart = 'callliar:'
+              const playersLeft = parseInt(message.substring(liarStart.length))
+              if (playersLeft > 1) {
+                rolldice()
+              }
               break
           }
         }
