@@ -101,6 +101,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	resp := struct {
 		Status        string   `json:"status"`
+		AnteUSD       int      `json:"ante_usd"`
 		LastOutAcct   string   `json:"last_out"`
 		LastWinAcct   string   `json:"last_win"`
 		CurrentPlayer string   `json:"current_player"`
@@ -111,6 +112,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		Claims        []Claim  `json:"claims"`
 	}{
 		Status:        status.Status,
+		AnteUSD:       h.AnteUSD,
 		LastOutAcct:   status.LastOutAcct,
 		LastWinAcct:   status.LastWinAcct,
 		CurrentPlayer: status.CurrentPlayer,
@@ -145,20 +147,41 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 	return web.Respond(ctx, w, data, http.StatusOK)
 }
 
-// Join adds the given player to the game.
-func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// NewGame creates a new game if there is no game or the status of the current game
+// is GameOver.
+func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims, err := auth.GetClaims(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
 	address := claims.Subject
 
-	// Create a game if it does not exit.
+	g, err := h.createGame(address)
+	if err != nil {
+		return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+	}
+
+	if err := g.AddAccount(ctx, address); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	h.Evts.Send("newgame:" + address)
+
+	return h.Status(ctx, w, r)
+}
+
+// Join adds the given player to the game.
+func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
-		g = game.New(h.Banker, address, h.AnteUSD)
-		h.setGame(g)
+		return err
 	}
+
+	claims, err := auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
+	}
+	address := claims.Subject
 
 	if err := g.AddAccount(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
@@ -379,11 +402,20 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 // =============================================================================
 
 // SetGame safely sets a game pointer.
-func (h *Handlers) setGame(game *game.Game) {
+func (h *Handlers) createGame(address string) (*game.Game, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	h.game = game
+	if h.game != nil {
+		status := h.game.Info()
+		if status.Status != game.StatusGameOver {
+			return nil, v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+		}
+	}
+
+	h.game = game.New(h.Banker, address, h.AnteUSD)
+
+	return h.game, nil
 }
 
 // GetGame safely returns a copy of the game pointer.
