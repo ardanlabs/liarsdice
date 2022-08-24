@@ -86,7 +86,6 @@ func TestPlayerBalance(t *testing.T) {
 // ============================================================================
 
 func deployContract(ctx context.Context) (string, error) {
-	// Create a client as an owner.
 	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase)
 	if err != nil {
 		return "", err
@@ -102,8 +101,7 @@ func deployContract(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	_, err = client.WaitMined(ctx, tx)
-	if err != nil {
+	if _, err := client.WaitMined(ctx, tx); err != nil {
 		return "", err
 	}
 
