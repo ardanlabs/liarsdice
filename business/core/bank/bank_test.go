@@ -17,6 +17,10 @@ const (
 	Player1Address    = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
 	Player1KeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
 	Player1PassPhrase = "123"
+
+	Player2Address    = "0x8e113078adf6888b7ba84967f299f29aece24c55"
+	Player2KeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
+	Player2PassPhrase = "123"
 )
 
 func TestPlayerBalance(t *testing.T) {
@@ -91,7 +95,7 @@ func TestWithdraw(t *testing.T) {
 	}
 
 	// Create a bank for the player.
-	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
@@ -128,7 +132,7 @@ func TestWithdrawWithoutBalance(t *testing.T) {
 	}
 
 	// Create a bank for the player.
-	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
@@ -137,6 +141,89 @@ func TestWithdrawWithoutBalance(t *testing.T) {
 	err = playerClient.Withdraw(ctx, Player1Address)
 	if err == nil {
 		t.Fatal("expecting error when trying to withdraw from an empty balance")
+	}
+}
+
+func TestReconcile(t *testing.T) {
+	ctx := context.Background()
+
+	// Deploy a new contract.
+	contractID, err := deployContract(ctx)
+	if err != nil {
+		t.Fatalf("error deploying a new contract: %s", err)
+	}
+
+	// Create a bank for the contract owner.
+	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	if err != nil {
+		t.Fatalf("error creating new bank for owner: %s", err)
+	}
+
+	// Create a bank for the player 1.
+	player1Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
+	if err != nil {
+		t.Fatalf("error creating new bank for player 1: %s", err)
+	}
+
+	// Create a bank for the player 2.
+	player2Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player2KeyPath, Player2PassPhrase, contractID)
+	if err != nil {
+		t.Fatalf("error creating new bank for player 2: %s", err)
+	}
+
+	// Make a deposit for player 1.
+	err = player1Client.Deposit(ctx, Player1Address, 40000000)
+	if err != nil {
+		t.Fatalf("error making deposit player 1: %s", err)
+	}
+
+	// Make a deposit for player 2.
+	err = player2Client.Deposit(ctx, Player2Address, 20000000)
+	if err != nil {
+		t.Fatalf("error making deposit for player 2: %s", err)
+	}
+
+	// Define game ante and fee.
+	ante := big.NewInt(20000000000000000)
+	fee := big.NewInt(10000000000000000)
+
+	losingAccounts := []string{Player2Address}
+
+	err = ownerClient.Reconcile(ctx, Player1Address, losingAccounts, ante, fee)
+	if err != nil {
+		t.Fatalf("error calling Reconcile: %s", err)
+	}
+
+	// Check the winner's balance.
+	player1Balance, err := ownerClient.Balance(ctx, Player1Address)
+	if err != nil {
+		t.Fatalf("error calling balance for player 1: %s", err)
+	}
+
+	winnerBalance := big.NewInt(50000000000000000)
+
+	if player1Balance.Cmp(winnerBalance) != 0 {
+		t.Fatalf("expecting winner player balance to be %d; got %d", winnerBalance, player1Balance)
+	}
+
+	// Check the loser's balance.
+	player2Balance, err := ownerClient.Balance(ctx, Player2Address)
+	if err != nil {
+		t.Fatalf("error calling balance for player 2: %s", err)
+	}
+
+	if player2Balance.Cmp(big.NewInt(0)) != 0 {
+		t.Fatalf("expecting loser player balance to be %d; got %d", 0, player2Balance)
+	}
+
+	// Check owner's balance.
+	contractBalance, err := ownerClient.Balance(ctx, ownerClient.Account())
+	if err != nil {
+		t.Fatalf("error calling balance for owner: %s", err)
+	}
+
+	if contractBalance.Cmp(fee) != 0 {
+		t.Fatalf("expecting owner balance to be %d; got %d", fee, contractBalance)
 	}
 }
 
