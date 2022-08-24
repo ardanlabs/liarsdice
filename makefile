@@ -27,7 +27,7 @@ dev.setup:
 # Game Engine
 
 game-run:
-	go run app/engine/main.go | go run app/tooling/logfmt/main.go
+	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
 # ==============================================================================
 # Browser Application
@@ -36,10 +36,10 @@ game-run:
 # Your default localhost will open at http://localhost:3001
 
 react-install:
-	npm install --prefix app/client/
+	npm install --prefix app/services/game/
 
 react-start:
-	PORT=3001 npm start --prefix app/client/
+	PORT=3001 npm start --prefix app/services/game/
 
 # ==============================================================================
 # Running tests within the local computer

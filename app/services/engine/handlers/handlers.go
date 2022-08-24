@@ -8,8 +8,8 @@ import (
 	"net/http/pprof"
 	"os"
 
-	"github.com/ardanlabs/liarsdice/app/engine/handlers/debug/checkgrp"
-	v1 "github.com/ardanlabs/liarsdice/app/engine/handlers/v1"
+	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/debug/checkgrp"
+	v1 "github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1"
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"

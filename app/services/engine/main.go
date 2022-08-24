@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf/v3"
-	"github.com/ardanlabs/liarsdice/app/engine/handlers"
+	"github.com/ardanlabs/liarsdice/app/services/engine/handlers"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"

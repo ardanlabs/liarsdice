@@ -5,7 +5,7 @@ package v1
 import (
 	"net/http"
 
-	"github.com/ardanlabs/liarsdice/app/engine/handlers/v1/gamegrp"
+	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1/gamegrp"
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"

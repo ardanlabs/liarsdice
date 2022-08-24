@@ -1,4 +1,4 @@
-app/client/node_modules
+app/services/game/node_modules
 zarf/ethereum/geth
 zarf/contract
 etherscan.env
