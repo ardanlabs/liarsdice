@@ -157,7 +157,7 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 	address := claims.Subject
 
 	if err := h.createGame(ctx, address); err != nil {
-		return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send("newgame:" + address)
@@ -404,13 +404,13 @@ func (h *Handlers) createGame(ctx context.Context, address string) error {
 	if h.game != nil {
 		status := h.game.Info()
 		if status.Status != game.StatusGameOver {
-			return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+			return errors.New("game is currently being played")
 		}
 	}
 
 	g, err := game.New(ctx, h.Banker, address, h.AnteUSD)
 	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("unable to create game: %w", err), http.StatusBadRequest)
+		return fmt.Errorf("unable to create game: %w", err)
 	}
 
 	h.game = g
