@@ -19,6 +19,7 @@ export function App() {
     cups: [],
     player_order: [],
     claims: [],
+    ante_usd: 0,
   } as game)
 
   const providerGame = useMemo(() => ({ game, setGame }), [game, setGame])

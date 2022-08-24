@@ -12,6 +12,7 @@ export const GameContext = createContext({
     cups: [],
     player_order: [],
     claims: [] as claim[],
+    ante_usd: 0,
   } as game,
   setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
 })

@@ -23,6 +23,7 @@ export interface game {
   cups: user[]
   player_order: string[]
   claims: claim[]
+  ante_usd: number
 }
 
 export type getExchangeRateResponse = {

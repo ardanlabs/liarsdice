@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { useEthers } from '@usedapp/core'
 import axios, { AxiosResponse } from 'axios'
-import { axiosConfig, token } from '../utils/axiosConfig'
+import { axiosConfig } from '../utils/axiosConfig'
 import Transaction from './transaction'
 
 const PlayerBalance = () => {
@@ -11,14 +11,19 @@ const PlayerBalance = () => {
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'
 
-  const updateBalance = useCallback(() => {
-    if (account)
-      axios
-        .get(`http://${apiUrl}/balance`, axiosConfig)
-        .then((balanceResponse: AxiosResponse) => {
-          setBalance(parseFloat(balanceResponse.data.balance))
-        })
-  }, [account, apiUrl])
+  const updateBalance = useCallback(
+    (balance: number = -1) => {
+      if (balance !== -2) {
+        if (account)
+          axios
+            .get(`http://${apiUrl}/balance`, axiosConfig)
+            .then((balanceResponse: AxiosResponse) => {
+              setBalance(parseFloat(balanceResponse.data.balance))
+            })
+      }
+    },
+    [account, apiUrl],
+  )
 
   const toggle = () => {
     const dropdown = document.querySelector('.dropdown-menu') as HTMLElement
@@ -33,7 +38,7 @@ const PlayerBalance = () => {
     updateBalance()
   }, [updateBalance])
 
-  return token() ? (
+  return account ? (
     <div
       className="dropdown dropleft dropdown-content"
       style={{

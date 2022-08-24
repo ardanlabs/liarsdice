@@ -29,7 +29,6 @@ function Footer() {
     axios
       .get(`http://${apiUrl}/claim/${number}/${suite}`, axiosConfig)
       .then(function (response: AxiosResponse) {
-        console.info('Claim made!')
         if (response.data) {
           setNewGame(response.data)
         }

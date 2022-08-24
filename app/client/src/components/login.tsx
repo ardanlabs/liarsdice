@@ -1,33 +1,26 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
 import { useEthers } from '@usedapp/core'
 import MainRoom from './mainRoom'
-import { token } from '../utils/axiosConfig'
 import { utils } from 'ethers'
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
+import getNowDate from '../utils/getNowDate'
+import { token } from '../utils/axiosConfig'
 
 export default function Login() {
   const { account, library, activateBrowserWallet } = useEthers()
-
+  const [isTokenSet, setIsTokenSet] = useState(false)
   function handleConnectAccount() {
     activateBrowserWallet()
   }
   const signTransaction = () => {
     toast.info('Connecting to game engine')
-    const now = new Date()
-    const dd = String(now.getDate()).padStart(2, '0')
-    const mm = String(now.getMonth() + 1).padStart(2, '0') //January is 0!
-    const yyyy = now.getFullYear()
-    const hours = now.getHours()
-    const minutes = now.getMinutes()
-    const seconds = now.getSeconds()
-    // We create the specific date to send to the signature
-    const date = yyyy + mm + dd + hours + minutes + seconds
+    const date = getNowDate()
 
-    var doc = { date_time: date }
+    let doc = { date_time: date }
 
     const signer = library?.getSigner()
 
@@ -53,8 +46,10 @@ export default function Login() {
             'token',
             `bearer ${response.data.token}`,
           )
+          setIsTokenSet(true)
         })
         .catch((error: AxiosError) => {
+          setIsTokenSet(false)
           let errorMessage = (error as any).response.data.error.replace(
             / \[.+\]/gm,
             '',

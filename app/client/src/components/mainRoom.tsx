@@ -1,310 +1,41 @@
-import React, { useEffect, useContext, useState, useRef, useMemo } from 'react'
+import React, { useEffect, useContext } from 'react'
 import SideBar from './sidebar'
 import GameTable from './gameTable'
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { shortenIfAddress, useEthers } from '@usedapp/core'
 import { GameContext } from '../gameContext'
-import { dice, game, user } from '../types/index.d'
-import { toast } from 'react-toastify'
+import useGame from './hooks/useGame'
+import useWebSocket from './hooks/useWebSocket'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
-  const { account } = useEthers()
-  const gameAnte = 5
-  let { game, setGame } = useContext(GameContext)
-  const gamePot = useMemo(
-    () => gameAnte * game.cups.length,
-    [game.cups.length, gameAnte],
-  )
-  let [playerDice, setPlayerDice] = useState([] as dice)
-  const apiUrl = process.env.REACT_APP_GO_HOST
-    ? process.env.REACT_APP_GO_HOST
-    : 'localhost:3000/v1/game'
-  const axiosConfig: AxiosRequestConfig = {
-    headers: {
-      authorization: window.sessionStorage.getItem('token') as string,
-    },
-  }
+  let { game } = useContext(GameContext)
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  const [
+    rolldice,
+    timer,
+    resetTimer,
+    gamePot,
+    playerDice,
+    managePlayerDice,
+    updateStatus,
+  ] = useGame()
 
-  useEffect(() => {
-    setPlayerDice(
-      JSON.parse(window.sessionStorage.getItem('playerDice') as string),
-    )
-  }, [])
+  const [connect, wsStatus] = useWebSocket()
 
+  // Effect to persits players dice
   useEffect(() => {
     window.sessionStorage.setItem('playerDice', JSON.stringify(playerDice))
   }, [playerDice])
+  // Timer time in seconds
 
-  const setNewGame = (data: game) => {
-      let newGame = data
-      newGame = newGame.claims ? newGame : { ...newGame, claims: [] }
-      newGame = newGame.cups ? newGame : { ...newGame, cups: [] }
-      newGame = newGame.player_order
-        ? newGame
-        : { ...newGame, player_order: [] }
-      setGame(newGame)
-    },
-    // Timer time in seconds
-    timeoutTime = 30,
-    // Get the timer that's set inside the sessionStorage
-    sessionTimer = window.sessionStorage.getItem('round_timer')
-      ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
-      : timeoutTime
-
-  let wsStatus = useRef('closed'),
-    roundInterval: NodeJS.Timer,
-    [timer, setTimer] = useState(sessionTimer)
-
-  const updateStatus = () => {
-    axios
-      .get(`http://${apiUrl}/status`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          setNewGame(response.data)
-          switch (response.data.status) {
-            // Keeping in case of edge cases
-            // case 'roundover':
-            //   newRound()
-            //   break
-            case 'newgame':
-              if (getActivePlayersLength(response.data) >= 2) {
-                startGame()
-              }
-              break
-            case 'gameover':
-              if (
-                getActivePlayersLength(response.data) === 1 &&
-                game.last_win === account
-              ) {
-                axios
-                  .get(`http://${apiUrl}/reconcile`, axiosConfig)
-                  .then((response: AxiosResponse) => {
-                    console.info(response)
-                  })
-                  .catch((error: AxiosError) => {
-                    console.error(error)
-                  })
-              }
-              break
-          }
-        }
-      })
-      .catch(function (error: AxiosError) {
-        console.error((error as any).response.data.error)
-      })
-  }
-
-  const startGame = () => {
-    if (game.status === 'gameover') {
-      axios
-        .get(`http://${apiUrl}/start`, axiosConfig)
-        .then(function () {})
-        .catch(function (error: AxiosError) {
-          console.error(error)
-        })
-    }
-  }
-
-  const rolldice = () => {
-    axios
-      .get(`http://${apiUrl}/rolldice`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          setPlayerDice(response.data.dice)
-        }
-      })
-      .catch(function (error: AxiosError) {
-        console.error(error)
-      })
-  }
-
-  // const newRound = () => {
-  //   axios
-  //     .get(`http://${apiUrl}/newround`, axiosConfig)
-  //     .then(function (response: AxiosResponse) {
-  //       if (response.data) {
-  //         window.sessionStorage.removeItem('round_timer')
-  //         setTimer(timeoutTime)
-  //         setTimeoutsCount(0)
-  //         updateStatus()
-  //         rolldice()
-  //       }
-  //     })
-  //     .catch(function (error: AxiosError) {
-  //       console.error(error)
-  //     })
-  // }
-
-  const getActivePlayersLength = (gameToFilter = game) => {
-    return gameToFilter.player_order.filter((player: string) => player.length)
-      .length
-  }
-
-  const connect = () => {
-    const ws = new WebSocket(`ws://${apiUrl}/events`)
-    if (
-      wsStatus.current !== 'open' &&
-      wsStatus.current !== 'attemptingConnection'
-    ) {
-      ws.onopen = () => {
-        updateStatus()
-        wsStatus.current = 'open'
-        toast.info('Connection established')
-      }
-      ws.onmessage = (evt: MessageEvent) => {
-        updateStatus()
-
-        if (evt.data) {
-          let message = evt.data
-          switch (true) {
-            case message.startsWith('start:'):
-              const gameStartStart = 'start:'
-              const gameOwnerAccount = shortenIfAddress(
-                message.substring(gameStartStart.length),
-              )
-              toast.info(`Game has been started by ${gameOwnerAccount}!`)
-              rolldice()
-              break
-            case message === 'rolldice':
-              toast.info(`Rolling dice's`)
-              break
-            case message.startsWith('join:'):
-              const joinStart = 'join:'
-              const joinAccount = shortenIfAddress(
-                message.substring(joinStart.length),
-              )
-              toast.info(`Account ${joinAccount} just joined`)
-              break
-            case message === 'claim':
-              window.sessionStorage.removeItem('round_timer')
-              setTimer(timeoutTime)
-              break
-            case message === 'newround':
-              toast.info('New round!')
-              break
-            case message === 'nextturn':
-              toast.info('Next turn!')
-              break
-            case message.startsWith('outs:'):
-              const outsStart = 'join:'
-              const strikedAccount = shortenIfAddress(
-                message.substring(outsStart.length),
-              )
-              toast.info(`Player ${strikedAccount} timed out and got striked`)
-              break
-            case message.startsWith('callliar:'):
-              toast.info('A player was called a liar and lost!')
-              const liarStart = 'callliar:'
-              const playersLeft = parseInt(message.substring(liarStart.length))
-              if (playersLeft > 1) {
-                rolldice()
-              }
-              break
-          }
-        }
-        return
-      }
-      ws.onclose = (evt: CloseEvent) => {
-        toast.error(
-          'Connection is closed. Reconnect will be attempted in 1 second. ' +
-            evt.reason,
-        )
-        wsStatus.current = 'closed'
-        setTimeout(function () {
-          setGame({
-            status: 'gameover',
-            last_out: '',
-            last_win: '',
-            current_player: '',
-            current_cup: 0,
-            round: 1,
-            cups: [],
-            player_order: [],
-            claims: [],
-          })
-          connect()
-        }, 1000)
-      }
-
-      ws.onerror = function (err) {
-        console.error('Socket encountered error: ', err, 'Closing socket')
-        ws.close()
-        wsStatus.current = 'close'
-      }
-    }
-  }
-
-  const nextTurn = () => {
-    axios
-      .get(`http://${apiUrl}/next`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        window.sessionStorage.removeItem('round_timer')
-        setTimer(timeoutTime)
-        // We calculate how many players are active and if every but one timed out
-        // if (getActivePlayersLength(response.data) - 1 === timeoutsCount) {
-        //   newRound()
-        // } else {
-        updateStatus()
-        // }
-      })
-      .catch(function (error: AxiosError) {
-        // To be discused
-      })
-  }
-
-  const addOut = (
-    accountToOut = (game.player_order as string[])[game.current_cup],
-  ) => {
-    const player = game.cups.filter((player: user) => {
-      return player.account === accountToOut
-    })
-    axios
-      .get(`http://${apiUrl}/out/${player[0].outs + 1}`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        setNewGame(response.data)
-        if (response.data.status === 'playing') {
-          nextTurn()
-        }
-      })
-      .catch(function (error: AxiosError) {
-        console.group('Something went wrong, try again.')
-        console.error(error)
-        console.groupEnd()
-      })
-  }
-
-  const decreaseTimer = () => {
-    setTimer((prevState) => {
-      return prevState - 1
-    })
-  }
+  // Effect to update the state of player's dice
   useEffect(() => {
-    window.sessionStorage.setItem('round_timer', `${timer}`)
-  }, [timer])
+    managePlayerDice(
+      JSON.parse(window.sessionStorage.getItem('playerDice') as string),
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  useEffect(() => {
-    if (
-      (game.player_order as string[])[game.current_cup] === account &&
-      game.status === 'playing'
-    ) {
-      clearInterval(roundInterval)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      roundInterval = setInterval(() => {
-        if (timer > 0 && game.status === 'playing') {
-          decreaseTimer()
-        } else {
-          addOut()
-          window.sessionStorage.removeItem('round_timer')
-          clearInterval(roundInterval)
-        }
-      }, 1000)
-    } else {
-      clearInterval(roundInterval)
-    }
-    return () => clearInterval(roundInterval)
-  }, [timer, account, game.player_order, game.current_cup, game.status])
-
+  // First render effect to connect the websocket and to clear the round timer just in case.
   useEffect(() => {
     connect()
     window.sessionStorage.removeItem('round_timer')
@@ -324,7 +55,7 @@ const MainRoom = (props: MainRoomProps) => {
       }}
       id="mainRoom"
     >
-      <SideBar ante={gameAnte} gamePot={gamePot} />
+      <SideBar ante={game.ante_usd} gamePot={gamePot} />
       <GameTable playerDice={playerDice} timer={timer} />
     </div>
   )

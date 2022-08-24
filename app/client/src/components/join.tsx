@@ -28,17 +28,25 @@ const Join = (props: JoinProps) => {
   }
 
   // Saving for the future when we have multiple rooms
-  const createNewGame = (ante: number = 10) => {
+  const createNewGame = () => {
     axios
       .get(`http://${apiUrl}/new`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
-          joinGame()
         }
       })
       .catch(function (error: AxiosError) {
-        console.error(error)
+        let errorMessage = (error as any).response.data.error.replace(
+          / \[.+\]/gm,
+          '',
+        )
+        toast.error(
+          <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
+        )
+        console.group()
+        console.error('Error:', (error as any).response.data.error)
+        console.groupEnd()
       })
   }
 
@@ -77,7 +85,6 @@ const Join = (props: JoinProps) => {
         }
       })
       .catch(function (error: AxiosError) {
-        console.log('hi')
         createNewGame()
         console.error((error as any).response.data.error)
       })

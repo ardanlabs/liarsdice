@@ -29,7 +29,7 @@ const SidebarDetails = (props: SidebarDetailsProps) => {
         {ante ? (
           <>
             <strong className="details__title mr-6">Ante:</strong>
-            {ante} ETH
+            {ante} U$D
           </>
         ) : (
           ''
