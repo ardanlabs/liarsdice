@@ -156,13 +156,8 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	address := claims.Subject
 
-	g, err := h.createGame(address)
-	if err != nil {
+	if err := h.createGame(ctx, address); err != nil {
 		return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
-	}
-
-	if err := g.AddAccount(ctx, address); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send("newgame:" + address)
@@ -402,20 +397,25 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 // =============================================================================
 
 // SetGame safely sets a game pointer.
-func (h *Handlers) createGame(address string) (*game.Game, error) {
+func (h *Handlers) createGame(ctx context.Context, address string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	if h.game != nil {
 		status := h.game.Info()
 		if status.Status != game.StatusGameOver {
-			return nil, v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
+			return v1Web.NewRequestError(errors.New("game is currently being played"), http.StatusBadRequest)
 		}
 	}
 
-	h.game = game.New(h.Banker, address, h.AnteUSD)
+	g, err := game.New(ctx, h.Banker, address, h.AnteUSD)
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("unable to create game: %w", err), http.StatusBadRequest)
+	}
 
-	return h.game, nil
+	h.game = g
+
+	return nil
 }
 
 // GetGame safely returns a copy of the game pointer.

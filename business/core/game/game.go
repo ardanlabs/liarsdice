@@ -88,10 +88,22 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(banker Banker, owner string, anteUSD int) *Game {
+func New(ctx context.Context, banker Banker, owner string, anteUSD int) (*Game, error) {
+	balance, err := banker.Balance(ctx, owner)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve account[%s] balance", owner)
+	}
+
+	ante := big.NewInt(int64(anteUSD))
+
+	// If comparison is negative, the player has no balance.
+	if balance.Cmp(ante) < 0 {
+		return nil, fmt.Errorf("account [%s] does not have enough balance to play", owner)
+	}
+
 	rand.Seed(time.Now().UTC().UnixNano())
 
-	return &Game{
+	g := Game{
 		id:      uuid.NewString(),
 		banker:  banker,
 		owner:   owner,
@@ -100,6 +112,12 @@ func New(banker Banker, owner string, anteUSD int) *Game {
 		anteUSD: anteUSD,
 		cups:    make(map[string]Cup),
 	}
+
+	if err := g.AddAccount(ctx, owner); err != nil {
+		return nil, errors.New("unable to add owner to the game")
+	}
+
+	return &g, nil
 }
 
 // AddAccount adds a player to the game. If the account already exists, the

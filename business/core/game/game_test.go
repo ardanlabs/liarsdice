@@ -25,14 +25,17 @@ func TestSuccessGamePlay(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, "owner", 0)
 	ctx := context.Background()
+	g, err := New(ctx, &bank, "owner", 0)
+	if err != nil {
+		t.Fatalf("unexpected error creating game: %s", err)
+	}
 
 	// =========================================================================
 	// Game Setup.
 
 	// Add players.
-	err := g.AddAccount(ctx, "player1")
+	err = g.AddAccount(ctx, "player1")
 	if err != nil {
 		t.Fatalf("unexpected error adding player 1: %s", err)
 	}
@@ -249,14 +252,18 @@ func TestInvalidClaim(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, "owner", 0)
 	ctx := context.Background()
+
+	g, err := New(ctx, &bank, "owner", 0)
+	if err != nil {
+		t.Fatalf("unexpected error adding owner: %s", err)
+	}
 
 	// =========================================================================
 	// Game Setup.
 
 	// Add players.
-	err := g.AddAccount(ctx, "player1")
+	err = g.AddAccount(ctx, "player1")
 	if err != nil {
 		t.Fatalf("unexpected error adding player 1: %s", err)
 	}
@@ -299,9 +306,14 @@ func TestInvalidClaim(t *testing.T) {
 }
 
 func TestGameWithoutEnoughPlayers(t *testing.T) {
-	g := New(nil, "owner", 0)
+	ctx := context.Background()
 
-	err := g.StartGame("owner")
+	g, err := New(ctx, nil, "owner", 0)
+	if err != nil {
+		t.Fatal("not expecting error creating game")
+	}
+
+	err = g.StartGame("owner")
 	if err == nil {
 		t.Fatal("expecting error trying to start a game without enough players")
 	}
@@ -313,10 +325,13 @@ func TestWrongPlayerTryingToPlayer(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, "owner", 0)
 	ctx := context.Background()
+	g, err := New(ctx, &bank, "owner", 0)
+	if err != nil {
+		t.Fatal("not expecting error creating game")
+	}
 
-	err := g.AddAccount(ctx, "player1")
+	err = g.AddAccount(ctx, "player1")
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -343,11 +358,13 @@ func TestAddAccountWithoutBalance(t *testing.T) {
 		err:   nil,
 	}
 
-	g := New(&bank, "owner", 101)
-
 	ctx := context.Background()
+	g, err := New(ctx, &bank, "owner", 0)
+	if err != nil {
+		t.Fatal("not expecting error creating game")
+	}
 
-	err := g.AddAccount(ctx, "player1")
+	err = g.AddAccount(ctx, "player1")
 	if err == nil {
 		t.Fatal("expecting error adding player without balance")
 	}
