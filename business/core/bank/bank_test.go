@@ -21,6 +21,8 @@ const (
 	Player2Address    = "0x8e113078adf6888b7ba84967f299f29aece24c55"
 	Player2KeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
 	Player2PassPhrase = "123"
+
+	OwnerAddress = "0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd"
 )
 
 func TestPlayerBalance(t *testing.T) {
@@ -217,7 +219,7 @@ func TestReconcile(t *testing.T) {
 	}
 
 	// Check owner's balance.
-	contractBalance, err := ownerClient.Balance(ctx, ownerClient.Account())
+	contractBalance, err := ownerClient.Balance(ctx, OwnerAddress)
 	if err != nil {
 		t.Fatalf("error calling balance for owner: %s", err)
 	}

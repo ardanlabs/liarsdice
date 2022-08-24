@@ -115,8 +115,3 @@ func (b *Bank) Withdraw(ctx context.Context, account string) error {
 
 	return nil
 }
-
-// Account returns the connected account address.
-func (b *Bank) Account() string {
-	return b.client.Account.String()
-}
