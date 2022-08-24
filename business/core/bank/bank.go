@@ -89,3 +89,22 @@ func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error 
 
 	return nil
 }
+
+func (b *Bank) Withdraw(ctx context.Context, account string) error {
+	tranOpts, err := b.client.NewTransactOpts(ctx, 0, 0)
+	if err != nil {
+		return err
+	}
+
+	tx, err := b.contract.Withdraw(tranOpts)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.client.WaitMined(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
