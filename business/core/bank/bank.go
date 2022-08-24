@@ -69,3 +69,23 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 
 	return nil
 }
+
+// Deposit will add the given amount to the player's contract balance.
+func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error {
+	tranOpts, err := b.client.NewTransactOpts(ctx, 0, uint64(amount))
+	if err != nil {
+		return err
+	}
+
+	tx, err := b.contract.Deposit(tranOpts)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.client.WaitMined(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
