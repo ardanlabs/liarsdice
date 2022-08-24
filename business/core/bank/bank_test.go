@@ -1,13 +1,13 @@
-package bank
+package bank_test
 
 import (
 	"context"
 	"math/big"
 	"testing"
 
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -29,13 +29,13 @@ func TestPlayerBalance(t *testing.T) {
 	}
 
 	// Create a bank for the contract owner.
-	ownerClient, err := New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
 	// Create a bank for the player.
-	playerClient, err := New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
+	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
@@ -43,30 +43,15 @@ func TestPlayerBalance(t *testing.T) {
 	// =========================================================================
 	// Make a deposit as player.
 
-	tranOpts, err := playerClient.client.NewTransactOpts(ctx, 300000, 40000000)
-	if err != nil {
-		t.Fatalf("error creating player transaction: %s", err)
-	}
-
-	tx, err := playerClient.contract.Deposit(tranOpts)
+	err = playerClient.Deposit(ctx, Player1Address, 40000000)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
-	}
-
-	_, err = playerClient.client.WaitMined(ctx, tx)
-	if err != nil {
-		t.Fatalf("error mining the block: %s", err)
 	}
 
 	// =========================================================================
 	// Check the player balance as an owner.
 
-	callOpts, err := ownerClient.client.NewCallOpts(ctx)
-	if err != nil {
-		t.Fatalf("error creating owner transaction: %s", err)
-	}
-
-	amount, err := ownerClient.contract.PlayerBalance(callOpts, common.HexToAddress(Player1Address))
+	amount, err := ownerClient.Balance(ctx, Player1Address)
 	if err != nil {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
@@ -79,25 +64,15 @@ func TestPlayerBalance(t *testing.T) {
 	// ==========================================================================
 	// Make a new player deposit.
 
-	tranOpts, err = playerClient.client.NewTransactOpts(ctx, 300000, 40000000)
-	if err != nil {
-		t.Fatalf("error creating player transaction: %s", err)
-	}
-
-	tx, err = playerClient.contract.Deposit(tranOpts)
+	err = playerClient.Deposit(ctx, Player1Address, 40000000)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
-	}
-
-	_, err = playerClient.client.WaitMined(ctx, tx)
-	if err != nil {
-		t.Fatalf("error mining the block: %s", err)
 	}
 
 	// =========================================================================
 	// Check the player balance as an owner.
 
-	amount, err = ownerClient.contract.PlayerBalance(callOpts, common.HexToAddress(Player1Address))
+	amount, err = ownerClient.Balance(ctx, Player1Address)
 	if err != nil {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
