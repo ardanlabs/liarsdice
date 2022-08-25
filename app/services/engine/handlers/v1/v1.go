@@ -39,6 +39,7 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
+	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", ggh.USD2Wei)
 
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
 

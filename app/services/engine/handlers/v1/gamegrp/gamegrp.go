@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"sync"
@@ -144,6 +145,27 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 		Token string `json:"token"`
 	}{
 		Token: token,
+	}
+
+	return web.Respond(ctx, w, data, http.StatusOK)
+}
+
+// USD2Wei converts the us dollar amount to wei based on the game engine's
+// conversion rate.
+func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	usd, err := strconv.ParseFloat(web.Param(r, "usd"), 64)
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
+	}
+
+	wei := smart.USD2Wei(big.NewFloat(usd))
+
+	data := struct {
+		USD float64  `json:"usd"`
+		WEI *big.Int `json:"wei"`
+	}{
+		USD: usd,
+		WEI: wei,
 	}
 
 	return web.Respond(ctx, w, data, http.StatusOK)
