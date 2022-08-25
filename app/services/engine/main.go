@@ -82,8 +82,8 @@ func run(log *zap.SugaredLogger) error {
 			AnteUSD    int    `conf:"default:5"`
 		}
 		Bank struct {
-			KeyPath    string `conf:"zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd,mask"`
-			PassPhrase string `conf:"123,mask"`
+			KeyPath    string `conf:"zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
+			PassPhrase string `conf:"123"`
 		}
 	}{
 		Version: conf.Version{
@@ -147,7 +147,7 @@ func run(log *zap.SugaredLogger) error {
 
 	bank, err := bank.New(ctx, smart.NetworkLocalhost, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
 	if err != nil {
-		return fmt.Errorf("connecting to db: %w", err)
+		return fmt.Errorf("connecting to bank: %w", err)
 	}
 
 	// =========================================================================
