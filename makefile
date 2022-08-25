@@ -42,38 +42,6 @@ react-start:
 	PORT=3001 npm start --prefix app/services/game/
 
 # ==============================================================================
-# Running tests within the local computer
-
-test:
-	go test ./... -count=1
-	staticcheck -checks=all ./...
-
-# ==============================================================================
-# Modules support
-
-deps-reset:
-	git checkout -- go.mod
-	go mod tidy
-	go mod vendor
-
-tidy:
-	go mod tidy
-	go mod vendor
-
-deps-upgrade:
-	# go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
-	go get -u -v ./...
-	go mod tidy
-	go mod vendor
-
-deps-cleancache:
-	go clean -modcache
-
-list:
-	go list -mod=mod all
-
-
-# ==============================================================================
 # These commands build and deploy basic smart contract.
 
 # This will compile the smart contract and produce the binary code. Then with the
@@ -85,23 +53,7 @@ contract-build:
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 contract-deploy:
-	go run contract/cmd/deploy/main.go
-
-# This will show the reconcile.
-contract-reconcile:
-	go run contract/cmd/reconcile/main.go
-
-# This will show the player's balance.
-contract-playerbalance:
-	go run contract/cmd/playerbalance/main.go
-
-# This will make a deposit for the player.
-contract-deposit:
-	go run contract/cmd/deposit/main.go
-
-# This will withdraw from the player balance and transfer to their wallet.
-contract-withdraw:
-	go run contract/cmd/withdraw/main.go
+	go run contract/deploy/main.go
 
 # ==============================================================================
 # These commands start the Ethereum node and provide examples of attaching
@@ -134,3 +86,34 @@ geth-new-account:
 geth-deposit:
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+
+# ==============================================================================
+# Running tests within the local computer
+
+test:
+	go test ./... -count=1
+	staticcheck -checks=all ./...
+
+# ==============================================================================
+# Modules support
+
+deps-reset:
+	git checkout -- go.mod
+	go mod tidy
+	go mod vendor
+
+tidy:
+	go mod tidy
+	go mod vendor
+
+deps-upgrade:
+	# go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
+	go get -u -v ./...
+	go mod tidy
+	go mod vendor
+
+deps-cleancache:
+	go clean -modcache
+
+list:
+	go list -mod=mod all
