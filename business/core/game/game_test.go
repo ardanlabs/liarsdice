@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"errors"
 	"math/big"
 	"testing"
 )
@@ -26,19 +27,13 @@ func TestSuccessGamePlay(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g, err := New(ctx, &bank, "owner", 0)
+	g, err := New(ctx, &bank, "player1", 0)
 	if err != nil {
 		t.Fatalf("unexpected error creating game: %s", err)
 	}
 
 	// =========================================================================
 	// Game Setup.
-
-	// Add players.
-	err = g.AddAccount(ctx, "player1")
-	if err != nil {
-		t.Fatalf("unexpected error adding player 1: %s", err)
-	}
 
 	err = g.AddAccount(ctx, "player2")
 	if err != nil {
@@ -51,7 +46,7 @@ func TestSuccessGamePlay(t *testing.T) {
 	}
 
 	// Start the game.
-	err = g.StartGame("owner")
+	err = g.StartGame("player1")
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
@@ -254,7 +249,7 @@ func TestInvalidClaim(t *testing.T) {
 
 	ctx := context.Background()
 
-	g, err := New(ctx, &bank, "owner", 0)
+	g, err := New(ctx, &bank, "player1", 0)
 	if err != nil {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
@@ -262,18 +257,12 @@ func TestInvalidClaim(t *testing.T) {
 	// =========================================================================
 	// Game Setup.
 
-	// Add players.
-	err = g.AddAccount(ctx, "player1")
-	if err != nil {
-		t.Fatalf("unexpected error adding player 1: %s", err)
-	}
-
 	err = g.AddAccount(ctx, "player2")
 	if err != nil {
 		t.Fatalf("unexpected error adding player 2: %s", err)
 	}
 
-	err = g.StartGame("owner")
+	err = g.StartGame("player1")
 	if err != nil {
 		t.Fatalf("unexpected error starting game: %s", err)
 	}
@@ -306,9 +295,14 @@ func TestInvalidClaim(t *testing.T) {
 }
 
 func TestGameWithoutEnoughPlayers(t *testing.T) {
+	bank := MockedBank{
+		value: big.NewInt(100),
+		err:   nil,
+	}
+
 	ctx := context.Background()
 
-	g, err := New(ctx, nil, "owner", 0)
+	g, err := New(ctx, &bank, "owner", 0)
 	if err != nil {
 		t.Fatal("not expecting error creating game")
 	}
@@ -319,7 +313,7 @@ func TestGameWithoutEnoughPlayers(t *testing.T) {
 	}
 }
 
-func TestWrongPlayerTryingToPlayer(t *testing.T) {
+func TestWrongPlayerTryingToPlay(t *testing.T) {
 	bank := MockedBank{
 		value: big.NewInt(100),
 		err:   nil,
@@ -359,10 +353,12 @@ func TestAddAccountWithoutBalance(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g, err := New(ctx, &bank, "owner", 0)
+	g, err := New(ctx, &bank, "owner", 100)
 	if err != nil {
 		t.Fatal("not expecting error creating game")
 	}
+
+	bank.err = errors.New("the player don't have enough balance")
 
 	err = g.AddAccount(ctx, "player1")
 	if err == nil {
