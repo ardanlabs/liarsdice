@@ -20,9 +20,9 @@ func main() {
 
 func run() error {
 	ctx := context.Background()
-	network := smart.NetworkLocalhost
+	network := smart.NetworkGoerli
 
-	client, err := smart.Connect(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
+	client, err := smart.Connect(ctx, network, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
 	if err != nil {
 		return err
 	}
@@ -36,6 +36,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("starting Ba:", smart.Wei2GWei(startingBalance))
 	defer client.DisplayBalanceSheet(ctx, startingBalance)
 
 	// =========================================================================

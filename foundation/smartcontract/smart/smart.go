@@ -23,7 +23,7 @@ import (
 const (
 	NetworkHTTPLocalhost = "http://localhost:8545"
 	NetworkLocalhost     = "zarf/ethereum/geth.ipc"
-	NetworkGoerli        = "http://goerli.prylabs.net/"
+	NetworkGoerli        = "https://rpc.ankr.com/eth_goerli"
 )
 
 // Harded this here for now just to make life easier.
