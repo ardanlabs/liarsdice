@@ -41,6 +41,9 @@ react-install:
 react-start:
 	PORT=3001 npm start --prefix app/services/game/
 
+react-test:
+	npm test --prefix app/services/game/
+
 # ==============================================================================
 # Running tests within the local computer
 

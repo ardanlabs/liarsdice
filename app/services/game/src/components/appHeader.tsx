@@ -11,7 +11,7 @@ const AppHeader: FC<AppHeaderProps> = (AppHeaderProps) => {
     return null
   }
   return (
-    <header className="App-header">
+    <header data-testid="app-header" className="App-header">
       <h1>Ardan's Liar's Dice</h1>
       <PlayerBalance />
     </header>

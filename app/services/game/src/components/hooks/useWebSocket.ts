@@ -17,16 +17,7 @@ import useGame from './useGame'
 const useWebSocket = () => {
   let wsStatus = useRef('closed')
   let { setGame } = useContext(GameContext)
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  const [
-    rolldice,
-    timer,
-    resetTimer,
-    gamePot,
-    playerDice,
-    managePlayerDice,
-    updateStatus,
-  ] = useGame()
+  const { rolldice, resetTimer, updateStatus } = useGame()
 
   const connect = () => {
     const ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -135,7 +126,7 @@ const useWebSocket = () => {
       }
     }
   }
-  return [connect, wsStatus] as const
+  return { connect, wsStatus }
 }
 
 export default useWebSocket

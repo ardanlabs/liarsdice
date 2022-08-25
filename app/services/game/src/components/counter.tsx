@@ -11,6 +11,7 @@ const Counter: FC<CounterProps> = (CounterProps) => {
   if (show) {
     return (
       <span
+        data-testid="counter-test"
         style={{
           fontSize: '32px',
           fontWeight: '500',

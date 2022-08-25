@@ -119,7 +119,7 @@ code {
 .dice svg {
   margin: 4px 12px;
 }
-.die {
+.die .question_die{
   margin: 6px;
 }
 .dice {

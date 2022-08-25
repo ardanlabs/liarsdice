@@ -1,7 +1,7 @@
-import { createContext } from 'react'
+import React, { createContext, useState } from 'react'
 import { claim, game } from './types/index.d'
 
-export const GameContext = createContext({
+export const GameContext = React.createContext({
   game: {
     status: 'gameover',
     last_out: '',

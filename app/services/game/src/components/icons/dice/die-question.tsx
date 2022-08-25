@@ -6,7 +6,7 @@ const DieQuestion = () => {
       width="59"
       height="60"
       viewBox="0 0 59 60"
-      className="die"
+      className="question_die"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >

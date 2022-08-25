@@ -8,18 +8,10 @@ import useWebSocket from './hooks/useWebSocket'
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
   let { game } = useContext(GameContext)
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  const [
-    rolldice,
-    timer,
-    resetTimer,
-    gamePot,
-    playerDice,
-    managePlayerDice,
-    updateStatus,
-  ] = useGame()
 
-  const [connect, wsStatus] = useWebSocket()
+  const { timer, gamePot, playerDice, managePlayerDice } = useGame()
+
+  const { connect, wsStatus } = useWebSocket()
 
   // Effect to persits players dice
   useEffect(() => {

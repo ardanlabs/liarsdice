@@ -1,14 +1,10 @@
 import React, { FC, useContext } from 'react'
-import { claim, dice, user } from '../types/index.d'
+import { claim, CupsProps, user } from '../types/index.d'
 import Star from './icons/star'
 import Claim from './claim'
 import Cup from './cup'
 import { GameContext } from '../gameContext'
 import { shortenIfAddress } from '@usedapp/core'
-
-interface CupsProps {
-  playerDice: dice
-}
 
 const Cups: FC<CupsProps> = (CupsProps) => {
   const { playerDice } = CupsProps
@@ -41,6 +37,7 @@ const Cups: FC<CupsProps> = (CupsProps) => {
         }}
         key={player.account}
         className="player__ui"
+        data-testid="player__ui"
       >
         <div className="d-flex">{stars}</div>
         <h2

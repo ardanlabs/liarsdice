@@ -2,7 +2,6 @@ export type dice = readonly die[] | []
 export type die = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export interface user {
   account: string
-  dice: dice
   outs: number
   claim: claim
 }
@@ -32,4 +31,14 @@ export type getExchangeRateResponse = {
     base: 'ETH'
     currency: 'USD'
   }
+}
+
+// Props Interfaces
+export interface CupProps {
+  player: user
+  playerDice: dice
+}
+
+export interface CupsProps {
+  playerDice: dice
 }

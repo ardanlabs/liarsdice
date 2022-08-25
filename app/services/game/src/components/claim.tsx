@@ -6,7 +6,6 @@ interface ClaimProps {
   claim: claim
   dieWidth?: string
   dieHeight?: string
-  dieColor?: string
   fill: string
 }
 

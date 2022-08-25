@@ -178,7 +178,7 @@ const useGame = () => {
     return () => clearInterval(roundInterval)
   }, [timer, account, game.player_order, game.current_cup, game.status])
 
-  return [
+  return {
     rolldice,
     timer,
     resetTimer,
@@ -186,7 +186,7 @@ const useGame = () => {
     playerDice,
     managePlayerDice,
     updateStatus,
-  ] as const
+  }
 }
 
 export default useGame
