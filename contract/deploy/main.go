@@ -3,27 +3,31 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
+	"time"
 
-	contract "github.com/ardanlabs/liarsdice/contract/sol/go/contract"
+	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatalln(err)
+		fmt.Println("ERROR:", err)
+		os.Exit(1)
 	}
 }
 
 func run() error {
 	ctx := context.Background()
+	network := smart.NetworkLocalhost
 
 	client, err := smart.Connect(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
 	if err != nil {
 		return err
 	}
 
+	fmt.Println("network    :", network)
 	fmt.Println("fromAddress:", client.Account)
 
 	// =========================================================================
@@ -59,13 +63,29 @@ func run() error {
 	fmt.Println("\nContract Details")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("Contract ID:", address.Hex())
-	fmt.Println("Please export GAME_CONTRACT_ID=<ID>")
+	fmt.Println("Please export GAME_CONTRACT_ID=", address.Hex())
 
-	receipt, err := client.WaitMined(ctx, tx)
-	if err != nil {
-		return err
+	log.Root().SetHandler(log.StdoutHandler)
+
+	for {
+		fmt.Println("*** Establish new connection ***")
+
+		client, err := smart.Connect(ctx, network, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
+		if err != nil {
+			return err
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		receipt, err := client.WaitMined(ctx, tx)
+		cancel()
+
+		if err != nil {
+			continue
+		}
+
+		client.DisplayTransactionReceipt(receipt, tx)
+		break
 	}
-	client.DisplayTransactionReceipt(receipt, tx)
 
 	return nil
 }

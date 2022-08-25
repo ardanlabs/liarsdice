@@ -23,7 +23,7 @@ import (
 const (
 	NetworkHTTPLocalhost = "http://localhost:8545"
 	NetworkLocalhost     = "zarf/ethereum/geth.ipc"
-	NetworkGoerli        = "https://rpc.goerli.mudit.blog/"
+	NetworkGoerli        = "http://goerli.prylabs.net/"
 )
 
 // Harded this here for now just to make life easier.
@@ -144,6 +144,14 @@ func (c *Client) WaitMined(ctx context.Context, tx *types.Transaction) (*types.R
 	}
 
 	return receipt, nil
+}
+
+func (c *Client) Transaction(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
+	return c.ethClient.TransactionByHash(ctx, txHash)
+}
+
+func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
+	return c.ethClient.TransactionReceipt(ctx, txHash)
 }
 
 // BaseFee calculates the base fee from the block for this receipt.
