@@ -29,6 +29,9 @@ dev.setup:
 game-run:
 	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
+game-cli:
+	go run app/cli/liars/main.go
+
 # ==============================================================================
 # Browser Application
 # This will start the React Frontend

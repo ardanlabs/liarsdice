@@ -146,10 +146,12 @@ func (c *Client) WaitMined(ctx context.Context, tx *types.Transaction) (*types.R
 	return receipt, nil
 }
 
+// Transaction returns a transaction value for the specified transaction hash.
 func (c *Client) Transaction(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
 	return c.ethClient.TransactionByHash(ctx, txHash)
 }
 
+// TransactionReceipt returns a receipt value for the specified transaction hash.
 func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
 	return c.ethClient.TransactionReceipt(ctx, txHash)
 }

@@ -97,6 +97,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 	return nil
 }
 
+// Withdraw will move all the player's balance in the contract, to the player's wallet.
 func (b *Bank) Withdraw(ctx context.Context, account string) error {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, 0)
 	if err != nil {
@@ -114,4 +115,15 @@ func (b *Bank) Withdraw(ctx context.Context, account string) error {
 	}
 
 	return nil
+}
+
+// WalletBalance returns the current balance for the account used to
+// create this bank.
+func (b *Bank) WalletBalance(ctx context.Context) (*big.Int, error) {
+	balance, err := b.client.CurrentBalance(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return balance, nil
 }
