@@ -5,6 +5,8 @@ import (
 	"errors"
 	"math/big"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type MockedBank struct {
@@ -16,8 +18,8 @@ func (m *MockedBank) Balance(ctx context.Context, account string) (*big.Int, err
 	return m.value, m.err
 }
 
-func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) error {
-	return m.err
+func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) (*types.Transaction, *types.Receipt, error) {
+	return nil, nil, m.err
 }
 
 func TestSuccessGamePlay(t *testing.T) {

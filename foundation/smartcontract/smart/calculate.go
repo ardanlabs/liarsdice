@@ -19,7 +19,7 @@ type TransactionDetails struct {
 }
 
 // CalculateTranactionDetails performs calculations on the transaction.
-func (*Client) CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
+func CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
 	return TransactionDetails{
 		Hash:              tx.Hash().Hex(),
 		GasLimit:          tx.Gas(),
@@ -43,7 +43,7 @@ type ReceiptDetails struct {
 }
 
 // CalculateReceiptDetails performs calculations on the receipt.
-func (c *Client) CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.Int) ReceiptDetails {
+func CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.Int) ReceiptDetails {
 	cost := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), gasPrice)
 
 	return ReceiptDetails{
@@ -57,7 +57,7 @@ func (c *Client) CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.I
 }
 
 // ExtractLogs extracts the logging events from the receipt.
-func (*Client) ExtractLogs(receipt *types.Receipt) []string {
+func ExtractLogs(receipt *types.Receipt) []string {
 	var logs []string
 
 	if len(receipt.Logs) > 0 {
@@ -89,7 +89,7 @@ type BalanceDiff struct {
 }
 
 // CalculateBalanceDiff performs calculations on the starting and ending balance.
-func (*Client) CalculateBalanceDiff(ctx context.Context, startingBalance *big.Int, endingBalance *big.Int) (BalanceDiff, error) {
+func CalculateBalanceDiff(ctx context.Context, startingBalance *big.Int, endingBalance *big.Int) (BalanceDiff, error) {
 	cost := big.NewInt(0).Sub(startingBalance, endingBalance)
 
 	return BalanceDiff{

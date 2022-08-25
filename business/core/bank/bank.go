@@ -9,6 +9,7 @@ import (
 	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 // Bank represents a bank that allows for the reconciling of a game and
@@ -70,10 +71,10 @@ func (b *Bank) Balance(ctx context.Context, account string) (*big.Int, error) {
 
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
-func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) error {
+func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, 0)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	winner := common.HexToAddress(winningAccount)
@@ -86,15 +87,15 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 
 	tx, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	_, err = b.client.WaitMined(ctx, tx)
+	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	return nil
+	return tx, receipt, nil
 }
 
 // Withdraw will move all the player's balance in the contract, to the player's wallet.
@@ -109,8 +110,7 @@ func (b *Bank) Withdraw(ctx context.Context, account string) error {
 		return err
 	}
 
-	_, err = b.client.WaitMined(ctx, tx)
-	if err != nil {
+	if _, err = b.client.WaitMined(ctx, tx); err != nil {
 		return err
 	}
 

@@ -4,47 +4,50 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// WriteBalanceSheet produces a easy to read format of the starting and ending
+// FmtBalanceSheet produces a easy to read format of the starting and ending
 // balance for the connected account.
-func (c *Client) WriteBalanceSheet(ctx context.Context, w io.Writer, startingBalance *big.Int) {
+func (c *Client) FmtBalanceSheet(ctx context.Context, startingBalance *big.Int) string {
 	endingBalance, err := c.CurrentBalance(ctx)
 	if err != nil {
-		return
+		return ""
 	}
 
-	diff, err := c.CalculateBalanceDiff(ctx, startingBalance, endingBalance)
+	diff, err := CalculateBalanceDiff(ctx, startingBalance, endingBalance)
 	if err != nil {
-		return
+		return ""
 	}
 
-	w.Write(formatBalanceDiff(diff))
+	return formatBalanceDiff(diff)
 }
 
-// WriteTransaction produces a easy to read format of the specified transaction.
-func (c *Client) WriteTransaction(w io.Writer, tx *types.Transaction) {
-	tcd := c.CalculateTransactionDetails(tx)
+// FmtTransaction produces a easy to read format of the specified transaction.
+func FmtTransaction(tx *types.Transaction) string {
+	tcd := CalculateTransactionDetails(tx)
 
-	w.Write(formatTranCostDetails(tcd))
+	return formatTranCostDetails(tcd)
 }
 
-// WriteTransaction produces a easy to read format of the specified transaction.
-func (c *Client) WriteTransactionReceipt(w io.Writer, receipt *types.Receipt, gasPrice *big.Int) {
-	rcd := c.CalculateReceiptDetails(receipt, gasPrice)
+// FmtTransaction produces a easy to read format of the specified transaction.
+func FmtTransactionReceipt(receipt *types.Receipt, gasPrice *big.Int) string {
+	rcd := CalculateReceiptDetails(receipt, gasPrice)
 
-	w.Write(formatReceiptCostDetails(rcd))
-	w.Write(formatLogs(c.ExtractLogs(receipt)))
+	var b bytes.Buffer
+
+	b.WriteString(formatReceiptCostDetails(rcd))
+	b.WriteString(formatLogs(ExtractLogs(receipt)))
+
+	return b.String()
 }
 
 // =============================================================================
 
 // formatTranCostDetails displays the transaction cost details.
-func formatTranCostDetails(tcd TransactionDetails) []byte {
+func formatTranCostDetails(tcd TransactionDetails) string {
 	var b bytes.Buffer
 
 	fmt.Fprintf(&b, "\nTransaction Details\n")
@@ -56,11 +59,11 @@ func formatTranCostDetails(tcd TransactionDetails) []byte {
 	fmt.Fprintf(&b, "max gas price   : %v GWei\n", tcd.MaxGasPriceGWei)
 	fmt.Fprintf(&b, "max gas price   : %v USD\n", tcd.MaxGasPriceUSD)
 
-	return b.Bytes()
+	return b.String()
 }
 
 // formatReceiptCostDetails displays the receipt cost details.
-func formatReceiptCostDetails(rcd ReceiptDetails) []byte {
+func formatReceiptCostDetails(rcd ReceiptDetails) string {
 	var b bytes.Buffer
 
 	fmt.Fprintf(&b, "\nReceipt Details\n")
@@ -72,11 +75,11 @@ func formatReceiptCostDetails(rcd ReceiptDetails) []byte {
 	fmt.Fprintf(&b, "final gas cost  : %v GWei\n", rcd.FinalCostGWei)
 	fmt.Fprintf(&b, "final gas cost  : %v USD\n", rcd.FinalCostUSD)
 
-	return b.Bytes()
+	return b.String()
 }
 
 // formatLogs takes the slice of log information and displays it.
-func formatLogs(logs []string) []byte {
+func formatLogs(logs []string) string {
 	var b bytes.Buffer
 
 	fmt.Fprintf(&b, "\nLogs\n")
@@ -85,11 +88,11 @@ func formatLogs(logs []string) []byte {
 		fmt.Fprintln(&b, log)
 	}
 
-	return b.Bytes()
+	return b.String()
 }
 
 // formatBalanceDiff outputs the start and ending balances with difference.
-func formatBalanceDiff(bd BalanceDiff) []byte {
+func formatBalanceDiff(bd BalanceDiff) string {
 	var b bytes.Buffer
 
 	fmt.Fprintf(&b, "\nBalance\n")
@@ -99,5 +102,5 @@ func formatBalanceDiff(bd BalanceDiff) []byte {
 	fmt.Fprintf(&b, "balance diff    : %v GWei\n", bd.DiffGWei)
 	fmt.Fprintf(&b, "balance diff    : %v USD\n", bd.DiffUSD)
 
-	return b.Bytes()
+	return b.String()
 }

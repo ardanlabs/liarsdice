@@ -24,7 +24,7 @@ const (
 	Player2PassPhrase = "123"
 )
 
-func TestPlayerBalance(t *testing.T) {
+func Test_PlayerBalance(t *testing.T) {
 	ctx := context.Background()
 
 	contractID, err := deployContract(ctx)
@@ -73,7 +73,7 @@ func TestPlayerBalance(t *testing.T) {
 	}
 }
 
-func TestWithdraw(t *testing.T) {
+func Test_Withdraw(t *testing.T) {
 	ctx := context.Background()
 
 	contractID, err := deployContract(ctx)
@@ -113,7 +113,7 @@ func TestWithdraw(t *testing.T) {
 	// TODO: You need to check the Wallet Balance before and after this as well.
 }
 
-func TestWithdrawWithoutBalance(t *testing.T) {
+func Test_WithdrawWithoutBalance(t *testing.T) {
 	ctx := context.Background()
 
 	contractID, err := deployContract(ctx)
@@ -132,7 +132,7 @@ func TestWithdrawWithoutBalance(t *testing.T) {
 	}
 }
 
-func TestReconcile(t *testing.T) {
+func Test_Reconcile(t *testing.T) {
 	ctx := context.Background()
 
 	contractID, err := deployContract(ctx)
@@ -170,10 +170,13 @@ func TestReconcile(t *testing.T) {
 
 	losingAccounts := []string{Player2Address}
 
-	err = ownerClient.Reconcile(ctx, Player1Address, losingAccounts, ante, fee)
+	tx, receipt, err := ownerClient.Reconcile(ctx, Player1Address, losingAccounts, ante, fee)
 	if err != nil {
 		t.Fatalf("error calling Reconcile: %s", err)
 	}
+
+	t.Log(smart.FmtTransaction(tx))
+	t.Log(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	player1Balance, err := ownerClient.Balance(ctx, Player1Address)
 	if err != nil {

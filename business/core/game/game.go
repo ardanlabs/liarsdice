@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/uuid"
 )
 
@@ -36,7 +37,7 @@ const minNumberPlayers = 2
 // Withdrawls happen outside of game play.
 type Banker interface {
 	Balance(ctx context.Context, account string) (*big.Int, error)
-	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) error
+	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) (*types.Transaction, *types.Receipt, error)
 }
 
 // =============================================================================
@@ -452,7 +453,7 @@ func (g *Game) PlayerBalance(ctx context.Context, account string) (string, error
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
-func (g *Game) Reconcile(ctx context.Context, winningAccount string) error {
+func (g *Game) Reconcile(ctx context.Context, winningAccount string) (*types.Transaction, *types.Receipt, error) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
@@ -468,7 +469,7 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) error {
 	}
 
 	if winner != winningAccount {
-		return fmt.Errorf("only winning account can reconcile the game, winner[%s]", winner)
+		return nil, nil, fmt.Errorf("only winning account can reconcile the game, winner[%s]", winner)
 	}
 
 	// Find the losers.

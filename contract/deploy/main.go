@@ -43,7 +43,9 @@ func run() error {
 		return err
 	}
 	fmt.Println("starting Ba:", smart.Wei2GWei(startingBalance))
-	defer client.WriteBalanceSheet(ctx, os.Stdout, startingBalance)
+	defer func() {
+		fmt.Print(client.FmtBalanceSheet(ctx, startingBalance))
+	}()
 
 	// =========================================================================
 
@@ -60,7 +62,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	client.WriteTransaction(os.Stdout, tx)
+	fmt.Print(smart.FmtTransaction(tx))
 
 	os.MkdirAll("zarf/contract/", 0755)
 	if err := os.WriteFile("zarf/contract/id.env", []byte(address.Hex()), 0666); err != nil {
@@ -92,7 +94,7 @@ func run() error {
 			continue
 		}
 
-		client.WriteTransactionReceipt(os.Stdout, receipt, tx.GasPrice())
+		fmt.Print(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
 		break
 	}
 

@@ -14,6 +14,7 @@ import (
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
@@ -25,6 +26,7 @@ import (
 // Handlers manages the set of user endpoints.
 type Handlers struct {
 	Banker  game.Banker
+	Log     *zap.SugaredLogger
 	WS      websocket.Upgrader
 	Evts    *events.Events
 	Auth    *auth.Auth
@@ -309,16 +311,25 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("missing web context values")
+	}
+
 	claims, err := auth.GetClaims(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
 	address := claims.Subject
 
-	err = g.Reconcile(ctx, address)
+	tx, receipt, err := g.Reconcile(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
+
+	h.Log.Infow("reconcile results", "traceid", v.TraceID, "tx", smart.CalculateTransactionDetails(tx), "receipt", smart.CalculateReceiptDetails(receipt, tx.GasPrice()))
+
+	h.Evts.Send("reconcile")
 
 	return h.Status(ctx, w, r)
 }
