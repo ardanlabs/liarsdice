@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	PrimaryKeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
-	PrimaryPassPhrase = "123"
+	OwnerAddress    = "0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd"
+	OwnerKeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+	OwnerPassPhrase = "123"
 
 	Player1Address    = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
 	Player1KeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
@@ -21,38 +22,31 @@ const (
 	Player2Address    = "0x8e113078adf6888b7ba84967f299f29aece24c55"
 	Player2KeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
 	Player2PassPhrase = "123"
-
-	OwnerAddress = "0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd"
 )
 
 func TestPlayerBalance(t *testing.T) {
 	ctx := context.Background()
 
-	// Deploy a new contract.
 	contractID, err := deployContract(ctx)
 	if err != nil {
 		t.Fatalf("error deploying a new contract: %s", err)
 	}
 
-	// Create a bank for the contract owner.
-	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	// Create a bank for the player.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
 
-	// Make a deposit as player.
 	err = playerClient.Deposit(ctx, Player1Address, 40000000)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
 
-	// Check the player balance as an owner.
 	amount, err := ownerClient.Balance(ctx, Player1Address)
 	if err != nil {
 		t.Fatalf("error getting the player balance: %s", err)
@@ -63,13 +57,11 @@ func TestPlayerBalance(t *testing.T) {
 		t.Fatalf("expecting balance to be %d; got %d", expectedWeiAmount, amount)
 	}
 
-	// Make a new player deposit.
 	err = playerClient.Deposit(ctx, Player1Address, 40000000)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
 
-	// Check the player balance as an owner.
 	amount, err = ownerClient.Balance(ctx, Player1Address)
 	if err != nil {
 		t.Fatalf("error getting the player balance: %s", err)
@@ -84,25 +76,21 @@ func TestPlayerBalance(t *testing.T) {
 func TestWithdraw(t *testing.T) {
 	ctx := context.Background()
 
-	// Deploy a new contract.
 	contractID, err := deployContract(ctx)
 	if err != nil {
 		t.Fatalf("error deploying a new contract: %s", err)
 	}
 
-	// Create a bank for the contract owner.
-	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	// Create a bank for the player.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	// Make a new player deposit.
 	err = playerClient.Deposit(ctx, Player1Address, 40000000)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
@@ -118,28 +106,26 @@ func TestWithdraw(t *testing.T) {
 		t.Fatalf("error calling Balance: %s", err)
 	}
 
-	// The player's contract balance should be zero.
 	if balance.Cmp(big.NewInt(0)) != 0 {
 		t.Fatalf("expecting player balance to be 0; got %d", balance)
 	}
+
+	// TODO: You need to check the Wallet Balance before and after this as well.
 }
 
 func TestWithdrawWithoutBalance(t *testing.T) {
 	ctx := context.Background()
 
-	// Deploy a new contract.
 	contractID, err := deployContract(ctx)
 	if err != nil {
 		t.Fatalf("error deploying a new contract: %s", err)
 	}
 
-	// Create a bank for the player.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	// Call withdraw when the player have no balance.
 	err = playerClient.Withdraw(ctx, Player1Address)
 	if err == nil {
 		t.Fatal("expecting error when trying to withdraw from an empty balance")
@@ -149,43 +135,36 @@ func TestWithdrawWithoutBalance(t *testing.T) {
 func TestReconcile(t *testing.T) {
 	ctx := context.Background()
 
-	// Deploy a new contract.
 	contractID, err := deployContract(ctx)
 	if err != nil {
 		t.Fatalf("error deploying a new contract: %s", err)
 	}
 
-	// Create a bank for the contract owner.
-	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase, contractID)
+	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	// Create a bank for the player 1.
 	player1Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 1: %s", err)
 	}
 
-	// Create a bank for the player 2.
 	player2Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player2KeyPath, Player2PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 2: %s", err)
 	}
 
-	// Make a deposit for player 1.
 	err = player1Client.Deposit(ctx, Player1Address, 40000000)
 	if err != nil {
 		t.Fatalf("error making deposit player 1: %s", err)
 	}
 
-	// Make a deposit for player 2.
 	err = player2Client.Deposit(ctx, Player2Address, 20000000)
 	if err != nil {
 		t.Fatalf("error making deposit for player 2: %s", err)
 	}
 
-	// Define game ante and fee.
 	ante := big.NewInt(20000000000000000)
 	fee := big.NewInt(10000000000000000)
 
@@ -196,7 +175,6 @@ func TestReconcile(t *testing.T) {
 		t.Fatalf("error calling Reconcile: %s", err)
 	}
 
-	// Check the winner's balance.
 	player1Balance, err := ownerClient.Balance(ctx, Player1Address)
 	if err != nil {
 		t.Fatalf("error calling balance for player 1: %s", err)
@@ -208,7 +186,6 @@ func TestReconcile(t *testing.T) {
 		t.Fatalf("expecting winner player balance to be %d; got %d", winnerBalance, player1Balance)
 	}
 
-	// Check the loser's balance.
 	player2Balance, err := ownerClient.Balance(ctx, Player2Address)
 	if err != nil {
 		t.Fatalf("error calling balance for player 2: %s", err)
@@ -218,7 +195,6 @@ func TestReconcile(t *testing.T) {
 		t.Fatalf("expecting loser player balance to be %d; got %d", 0, player2Balance)
 	}
 
-	// Check owner's balance.
 	contractBalance, err := ownerClient.Balance(ctx, OwnerAddress)
 	if err != nil {
 		t.Fatalf("error calling balance for owner: %s", err)
@@ -230,7 +206,7 @@ func TestReconcile(t *testing.T) {
 }
 
 func deployContract(ctx context.Context) (string, error) {
-	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, PrimaryKeyPath, PrimaryPassPhrase)
+	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
 	if err != nil {
 		return "", err
 	}
