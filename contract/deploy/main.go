@@ -66,6 +66,8 @@ func run() error {
 	fmt.Println("Contract ID:", address.Hex())
 	fmt.Println("Please export GAME_CONTRACT_ID=", address.Hex())
 
+	// =========================================================================
+
 	log.Root().SetHandler(log.StdoutHandler)
 
 	for {
