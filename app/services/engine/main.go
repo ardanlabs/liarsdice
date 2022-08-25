@@ -82,8 +82,8 @@ func run(log *zap.SugaredLogger) error {
 			AnteUSD    int    `conf:"default:5"`
 		}
 		Bank struct {
-			KeyPath    string `conf:"zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
-			PassPhrase string `conf:"123"`
+			KeyPath    string `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
+			PassPhrase string `conf:"default:123"`
 		}
 	}{
 		Version: conf.Version{
