@@ -38,6 +38,26 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 	return &bank, nil
 }
 
+// Deposit will add the given amount to the player's contract balance.
+func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error {
+	tranOpts, err := b.client.NewTransactOpts(ctx, 0, uint64(amount))
+	if err != nil {
+		return err
+	}
+
+	tx, err := b.contract.Deposit(tranOpts)
+	if err != nil {
+		return err
+	}
+
+	_, err = b.client.WaitMined(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Balance will return the balance for the specified account.
 func (b *Bank) Balance(ctx context.Context, account string) (*big.Int, error) {
 	tranOpts, err := b.client.NewCallOpts(ctx)
@@ -55,6 +75,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 	if err != nil {
 		return err
 	}
+
 	winner := common.HexToAddress(winningAccount)
 
 	var losers []common.Address
@@ -63,21 +84,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 		losers = append(losers, common.HexToAddress(loser))
 	}
 
-	if _, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Deposit will add the given amount to the player's contract balance.
-func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, uint64(amount))
-	if err != nil {
-		return err
-	}
-
-	tx, err := b.contract.Deposit(tranOpts)
+	tx, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei)
 	if err != nil {
 		return err
 	}
