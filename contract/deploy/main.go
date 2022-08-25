@@ -20,7 +20,7 @@ func main() {
 
 func run() error {
 	ctx := context.Background()
-	network := smart.NetworkGoerli
+	network := smart.NetworkLocalhost
 
 	client, err := smart.Connect(ctx, network, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
 	if err != nil {
