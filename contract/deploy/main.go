@@ -11,6 +11,12 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+// Harded this here for now just to make life easier.
+const (
+	primaryKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+	primaryPassPhrase = "123"
+)
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Println("ERROR:", err)
@@ -22,13 +28,13 @@ func run() error {
 	ctx := context.Background()
 	network := smart.NetworkLocalhost
 
-	client, err := smart.Connect(ctx, network, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
+	client, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("network    :", network)
-	fmt.Println("fromAddress:", client.Account)
+	fmt.Println("fromAddress:", client.Account())
 
 	// =========================================================================
 
@@ -37,7 +43,7 @@ func run() error {
 		return err
 	}
 	fmt.Println("starting Ba:", smart.Wei2GWei(startingBalance))
-	defer client.DisplayBalanceSheet(ctx, startingBalance)
+	defer client.WriteBalanceSheet(ctx, os.Stdout, startingBalance)
 
 	// =========================================================================
 
@@ -54,7 +60,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	client.DisplayTransaction(tx)
+	client.WriteTransaction(os.Stdout, tx)
 
 	os.MkdirAll("zarf/contract/", 0755)
 	if err := os.WriteFile("zarf/contract/id.env", []byte(address.Hex()), 0666); err != nil {
@@ -73,7 +79,7 @@ func run() error {
 	for {
 		fmt.Println("*** Establish new connection ***")
 
-		client, err := smart.Connect(ctx, network, smart.PrimaryKeyPath, smart.PrimaryPassPhrase)
+		client, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
 		if err != nil {
 			return err
 		}
@@ -86,7 +92,7 @@ func run() error {
 			continue
 		}
 
-		client.DisplayTransactionReceipt(receipt, tx)
+		client.WriteTransactionReceipt(os.Stdout, receipt, tx.GasPrice())
 		break
 	}
 

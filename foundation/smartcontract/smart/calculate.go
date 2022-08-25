@@ -43,14 +43,14 @@ type ReceiptDetails struct {
 }
 
 // CalculateReceiptDetails performs calculations on the receipt.
-func (c *Client) CalculateReceiptDetails(receipt *types.Receipt, tx *types.Transaction) ReceiptDetails {
-	cost := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), tx.GasPrice())
+func (c *Client) CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.Int) ReceiptDetails {
+	cost := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), gasPrice)
 
 	return ReceiptDetails{
 		Status:        receipt.Status,
 		GasUsed:       receipt.GasUsed,
-		GasPriceGWei:  Wei2GWei(tx.GasPrice()),
-		GasPriceUSD:   Wei2USD(tx.GasPrice()),
+		GasPriceGWei:  Wei2GWei(gasPrice),
+		GasPriceUSD:   Wei2USD(gasPrice),
 		FinalCostGWei: Wei2GWei(cost),
 		FinalCostUSD:  Wei2USD(cost),
 	}
@@ -76,40 +76,6 @@ func (*Client) ExtractLogs(receipt *types.Receipt) []string {
 	}
 
 	return logs
-}
-
-// =============================================================================
-
-// MainnetReceiptDetails provides details about a transaction and it's cost based
-// on the Mainnet costs.
-type MainnetReceiptDetails struct {
-	GasUsed       uint64
-	GasPriceGWei  string
-	GasPriceUSD   string
-	FinalCostGWei string
-	FinalCostUSD  string
-}
-
-// CalculateMainnetReceiptDetails performs calculations on the receipt using Mainnet pricing.
-func (c *Client) CalculateMainnetReceiptDetails(receipt *types.Receipt, tx *types.Transaction) MainnetReceiptDetails {
-	if c.etherscan == nil {
-		return MainnetReceiptDetails{}
-	}
-
-	gas, err := c.etherscan.GasTracker(context.Background())
-	if err != nil {
-		return MainnetReceiptDetails{}
-	}
-
-	cost := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), gas.ProposeGasPrice)
-
-	return MainnetReceiptDetails{
-		GasUsed:       receipt.GasUsed,
-		GasPriceGWei:  Wei2GWei(gas.ProposeGasPrice),
-		GasPriceUSD:   Wei2USD(gas.ProposeGasPrice),
-		FinalCostGWei: Wei2GWei(cost),
-		FinalCostUSD:  Wei2USD(cost),
-	}
 }
 
 // =============================================================================

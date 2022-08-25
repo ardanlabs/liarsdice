@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/big"
-	"os"
 
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/etherscan"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -26,31 +24,15 @@ const (
 	NetworkGoerli        = "https://rpc.ankr.com/eth_goerli"
 )
 
-// Harded this here for now just to make life easier.
-const (
-	PrimaryKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
-	PrimaryPassPhrase = "123"
-
-	Player1Address    = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
-	Player1KeyPath    = "zarf/ethereum/keystore/UTC--2022-05-13T16-59-42.277071000Z--0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
-	Player1PassPhrase = "123"
-
-	Player2Address    = "0x8e113078adf6888b7ba84967f299f29aece24c55"
-	Player2KeyPath    = "zarf/ethereum/keystore/UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
-	Player2PassPhrase = "123"
-)
-
 // =============================================================================
 
 // Client provides an API for working with smart contracts.
 type Client struct {
-	Network string
-	Account common.Address
-
+	network    string
+	account    common.Address
 	privateKey *ecdsa.PrivateKey
 	chainID    *big.Int
 	ethClient  *ethclient.Client
-	etherscan  *etherscan.Etherscan
 }
 
 // Connect provides boilerplate for connecting to the geth service using
@@ -71,23 +53,21 @@ func Connect(ctx context.Context, network string, keyPath string, passPhrase str
 		return nil, fmt.Errorf("capture chain id: %w", err)
 	}
 
-	var eth *etherscan.Etherscan
-	etherscanApiKey := os.Getenv("ETHERSCAN")
-	if etherscanApiKey != "" {
-		eth = etherscan.New(etherscanApiKey)
-	}
-
 	c := Client{
-		Network: network,
-		Account: crypto.PubkeyToAddress(privateKey.PublicKey),
+		network: network,
+		account: crypto.PubkeyToAddress(privateKey.PublicKey),
 
 		privateKey: privateKey,
 		chainID:    chainID,
 		ethClient:  ethClient,
-		etherscan:  eth,
 	}
 
 	return &c, nil
+}
+
+// Account returns the current account address calculated from the private key.
+func (c *Client) Account() common.Address {
+	return c.account
 }
 
 // NewCallOpts constructs a new CallOpts which is used to call contract methods
@@ -95,7 +75,7 @@ func Connect(ctx context.Context, network string, keyPath string, passPhrase str
 func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
 	call := bind.CallOpts{
 		Pending: true,
-		From:    c.Account,
+		From:    c.account,
 		Context: ctx,
 	}
 
@@ -105,7 +85,7 @@ func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
 // NewTransaction constructs a new TransactOpts which is the collection of
 // authorization data required to create a valid Ethereum transaction.
 func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGwei uint64) (*bind.TransactOpts, error) {
-	nonce, err := c.ethClient.PendingNonceAt(ctx, c.Account)
+	nonce, err := c.ethClient.PendingNonceAt(ctx, c.account)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving next nonce: %w", err)
 	}
@@ -147,7 +127,7 @@ func (c *Client) WaitMined(ctx context.Context, tx *types.Transaction) (*types.R
 }
 
 // Transaction returns a transaction value for the specified transaction hash.
-func (c *Client) Transaction(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
+func (c *Client) TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
 	return c.ethClient.TransactionByHash(ctx, txHash)
 }
 
@@ -167,7 +147,7 @@ func (c *Client) BaseFee(receipt *types.Receipt) *big.Int {
 
 // CurrentBalance retrieves the current balance for the account.
 func (c *Client) CurrentBalance(ctx context.Context) (*big.Int, error) {
-	balance, err := c.ethClient.BalanceAt(ctx, c.Account, nil)
+	balance, err := c.ethClient.BalanceAt(ctx, c.account, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +166,7 @@ func (c *Client) ContractBackend() *ethclient.Client {
 // extractError checks the failed transaction for the error message.
 func (c *Client) extractError(ctx context.Context, tx *types.Transaction) error {
 	msg := ethereum.CallMsg{
-		From:     c.Account,
+		From:     c.account,
 		To:       tx.To(),
 		Gas:      tx.Gas(),
 		GasPrice: tx.GasPrice(),

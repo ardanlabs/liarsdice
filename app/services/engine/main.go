@@ -81,6 +81,10 @@ func run(log *zap.SugaredLogger) error {
 			ContractID string `conf:"default:0x0"`
 			AnteUSD    int    `conf:"default:5"`
 		}
+		Bank struct {
+			KeyPath    string `conf:"zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd,mask"`
+			PassPhrase string `conf:"123,mask"`
+		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -141,7 +145,7 @@ func run(log *zap.SugaredLogger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bank, err := bank.New(ctx, smart.NetworkLocalhost, smart.PrimaryKeyPath, smart.PrimaryPassPhrase, cfg.Game.ContractID)
+	bank, err := bank.New(ctx, smart.NetworkLocalhost, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
