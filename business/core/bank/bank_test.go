@@ -52,9 +52,9 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
 
-	expectedGWeiAmount := big.NewFloat(400000000)
+	expectedGWeiAmount := big.NewFloat(40000000)
 	if amount.Cmp(expectedGWeiAmount) != 0 {
-		t.Fatalf("expecting balance to be %d; got %d", expectedGWeiAmount, amount)
+		t.Fatalf("expecting balance to be %f; got %f", expectedGWeiAmount, amount)
 	}
 
 	err = playerClient.Deposit(ctx, Player1Address, expectedGWeiAmount)
@@ -67,7 +67,7 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
 
-	expectedGWeiAmount = big.NewFloat(800000000)
+	expectedGWeiAmount = big.NewFloat(80000000)
 	if amount.Cmp(expectedGWeiAmount) != 0 {
 		t.Fatalf("expecting balance to be %d; got %d", expectedGWeiAmount, amount)
 	}
