@@ -165,8 +165,8 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error making deposit for player 2: %s", err)
 	}
 
-	anteGwei := big.NewFloat(200000000)
-	feeGwei := big.NewFloat(100000000)
+	anteGwei := big.NewFloat(20000000)
+	feeGwei := big.NewFloat(10000000)
 
 	losingAccounts := []string{Player2Address}
 
@@ -183,7 +183,7 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error calling balance for player 1: %s", err)
 	}
 
-	winnerBalanceGWei := big.NewFloat(500000000)
+	winnerBalanceGWei := big.NewFloat(50000000)
 
 	if player1Balance.Cmp(winnerBalanceGWei) != 0 {
 		t.Fatalf("expecting winner player balance to be %f; got %f", winnerBalanceGWei, player1Balance)
