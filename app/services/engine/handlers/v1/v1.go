@@ -4,6 +4,7 @@ package v1
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1/gamegrp"
 	"github.com/ardanlabs/liarsdice/business/core/game"
@@ -17,11 +18,12 @@ import (
 
 // Config contains all the mandatory systems required by handlers.
 type Config struct {
-	Log     *zap.SugaredLogger
-	Auth    *auth.Auth
-	Banker  game.Banker
-	Evts    *events.Events
-	AnteUSD float64
+	Log         *zap.SugaredLogger
+	Auth        *auth.Auth
+	Banker      game.Banker
+	Evts        *events.Events
+	AnteUSD     float64
+	BankTimeout time.Duration
 }
 
 // Routes binds all the version 1 routes.
@@ -30,12 +32,13 @@ func Routes(app *web.App, cfg Config) {
 
 	// Register group endpoints.
 	ggh := gamegrp.Handlers{
-		Banker:  cfg.Banker,
-		Log:     cfg.Log,
-		Evts:    cfg.Evts,
-		WS:      websocket.Upgrader{},
-		Auth:    cfg.Auth,
-		AnteUSD: cfg.AnteUSD,
+		Banker:      cfg.Banker,
+		Log:         cfg.Log,
+		Evts:        cfg.Evts,
+		WS:          websocket.Upgrader{},
+		Auth:        cfg.Auth,
+		AnteUSD:     cfg.AnteUSD,
+		BankTimeout: cfg.BankTimeout,
 	}
 
 	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)

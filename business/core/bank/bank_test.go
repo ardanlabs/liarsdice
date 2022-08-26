@@ -2,9 +2,11 @@ package bank_test
 
 import (
 	"context"
-	"math"
+	"fmt"
 	"math/big"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
@@ -26,222 +28,250 @@ const (
 )
 
 func Test_PlayerBalance(t *testing.T) {
-	ctx := context.Background()
+	contractID := deployContract()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	contractID, err := deployContract(ctx)
-	if err != nil {
-		t.Fatalf("error deploying a new contract: %s", err)
-	}
-
-	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
-	if err != nil {
-		t.Fatalf("error creating new bank for owner: %s", err)
-	}
-
+	// Connect player 1 to the smart contract.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
 
-	_, _, err = playerClient.Deposit(ctx, Player1Address, big.NewFloat(40000000))
-	if err != nil {
+	// Deposit ~10 USD into the players account.
+	depositGWei := smart.USD2GWei(big.NewFloat(10))
+	if _, _, err := playerClient.Deposit(ctx, depositGWei); err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
 
-	amount, err := ownerClient.Balance(ctx, Player1Address)
+	// Check the players balance in the smart contract.
+	playerBalance, err := playerClient.Balance(ctx)
 	if err != nil {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
 
-	expectedGWeiAmount := big.NewFloat(40000000)
-	if amount.Cmp(expectedGWeiAmount) != 0 {
-		t.Fatalf("expecting balance to be %f; got %f", expectedGWeiAmount, amount)
+	// The players balance should match the deposit.
+	depositGWei32, _ := depositGWei.Float32()
+	playerBalance32, _ := playerBalance.Float32()
+	if playerBalance32 != depositGWei32 {
+		t.Fatalf("expecting balance to be %f; got %f", depositGWei32, playerBalance32)
 	}
 
-	_, _, err = playerClient.Deposit(ctx, Player1Address, expectedGWeiAmount)
-	if err != nil {
+	// Perform a second deposit of the same amount.
+	if _, _, err := playerClient.Deposit(ctx, depositGWei); err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
 
-	amount, err = ownerClient.Balance(ctx, Player1Address)
+	// Check the players balance in the smart contract.
+	playerBalance, err = playerClient.Balance(ctx)
 	if err != nil {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
 
-	expectedGWeiAmount = big.NewFloat(80000000)
-	if amount.Cmp(expectedGWeiAmount) != 0 {
-		t.Fatalf("expecting balance to be %d; got %d", expectedGWeiAmount, amount)
+	// The players balance should match the two deposits.
+	expectedGWei32, _ := depositGWei.Mul(depositGWei, big.NewFloat(2)).Float32()
+	playerBalance32, _ = playerBalance.Float32()
+	if playerBalance32 != expectedGWei32 {
+		t.Fatalf("expecting balance to be %f; got %f", expectedGWei32, playerBalance32)
 	}
 }
 
 func Test_Withdraw(t *testing.T) {
-	ctx := context.Background()
+	contractID := deployContract()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	contractID, err := deployContract(ctx)
-	if err != nil {
-		t.Fatalf("error deploying a new contract: %s", err)
-	}
-
+	// Connect player 1 to the smart contract.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	walletBalance, err := playerClient.WalletBalance(ctx)
+	// =========================================================================
+	// Deposit process
+
+	// Get the starting balance.
+	startingBalance, err := playerClient.WalletBalance(ctx)
 	if err != nil {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
 
-	var depositAmount float64 = 400000000
-
-	depositTx, depositReceipt, err := playerClient.Deposit(ctx, Player1Address, big.NewFloat(depositAmount))
+	// Perform a deposit from the player's wallet.
+	depositGWeiAmount := smart.USD2GWei(big.NewFloat(10))
+	depositTx, depositReceipt, err := playerClient.Deposit(ctx, depositGWeiAmount)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
 
-	// Get the deposit value in Wei.
-	valueWei := depositAmount * math.Pow(10, 9)
-
-	// We need the deposit Wei value to be a big.Int for future calculations.
-	depositWei := big.NewInt(int64(valueWei))
-
-	// Calculate the total Gas cost for the deposit.
-	depositTotalGasCost := new(big.Int).Mul(depositTx.GasPrice(), big.NewInt(int64(depositReceipt.GasUsed)))
-
-	// Subtract the transaction amount and total gas cost from starting balance.
-	expectedBalance := new(big.Int).Sub(walletBalance, depositWei)
-	expectedBalance.Sub(expectedBalance, depositTotalGasCost)
+	// Calculate the expected balance by subtracting the amount deposited and the
+	// gas fees for the transaction.
+	gasCost := big.NewInt(0).Mul(depositTx.GasPrice(), big.NewInt(0).SetUint64(depositReceipt.GasUsed))
+	depositWeiAmount := smart.GWei2Wei(depositGWeiAmount)
+	expectedBalance := big.NewInt(0).Sub(startingBalance, depositWeiAmount)
+	expectedBalance.Sub(expectedBalance, gasCost)
 
 	// Get the updated wallet balance.
-	depositWalletBalance, err := playerClient.WalletBalance(ctx)
+	currentBalance, err := playerClient.WalletBalance(ctx)
 	if err != nil {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
 
-	if expectedBalance.Cmp(depositWalletBalance) != 0 {
-		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, depositWalletBalance)
+	// The player's wallet balance should match the deposit minus the fees.
+	if expectedBalance.Cmp(currentBalance) != 0 {
+		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, currentBalance)
 	}
 
-	// Withdraw process.
-	withdrawTx, withdrawReceipt, err := playerClient.Withdraw(ctx, Player1Address)
+	// =========================================================================
+	// Withdraw process
+
+	// Perform a withdraw to the player's wallet.
+	withdrawTx, withdrawReceipt, err := playerClient.Withdraw(ctx)
 	if err != nil {
 		t.Fatalf("error calling withdraw: %s", err)
 	}
 
-	// Calculate the total Gas cost for the Withdraw.
-	withdrawTotalGasCost := new(big.Int).Mul(withdrawTx.GasPrice(), big.NewInt(int64(withdrawReceipt.GasUsed)))
+	// Calculate the expected balance by adding the amount withdrawn and the
+	// gas fees for the transaction.
+	gasCost = big.NewInt(0).Mul(withdrawTx.GasPrice(), big.NewInt(0).SetUint64(withdrawReceipt.GasUsed))
+	expectedBalance = big.NewInt(0).Add(currentBalance, depositWeiAmount)
+	expectedBalance.Sub(expectedBalance, gasCost)
 
-	// Add the deposit value to the wallet balance, minus the withdraw gas cost.
-	expectedBalance.Add(depositWalletBalance, depositWei)
-	expectedBalance.Sub(expectedBalance, withdrawTotalGasCost)
-
-	// Get the updated wallet balance after the Withdraw.
-	withdrawWalletBalance, err := playerClient.WalletBalance(ctx)
+	// Get the updated wallet balance.
+	currentBalance, err = playerClient.WalletBalance(ctx)
 	if err != nil {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
 
-	if expectedBalance.Cmp(withdrawWalletBalance) != 0 {
-		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, withdrawWalletBalance)
+	// The player's wallet balance should match the withdrawl minus the fees.
+	if expectedBalance.Cmp(currentBalance) != 0 {
+		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, currentBalance)
 	}
 }
 
 func Test_WithdrawWithoutBalance(t *testing.T) {
-	ctx := context.Background()
+	contractID := deployContract()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	contractID, err := deployContract(ctx)
-	if err != nil {
-		t.Fatalf("error deploying a new contract: %s", err)
-	}
-
+	// Connect player 1 to the smart contract.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	_, _, err = playerClient.Withdraw(ctx, Player1Address)
-	if err == nil {
+	// Perform a withdraw to the player's wallet.
+	if _, _, err := playerClient.Withdraw(ctx); err == nil {
 		t.Fatal("expecting error when trying to withdraw from an empty balance")
 	}
 }
 
 func Test_Reconcile(t *testing.T) {
-	ctx := context.Background()
+	contractID := deployContract()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	contractID, err := deployContract(ctx)
-	if err != nil {
-		t.Fatalf("error deploying a new contract: %s", err)
-	}
-
+	// Connect owner to the smart contract.
 	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
+	// Connect player 1 to the smart contract.
 	player1Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 1: %s", err)
 	}
 
+	// Connect player 2 to the smart contract.
 	player2Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player2KeyPath, Player2PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 2: %s", err)
 	}
 
-	_, _, err = player1Client.Deposit(ctx, Player1Address, big.NewFloat(40000000))
-	if err != nil {
+	// Deposit ~$10 USD into the players account.
+	player1DepositGWei := smart.USD2GWei(big.NewFloat(10))
+	if _, _, err := player1Client.Deposit(ctx, player1DepositGWei); err != nil {
 		t.Fatalf("error making deposit player 1: %s", err)
 	}
 
-	_, _, err = player2Client.Deposit(ctx, Player2Address, big.NewFloat(20000000))
-	if err != nil {
+	// Deposit ~$20 USD into the players account.
+	player2DepositGWei := smart.USD2GWei(big.NewFloat(20))
+	if _, _, err := player2Client.Deposit(ctx, player2DepositGWei); err != nil {
 		t.Fatalf("error making deposit for player 2: %s", err)
 	}
 
-	anteGwei := big.NewFloat(20000000)
-	feeGwei := big.NewFloat(10000000)
+	// Set the ante and fees.
+	anteGwei := smart.USD2GWei(big.NewFloat(5))
+	feeGwei := smart.USD2GWei(big.NewFloat(5))
 
-	losingAccounts := []string{Player2Address}
-
-	tx, receipt, err := ownerClient.Reconcile(ctx, Player1Address, losingAccounts, anteGwei, feeGwei)
+	// Reconcile with player 1 as the winner and player 2 as the loser.
+	tx, receipt, err := ownerClient.Reconcile(ctx, Player1Address, []string{Player2Address}, anteGwei, feeGwei)
 	if err != nil {
 		t.Fatalf("error calling Reconcile: %s", err)
 	}
 
+	// Log the results of the reconcile transaction.
 	t.Log(smart.FmtTransaction(tx))
 	t.Log(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
-	player1Balance, err := ownerClient.Balance(ctx, Player1Address)
+	// Capture player 1 balance in the smart contract.
+	player1Balance, err := player1Client.Balance(ctx)
 	if err != nil {
 		t.Fatalf("error calling balance for player 1: %s", err)
 	}
 
-	winnerBalanceGWei := big.NewFloat(50000000)
-
-	if player1Balance.Cmp(winnerBalanceGWei) != 0 {
-		t.Fatalf("expecting winner player balance to be %f; got %f", winnerBalanceGWei, player1Balance)
+	// The winner should have $15 USD.
+	winnerBalanceGWei32, _ := smart.USD2GWei(big.NewFloat(15)).Float32()
+	player1Balance32, _ := player1Balance.Float32()
+	if player1Balance32 != winnerBalanceGWei32 {
+		t.Fatalf("expecting winner player balance to be %f; got %f", winnerBalanceGWei32, player1Balance32)
 	}
 
-	player2Balance, err := ownerClient.Balance(ctx, Player2Address)
+	// Capture player 2 balance in the smart contract.
+	player2Balance, err := player2Client.Balance(ctx)
 	if err != nil {
 		t.Fatalf("error calling balance for player 2: %s", err)
 	}
 
-	if player2Balance.Cmp(big.NewFloat(0)) != 0 {
-		t.Fatalf("expecting loser player balance to be %d; got %f", 0, player2Balance)
+	// The loser should have $15 USD.
+	losingBalanceGWei32, _ := smart.USD2GWei(big.NewFloat(15)).Float32()
+	player2Balance32, _ := player2Balance.Float32()
+	if player2Balance32 != losingBalanceGWei32 {
+		t.Fatalf("expecting loser player balance to be %f; got %f", losingBalanceGWei32, player2Balance32)
 	}
 
-	contractBalance, err := ownerClient.Balance(ctx, OwnerAddress)
+	// Capture owber balance in the smart contract.
+	ownerBalance, err := ownerClient.Balance(ctx)
 	if err != nil {
 		t.Fatalf("error calling balance for owner: %s", err)
 	}
 
-	if contractBalance.Cmp(feeGwei) != 0 {
-		t.Fatalf("expecting owner balance to be %f; got %d", feeGwei, contractBalance)
+	// The owner should have $5 USD.
+	feeGwei32, _ := feeGwei.Float32()
+	ownerBalance32, _ := ownerBalance.Float32()
+	if ownerBalance32 != feeGwei32 {
+		t.Fatalf("expecting owner balance to be %f; got %f", feeGwei32, ownerBalance32)
 	}
 }
 
-func deployContract(ctx context.Context) (string, error) {
+// =============================================================================
+
+func deployContract() string {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Println("*** Deploying Contract ***")
+
+	contractID, err := smartContract(ctx)
+	if err != nil {
+		fmt.Println("error deploying a new contract:", err)
+		os.Exit(1)
+	}
+
+	return contractID
+}
+
+func smartContract(ctx context.Context) (string, error) {
 	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
 	if err != nil {
 		return "", err

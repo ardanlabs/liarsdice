@@ -37,7 +37,7 @@ const minNumberPlayers = 2
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
 type Banker interface {
-	Balance(ctx context.Context, account string) (GWei *big.Float, err error)
+	AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error)
 	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error)
 }
 
@@ -91,7 +91,7 @@ type Game struct {
 
 // New creates a new game.
 func New(ctx context.Context, banker Banker, owner string, anteUSD float64) (*Game, error) {
-	balance, err := banker.Balance(ctx, owner)
+	balance, err := banker.AccountBalance(ctx, owner)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", owner)
 	}
@@ -139,7 +139,7 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 		return fmt.Errorf("account [%s] is already in the game", account)
 	}
 
-	balance, err := g.banker.Balance(ctx, account)
+	balance, err := g.banker.AccountBalance(ctx, account)
 	if err != nil {
 		return fmt.Errorf("unable to retrieve account[%s] balance", account)
 	}
@@ -302,13 +302,28 @@ func (g *Game) Claim(account string, number int, suite int) error {
 	}
 	g.claims = append(g.claims, c)
 
-	g.NextTurn(account)
+	// Move the turn to the next player.
+	g.nextTurn(account)
 
 	return nil
 }
 
 // NextTurn determines which account make the next move.
-func (g *Game) NextTurn(account string) {
+func (g *Game) NextTurn(account string) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	if g.status != StatusPlaying {
+		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
+	}
+
+	g.nextTurn(account)
+
+	return nil
+}
+
+// nextTurn determines which account make the next move.
+func (g *Game) nextTurn(account string) {
 	l := len(g.cupsOrder)
 
 	for i := 0; i < l; i++ {
@@ -435,21 +450,6 @@ func (g *Game) NextRound() (int, error) {
 
 	// Return the number of players for this round.
 	return leftToPlay, nil
-}
-
-// PlayerBalance returns the player's balance, by calling the banks contract
-// method.
-func (g *Game) PlayerBalance(ctx context.Context, account string) (string, error) {
-	if account == "" {
-		return "", errors.New("account provided is empty")
-	}
-
-	balGWei, err := g.banker.Balance(ctx, account)
-	if err != nil {
-		return "", fmt.Errorf("unable to retrieve balance, %w", err)
-	}
-
-	return smart.GWei2USD(balGWei), nil
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.

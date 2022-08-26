@@ -13,7 +13,7 @@ type MockedBank struct {
 	err   error
 }
 
-func (m *MockedBank) Balance(ctx context.Context, account string) (GWei *big.Float, err error) {
+func (m *MockedBank) AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error) {
 	return m.value, m.err
 }
 

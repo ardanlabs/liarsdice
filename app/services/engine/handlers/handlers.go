@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/pprof"
 	"os"
+	"time"
 
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/debug/checkgrp"
 	v1 "github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1"
@@ -32,12 +33,13 @@ func WithCORS(origin string) func(opts *Options) {
 
 // APIMuxConfig contains all the mandatory systems required by handlers.
 type APIMuxConfig struct {
-	Shutdown chan os.Signal
-	Log      *zap.SugaredLogger
-	Auth     *auth.Auth
-	Banker   game.Banker
-	Evts     *events.Events
-	AnteUSD  float64
+	Shutdown    chan os.Signal
+	Log         *zap.SugaredLogger
+	Auth        *auth.Auth
+	Banker      game.Banker
+	Evts        *events.Events
+	AnteUSD     float64
+	BankTimeout time.Duration
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -82,11 +84,12 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 
 	// Load the v1 routes.
 	v1.Routes(app, v1.Config{
-		Log:     cfg.Log,
-		Auth:    cfg.Auth,
-		Banker:  cfg.Banker,
-		Evts:    cfg.Evts,
-		AnteUSD: cfg.AnteUSD,
+		Log:         cfg.Log,
+		Auth:        cfg.Auth,
+		Banker:      cfg.Banker,
+		Evts:        cfg.Evts,
+		AnteUSD:     cfg.AnteUSD,
+		BankTimeout: cfg.BankTimeout,
 	})
 
 	return app

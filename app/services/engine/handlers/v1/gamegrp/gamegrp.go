@@ -26,12 +26,13 @@ import (
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
-	Banker  game.Banker
-	Log     *zap.SugaredLogger
-	WS      websocket.Upgrader
-	Evts    *events.Events
-	Auth    *auth.Auth
-	AnteUSD float64
+	Banker      game.Banker
+	Log         *zap.SugaredLogger
+	WS          websocket.Upgrader
+	Evts        *events.Events
+	Auth        *auth.Auth
+	AnteUSD     float64
+	BankTimeout time.Duration
 
 	game *game.Game
 	mu   sync.RWMutex
@@ -344,7 +345,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 	}
 	address := claims.Subject
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
 	tx, receipt, err := g.Reconcile(ctx, address)
@@ -367,10 +368,10 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	address := claims.Subject
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
-	balanceGWei, err := h.Banker.Balance(ctx, address)
+	balanceGWei, err := h.Banker.AccountBalance(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
@@ -397,7 +398,9 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 	address := claims.Subject
 
-	g.NextTurn(address)
+	if err := g.NextTurn(address); err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
 
 	h.Evts.Send("nextturn")
 
