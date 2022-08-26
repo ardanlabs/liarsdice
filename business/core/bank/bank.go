@@ -40,22 +40,23 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 }
 
 // Deposit will add the given amount to the player's contract balance.
-func (b *Bank) Deposit(ctx context.Context, account string, amountGWei *big.Float) error {
+func (b *Bank) Deposit(ctx context.Context, account string, amountGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, amountGWei)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	tx, err := b.contract.Deposit(tranOpts)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	if _, err := b.client.WaitMined(ctx, tx); err != nil {
-		return err
+	receipt, err := b.client.WaitMined(ctx, tx)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return nil
+	return tx, receipt, nil
 }
 
 // Balance will return the balance for the specified account.
@@ -106,22 +107,23 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 }
 
 // Withdraw will move all the player's balance in the contract, to the player's wallet.
-func (b *Bank) Withdraw(ctx context.Context, account string) error {
+func (b *Bank) Withdraw(ctx context.Context, account string) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	tx, err := b.contract.Withdraw(tranOpts)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	if _, err = b.client.WaitMined(ctx, tx); err != nil {
-		return err
+	receipt, err := b.client.WaitMined(ctx, tx)
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return nil
+	return tx, receipt, nil
 }
 
 // WalletBalance returns the current balance for the account used to

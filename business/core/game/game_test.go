@@ -2,7 +2,6 @@ package game
 
 import (
 	"context"
-	"errors"
 	"math/big"
 	"testing"
 
@@ -355,14 +354,7 @@ func TestAddAccountWithoutBalance(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g, err := New(ctx, &bank, "owner", 100)
-	if err != nil {
-		t.Fatal("not expecting error creating game")
-	}
-
-	bank.err = errors.New("the player don't have enough balance")
-
-	err = g.AddAccount(ctx, "player1")
+	_, err := New(ctx, &bank, "owner", 100)
 	if err == nil {
 		t.Fatal("expecting error adding player without balance")
 	}

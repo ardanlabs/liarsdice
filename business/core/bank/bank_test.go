@@ -2,6 +2,7 @@ package bank_test
 
 import (
 	"context"
+	"math"
 	"math/big"
 	"testing"
 
@@ -42,7 +43,7 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
 
-	err = playerClient.Deposit(ctx, Player1Address, big.NewFloat(40000000))
+	_, _, err = playerClient.Deposit(ctx, Player1Address, big.NewFloat(40000000))
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
@@ -57,7 +58,7 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("expecting balance to be %f; got %f", expectedGWeiAmount, amount)
 	}
 
-	err = playerClient.Deposit(ctx, Player1Address, expectedGWeiAmount)
+	_, _, err = playerClient.Deposit(ctx, Player1Address, expectedGWeiAmount)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
@@ -81,36 +82,68 @@ func Test_Withdraw(t *testing.T) {
 		t.Fatalf("error deploying a new contract: %s", err)
 	}
 
-	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
-	if err != nil {
-		t.Fatalf("error creating new bank for owner: %s", err)
-	}
-
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	err = playerClient.Deposit(ctx, Player1Address, big.NewFloat(400000000))
+	walletBalance, err := playerClient.WalletBalance(ctx)
+	if err != nil {
+		t.Fatalf("error getting player's wallet balance: %s", err)
+	}
+
+	var depositAmount float64 = 400000000
+
+	depositTx, depositReceipt, err := playerClient.Deposit(ctx, Player1Address, big.NewFloat(depositAmount))
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
 
-	err = playerClient.Withdraw(ctx, Player1Address)
+	// Get the deposit value in Wei.
+	valueWei := depositAmount * math.Pow(10, 9)
+
+	// We need the deposit Wei value to be a big.Int for future calculations.
+	depositWei := big.NewInt(int64(valueWei))
+
+	// Calculate the total Gas cost for the deposit.
+	depositTotalGasCost := new(big.Int).Mul(depositTx.GasPrice(), big.NewInt(int64(depositReceipt.GasUsed)))
+
+	// Subtract the transaction amount and total gas cost from starting balance.
+	expectedBalance := new(big.Int).Sub(walletBalance, depositWei)
+	expectedBalance.Sub(expectedBalance, depositTotalGasCost)
+
+	// Get the updated wallet balance.
+	depositWalletBalance, err := playerClient.WalletBalance(ctx)
 	if err != nil {
-		t.Fatalf("error calling Withdraw: %s", err)
+		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
 
-	balance, err := ownerClient.Balance(ctx, Player1Address)
+	if expectedBalance.Cmp(depositWalletBalance) != 0 {
+		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, depositWalletBalance)
+	}
+
+	// Withdraw process.
+	withdrawTx, withdrawReceipt, err := playerClient.Withdraw(ctx, Player1Address)
 	if err != nil {
-		t.Fatalf("error calling Balance: %s", err)
+		t.Fatalf("error calling withdraw: %s", err)
 	}
 
-	if balance.Cmp(big.NewFloat(0)) != 0 {
-		t.Fatalf("expecting player balance to be 0; got %f", balance)
+	// Calculate the total Gas cost for the Withdraw.
+	withdrawTotalGasCost := new(big.Int).Mul(withdrawTx.GasPrice(), big.NewInt(int64(withdrawReceipt.GasUsed)))
+
+	// Add the deposit value to the wallet balance, minus the withdraw gas cost.
+	expectedBalance.Add(depositWalletBalance, depositWei)
+	expectedBalance.Sub(expectedBalance, withdrawTotalGasCost)
+
+	// Get the updated wallet balance after the Withdraw.
+	withdrawWalletBalance, err := playerClient.WalletBalance(ctx)
+	if err != nil {
+		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
 
-	// TODO: You need to check the Wallet Balance before and after this as well.
+	if expectedBalance.Cmp(withdrawWalletBalance) != 0 {
+		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, withdrawWalletBalance)
+	}
 }
 
 func Test_WithdrawWithoutBalance(t *testing.T) {
@@ -126,7 +159,7 @@ func Test_WithdrawWithoutBalance(t *testing.T) {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	err = playerClient.Withdraw(ctx, Player1Address)
+	_, _, err = playerClient.Withdraw(ctx, Player1Address)
 	if err == nil {
 		t.Fatal("expecting error when trying to withdraw from an empty balance")
 	}
@@ -155,12 +188,12 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error creating new bank for player 2: %s", err)
 	}
 
-	err = player1Client.Deposit(ctx, Player1Address, big.NewFloat(40000000))
+	_, _, err = player1Client.Deposit(ctx, Player1Address, big.NewFloat(40000000))
 	if err != nil {
 		t.Fatalf("error making deposit player 1: %s", err)
 	}
 
-	err = player2Client.Deposit(ctx, Player2Address, big.NewFloat(20000000))
+	_, _, err = player2Client.Deposit(ctx, Player2Address, big.NewFloat(20000000))
 	if err != nil {
 		t.Fatalf("error making deposit for player 2: %s", err)
 	}
