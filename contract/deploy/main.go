@@ -26,7 +26,7 @@ func main() {
 
 func run() error {
 	ctx := context.Background()
-	network := smart.NetworkLocalhost
+	network := smart.NetworkGoerli
 
 	client, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
@@ -76,27 +76,21 @@ func run() error {
 
 	// =========================================================================
 
-	log.Root().SetHandler(log.StdoutHandler)
-
-	for {
-		fmt.Println("*** Establish new connection ***")
-
-		client, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
-		if err != nil {
-			return err
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		receipt, err := client.WaitMined(ctx, tx)
-		cancel()
-
-		if err != nil {
-			continue
-		}
-
-		fmt.Print(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
-		break
+	clientWait, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
+	if err != nil {
+		return err
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Root().SetHandler(log.StdoutHandler)
+	receipt, err := clientWait.WaitMined(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	return nil
 }

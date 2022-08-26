@@ -344,6 +344,9 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 	}
 	address := claims.Subject
 
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
 	tx, receipt, err := g.Reconcile(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
@@ -363,6 +366,9 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
 	address := claims.Subject
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
 	balance, err := h.Banker.Balance(ctx, address)
 	if err != nil {
