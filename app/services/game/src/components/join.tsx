@@ -93,7 +93,9 @@ const Join = (props: JoinProps) => {
       })
   }
   const getButtonText = () => {
-    return game.status === 'gameover' ? 'New Game' : 'Join Game'
+    return game.status === 'gameover' || game.status === 'reconcile'
+      ? 'New Game'
+      : 'Join Game'
   }
 
   const isPlayerInGame = () => {

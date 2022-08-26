@@ -53,7 +53,7 @@ const useGame = () => {
                 axios
                   .get(`http://${apiUrl}/reconcile`, axiosConfig)
                   .then((response: AxiosResponse) => {
-                    console.info(response)
+                    updateStatus()
                   })
                   .catch((error: AxiosError) => {
                     console.error(error)
