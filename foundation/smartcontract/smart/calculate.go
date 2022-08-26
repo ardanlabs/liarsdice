@@ -23,9 +23,9 @@ func CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
 	return TransactionDetails{
 		Hash:              tx.Hash().Hex(),
 		GasLimit:          tx.Gas(),
-		GasOfferPriceGWei: Wei2GWei(tx.GasPrice()),
-		Value:             Wei2GWei(tx.Value()),
-		MaxGasPriceGWei:   Wei2GWei(tx.Cost()),
+		GasOfferPriceGWei: Wei2GWei(tx.GasPrice()).String(),
+		Value:             Wei2GWei(tx.Value()).String(),
+		MaxGasPriceGWei:   Wei2GWei(tx.Cost()).String(),
 		MaxGasPriceUSD:    Wei2USD(tx.Cost()),
 	}
 }
@@ -49,9 +49,9 @@ func CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.Int) ReceiptD
 	return ReceiptDetails{
 		Status:        receipt.Status,
 		GasUsed:       receipt.GasUsed,
-		GasPriceGWei:  Wei2GWei(gasPrice),
+		GasPriceGWei:  Wei2GWei(gasPrice).String(),
 		GasPriceUSD:   Wei2USD(gasPrice),
-		FinalCostGWei: Wei2GWei(cost),
+		FinalCostGWei: Wei2GWei(cost).String(),
 		FinalCostUSD:  Wei2USD(cost),
 	}
 }
@@ -93,9 +93,9 @@ func CalculateBalanceDiff(ctx context.Context, startingBalance *big.Int, endingB
 	cost := big.NewInt(0).Sub(startingBalance, endingBalance)
 
 	return BalanceDiff{
-		BeforeGWei: Wei2GWei(startingBalance),
-		AfterGWei:  Wei2GWei(endingBalance),
-		DiffGWei:   Wei2GWei(cost),
+		BeforeGWei: Wei2GWei(startingBalance).String(),
+		AfterGWei:  Wei2GWei(endingBalance).String(),
+		DiffGWei:   Wei2GWei(cost).String(),
 		DiffUSD:    Wei2USD(cost),
 	}, nil
 }

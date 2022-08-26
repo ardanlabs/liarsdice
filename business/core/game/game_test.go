@@ -10,21 +10,21 @@ import (
 )
 
 type MockedBank struct {
-	value *big.Int
+	value *big.Float
 	err   error
 }
 
-func (m *MockedBank) Balance(ctx context.Context, account string) (*big.Int, error) {
+func (m *MockedBank) Balance(ctx context.Context, account string) (GWei *big.Float, err error) {
 	return m.value, m.err
 }
 
-func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) (*types.Transaction, *types.Receipt, error) {
+func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	return nil, nil, m.err
 }
 
 func TestSuccessGamePlay(t *testing.T) {
 	bank := MockedBank{
-		value: big.NewInt(100),
+		value: big.NewFloat(100),
 		err:   nil,
 	}
 
@@ -245,7 +245,7 @@ func TestSuccessGamePlay(t *testing.T) {
 
 func TestInvalidClaim(t *testing.T) {
 	bank := MockedBank{
-		value: big.NewInt(100),
+		value: big.NewFloat(100),
 		err:   nil,
 	}
 
@@ -298,7 +298,7 @@ func TestInvalidClaim(t *testing.T) {
 
 func TestGameWithoutEnoughPlayers(t *testing.T) {
 	bank := MockedBank{
-		value: big.NewInt(100),
+		value: big.NewFloat(100),
 		err:   nil,
 	}
 
@@ -317,7 +317,7 @@ func TestGameWithoutEnoughPlayers(t *testing.T) {
 
 func TestWrongPlayerTryingToPlay(t *testing.T) {
 	bank := MockedBank{
-		value: big.NewInt(100),
+		value: big.NewFloat(100),
 		err:   nil,
 	}
 
@@ -350,7 +350,7 @@ func TestWrongPlayerTryingToPlay(t *testing.T) {
 
 func TestAddAccountWithoutBalance(t *testing.T) {
 	bank := MockedBank{
-		value: big.NewInt(100),
+		value: big.NewFloat(100),
 		err:   nil,
 	}
 

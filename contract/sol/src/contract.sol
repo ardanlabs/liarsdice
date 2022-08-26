@@ -31,23 +31,23 @@ contract Bank {
     }
 
     // Reconcile settles the accounting for a game that was played.
-    function Reconcile(address winningPlayer, address[] calldata losers, uint256 ante, uint256 gameFee) onlyOwner public {
+    function Reconcile(address winningPlayer, address[] calldata losers, uint256 anteWei, uint256 gameFeeWei) onlyOwner public {
 
         // Build the pot for the winner based on taking the ante from
         // each player that lost.
         uint256 pot;
         for (uint i = 0; i < losers.length; i++) {
-            if (playerBalance[losers[i]] < ante) {
-                emit EventLog(string.concat("player balance ", Error.Itoa(playerBalance[losers[i]]), " is less than ante ", Error.Itoa(ante)));
+            if (playerBalance[losers[i]] < anteWei) {
+                emit EventLog(string.concat("player balance ", Error.Itoa(playerBalance[losers[i]]), " is less than ante ", Error.Itoa(anteWei)));
                 pot += playerBalance[losers[i]];
                 playerBalance[losers[i]] = 0;                
             } else {
-                pot += ante;
-                playerBalance[losers[i]] -= ante;
+                pot += anteWei;
+                playerBalance[losers[i]] -= anteWei;
             }
         }
 
-        emit EventLog(string.concat("ante[", Error.Itoa(ante), "] gameFee[", Error.Itoa(gameFee), "] pot[", Error.Itoa(pot), "]"));
+        emit EventLog(string.concat("ante[", Error.Itoa(anteWei), "] gameFee[", Error.Itoa(gameFeeWei), "] pot[", Error.Itoa(pot), "]"));
 
         // This should not happen but check to see if the pot is 0 because none
         // of the losers had a player balance.
@@ -57,7 +57,7 @@ contract Bank {
 
         // This should not happen but check there is enough in the pot to cover
         // the game fee.
-        if (pot < gameFee) {
+        if (pot < gameFeeWei) {
             playerBalance[Owner] += pot;
             emit EventLog(string.concat("winningPlayer[0] owner[", Error.Itoa(pot), "]"));
             return;
@@ -65,10 +65,10 @@ contract Bank {
 
         // Take the game fee from the pot and give the winner the remaining pot
         // and the owner the game fee.
-        pot -= gameFee;
+        pot -= gameFeeWei;
         playerBalance[winningPlayer] += pot;
-        playerBalance[Owner] += gameFee;
-        emit EventLog(string.concat("winningPlayer[", Error.Itoa(pot), "] owner[", Error.Itoa(gameFee), "]"));
+        playerBalance[Owner] += gameFeeWei;
+        emit EventLog(string.concat("winningPlayer[", Error.Itoa(pot), "] owner[", Error.Itoa(gameFeeWei), "]"));
     }
 
     // PlayerBalance returns the current players balance.

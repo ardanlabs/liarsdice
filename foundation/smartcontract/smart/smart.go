@@ -84,7 +84,7 @@ func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
 
 // NewTransaction constructs a new TransactOpts which is the collection of
 // authorization data required to create a valid Ethereum transaction.
-func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGwei uint64) (*bind.TransactOpts, error) {
+func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGWei *big.Float) (*bind.TransactOpts, error) {
 	nonce, err := c.ethClient.PendingNonceAt(ctx, c.account)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving next nonce: %w", err)
@@ -100,11 +100,8 @@ func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGwei
 		return nil, fmt.Errorf("keying transaction: %w", err)
 	}
 
-	// The value must be converted from Gwei to Wei.
-	valueWei := big.NewInt(0).Mul(big.NewInt(int64(valueGwei)), GWeiConv)
-
 	tranOpts.Nonce = big.NewInt(int64(nonce))
-	tranOpts.Value = valueWei
+	tranOpts.Value = GWei2Wei(valueGWei)
 	tranOpts.GasLimit = gasLimit // The maximum amount of Gas you are willing to pay for.
 	tranOpts.GasPrice = gasPrice // What you will agree to pay per unit of gas.
 
@@ -137,7 +134,7 @@ func (c *Client) TransactionReceipt(ctx context.Context, txHash common.Hash) (*t
 }
 
 // BaseFee calculates the base fee from the block for this receipt.
-func (c *Client) BaseFee(receipt *types.Receipt) *big.Int {
+func (c *Client) BaseFee(receipt *types.Receipt) (wei *big.Int) {
 	block, err := c.ethClient.BlockByNumber(context.Background(), receipt.BlockNumber)
 	if err != nil {
 		return big.NewInt(0)
@@ -146,7 +143,7 @@ func (c *Client) BaseFee(receipt *types.Receipt) *big.Int {
 }
 
 // CurrentBalance retrieves the current balance for the account.
-func (c *Client) CurrentBalance(ctx context.Context) (*big.Int, error) {
+func (c *Client) CurrentBalance(ctx context.Context) (wei *big.Int, err error) {
 	balance, err := c.ethClient.BalanceAt(ctx, c.account, nil)
 	if err != nil {
 		return nil, err

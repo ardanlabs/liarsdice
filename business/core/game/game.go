@@ -37,8 +37,8 @@ const minNumberPlayers = 2
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
 type Banker interface {
-	Balance(ctx context.Context, account string) (*big.Int, error)
-	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) (*types.Transaction, *types.Receipt, error)
+	Balance(ctx context.Context, account string) (GWei *big.Float, err error)
+	Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error)
 }
 
 // =============================================================================
@@ -83,23 +83,22 @@ type Game struct {
 	currentPlayer string
 	currentCup    int
 	round         int
-	anteUSD       int
+	anteUSD       float64
 	cups          map[string]Cup
 	cupsOrder     []string
 	claims        []Claim
 }
 
 // New creates a new game.
-func New(ctx context.Context, banker Banker, owner string, anteUSD int) (*Game, error) {
+func New(ctx context.Context, banker Banker, owner string, anteUSD float64) (*Game, error) {
 	balance, err := banker.Balance(ctx, owner)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", owner)
 	}
 
-	ante := big.NewInt(int64(anteUSD))
-
 	// If comparison is negative, the player has no balance.
-	if balance.Cmp(ante) < 0 {
+	anteGwei := smart.USD2GWei(big.NewFloat(anteUSD))
+	if balance.Cmp(anteGwei) < 0 {
 		return nil, fmt.Errorf("account [%s] does not have enough balance to play", owner)
 	}
 
@@ -145,7 +144,7 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 		return fmt.Errorf("unable to retrieve account[%s] balance", account)
 	}
 
-	ante := big.NewInt(int64(g.anteUSD))
+	ante := big.NewFloat(float64(g.anteUSD))
 
 	// If comparison is negative, the player has no balance.
 	if balance.Cmp(ante) < 0 {
@@ -445,12 +444,12 @@ func (g *Game) PlayerBalance(ctx context.Context, account string) (string, error
 		return "", errors.New("account provided is empty")
 	}
 
-	bal, err := g.banker.Balance(ctx, account)
+	balGWei, err := g.banker.Balance(ctx, account)
 	if err != nil {
 		return "", fmt.Errorf("unable to retrieve balance, %w", err)
 	}
 
-	return smart.Wei2USD(bal), nil
+	return smart.GWei2USD(balGWei), nil
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
@@ -484,11 +483,11 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) (*types.Tra
 	}
 
 	// Convert the anti and game fee from USD to Wei.
-	antiWei := smart.USD2Wei(big.NewFloat(float64(g.anteUSD)))
-	gameFeeWei := smart.USD2Wei(big.NewFloat(float64(g.anteUSD)))
+	antiGWei := smart.USD2GWei(big.NewFloat(g.anteUSD))
+	gameFeeGWei := smart.USD2GWei(big.NewFloat(g.anteUSD))
 
 	// Perform the reconcile against the bank.
-	tx, receipt, err := g.banker.Reconcile(ctx, winner, losers, antiWei, gameFeeWei)
+	tx, receipt, err := g.banker.Reconcile(ctx, winner, losers, antiGWei, gameFeeGWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
 	}

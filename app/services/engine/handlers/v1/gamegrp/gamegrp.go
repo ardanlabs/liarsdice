@@ -31,7 +31,7 @@ type Handlers struct {
 	WS      websocket.Upgrader
 	Evts    *events.Events
 	Auth    *auth.Auth
-	AnteUSD int
+	AnteUSD float64
 
 	game *game.Game
 	mu   sync.RWMutex
@@ -104,7 +104,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	resp := struct {
 		Status        string   `json:"status"`
-		AnteUSD       int      `json:"ante_usd"`
+		AnteUSD       float64  `json:"ante_usd"`
 		LastOutAcct   string   `json:"last_out"`
 		LastWinAcct   string   `json:"last_win"`
 		CurrentPlayer string   `json:"current_player"`
@@ -370,7 +370,7 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	balance, err := h.Banker.Balance(ctx, address)
+	balanceGWei, err := h.Banker.Balance(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
@@ -378,7 +378,7 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	resp := struct {
 		Balance string `json:"balance"`
 	}{
-		Balance: smart.Wei2USD(balance),
+		Balance: smart.GWei2USD(balanceGWei),
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)

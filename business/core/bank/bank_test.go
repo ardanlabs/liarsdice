@@ -42,7 +42,7 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
 
-	err = playerClient.Deposit(ctx, Player1Address, 40000000)
+	err = playerClient.Deposit(ctx, Player1Address, big.NewFloat(40000000))
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
@@ -52,12 +52,12 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
 
-	expectedWeiAmount := big.NewInt(40000000000000000)
-	if amount.Cmp(expectedWeiAmount) != 0 {
-		t.Fatalf("expecting balance to be %d; got %d", expectedWeiAmount, amount)
+	expectedGWeiAmount := big.NewFloat(400000000)
+	if amount.Cmp(expectedGWeiAmount) != 0 {
+		t.Fatalf("expecting balance to be %d; got %d", expectedGWeiAmount, amount)
 	}
 
-	err = playerClient.Deposit(ctx, Player1Address, 40000000)
+	err = playerClient.Deposit(ctx, Player1Address, expectedGWeiAmount)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
@@ -67,9 +67,9 @@ func Test_PlayerBalance(t *testing.T) {
 		t.Fatalf("error getting the player balance: %s", err)
 	}
 
-	expectedWeiAmount = big.NewInt(80000000000000000)
-	if amount.Cmp(expectedWeiAmount) != 0 {
-		t.Fatalf("expecting balance to be %d; got %d", expectedWeiAmount, amount)
+	expectedGWeiAmount = big.NewFloat(800000000)
+	if amount.Cmp(expectedGWeiAmount) != 0 {
+		t.Fatalf("expecting balance to be %d; got %d", expectedGWeiAmount, amount)
 	}
 }
 
@@ -91,7 +91,7 @@ func Test_Withdraw(t *testing.T) {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	err = playerClient.Deposit(ctx, Player1Address, 40000000)
+	err = playerClient.Deposit(ctx, Player1Address, big.NewFloat(400000000))
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
@@ -106,8 +106,8 @@ func Test_Withdraw(t *testing.T) {
 		t.Fatalf("error calling Balance: %s", err)
 	}
 
-	if balance.Cmp(big.NewInt(0)) != 0 {
-		t.Fatalf("expecting player balance to be 0; got %d", balance)
+	if balance.Cmp(big.NewFloat(0)) != 0 {
+		t.Fatalf("expecting player balance to be 0; got %f", balance)
 	}
 
 	// TODO: You need to check the Wallet Balance before and after this as well.
@@ -155,22 +155,22 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error creating new bank for player 2: %s", err)
 	}
 
-	err = player1Client.Deposit(ctx, Player1Address, 40000000)
+	err = player1Client.Deposit(ctx, Player1Address, big.NewFloat(40000000))
 	if err != nil {
 		t.Fatalf("error making deposit player 1: %s", err)
 	}
 
-	err = player2Client.Deposit(ctx, Player2Address, 20000000)
+	err = player2Client.Deposit(ctx, Player2Address, big.NewFloat(20000000))
 	if err != nil {
 		t.Fatalf("error making deposit for player 2: %s", err)
 	}
 
-	ante := big.NewInt(20000000000000000)
-	fee := big.NewInt(10000000000000000)
+	anteGwei := big.NewFloat(200000000)
+	feeGwei := big.NewFloat(100000000)
 
 	losingAccounts := []string{Player2Address}
 
-	tx, receipt, err := ownerClient.Reconcile(ctx, Player1Address, losingAccounts, ante, fee)
+	tx, receipt, err := ownerClient.Reconcile(ctx, Player1Address, losingAccounts, anteGwei, feeGwei)
 	if err != nil {
 		t.Fatalf("error calling Reconcile: %s", err)
 	}
@@ -183,10 +183,10 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error calling balance for player 1: %s", err)
 	}
 
-	winnerBalance := big.NewInt(50000000000000000)
+	winnerBalanceGWei := big.NewFloat(500000000)
 
-	if player1Balance.Cmp(winnerBalance) != 0 {
-		t.Fatalf("expecting winner player balance to be %d; got %d", winnerBalance, player1Balance)
+	if player1Balance.Cmp(winnerBalanceGWei) != 0 {
+		t.Fatalf("expecting winner player balance to be %f; got %f", winnerBalanceGWei, player1Balance)
 	}
 
 	player2Balance, err := ownerClient.Balance(ctx, Player2Address)
@@ -194,8 +194,8 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error calling balance for player 2: %s", err)
 	}
 
-	if player2Balance.Cmp(big.NewInt(0)) != 0 {
-		t.Fatalf("expecting loser player balance to be %d; got %d", 0, player2Balance)
+	if player2Balance.Cmp(big.NewFloat(0)) != 0 {
+		t.Fatalf("expecting loser player balance to be %d; got %f", 0, player2Balance)
 	}
 
 	contractBalance, err := ownerClient.Balance(ctx, OwnerAddress)
@@ -203,8 +203,8 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("error calling balance for owner: %s", err)
 	}
 
-	if contractBalance.Cmp(fee) != 0 {
-		t.Fatalf("expecting owner balance to be %d; got %d", fee, contractBalance)
+	if contractBalance.Cmp(feeGwei) != 0 {
+		t.Fatalf("expecting owner balance to be %f; got %d", feeGwei, contractBalance)
 	}
 }
 
@@ -214,7 +214,7 @@ func deployContract(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	tranOpts, err := client.NewTransactOpts(ctx, 3_000_000, 0)
+	tranOpts, err := client.NewTransactOpts(ctx, 3_000_000, big.NewFloat(0))
 	if err != nil {
 		return "", err
 	}

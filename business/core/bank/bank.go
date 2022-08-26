@@ -40,8 +40,8 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 }
 
 // Deposit will add the given amount to the player's contract balance.
-func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, uint64(amount))
+func (b *Bank) Deposit(ctx context.Context, account string, amountGWei *big.Float) error {
+	tranOpts, err := b.client.NewTransactOpts(ctx, 0, amountGWei)
 	if err != nil {
 		return err
 	}
@@ -51,8 +51,7 @@ func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error 
 		return err
 	}
 
-	_, err = b.client.WaitMined(ctx, tx)
-	if err != nil {
+	if _, err := b.client.WaitMined(ctx, tx); err != nil {
 		return err
 	}
 
@@ -60,19 +59,24 @@ func (b *Bank) Deposit(ctx context.Context, account string, amount int64) error 
 }
 
 // Balance will return the balance for the specified account.
-func (b *Bank) Balance(ctx context.Context, account string) (*big.Int, error) {
+func (b *Bank) Balance(ctx context.Context, account string) (GWei *big.Float, err error) {
 	tranOpts, err := b.client.NewCallOpts(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return b.contract.PlayerBalance(tranOpts, common.HexToAddress(account))
+	wei, err := b.contract.PlayerBalance(tranOpts, common.HexToAddress(account))
+	if err != nil {
+		return nil, err
+	}
+
+	return smart.Wei2GWei(wei), nil
 }
 
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
-func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteWei *big.Int, gameFeeWei *big.Int) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, 0)
+func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
+	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -84,6 +88,9 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 	for _, loser := range losingAccounts {
 		losers = append(losers, common.HexToAddress(loser))
 	}
+
+	anteWei := smart.GWei2Wei(anteGWei)
+	gameFeeWei := smart.GWei2Wei(gameFeeGWei)
 
 	tx, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei)
 	if err != nil {
@@ -100,7 +107,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 
 // Withdraw will move all the player's balance in the contract, to the player's wallet.
 func (b *Bank) Withdraw(ctx context.Context, account string) error {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, 0)
+	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
 		return err
 	}
@@ -119,7 +126,7 @@ func (b *Bank) Withdraw(ctx context.Context, account string) error {
 
 // WalletBalance returns the current balance for the account used to
 // create this bank.
-func (b *Bank) WalletBalance(ctx context.Context) (*big.Int, error) {
+func (b *Bank) WalletBalance(ctx context.Context) (wei *big.Int, err error) {
 	balance, err := b.client.CurrentBalance(ctx)
 	if err != nil {
 		return nil, err

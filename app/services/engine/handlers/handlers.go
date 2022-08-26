@@ -37,7 +37,7 @@ type APIMuxConfig struct {
 	Auth     *auth.Auth
 	Banker   game.Banker
 	Evts     *events.Events
-	AnteUSD  int
+	AnteUSD  float64
 }
 
 // APIMux constructs a http.Handler with all application routes defined.

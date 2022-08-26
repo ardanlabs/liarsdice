@@ -21,7 +21,7 @@ type Config struct {
 	Auth    *auth.Auth
 	Banker  game.Banker
 	Evts    *events.Events
-	AnteUSD int
+	AnteUSD float64
 }
 
 // Routes binds all the version 1 routes.

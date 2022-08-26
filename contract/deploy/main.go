@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 	"time"
 
@@ -50,8 +51,8 @@ func run() error {
 	// =========================================================================
 
 	const gasLimit = 3000000
-	const valueGwei = 0
-	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, valueGwei)
+	const valueGwei = 0.0
+	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
 	if err != nil {
 		return err
 	}

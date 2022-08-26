@@ -78,8 +78,8 @@ func run(log *zap.SugaredLogger) error {
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
 		Game struct {
-			ContractID string `conf:"default:0x0"`
-			AnteUSD    int    `conf:"default:5"`
+			ContractID string  `conf:"default:0x0"`
+			AnteUSD    float64 `conf:"default:5"`
 		}
 		Bank struct {
 			KeyPath    string `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
