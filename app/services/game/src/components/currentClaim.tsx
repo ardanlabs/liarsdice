@@ -12,6 +12,7 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
 
   return (
     <div
+      data-testid="current_claim_text_container"
       style={{
         display: 'flex',
         justifyContent: 'center',
@@ -26,6 +27,7 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
         height: '100%',
       }}
     >
+      {/* Checks if there's a claim and display who maded it */}
       {currentClaim.account?.length ? (
         <span>
           Current claim by Player {shortenIfAddress(currentClaim.account)}
@@ -33,7 +35,9 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
       ) : (
         ''
       )}
+      {/* Returns an empty box if there's no claim. Works with Claim Component logic. */}
       <div
+        data-testid="current_claim_container"
         style={{
           color: 'var(--secondary-color)',
           fontSize: '28px',

@@ -10,7 +10,7 @@ export const token = () => {
 // Default headers for axios.
 export const axiosConfig: AxiosRequestConfig = {
   headers: {
-    authorization: token(),
+    authorization: window.sessionStorage.getItem('token') as string,
   },
 }
 

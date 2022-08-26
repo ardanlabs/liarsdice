@@ -16,7 +16,7 @@ const mainnetConfig: Config = {
   },
 }
 
-const ardansLocalHostConfig = {
+const ardansLocalHostConfig: Config = {
   readOnlyChainId: Localhost.chainId,
   readOnlyUrls: {
     [Localhost.chainId]: 'http://127.0.0.1:8545/',

@@ -7,6 +7,7 @@ import { game } from '../types/index.d'
 import { axiosConfig } from '../utils/axiosConfig'
 import { toast } from 'react-toastify'
 import SignOut from './signout'
+import getActivePlayersLength from '../utils/getActivePlayers'
 
 function Footer() {
   const { account } = useEthers()
@@ -41,11 +42,13 @@ function Footer() {
     axios
       .get(`http://${apiUrl}/liar`, axiosConfig)
       .then(function (response: AxiosResponse) {
-        toast.info(
-          `Game finished! Winner is ${shortenIfAddress(
-            response.data.cups[0].account,
-          )}`,
-        )
+        if (getActivePlayersLength(game) === 1) {
+          toast.info(
+            `Game finished! Winner is ${shortenIfAddress(
+              response.data.cups[0].account,
+            )}`,
+          )
+        }
       })
       .catch(function (error: AxiosError) {
         console.error(error)

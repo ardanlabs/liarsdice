@@ -7,9 +7,10 @@ import contractAbi from '../abi/Contract.json'
 // Contract utils from DApp library
 import { useContractFunction, useEthers } from '@usedapp/core'
 import { Contract } from '@ethersproject/contracts'
-import { utils, BigNumber } from 'ethers'
+import { utils } from 'ethers'
+// Another utils
 import { toast } from 'react-toastify'
-import { getExchangeRateResponse } from '../types/index.d'
+import { apiUrl } from '../utils/axiosConfig'
 
 type transactionProps = {
   buttonText: string
@@ -17,21 +18,24 @@ type transactionProps = {
   updateBalance: Function
 }
 
-const Transaction = (props: transactionProps) => {
-  async function getExchangeRate() {
-    try {
-      const { data } = await axios.get<getExchangeRateResponse>(
-        'https://api.coinbase.com/v2/prices/ETH-USD/spot',
-      )
+interface usd2weiResponse {
+  data: {
+    usd: number
+    wei: number
+  }
+}
 
-      return data
+const Transaction = (props: transactionProps) => {
+  async function usd2Wei(usdAmount: number) {
+    try {
+      axios.get(`http://${apiUrl}/usd2wei/${usdAmount}`).then((response) => {
+        return response.data
+      })
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('error message: ', error.message)
-        return error.message
       } else {
         console.error('unexpected error: ', error)
-        return 'An unexpected error occurred'
       }
     }
   }
@@ -54,30 +58,19 @@ const Transaction = (props: transactionProps) => {
     setTransactionAmount(parseFloat(event.target.value))
   }
   const sendTransaction = () => {
-    getExchangeRate().then((response) => {
-      let responseEth = response as getExchangeRateResponse
-      if (responseEth.data.amount) {
-        const priceInWei =
-          transactionAmount /
-          parseInt(responseEth.data.amount) /
-          0.000000000000000001
-        const sendValue =
-          action === 'Deposit'
-            ? { value: BigNumber.from(`${Math.round(priceInWei)}`) }
-            : {}
-        send(sendValue).then((response) => {
-          if (response === undefined) {
-            toast.error(`${action} failed`)
-          } else {
-            updateBalance(-1)
-            setInputValue('')
-            toast.info(`${action} successful`)
-          }
-        })
-      } else {
-        console.error(response)
-      }
+    usd2Wei(transactionAmount).then((response) => {
+      console.log(response)
     })
+
+    // send(sendValue.wei).then((response) => {
+    //   if (response === undefined) {
+    //     toast.error(`${action} failed`)
+    //   } else {
+    //     updateBalance(-1)
+    //     setInputValue('')
+    //     toast.info(`${action} successful`)
+    //   }
+    // })
   }
 
   return !account ? (

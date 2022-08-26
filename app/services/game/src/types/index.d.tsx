@@ -25,14 +25,6 @@ export interface game {
   ante_usd: number
 }
 
-export type getExchangeRateResponse = {
-  data: {
-    amount: string
-    base: 'ETH'
-    currency: 'USD'
-  }
-}
-
 // Props Interfaces
 export interface CupProps {
   player: user

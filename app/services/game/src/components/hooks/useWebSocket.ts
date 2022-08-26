@@ -14,10 +14,10 @@ import { GameContext } from '../../gameContext'
 import { apiUrl } from '../../utils/axiosConfig'
 import useGame from './useGame'
 
-const useWebSocket = () => {
+const useWebSocket = (resetTimer: Function) => {
   let wsStatus = useRef('closed')
   let { setGame } = useContext(GameContext)
-  const { rolldice, resetTimer, updateStatus } = useGame()
+  const { rolldice, updateStatus } = useGame()
 
   const connect = () => {
     const ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -66,16 +66,18 @@ const useWebSocket = () => {
             // Message received when claim is maded
             case message === 'claim':
               // We reset the timer because a new turn has started
-              window.sessionStorage.removeItem('round_timer')
               resetTimer()
               break
             // Message received when new round starts
             case message === 'newround':
               toast.info('New round!')
+              rolldice()
               break
             // Message received when next turn is started
             case message === 'nextturn':
               toast.info('Next turn!')
+              // We reset the timer because a new turn has started
+              resetTimer()
               break
             // Message received when player gets an out
             case message.startsWith('outs:'):
@@ -89,6 +91,8 @@ const useWebSocket = () => {
               break
             // Message received when a player gets called a liar
             case message.startsWith('callliar:'):
+              // We reset the timer because a new turn has started
+              resetTimer()
               toast.info('A player was called a liar and lost!')
               break
           }

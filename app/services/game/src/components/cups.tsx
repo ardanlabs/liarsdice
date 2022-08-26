@@ -7,7 +7,8 @@ import { GameContext } from '../gameContext'
 import { shortenIfAddress } from '@usedapp/core'
 
 const Cups: FC<CupsProps> = (CupsProps) => {
-  const { playerDice } = CupsProps
+  const playerDice =
+    JSON.parse(window.localStorage.getItem('playerDice') as string) ?? []
   const { game } = useContext(GameContext)
   const { cups, player_order, current_cup, status } = game
   const cupsElements: JSX.Element[] = []

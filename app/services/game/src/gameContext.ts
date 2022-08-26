@@ -1,4 +1,4 @@
-import React, { createContext, useState } from 'react'
+import React from 'react'
 import { claim, game } from './types/index.d'
 
 export const GameContext = React.createContext({

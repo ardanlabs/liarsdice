@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
 import { useEthers } from '@usedapp/core'
@@ -12,7 +12,6 @@ import { token } from '../utils/axiosConfig'
 
 export default function Login() {
   const { account, library, activateBrowserWallet } = useEthers()
-  const [isTokenSet, setIsTokenSet] = useState(false)
   function handleConnectAccount() {
     activateBrowserWallet()
   }
@@ -46,10 +45,9 @@ export default function Login() {
             'token',
             `bearer ${response.data.token}`,
           )
-          setIsTokenSet(true)
+          window.location.reload()
         })
         .catch((error: AxiosError) => {
-          setIsTokenSet(false)
           let errorMessage = (error as any).response.data.error.replace(
             / \[.+\]/gm,
             '',

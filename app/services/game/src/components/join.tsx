@@ -53,10 +53,13 @@ const Join = (props: JoinProps) => {
   const joinGame = () => {
     toast.info('Joining game...')
     axios
-      .get('http://localhost:3000/v1/game/join', axiosConfig)
+      .get('http://localhost:3000/v1/game/join', {
+        headers: {
+          authorization: window.sessionStorage.getItem('token') as string,
+        },
+      })
       .then((response) => {
         toast.info('Welcome to the game')
-        window.sessionStorage.setItem('token', `bearer ${response.data.token}`)
       })
       .catch((error: AxiosError) => {
         let errorMessage = (error as any).response.data.error.replace(

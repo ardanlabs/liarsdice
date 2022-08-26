@@ -2,7 +2,7 @@
 
   This hook provides all functions needed to run the game.
   It only exports the methods needed to run the game from another component.
-  Apart from the gameflow methods (line 36) we have a timer, and also the gamepot set in here.
+  Apart from the gameflow methods (line 36) we have the gamepot set in here.
   Inside ~/src/components/mainRoom.tsx you can see an implementation of how all of this is working.
   Might be helpfull to see ~/src/hooks/useWebSocket.ts to understand the events that run the game notifications/updating system.
   
@@ -18,24 +18,16 @@ import getActivePlayersLength from '../../utils/getActivePlayers'
 
 const useGame = () => {
   const { account } = useEthers()
-  let { game, setGame } = useContext(GameContext),
-    roundInterval: NodeJS.Timer
+  let { game, setGame } = useContext(GameContext)
   const [playerDice, setPlayerDice] = useState([] as dice)
   const gamePot = useMemo(
     () => game.ante_usd * game.cups.length,
     [game.cups.length, game.ante_usd],
   )
   const setNewGame = (data: game) => {
-      const newGame = assureGameType(data)
-      setGame(newGame)
-    },
-    // Timer time in seconds
-    timeoutTime = 30,
-    // Get the timer that's set inside the sessionStorage
-    sessionTimer = window.sessionStorage.getItem('round_timer')
-      ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
-      : timeoutTime
-  const [timer, setTimer] = useState(sessionTimer)
+    const newGame = assureGameType(data)
+    setGame(newGame)
+  }
 
   const updateStatus = () => {
     axios
@@ -56,7 +48,7 @@ const useGame = () => {
             case 'gameover':
               if (
                 getActivePlayersLength(response.data) === 1 &&
-                game.last_win === account
+                response.data.last_win === account
               ) {
                 axios
                   .get(`http://${apiUrl}/reconcile`, axiosConfig)
@@ -89,16 +81,19 @@ const useGame = () => {
     }
   }
 
-  const managePlayerDice = (dice: dice) => {
-    setPlayerDice(dice)
-  }
+  // Effect to persits players dice
+  useEffect(() => {
+    if (playerDice.length) {
+      window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
+    }
+  }, [playerDice])
 
   const rolldice = () => {
     axios
       .get(`http://${apiUrl}/rolldice`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
-          managePlayerDice(response.data.dice)
+          setPlayerDice(response.data.dice)
         }
       })
       .catch(function (error: AxiosError) {
@@ -110,17 +105,10 @@ const useGame = () => {
     axios
       .get(`http://${apiUrl}/next`, axiosConfig)
       .then(function (response: AxiosResponse) {
-        window.sessionStorage.removeItem('round_timer')
-        setTimer(timeoutTime)
-        // We calculate how many players are active and if every but one timed out
-        // if (getActivePlayersLength(response.data) - 1 === timeoutsCount) {
-        //   newRound()
-        // } else {
         updateStatus()
-        // }
       })
       .catch(function (error: AxiosError) {
-        // To be discused
+        console.error(error)
       })
   }
   // Takes an account address and adds an out to that account
@@ -146,45 +134,12 @@ const useGame = () => {
       })
   }
 
-  const resetTimer = () => {
-    setTimer(timeoutTime)
-  }
-  // If the timer updates we store it in the sessionStorage in order to persits it when refreshing the page
-  useEffect(() => {
-    window.sessionStorage.setItem('round_timer', `${timer}`)
-  }, [timer])
-  // Effect to handle the timer.
-  useEffect(() => {
-    if (
-      (game.player_order as string[])[game.current_cup] === account &&
-      game.status === 'playing'
-    ) {
-      clearInterval(roundInterval)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      roundInterval = setInterval(() => {
-        if (timer > 0 && game.status === 'playing') {
-          setTimer((prevState) => {
-            return prevState - 1
-          })
-        } else {
-          addOut()
-          window.sessionStorage.removeItem('round_timer')
-          clearInterval(roundInterval)
-        }
-      }, 1000)
-    } else {
-      clearInterval(roundInterval)
-    }
-    return () => clearInterval(roundInterval)
-  }, [timer, account, game.player_order, game.current_cup, game.status])
-
   return {
+    addOut,
     rolldice,
-    timer,
-    resetTimer,
     gamePot,
     playerDice,
-    managePlayerDice,
+    setPlayerDice,
     updateStatus,
   }
 }

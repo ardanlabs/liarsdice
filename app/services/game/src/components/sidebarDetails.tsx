@@ -39,7 +39,7 @@ const SidebarDetails = (props: SidebarDetailsProps) => {
         {pot ? (
           <>
             <strong className="details__title mr-6">Pot:</strong>
-            {pot} ETH
+            {pot} U$D
           </>
         ) : (
           ''
