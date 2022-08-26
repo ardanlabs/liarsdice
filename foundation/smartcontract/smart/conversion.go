@@ -10,8 +10,8 @@ import (
 // These values are used to calculate Wei values in both GWei and USD.
 // https://nomics.com/markets/gwei-gwei/usd-united-states-dollar
 var (
-	OneGWeiInUSD = big.NewFloat(0.00000255) // 8/23/22
-	OneUSDInGwei = big.NewFloat(391424.02)  // $1 USD to GWei
+	oneGWeiInUSD = big.NewFloat(0.00000255) // 8/23/22
+	oneUSDInGwei = big.NewFloat(391424.02)  // $1 USD to GWei
 )
 
 // Wei2USD converts Wei to USD.
@@ -24,7 +24,7 @@ func Wei2USD(amountWei *big.Int) string {
 
 // GWei2USD converts GWei to USD.
 func GWei2USD(amountGWei *big.Float) string {
-	cost := big.NewFloat(0).Mul(amountGWei, OneGWeiInUSD)
+	cost := big.NewFloat(0).Mul(amountGWei, oneGWeiInUSD)
 	costFloat, _ := cost.Float64()
 	return fmt.Sprintf("%.8f", costFloat)
 }
@@ -43,7 +43,7 @@ func GWei2Wei(amountGWei *big.Float) *big.Int {
 
 // USD2Wei converts USD to Wei.
 func USD2Wei(amountGWei *big.Float) *big.Int {
-	gwei := big.NewFloat(0).Mul(amountGWei, OneUSDInGwei)
+	gwei := big.NewFloat(0).Mul(amountGWei, oneUSDInGwei)
 	multiplier := big.NewFloat(1e9)
 	v, _ := big.NewFloat(0).Mul(gwei, multiplier).Int64()
 	return big.NewInt(0).SetInt64(v)
@@ -51,5 +51,5 @@ func USD2Wei(amountGWei *big.Float) *big.Int {
 
 // USD2GWei converts USD to GWei.
 func USD2GWei(amount *big.Float) *big.Float {
-	return big.NewFloat(0).Mul(amount, OneUSDInGwei)
+	return big.NewFloat(0).Mul(amount, oneUSDInGwei)
 }

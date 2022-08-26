@@ -23,12 +23,12 @@ type Bank struct {
 func New(ctx context.Context, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
 	client, err := smart.Connect(ctx, network, keyPath, passPhrase)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("network connect: %w", err)
 	}
 
 	contract, err := contract.NewContract(common.HexToAddress(contractID), client.ContractBackend())
 	if err != nil {
-		return nil, fmt.Errorf("NewContract: %w", err)
+		return nil, fmt.Errorf("new contract: %w", err)
 	}
 
 	bank := Bank{
@@ -43,17 +43,17 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 func (b *Bank) Deposit(ctx context.Context, account string, amountGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, amountGWei)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
 
 	tx, err := b.contract.Deposit(tranOpts)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("deposit: %w", err)
 	}
 
 	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
 	return tx, receipt, nil
@@ -63,12 +63,12 @@ func (b *Bank) Deposit(ctx context.Context, account string, amountGWei *big.Floa
 func (b *Bank) Balance(ctx context.Context, account string) (GWei *big.Float, err error) {
 	tranOpts, err := b.client.NewCallOpts(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new call opts: %w", err)
 	}
 
 	wei, err := b.contract.PlayerBalance(tranOpts, common.HexToAddress(account))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("player balance: %w", err)
 	}
 
 	return smart.Wei2GWei(wei), nil
@@ -79,7 +79,7 @@ func (b *Bank) Balance(ctx context.Context, account string) (GWei *big.Float, er
 func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
 
 	winner := common.HexToAddress(winningAccount)
@@ -95,12 +95,12 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 
 	tx, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("reconcile: %w", err)
 	}
 
 	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
 	return tx, receipt, nil
@@ -110,17 +110,17 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 func (b *Bank) Withdraw(ctx context.Context, account string) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
 
 	tx, err := b.contract.Withdraw(tranOpts)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("withdrawl: %w", err)
 	}
 
 	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
 	return tx, receipt, nil
@@ -131,7 +131,7 @@ func (b *Bank) Withdraw(ctx context.Context, account string) (*types.Transaction
 func (b *Bank) WalletBalance(ctx context.Context) (wei *big.Int, err error) {
 	balance, err := b.client.CurrentBalance(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("current balance: %w", err)
 	}
 
 	return balance, nil
