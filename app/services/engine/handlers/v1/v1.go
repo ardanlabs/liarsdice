@@ -31,6 +31,7 @@ func Routes(app *web.App, cfg Config) {
 	// Register group endpoints.
 	ggh := gamegrp.Handlers{
 		Banker:  cfg.Banker,
+		Log:     cfg.Log,
 		Evts:    cfg.Evts,
 		WS:      websocket.Upgrader{},
 		Auth:    cfg.Auth,
