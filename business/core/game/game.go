@@ -21,10 +21,11 @@ import (
 
 // Represents the different game status.
 const (
-	StatusNewGame   = "newgame"
-	StatusPlaying   = "playing"
-	StatusRoundOver = "roundover"
-	StatusGameOver  = "gameover"
+	StatusNewGame    = "newgame"
+	StatusPlaying    = "playing"
+	StatusRoundOver  = "roundover"
+	StatusGameOver   = "gameover"
+	StatusReconciled = "reconciled"
 )
 
 // minNumberPlayers represents the minimum number of players required
@@ -457,11 +458,13 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) (*types.Tra
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	var winner string
-	var losers []string
+	if g.status != StatusGameOver {
+		return nil, nil, fmt.Errorf("game status is required to be gameover: status[%s]", g.status)
+	}
 
 	// Find the winner.
 	// cupsOrders holds the remaining (winner) account, the others are "".
+	var winner string
 	for _, cup := range g.cupsOrder {
 		if _, found := g.cups[cup]; found {
 			winner = cup
@@ -473,6 +476,7 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) (*types.Tra
 	}
 
 	// Find the losers.
+	var losers []string
 	for _, cup := range g.cups {
 		if winner != cup.Account {
 			losers = append(losers, cup.Account)
@@ -483,7 +487,15 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) (*types.Tra
 	antiWei := smart.USD2Wei(big.NewFloat(float64(g.anteUSD)))
 	gameFeeWei := smart.USD2Wei(big.NewFloat(float64(g.anteUSD)))
 
-	return g.banker.Reconcile(ctx, winner, losers, antiWei, gameFeeWei)
+	// Perform the reconcile against the bank.
+	tx, receipt, err := g.banker.Reconcile(ctx, winner, losers, antiWei, gameFeeWei)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
+	}
+
+	g.status = StatusReconciled
+
+	return tx, receipt, nil
 }
 
 // Info returns a copy of the game status.
