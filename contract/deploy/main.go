@@ -73,7 +73,7 @@ func run() error {
 	fmt.Println("\nContract Details")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("Contract ID:", address.Hex())
-	fmt.Println("Please export GAME_CONTRACT_ID=", address.Hex())
+	fmt.Printf("Please export GAME_CONTRACT_ID=%s\n", address.Hex())
 
 	// =========================================================================
 
