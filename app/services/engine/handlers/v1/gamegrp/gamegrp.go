@@ -20,12 +20,13 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/signature"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
+	Converter   currency.Converter
 	Banker      game.Banker
 	Log         *zap.SugaredLogger
 	WS          websocket.Upgrader
@@ -159,7 +160,7 @@ func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.R
 		return v1Web.NewRequestError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
 	}
 
-	wei := smart.USD2Wei(big.NewFloat(usd))
+	wei := h.Converter.USD2Wei(big.NewFloat(usd))
 
 	data := struct {
 		USD float64  `json:"usd"`
@@ -353,7 +354,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
 
-	h.Log.Infow("reconcile results", "traceid", v.TraceID, "tx", smart.CalculateTransactionDetails(tx), "receipt", smart.CalculateReceiptDetails(receipt, tx.GasPrice()))
+	h.Log.Infow("reconcile results", "traceid", v.TraceID, "tx", h.Converter.CalculateTransactionDetails(tx), "receipt", h.Converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
 	h.Evts.Send("reconcile")
 
@@ -379,7 +380,7 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	resp := struct {
 		Balance string `json:"balance"`
 	}{
-		Balance: smart.GWei2USD(balanceGWei),
+		Balance: h.Converter.GWei2USD(balanceGWei),
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
@@ -450,7 +451,7 @@ func (h *Handlers) createGame(ctx context.Context, address string) error {
 		}
 	}
 
-	g, err := game.New(ctx, h.Banker, address, h.AnteUSD)
+	g, err := game.New(ctx, h.Converter, h.Banker, address, h.AnteUSD)
 	if err != nil {
 		return fmt.Errorf("unable to create game: %w", err)
 	}

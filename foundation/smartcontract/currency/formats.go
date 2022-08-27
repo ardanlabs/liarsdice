@@ -1,50 +1,9 @@
-package smart
+package currency
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"math/big"
-
-	"github.com/ethereum/go-ethereum/core/types"
 )
-
-// FmtBalanceSheet produces a easy to read format of the starting and ending
-// balance for the connected account.
-func (c *Client) FmtBalanceSheet(ctx context.Context, startingBalance *big.Int) string {
-	endingBalance, err := c.CurrentBalance(ctx)
-	if err != nil {
-		return ""
-	}
-
-	diff, err := CalculateBalanceDiff(ctx, startingBalance, endingBalance)
-	if err != nil {
-		return ""
-	}
-
-	return formatBalanceDiff(diff)
-}
-
-// FmtTransaction produces a easy to read format of the specified transaction.
-func FmtTransaction(tx *types.Transaction) string {
-	tcd := CalculateTransactionDetails(tx)
-
-	return formatTranCostDetails(tcd)
-}
-
-// FmtTransaction produces a easy to read format of the specified transaction.
-func FmtTransactionReceipt(receipt *types.Receipt, gasPrice *big.Int) string {
-	rcd := CalculateReceiptDetails(receipt, gasPrice)
-
-	var b bytes.Buffer
-
-	b.WriteString(formatReceiptCostDetails(rcd))
-	b.WriteString(formatLogs(ExtractLogs(receipt)))
-
-	return b.String()
-}
-
-// =============================================================================
 
 // formatTranCostDetails displays the transaction cost details.
 func formatTranCostDetails(tcd TransactionDetails) string {

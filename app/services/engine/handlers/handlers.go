@@ -15,6 +15,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"go.uber.org/zap"
 )
@@ -36,6 +37,7 @@ type APIMuxConfig struct {
 	Shutdown    chan os.Signal
 	Log         *zap.SugaredLogger
 	Auth        *auth.Auth
+	Converter   currency.Converter
 	Banker      game.Banker
 	Evts        *events.Events
 	AnteUSD     float64
@@ -86,6 +88,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 	v1.Routes(app, v1.Config{
 		Log:         cfg.Log,
 		Auth:        cfg.Auth,
+		Converter:   cfg.Converter,
 		Banker:      cfg.Banker,
 		Evts:        cfg.Evts,
 		AnteUSD:     cfg.AnteUSD,

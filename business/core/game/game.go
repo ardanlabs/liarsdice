@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/uuid"
 )
@@ -74,6 +74,7 @@ type Claim struct {
 // Game represents a single game that is being played.
 type Game struct {
 	id            string
+	converter     currency.Converter
 	banker        Banker
 	mu            sync.RWMutex
 	owner         string
@@ -90,14 +91,14 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(ctx context.Context, banker Banker, owner string, anteUSD float64) (*Game, error) {
+func New(ctx context.Context, converter currency.Converter, banker Banker, owner string, anteUSD float64) (*Game, error) {
 	balance, err := banker.AccountBalance(ctx, owner)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", owner)
 	}
 
 	// If comparison is negative, the player has no balance.
-	anteGwei := smart.USD2GWei(big.NewFloat(anteUSD))
+	anteGwei := converter.USD2GWei(big.NewFloat(anteUSD))
 	if balance.Cmp(anteGwei) < 0 {
 		return nil, fmt.Errorf("account [%s] does not have enough balance to play", owner)
 	}
@@ -105,13 +106,14 @@ func New(ctx context.Context, banker Banker, owner string, anteUSD float64) (*Ga
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	g := Game{
-		id:      uuid.NewString(),
-		banker:  banker,
-		owner:   owner,
-		status:  StatusNewGame,
-		round:   1,
-		anteUSD: anteUSD,
-		cups:    make(map[string]Cup),
+		id:        uuid.NewString(),
+		converter: converter,
+		banker:    banker,
+		owner:     owner,
+		status:    StatusNewGame,
+		round:     1,
+		anteUSD:   anteUSD,
+		cups:      make(map[string]Cup),
 	}
 
 	if err := g.AddAccount(ctx, owner); err != nil {
@@ -483,8 +485,8 @@ func (g *Game) Reconcile(ctx context.Context, winningAccount string) (*types.Tra
 	}
 
 	// Convert the anti and game fee from USD to Wei.
-	antiGWei := smart.USD2GWei(big.NewFloat(g.anteUSD))
-	gameFeeGWei := smart.USD2GWei(big.NewFloat(g.anteUSD))
+	antiGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
+	gameFeeGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
 	// Perform the reconcile against the bank.
 	tx, receipt, err := g.banker.Reconcile(ctx, winner, losers, antiGWei, gameFeeGWei)

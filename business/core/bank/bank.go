@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -52,7 +53,7 @@ func (b *Bank) AccountBalance(ctx context.Context, account string) (GWei *big.Fl
 		return nil, fmt.Errorf("player balance: %w", err)
 	}
 
-	return smart.Wei2GWei(wei), nil
+	return currency.Wei2GWei(wei), nil
 }
 
 // Balance will return the balance for the connected account.
@@ -67,7 +68,7 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 		return nil, fmt.Errorf("player balance: %w", err)
 	}
 
-	return smart.Wei2GWei(wei), nil
+	return currency.Wei2GWei(wei), nil
 }
 
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
@@ -86,8 +87,8 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 		losers = append(losers, common.HexToAddress(loser))
 	}
 
-	anteWei := smart.GWei2Wei(anteGWei)
-	gameFeeWei := smart.GWei2Wei(gameFeeGWei)
+	anteWei := currency.GWei2Wei(anteGWei)
+	gameFeeWei := currency.GWei2Wei(gameFeeGWei)
 
 	tx, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei)
 	if err != nil {

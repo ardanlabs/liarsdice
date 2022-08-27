@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"github.com/ethereum/go-ethereum/log"
 )
@@ -16,6 +17,8 @@ import (
 const (
 	primaryKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	primaryPassPhrase = "123"
+	coinMarketCapKey  = "a8cd12fb-d056-423f-877b-659046af0aa5"
+	network           = smart.NetworkLocalhost
 )
 
 func main() {
@@ -25,17 +28,27 @@ func main() {
 	}
 }
 
-func run() error {
-	ctx := context.Background()
-	network := smart.NetworkLocalhost
+func run() (dErr error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	converter, err := currency.NewConverter(coinMarketCapKey)
+	if err != nil {
+		fmt.Println("unable to create converter, using default:", err)
+		converter = currency.NewDefaultConverter()
+	}
 
 	client, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("network    :", network)
-	fmt.Println("fromAddress:", client.Account())
+	oneETHToUSD, oneUSDToETH := converter.Values()
+
+	fmt.Println("network         :", network)
+	fmt.Println("fromAddress     :", client.Account())
+	fmt.Println("oneETHToUSD     :", oneETHToUSD)
+	fmt.Println("oneUSDToETH     :", oneUSDToETH)
 
 	// =========================================================================
 
@@ -43,9 +56,14 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("starting Ba:", smart.Wei2GWei(startingBalance))
+	fmt.Println("starting Balance:", currency.Wei2GWei(startingBalance))
 	defer func() {
-		fmt.Print(client.FmtBalanceSheet(ctx, startingBalance))
+		endingBalance, err := client.CurrentBalance(ctx)
+		if err != nil {
+			dErr = err
+			return
+		}
+		fmt.Print(converter.FmtBalanceSheet(startingBalance, endingBalance))
 	}()
 
 	// =========================================================================
@@ -63,7 +81,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Print(smart.FmtTransaction(tx))
+	fmt.Print(converter.FmtTransaction(tx))
 
 	os.MkdirAll("zarf/contract/", 0755)
 	if err := os.WriteFile("zarf/contract/id.env", []byte(address.Hex()), 0666); err != nil {
@@ -72,8 +90,9 @@ func run() error {
 
 	fmt.Println("\nContract Details")
 	fmt.Println("----------------------------------------------------")
-	fmt.Println("Contract ID:", address.Hex())
-	fmt.Printf("Please export GAME_CONTRACT_ID=%s\n", address.Hex())
+	fmt.Println("Contract ID     :", address.Hex())
+	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
+	fmt.Println("----------------------------------------------------")
 
 	// =========================================================================
 
@@ -82,16 +101,13 @@ func run() error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
-
 	log.Root().SetHandler(log.StdoutHandler)
 	receipt, err := clientWait.WaitMined(ctx, tx)
 	if err != nil {
 		return err
 	}
 
-	fmt.Print(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
+	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	return nil
 }

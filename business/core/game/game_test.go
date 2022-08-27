@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -28,7 +29,9 @@ func TestSuccessGamePlay(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g, err := New(ctx, &bank, "player1", 0)
+	converter := currency.NewDefaultConverter()
+
+	g, err := New(ctx, converter, &bank, "player1", 0)
 	if err != nil {
 		t.Fatalf("unexpected error creating game: %s", err)
 	}
@@ -249,8 +252,9 @@ func TestInvalidClaim(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	converter := currency.NewDefaultConverter()
 
-	g, err := New(ctx, &bank, "player1", 0)
+	g, err := New(ctx, converter, &bank, "player1", 0)
 	if err != nil {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
@@ -302,8 +306,9 @@ func TestGameWithoutEnoughPlayers(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	converter := currency.NewDefaultConverter()
 
-	g, err := New(ctx, &bank, "owner", 0)
+	g, err := New(ctx, converter, &bank, "owner", 0)
 	if err != nil {
 		t.Fatal("not expecting error creating game")
 	}
@@ -321,7 +326,9 @@ func TestWrongPlayerTryingToPlay(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	g, err := New(ctx, &bank, "owner", 0)
+	converter := currency.NewDefaultConverter()
+
+	g, err := New(ctx, converter, &bank, "owner", 0)
 	if err != nil {
 		t.Fatal("not expecting error creating game")
 	}
@@ -354,7 +361,9 @@ func TestAddAccountWithoutBalance(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err := New(ctx, &bank, "owner", 100)
+	converter := currency.NewDefaultConverter()
+
+	_, err := New(ctx, converter, &bank, "owner", 100)
 	if err == nil {
 		t.Fatal("expecting error adding player without balance")
 	}

@@ -19,6 +19,7 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
@@ -88,9 +89,10 @@ func run(log *zap.SugaredLogger) error {
 			AnteUSD    float64 `conf:"default:5"`
 		}
 		Bank struct {
-			KeyPath    string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
-			PassPhrase string        `conf:"default:123"`
-			Timeout    time.Duration `conf:"default:10s"`
+			KeyPath          string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
+			PassPhrase       string        `conf:"default:123"`
+			Timeout          time.Duration `conf:"default:10s"`
+			CoinMarketCapKey string        `conf:"default:a8cd12fb-d056-423f-877b-659046af0aa5"`
 		}
 	}{
 		Version: conf.Version{
@@ -147,6 +149,15 @@ func run(log *zap.SugaredLogger) error {
 		return errors.New("smart contract id not provided")
 	}
 
+	converter, err := currency.NewConverter(cfg.Bank.CoinMarketCapKey)
+	if err != nil {
+		log.Infow("unable to create converter, using default", "ERROR", err)
+		converter = currency.NewDefaultConverter()
+	}
+
+	oneETHToUSD, oneUSDToETH := converter.Values()
+	log.Infow("currency values", "oneETHToUSD", oneETHToUSD, "oneUSDToETH", oneUSDToETH)
+
 	evts := events.New()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -191,6 +202,7 @@ func run(log *zap.SugaredLogger) error {
 		Shutdown:    shutdown,
 		Log:         log,
 		Auth:        auth,
+		Converter:   converter,
 		Banker:      bank,
 		Evts:        evts,
 		AnteUSD:     cfg.Game.AnteUSD,

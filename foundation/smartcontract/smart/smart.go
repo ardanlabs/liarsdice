@@ -100,8 +100,12 @@ func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGWei
 		return nil, fmt.Errorf("keying transaction: %w", err)
 	}
 
-	tranOpts.Nonce = big.NewInt(int64(nonce))
-	tranOpts.Value = GWei2Wei(valueGWei)
+	// This will convert the GWei value to Wei.
+	GWei2Wei := big.NewInt(0)
+	big.NewFloat(0).SetPrec(1024).Mul(valueGWei, big.NewFloat(1e9)).Int(GWei2Wei)
+
+	tranOpts.Nonce = big.NewInt(0).SetUint64(nonce)
+	tranOpts.Value = GWei2Wei
 	tranOpts.GasLimit = gasLimit // The maximum amount of Gas you are willing to pay for.
 	tranOpts.GasPrice = gasPrice // What you will agree to pay per unit of gas.
 

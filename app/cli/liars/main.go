@@ -1,23 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"math/big"
+	"os"
 
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 	"github.com/gdamore/tcell/v2"
 )
 
 func main() {
-
-	// if err := run(); err != nil {
-	// 	os.Exit(1)
-	// }
-
-	GWei := smart.USD2GWei(big.NewFloat(1000))
-	wei := smart.GWei2Wei(GWei)
-	fmt.Println("USD: 1000   WEI2:", wei, "   GWEI:", GWei.String(), " USD:", smart.GWei2USD(GWei))
+	if err := run(); err != nil {
+		os.Exit(1)
+	}
 }
 
 func run() error {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
 )
 
@@ -32,6 +33,9 @@ func Test_PlayerBalance(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Need a converter for handling ETH to USD to ETH conversions.
+	converter := currency.NewDefaultConverter()
+
 	// Connect player 1 to the smart contract.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
@@ -39,7 +43,7 @@ func Test_PlayerBalance(t *testing.T) {
 	}
 
 	// Deposit ~10 USD into the players account.
-	depositGWei := smart.USD2GWei(big.NewFloat(10))
+	depositGWei := converter.USD2GWei(big.NewFloat(10))
 	if _, _, err := playerClient.Deposit(ctx, depositGWei); err != nil {
 		t.Fatalf("error making deposit: %s", err)
 	}
@@ -81,6 +85,9 @@ func Test_Withdraw(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Need a converter for handling ETH to USD to ETH conversions.
+	converter := currency.NewDefaultConverter()
+
 	// Connect player 1 to the smart contract.
 	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
@@ -97,7 +104,7 @@ func Test_Withdraw(t *testing.T) {
 	}
 
 	// Perform a deposit from the player's wallet.
-	depositGWeiAmount := smart.USD2GWei(big.NewFloat(10))
+	depositGWeiAmount := converter.USD2GWei(big.NewFloat(10))
 	depositTx, depositReceipt, err := playerClient.Deposit(ctx, depositGWeiAmount)
 	if err != nil {
 		t.Fatalf("error making deposit: %s", err)
@@ -106,7 +113,7 @@ func Test_Withdraw(t *testing.T) {
 	// Calculate the expected balance by subtracting the amount deposited and the
 	// gas fees for the transaction.
 	gasCost := big.NewInt(0).Mul(depositTx.GasPrice(), big.NewInt(0).SetUint64(depositReceipt.GasUsed))
-	depositWeiAmount := smart.GWei2Wei(depositGWeiAmount)
+	depositWeiAmount := currency.GWei2Wei(depositGWeiAmount)
 	expectedBalance := big.NewInt(0).Sub(startingBalance, depositWeiAmount)
 	expectedBalance.Sub(expectedBalance, gasCost)
 
@@ -170,6 +177,9 @@ func Test_Reconcile(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// Need a converter for handling ETH to USD to ETH conversions.
+	converter := currency.NewDefaultConverter()
+
 	// Connect owner to the smart contract.
 	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
 	if err != nil {
@@ -189,20 +199,20 @@ func Test_Reconcile(t *testing.T) {
 	}
 
 	// Deposit ~$10 USD into the players account.
-	player1DepositGWei := smart.USD2GWei(big.NewFloat(10))
+	player1DepositGWei := converter.USD2GWei(big.NewFloat(10))
 	if _, _, err := player1Client.Deposit(ctx, player1DepositGWei); err != nil {
 		t.Fatalf("error making deposit player 1: %s", err)
 	}
 
 	// Deposit ~$20 USD into the players account.
-	player2DepositGWei := smart.USD2GWei(big.NewFloat(20))
+	player2DepositGWei := converter.USD2GWei(big.NewFloat(20))
 	if _, _, err := player2Client.Deposit(ctx, player2DepositGWei); err != nil {
 		t.Fatalf("error making deposit for player 2: %s", err)
 	}
 
 	// Set the ante and fees.
-	anteGwei := smart.USD2GWei(big.NewFloat(5))
-	feeGwei := smart.USD2GWei(big.NewFloat(5))
+	anteGwei := converter.USD2GWei(big.NewFloat(5))
+	feeGwei := converter.USD2GWei(big.NewFloat(5))
 
 	// Reconcile with player 1 as the winner and player 2 as the loser.
 	tx, receipt, err := ownerClient.Reconcile(ctx, Player1Address, []string{Player2Address}, anteGwei, feeGwei)
@@ -211,8 +221,8 @@ func Test_Reconcile(t *testing.T) {
 	}
 
 	// Log the results of the reconcile transaction.
-	t.Log(smart.FmtTransaction(tx))
-	t.Log(smart.FmtTransactionReceipt(receipt, tx.GasPrice()))
+	t.Log(converter.FmtTransaction(tx))
+	t.Log(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	// Capture player 1 balance in the smart contract.
 	player1Balance, err := player1Client.Balance(ctx)
@@ -221,7 +231,7 @@ func Test_Reconcile(t *testing.T) {
 	}
 
 	// The winner should have $15 USD.
-	winnerBalanceGWei32, _ := smart.USD2GWei(big.NewFloat(15)).Float32()
+	winnerBalanceGWei32, _ := converter.USD2GWei(big.NewFloat(15)).Float32()
 	player1Balance32, _ := player1Balance.Float32()
 	if player1Balance32 != winnerBalanceGWei32 {
 		t.Fatalf("expecting winner player balance to be %f; got %f", winnerBalanceGWei32, player1Balance32)
@@ -234,7 +244,7 @@ func Test_Reconcile(t *testing.T) {
 	}
 
 	// The loser should have $15 USD.
-	losingBalanceGWei32, _ := smart.USD2GWei(big.NewFloat(15)).Float32()
+	losingBalanceGWei32, _ := converter.USD2GWei(big.NewFloat(15)).Float32()
 	player2Balance32, _ := player2Balance.Float32()
 	if player2Balance32 != losingBalanceGWei32 {
 		t.Fatalf("expecting loser player balance to be %f; got %f", losingBalanceGWei32, player2Balance32)

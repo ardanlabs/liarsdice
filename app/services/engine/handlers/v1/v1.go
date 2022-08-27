@@ -11,6 +11,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -20,6 +21,7 @@ import (
 type Config struct {
 	Log         *zap.SugaredLogger
 	Auth        *auth.Auth
+	Converter   currency.Converter
 	Banker      game.Banker
 	Evts        *events.Events
 	AnteUSD     float64
@@ -32,6 +34,7 @@ func Routes(app *web.App, cfg Config) {
 
 	// Register group endpoints.
 	ggh := gamegrp.Handlers{
+		Converter:   cfg.Converter,
 		Banker:      cfg.Banker,
 		Log:         cfg.Log,
 		Evts:        cfg.Evts,
