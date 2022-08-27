@@ -20,7 +20,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/signature"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 

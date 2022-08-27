@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 

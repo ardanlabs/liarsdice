@@ -19,15 +19,13 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
 
 /*
-	Need a way of pulling in the oneEthToUSD and oneUSDToEth information.
-		The ETH pricing is hardcoded in smartcontract/conversion.go
 	Build CLI based version of the game flow for easier use and testing.
 */
 
@@ -163,7 +161,7 @@ func run(log *zap.SugaredLogger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bank, err := bank.New(ctx, smart.NetworkLocalhost, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
+	bank, err := bank.New(ctx, contract.NetworkLocalhost, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
 	if err != nil {
 		return fmt.Errorf("connecting to bank: %w", err)
 	}

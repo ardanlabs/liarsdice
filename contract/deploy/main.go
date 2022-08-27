@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ardanlabs/liarsdice/contract/sol/go/bank"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/log"
 )
 
@@ -18,7 +18,7 @@ const (
 	primaryKeyPath    = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	primaryPassPhrase = "123"
 	coinMarketCapKey  = "a8cd12fb-d056-423f-877b-659046af0aa5"
-	network           = smart.NetworkLocalhost
+	network           = contract.NetworkLocalhost
 )
 
 func main() {
@@ -38,7 +38,7 @@ func run() (dErr error) {
 		converter = currency.NewDefaultConverter()
 	}
 
-	client, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
+	client, err := contract.NewClient(ctx, network, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func run() (dErr error) {
 
 	// =========================================================================
 
-	address, tx, _, err := contract.DeployContract(tranOpts, client.ContractBackend())
+	address, tx, _, err := bank.DeployBank(tranOpts, client.ContractBackend())
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func run() (dErr error) {
 
 	// =========================================================================
 
-	clientWait, err := smart.Connect(ctx, network, primaryKeyPath, primaryPassPhrase)
+	clientWait, err := contract.NewClient(ctx, network, primaryKeyPath, primaryPassPhrase)
 	if err != nil {
 		return err
 	}

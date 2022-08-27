@@ -53,9 +53,9 @@ react-test:
 # This will compile the smart contract and produce the binary code. Then with the
 # abi and binary code, a Go source code file can be generated for Go API access.
 contract-build:
-	solc --abi contract/sol/src/contract.sol -o contract/sol/abi --overwrite
-	solc --bin contract/sol/src/contract.sol -o contract/sol/abi --overwrite
-	abigen --bin=contract/sol/abi/Bank.bin --abi=contract/sol/abi/Bank.abi --pkg=contract --out=contract/sol/go/contract/contract.go
+	solc --abi contract/sol/src/bank/bank.sol -o contract/sol/abi/bank --overwrite
+	solc --bin contract/sol/src/bank/bank.sol -o contract/sol/abi/bank --overwrite
+	abigen --bin=contract/sol/abi/bank/Bank.bin --abi=contract/sol/abi/bank/Bank.abi --pkg=bank --out=contract/sol/go/bank/bank.go
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 contract-deploy:

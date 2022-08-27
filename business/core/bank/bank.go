@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	"github.com/ardanlabs/liarsdice/contract/sol/go/bank"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -16,18 +16,18 @@ import (
 // Bank represents a bank that allows for the reconciling of a game and
 // information about player balances.
 type Bank struct {
-	client   *smart.Client
-	contract *contract.Contract
+	client   *contract.Client
+	contract *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
 func New(ctx context.Context, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
-	client, err := smart.Connect(ctx, network, keyPath, passPhrase)
+	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return nil, fmt.Errorf("network connect: %w", err)
 	}
 
-	contract, err := contract.NewContract(common.HexToAddress(contractID), client.ContractBackend())
+	contract, err := bank.NewBank(common.HexToAddress(contractID), client.ContractBackend())
 	if err != nil {
 		return nil, fmt.Errorf("new contract: %w", err)
 	}

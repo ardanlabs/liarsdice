@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/contract/sol/go/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/smart"
+	scbank "github.com/ardanlabs/liarsdice/contract/sol/go/bank"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 )
 
 const (
@@ -37,7 +37,7 @@ func Test_PlayerBalance(t *testing.T) {
 	converter := currency.NewDefaultConverter()
 
 	// Connect player 1 to the smart contract.
-	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
+	playerClient, err := bank.New(ctx, contract.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
@@ -89,7 +89,7 @@ func Test_Withdraw(t *testing.T) {
 	converter := currency.NewDefaultConverter()
 
 	// Connect player 1 to the smart contract.
-	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
+	playerClient, err := bank.New(ctx, contract.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
@@ -161,7 +161,7 @@ func Test_WithdrawWithoutBalance(t *testing.T) {
 	defer cancel()
 
 	// Connect player 1 to the smart contract.
-	playerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
+	playerClient, err := bank.New(ctx, contract.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
@@ -181,19 +181,19 @@ func Test_Reconcile(t *testing.T) {
 	converter := currency.NewDefaultConverter()
 
 	// Connect owner to the smart contract.
-	ownerClient, err := bank.New(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
+	ownerClient, err := bank.New(ctx, contract.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
 	// Connect player 1 to the smart contract.
-	player1Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
+	player1Client, err := bank.New(ctx, contract.NetworkHTTPLocalhost, Player1KeyPath, Player1PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 1: %s", err)
 	}
 
 	// Connect player 2 to the smart contract.
-	player2Client, err := bank.New(ctx, smart.NetworkHTTPLocalhost, Player2KeyPath, Player2PassPhrase, contractID)
+	player2Client, err := bank.New(ctx, contract.NetworkHTTPLocalhost, Player2KeyPath, Player2PassPhrase, contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 2: %s", err)
 	}
@@ -282,7 +282,7 @@ func deployContract() string {
 }
 
 func smartContract(ctx context.Context) (string, error) {
-	client, err := smart.Connect(ctx, smart.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
+	client, err := contract.NewClient(ctx, contract.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
 	if err != nil {
 		return "", err
 	}
@@ -292,7 +292,7 @@ func smartContract(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	address, tx, _, err := contract.DeployContract(tranOpts, client.ContractBackend())
+	address, tx, _, err := scbank.DeployBank(tranOpts, client.ContractBackend())
 	if err != nil {
 		return "", err
 	}

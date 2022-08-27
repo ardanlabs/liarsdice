@@ -11,7 +11,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
-	"github.com/ardanlabs/liarsdice/foundation/smartcontract/currency"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"

@@ -1,5 +1,5 @@
-// Package smart provides smart contract support.
-package smart
+// contract client provides access to executing smart contracts.
+package contract
 
 import (
 	"context"
@@ -35,9 +35,9 @@ type Client struct {
 	ethClient  *ethclient.Client
 }
 
-// Connect provides boilerplate for connecting to the geth service using
+// NewClient provides boilerplate for connecting to the geth service using
 // an IPC socket created by the geth service on startup.
-func Connect(ctx context.Context, network string, keyPath string, passPhrase string) (*Client, error) {
+func NewClient(ctx context.Context, network string, keyPath string, passPhrase string) (*Client, error) {
 	ethClient, err := ethclient.Dial(network)
 	if err != nil {
 		return nil, fmt.Errorf("dial network: %w", err)
