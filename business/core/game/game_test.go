@@ -2,36 +2,113 @@ package game
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math/big"
 	"testing"
+	"time"
 
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-type MockedBank struct {
-	value *big.Float
-	err   error
+const (
+	OwnerAddress   = "0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd"
+	Player1Address = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
+	Player2Address = "0x8e113078adf6888b7ba84967f299f29aece24c55"
+)
+
+// =============================================================================
+
+// mockBank represents an in-memory bank for testing.
+type mockBank struct {
+	owner    string
+	balances map[string]*big.Int
 }
 
-func (m *MockedBank) AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error) {
-	return m.value, m.err
-}
-
-func (m *MockedBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
-	return nil, nil, m.err
-}
-
-func TestSuccessGamePlay(t *testing.T) {
-	bank := MockedBank{
-		value: big.NewFloat(100),
-		err:   nil,
-	}
-
-	ctx := context.Background()
+// newBank constructs a mock bank for use with the game package.
+func newBank() *mockBank {
 	converter := currency.NewDefaultConverter()
 
-	g, err := New(ctx, converter, &bank, "player1", 0)
+	balances := map[string]*big.Int{
+		OwnerAddress:   converter.USD2Wei(big.NewFloat(1_000_000)),
+		Player1Address: converter.USD2Wei(big.NewFloat(1_000)),
+		Player2Address: converter.USD2Wei(big.NewFloat(1_000)),
+	}
+
+	return &mockBank{
+		owner:    OwnerAddress,
+		balances: balances,
+	}
+}
+
+// AccountBalance implements the game.Banker interface and will return the
+// account balance for the specified account.
+func (mb *mockBank) AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error) {
+	amountWei, exists := mb.balances[account]
+	if !exists {
+		return nil, fmt.Errorf("account %q does not exist", account)
+	}
+
+	return currency.Wei2GWei(amountWei), nil
+}
+
+// Reconcile implements the game.Banker interface and will reconcile a game with
+// the same logic the bank smart contract is using.
+func (mb *mockBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
+
+	// The smart contract deals in wei.
+	anteWei := currency.GWei2Wei(anteGWei)
+	gameFeeWei := currency.GWei2Wei(gameFeeGWei)
+
+	// Add the ante for each player to the pot. The initialization is
+	// for the winner's ante.
+	pot := anteWei
+	for _, account := range losingAccounts {
+		if mb.balances[account].Cmp(anteWei) == -1 {
+			pot = big.NewInt(0).Add(pot, mb.balances[account])
+			mb.balances[account] = big.NewInt(0)
+		} else {
+			pot = big.NewInt(0).Add(pot, anteWei)
+			mb.balances[account] = big.NewInt(0).Sub(mb.balances[account], anteWei)
+		}
+	}
+
+	// This should not happen but check to see if the pot is 0 because none
+	// of the losers had an account balance.
+	if pot.Cmp(big.NewInt(0)) == 0 {
+		return nil, nil, errors.New("pot is zero")
+	}
+
+	// This should not happen but check there is enough in the pot to cover
+	// the game fee.
+	if pot.Cmp(gameFeeWei) == -1 {
+		fmt.Printf("pot less than fee: winner[0] owner[%d]\n", pot)
+		mb.balances[mb.owner] = big.NewInt(0).Add(mb.balances[mb.owner], pot)
+		return nil, nil, nil
+	}
+
+	// Take the game fee from the pot and give the winner the remaining pot
+	// and the owner the game fee.
+	pot = big.NewInt(0).Sub(pot, gameFeeWei)
+	mb.balances[winningAccount] = big.NewInt(0).Add(mb.balances[winningAccount], pot)
+	mb.balances[mb.owner] = big.NewInt(0).Add(mb.balances[mb.owner], gameFeeWei)
+
+	fmt.Printf("winner[%d] owner[%d]", pot, gameFeeWei)
+
+	return nil, nil, nil
+}
+
+// =============================================================================
+
+func TestSuccessGamePlay(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	converter := currency.NewDefaultConverter()
+	bank := newBank()
+
+	g, err := New(ctx, converter, bank, "player1", 0)
 	if err != nil {
 		t.Fatalf("unexpected error creating game: %s", err)
 	}
@@ -246,15 +323,13 @@ func TestSuccessGamePlay(t *testing.T) {
 }
 
 func TestInvalidClaim(t *testing.T) {
-	bank := MockedBank{
-		value: big.NewFloat(100),
-		err:   nil,
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	ctx := context.Background()
 	converter := currency.NewDefaultConverter()
+	bank := newBank()
 
-	g, err := New(ctx, converter, &bank, "player1", 0)
+	g, err := New(ctx, converter, bank, "player1", 0)
 	if err != nil {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
@@ -300,15 +375,13 @@ func TestInvalidClaim(t *testing.T) {
 }
 
 func TestGameWithoutEnoughPlayers(t *testing.T) {
-	bank := MockedBank{
-		value: big.NewFloat(100),
-		err:   nil,
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	ctx := context.Background()
 	converter := currency.NewDefaultConverter()
+	bank := newBank()
 
-	g, err := New(ctx, converter, &bank, "owner", 0)
+	g, err := New(ctx, converter, bank, "owner", 0)
 	if err != nil {
 		t.Fatal("not expecting error creating game")
 	}
@@ -320,15 +393,13 @@ func TestGameWithoutEnoughPlayers(t *testing.T) {
 }
 
 func TestWrongPlayerTryingToPlay(t *testing.T) {
-	bank := MockedBank{
-		value: big.NewFloat(100),
-		err:   nil,
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	ctx := context.Background()
 	converter := currency.NewDefaultConverter()
+	bank := newBank()
 
-	g, err := New(ctx, converter, &bank, "owner", 0)
+	g, err := New(ctx, converter, bank, "owner", 0)
 	if err != nil {
 		t.Fatal("not expecting error creating game")
 	}
@@ -355,15 +426,13 @@ func TestWrongPlayerTryingToPlay(t *testing.T) {
 }
 
 func TestAddAccountWithoutBalance(t *testing.T) {
-	bank := MockedBank{
-		value: big.NewFloat(100),
-		err:   nil,
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	ctx := context.Background()
 	converter := currency.NewDefaultConverter()
+	bank := newBank()
 
-	_, err := New(ctx, converter, &bank, "owner", 100)
+	_, err := New(ctx, converter, bank, "owner", 100)
 	if err == nil {
 		t.Fatal("expecting error adding player without balance")
 	}
