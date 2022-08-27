@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	scbank "github.com/ardanlabs/liarsdice/contract/sol/go/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 )
