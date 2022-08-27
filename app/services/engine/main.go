@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"expvar" // Calls init function.
+	"expvar"
 	"fmt"
 	"net/http"
 	"os"
@@ -23,6 +23,12 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
+
+/*
+	Need a way of pulling in the oneEthToUSD and oneUSDToEth information.
+		The ETH pricing is hardcoded in smartcontract/conversion.go
+	Build CLI based version of the game flow for easier use and testing.
+*/
 
 // build is the git version of this program. It is set using build flags in the makefile.
 var build = "develop"
