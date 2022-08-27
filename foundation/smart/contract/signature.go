@@ -1,10 +1,11 @@
-// Package signature provides helper functions for handling the blockchain
-// signature needs.
-package signature
+package contract
 
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -15,12 +16,17 @@ const ZeroHash string = "0x00000000000000000000000000000000000000000000000000000
 // ardanID is an arbitrary number for signing messages. This will make it
 // clear that the signature comes from the Ardan blockchain.
 // Ethereum and Bitcoin do this as well, but they use the value of 27.
-const EthID = 27
+const ethID = 27
 
 // =============================================================================
 
 // FromAddress extracts the address for the account that signed the data.
 func FromAddress(value any, signature string) (string, error) {
+
+	// Perform a basic check that the signature is formatted properly.
+	if err := verifySignature(signature); err != nil {
+		return "", fmt.Errorf("validating signature: %w", err)
+	}
 
 	// NOTE: If the same exact data for the given signature is not provided
 	// we will get the wrong from address for this transaction. There is no
@@ -40,7 +46,7 @@ func FromAddress(value any, signature string) (string, error) {
 	}
 
 	// Decrement the Ethereum ID from the V value.
-	sig[64] = sig[64] - EthID
+	sig[64] = sig[64] - ethID
 
 	// Capture the public key associated with this data and signature.
 	publicKey, err := crypto.SigToPub(data, sig)
@@ -53,6 +59,30 @@ func FromAddress(value any, signature string) (string, error) {
 }
 
 // =============================================================================
+
+// verifySignature verifies the signature conforms to our standards.
+func verifySignature(signature string) error {
+
+	// Convert the string to the underlying slice of bytes and extract
+	// the [R|S|V] values from the signature.
+	sig := []byte(signature[:])
+	r := new(big.Int).SetBytes(sig[:32])
+	s := new(big.Int).SetBytes(sig[32:64])
+	v := new(big.Int).SetBytes([]byte{sig[64]})
+
+	// Check the recovery id is either 0 or 1.
+	uintV := v.Uint64() - ethID
+	if uintV != 0 && uintV != 1 {
+		return errors.New("invalid recovery id")
+	}
+
+	// Check the signature values are valid.
+	if !crypto.ValidateSignatureValues(byte(uintV), r, s, false) {
+		return errors.New("invalid signature values")
+	}
+
+	return nil
+}
 
 // stamp returns a hash of 32 bytes that represents this data with
 // the Ardan stamp embedded into the final hash.

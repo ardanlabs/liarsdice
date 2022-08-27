@@ -19,7 +19,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
-	"github.com/ardanlabs/liarsdice/foundation/signature"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
@@ -491,7 +491,7 @@ func validateSignature(r *http.Request) (string, error) {
 		DateTime: dt.DateTime,
 	}
 
-	address, err := signature.FromAddress(data, dt.Signature)
+	address, err := contract.FromAddress(data, dt.Signature)
 	if err != nil {
 		return "", fmt.Errorf("unable to extract address: %w", err)
 	}
