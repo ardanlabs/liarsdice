@@ -15,10 +15,6 @@ import (
 	"github.com/google/uuid"
 )
 
-/*
-	We could choose a random person to start in the Start API.
-*/
-
 // Represents the different game status.
 const (
 	StatusNewGame    = "newgame"
