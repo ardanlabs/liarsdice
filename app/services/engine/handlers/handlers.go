@@ -11,7 +11,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/debug/checkgrp"
 	v1 "github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1"
-	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
@@ -38,7 +38,7 @@ type APIMuxConfig struct {
 	Log         *zap.SugaredLogger
 	Auth        *auth.Auth
 	Converter   currency.Converter
-	Banker      game.Banker
+	Bank        *bank.Bank
 	Evts        *events.Events
 	AnteUSD     float64
 	BankTimeout time.Duration
@@ -89,7 +89,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 		Log:         cfg.Log,
 		Auth:        cfg.Auth,
 		Converter:   cfg.Converter,
-		Banker:      cfg.Banker,
+		Bank:        cfg.Bank,
 		Evts:        cfg.Evts,
 		AnteUSD:     cfg.AnteUSD,
 		BankTimeout: cfg.BankTimeout,

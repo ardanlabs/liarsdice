@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1/gamegrp"
-	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
@@ -22,7 +22,7 @@ type Config struct {
 	Log         *zap.SugaredLogger
 	Auth        *auth.Auth
 	Converter   currency.Converter
-	Banker      game.Banker
+	Bank        *bank.Bank
 	Evts        *events.Events
 	AnteUSD     float64
 	BankTimeout time.Duration
@@ -35,7 +35,7 @@ func Routes(app *web.App, cfg Config) {
 	// Register group endpoints.
 	ggh := gamegrp.Handlers{
 		Converter:   cfg.Converter,
-		Banker:      cfg.Banker,
+		Bank:        cfg.Bank,
 		Log:         cfg.Log,
 		Evts:        cfg.Evts,
 		WS:          websocket.Upgrader{},

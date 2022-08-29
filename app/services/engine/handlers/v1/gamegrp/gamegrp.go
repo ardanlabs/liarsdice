@@ -17,6 +17,7 @@ import (
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
@@ -27,7 +28,7 @@ import (
 // Handlers manages the set of user endpoints.
 type Handlers struct {
 	Converter   currency.Converter
-	Banker      game.Banker
+	Bank        *bank.Bank
 	Log         *zap.SugaredLogger
 	WS          websocket.Upgrader
 	Evts        *events.Events
@@ -372,7 +373,7 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
-	balanceGWei, err := h.Banker.AccountBalance(ctx, address)
+	balanceGWei, err := h.Bank.AccountBalance(ctx, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
@@ -451,7 +452,7 @@ func (h *Handlers) createGame(ctx context.Context, address string) error {
 		}
 	}
 
-	g, err := game.New(ctx, h.Converter, h.Banker, address, h.AnteUSD)
+	g, err := game.New(ctx, h.Converter, h.Bank, address, h.AnteUSD)
 	if err != nil {
 		return fmt.Errorf("unable to create game: %w", err)
 	}

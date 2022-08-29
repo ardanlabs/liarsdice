@@ -142,7 +142,7 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	// =========================================================================
-	// Start Game and Bank Services
+	// Create the currency converter and bank needed for the game
 
 	if cfg.Game.ContractID == "0x0" {
 		return errors.New("smart contract id not provided")
@@ -202,7 +202,7 @@ func run(log *zap.SugaredLogger) error {
 		Log:         log,
 		Auth:        auth,
 		Converter:   converter,
-		Banker:      bank,
+		Bank:        bank,
 		Evts:        evts,
 		AnteUSD:     cfg.Game.AnteUSD,
 		BankTimeout: cfg.Bank.Timeout,
