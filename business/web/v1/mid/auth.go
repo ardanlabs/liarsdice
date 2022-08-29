@@ -3,6 +3,7 @@ package mid
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -36,8 +37,16 @@ func Authenticate(a *auth.Auth) web.Middleware {
 				return v1Web.NewRequestError(err, http.StatusUnauthorized)
 			}
 
+			fmt.Println("********* CLAIMS BEFORE", claims.Subject)
+
 			// Add claims to the context, so they can be retrieved later.
 			ctx = auth.SetClaims(ctx, claims)
+
+			c, err := auth.GetClaims(ctx)
+			if err != nil {
+				fmt.Println("********* CLAIMS NOT IN CONTEXT *****")
+			}
+			fmt.Println("********* CLAIMS AFTER", c.Subject)
 
 			// Call the next handler.
 			return handler(ctx, w, r)

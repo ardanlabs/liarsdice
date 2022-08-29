@@ -369,6 +369,8 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	address := claims.Subject
 
+	fmt.Println("******* Balance:", address)
+
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
