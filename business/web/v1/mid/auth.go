@@ -9,10 +9,11 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/ardanlabs/liarsdice/foundation/web"
+	"go.uber.org/zap"
 )
 
 // Authenticate validates a JWT from the `Authorization` header.
-func Authenticate(a *auth.Auth) web.Middleware {
+func Authenticate(log *zap.SugaredLogger, a *auth.Auth) web.Middleware {
 
 	// This is the actual middleware function to be executed.
 	m := func(handler web.Handler) web.Handler {
@@ -38,6 +39,8 @@ func Authenticate(a *auth.Auth) web.Middleware {
 
 			// Add claims to the context, so they can be retrieved later.
 			ctx = auth.SetClaims(ctx, claims)
+
+			log.Infow("request auth", "traceid", web.GetTraceID(ctx), "address", claims.Subject)
 
 			// Call the next handler.
 			return handler(ctx, w, r)

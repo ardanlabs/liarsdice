@@ -50,19 +50,19 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
 
-	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Log, cfg.Auth))
 
-	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Log, cfg.Auth))
 
-	app.Handle(http.MethodGet, version, "/game/claim/:number/:suite", ggh.Claim, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/claim/:number/:suite", ggh.Claim, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Log, cfg.Auth))
 
-	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Log, cfg.Auth))
 
 	// Timeout Situations with a player
-	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/out/:outs", ggh.UpdateOut, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/out/:outs", ggh.UpdateOut, mid.Authenticate(cfg.Log, cfg.Auth))
 }
