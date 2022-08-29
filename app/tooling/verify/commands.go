@@ -8,11 +8,11 @@ import (
 )
 
 const usage = `Usage:
-	verify [--encrypt] (-r round)... [--armor] [-o OUTPUT] [INPUT]
-	tle --decrypt [-o OUTPUT] [INPUT]
+	verify -t 0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3
+	verify --balance 0x8e113078adf6888b7ba84967f299f29aece24c55
 
 Options:
-	-t, --txhash   Show transaction details for the specified transaction hash.
+	-t, --tx       Show transaction details for the specified transaction hash.
 	-b, --balance  Show the smart contract balance for the specified account.
 `
 
@@ -48,7 +48,7 @@ func Parse() (Flags, error) {
 // The default value is set to the values parsed by the environment variables.
 func parseCmdline(f *Flags) *Flags {
 	flag.StringVar(&f.TXHash, "t", f.TXHash, "transaction details for the specified tx hash")
-	flag.StringVar(&f.TXHash, "txhash", f.TXHash, "transaction details for the specified tx hash")
+	flag.StringVar(&f.TXHash, "tx", f.TXHash, "transaction details for the specified tx hash")
 	flag.StringVar(&f.Balance, "b", f.Balance, "the balance of the specified account")
 	flag.StringVar(&f.Balance, "balance", f.Balance, "the balance of the specified account")
 
