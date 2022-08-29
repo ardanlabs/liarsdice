@@ -32,6 +32,9 @@ game-run:
 game-cli:
 	go run app/cli/liars/main.go
 
+verify-build:
+	go build -o verify app/tooling/verify/main.go
+
 verify:
 	go run app/tooling/verify/main.go
 

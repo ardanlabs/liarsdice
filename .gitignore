@@ -3,6 +3,7 @@ zarf/ethereum/geth
 zarf/contract
 source.env
 history
+verify
 
 # Binaries for programs and plugins
 *.exe
