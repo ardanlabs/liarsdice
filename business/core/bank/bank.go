@@ -40,6 +40,11 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 	return &bank, nil
 }
 
+// Client returns the underlying contract client.
+func (b *Bank) Client() *contract.Client {
+	return b.client
+}
+
 // AccountBalance will return the balance for the specified account. Only the
 // owner of the smart contract can make this call.
 func (b *Bank) AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error) {

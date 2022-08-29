@@ -6,44 +6,48 @@ import (
 	"fmt"
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// Wallet returns the current wallet balance
+func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
+	wei, err := bank.WalletBalance(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("\nWallet Balance")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("wei             :", wei)
+	fmt.Println("gwei            :", currency.Wei2GWei(wei))
+	fmt.Println("usd             :", converter.Wei2USD(wei))
+
+	return nil
+}
+
 // Balance returns the current balance of the specified address.
-func Balance(ctx context.Context, converter currency.Converter, v Values) error {
-	b, err := bank.New(ctx, v.Network, v.KeyFile, v.PassPhrase, v.ContractID)
+func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
+	gwei, err := bank.AccountBalance(ctx, v.Address)
 	if err != nil {
 		return err
 	}
 
-	gwei, err := b.AccountBalance(ctx, v.Address)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Address         :", v.Address)
-	fmt.Println("WEI             :", currency.GWei2Wei(gwei))
-	fmt.Println("GWEI            :", gwei)
-	fmt.Println("USD             :", converter.GWei2USD(gwei))
+	fmt.Println("\nGame Balance")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("address         :", v.Address)
+	fmt.Println("wei             :", currency.GWei2Wei(gwei))
+	fmt.Println("gwei            :", gwei)
+	fmt.Println("usd             :", converter.GWei2USD(gwei))
 
 	return nil
 }
 
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter currency.Converter, v Values) error {
-	client, err := contract.NewClient(ctx, v.Network, v.KeyFile, v.PassPhrase)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("fromAddress     :", client.Account())
-	fmt.Println("transaction     :", v.Hex)
-
+func Transaction(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
 	txHash := common.HexToHash(v.Hex)
-	tx, pending, err := client.TransactionByHash(ctx, txHash)
+	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
 	if err != nil {
 		fmt.Println("tx status       : Not Found")
 		return err
@@ -56,7 +60,7 @@ func Transaction(ctx context.Context, converter currency.Converter, v Values) er
 
 	fmt.Print(converter.FmtTransaction(tx))
 
-	receipt, err := client.TransactionReceipt(ctx, txHash)
+	receipt, err := bank.Client().TransactionReceipt(ctx, txHash)
 	if err != nil {
 		return err
 	}

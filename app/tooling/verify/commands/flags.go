@@ -16,6 +16,7 @@ const usage = `Usage:
 Options:
 	-t, --tx         Show transaction details for the specified transaction hash.
 	-b, --balance    Show the smart contract balance for the specified account.
+	-w, --wallet     Show the wallet balance for the keyfile account.
 	-c, --contract   Provides the contract id for required calls.
 	-n, --network    Sets the network to use. Default: zarf/ethereum/geth.ipc
 	-f, --keyfile    Sets the path to the key file. Default: zarf/ethereum/keystore/...6327a38415c53ffb36c11db55ea74cc9cb4976fd
@@ -87,6 +88,9 @@ func parseCmdline(v *Values) Flags {
 	flag.StringVar(&v.PassPhrase, "passphrase", v.PassPhrase, "pass phrase for the key file")
 	flag.StringVar(&v.CoinMarketCapKey, "m", v.CoinMarketCapKey, "key for the coin market cap api")
 	flag.StringVar(&v.CoinMarketCapKey, "market", v.CoinMarketCapKey, "key for the coin market cap api")
+
+	flag.Bool("w", false, "show the wallet balance")
+	flag.Bool("wallet", false, "show the wallet balance")
 
 	flag.Parse()
 

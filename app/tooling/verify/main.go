@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/app/tooling/verify/commands"
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 )
 
@@ -38,6 +39,11 @@ func run() error {
 	}
 	oneETHToUSD, oneUSDToETH := converter.Values()
 
+	bank, err := bank.New(ctx, v.Network, v.KeyFile, v.PassPhrase, v.ContractID)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("\nSettings")
 	fmt.Println("----------------------------------------------------")
 
@@ -46,12 +52,16 @@ func run() error {
 	fmt.Println("passphrase      :", v.PassPhrase)
 	fmt.Println("oneETHToUSD     :", oneETHToUSD)
 	fmt.Println("oneUSDToETH     :", oneUSDToETH)
+	fmt.Println("key address     :", bank.Client().Address())
 
 	if _, exists := f["t"]; exists {
-		return commands.Transaction(ctx, converter, v)
+		return commands.Transaction(ctx, converter, bank, v)
 	}
 	if _, exists := f["b"]; exists {
-		return commands.Balance(ctx, converter, v)
+		return commands.Balance(ctx, converter, bank, v)
+	}
+	if _, exists := f["w"]; exists {
+		return commands.Wallet(ctx, converter, bank, v)
 	}
 
 	return errors.New("no functional command provided")

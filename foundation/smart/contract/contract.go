@@ -29,7 +29,7 @@ const (
 // Client provides an API for working with smart contracts.
 type Client struct {
 	network    string
-	account    common.Address
+	address    common.Address
 	privateKey *ecdsa.PrivateKey
 	chainID    *big.Int
 	ethClient  *ethclient.Client
@@ -55,7 +55,7 @@ func NewClient(ctx context.Context, network string, keyPath string, passPhrase s
 
 	c := Client{
 		network: network,
-		account: crypto.PubkeyToAddress(privateKey.PublicKey),
+		address: crypto.PubkeyToAddress(privateKey.PublicKey),
 
 		privateKey: privateKey,
 		chainID:    chainID,
@@ -65,9 +65,9 @@ func NewClient(ctx context.Context, network string, keyPath string, passPhrase s
 	return &c, nil
 }
 
-// Account returns the current account address calculated from the private key.
-func (c *Client) Account() common.Address {
-	return c.account
+// Address returns the current address calculated from the private key.
+func (c *Client) Address() common.Address {
+	return c.address
 }
 
 // NewCallOpts constructs a new CallOpts which is used to call contract methods
@@ -75,7 +75,7 @@ func (c *Client) Account() common.Address {
 func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
 	call := bind.CallOpts{
 		Pending: true,
-		From:    c.account,
+		From:    c.address,
 		Context: ctx,
 	}
 
@@ -85,7 +85,7 @@ func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
 // NewTransaction constructs a new TransactOpts which is the collection of
 // authorization data required to create a valid Ethereum transaction.
 func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGWei *big.Float) (*bind.TransactOpts, error) {
-	nonce, err := c.ethClient.PendingNonceAt(ctx, c.account)
+	nonce, err := c.ethClient.PendingNonceAt(ctx, c.address)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving next nonce: %w", err)
 	}
@@ -148,7 +148,7 @@ func (c *Client) BaseFee(receipt *types.Receipt) (wei *big.Int) {
 
 // CurrentBalance retrieves the current balance for the account.
 func (c *Client) CurrentBalance(ctx context.Context) (wei *big.Int, err error) {
-	balance, err := c.ethClient.BalanceAt(ctx, c.account, nil)
+	balance, err := c.ethClient.BalanceAt(ctx, c.address, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (c *Client) ContractBackend() *ethclient.Client {
 // extractError checks the failed transaction for the error message.
 func (c *Client) extractError(ctx context.Context, tx *types.Transaction) error {
 	msg := ethereum.CallMsg{
-		From:     c.account,
+		From:     c.address,
 		To:       tx.To(),
 		Gas:      tx.Gas(),
 		GasPrice: tx.GasPrice(),

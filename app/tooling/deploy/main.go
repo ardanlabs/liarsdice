@@ -46,7 +46,7 @@ func run() (dErr error) {
 	oneETHToUSD, oneUSDToETH := converter.Values()
 
 	fmt.Println("network         :", network)
-	fmt.Println("fromAddress     :", client.Account())
+	fmt.Println("key address     :", client.Address())
 	fmt.Println("oneETHToUSD     :", oneETHToUSD)
 	fmt.Println("oneUSDToETH     :", oneUSDToETH)
 
@@ -90,7 +90,7 @@ func run() (dErr error) {
 
 	fmt.Println("\nContract Details")
 	fmt.Println("----------------------------------------------------")
-	fmt.Println("Contract ID     :", address.Hex())
+	fmt.Println("contract id     :", address.Hex())
 	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
 	fmt.Println("----------------------------------------------------")
 
