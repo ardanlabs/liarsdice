@@ -75,7 +75,6 @@ func TXHash(ctx context.Context, network string, hash string) error {
 		return err
 	}
 
-	fmt.Println("Output          :")
 	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	return nil
