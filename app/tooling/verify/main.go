@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"time"
@@ -10,6 +11,18 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+// flags represent the values from the command line.
+type flags struct {
+	txHash string
+}
+
+var f flags
+
+func init() {
+	flag.StringVar(&f.txHash, "t", "", "the transaction hash")
+	flag.StringVar(&f.txHash, "txhash", "", "the transaction hash")
+}
 
 // Harded this here for now just to make life easier.
 const (
@@ -50,7 +63,7 @@ func run() (dErr error) {
 
 	// =========================================================================
 
-	txHash := common.HexToHash("0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3")
+	txHash := common.HexToHash(f.txHash)
 	tx, pending, err := client.TransactionByHash(ctx, txHash)
 	if err != nil {
 		return err
@@ -58,7 +71,7 @@ func run() (dErr error) {
 
 	fmt.Print("Transaction Pending")
 	if pending {
-		fmt.Print("Transaction Pending")
+		fmt.Println("Transaction Pending")
 		return nil
 	}
 	fmt.Print(converter.FmtTransaction(tx))
