@@ -2,12 +2,11 @@ package mid
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/ardanlabs/liarsdice/business/web/auth"
-	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"go.uber.org/zap"
 )
@@ -35,13 +34,19 @@ func Logger(log *zap.SugaredLogger) web.Middleware {
 			// Call the next handler.
 			err = handler(ctx, w, r)
 
-			c, err2 := auth.GetClaims(ctx)
-			if err2 != nil {
-				return v1Web.NewRequestError(errors.New("missing claims"), http.StatusExpectationFailed)
+			var address string
+			if c, err := auth.GetClaims(ctx); err == nil {
+				address = c.Subject
+			}
+
+			if r.URL.Path == "/v1/game/balance" {
+				fmt.Println("******> BALANCE CALL")
+				c, err := auth.GetClaims(ctx)
+				fmt.Println("******> BALANCE CALL: ERROR:", err, " -SUB:", c.Subject)
 			}
 
 			log.Infow("request completed", "traceid", v.TraceID, "method", r.Method, "path", r.URL.Path,
-				"remoteaddr", r.RemoteAddr, "address", c.Subject, "statuscode", v.StatusCode, "since", time.Since(v.Now))
+				"remoteaddr", r.RemoteAddr, "address", address, "statuscode", v.StatusCode, "since", time.Since(v.Now))
 
 			// Return the error so it can be handled further up the chain.
 			return err
