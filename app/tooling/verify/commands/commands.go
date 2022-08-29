@@ -52,6 +52,11 @@ func TXHash(ctx context.Context, network string, hash string) error {
 		converter = currency.NewDefaultConverter()
 	}
 
+	oneETHToUSD, oneUSDToETH := converter.Values()
+
+	fmt.Println("oneETHToUSD     :", oneETHToUSD)
+	fmt.Println("oneUSDToETH     :", oneUSDToETH)
+
 	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return err
