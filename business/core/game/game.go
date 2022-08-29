@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/uuid"
 )
@@ -29,6 +28,11 @@ const (
 const minNumberPlayers = 2
 
 // =============================================================================
+
+// Converter represents the ability to convert USD to GWei for game play.
+type Converter interface {
+	USD2GWei(amountUSD *big.Float) *big.Float
+}
 
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
@@ -70,7 +74,7 @@ type Claim struct {
 // Game represents a single game that is being played.
 type Game struct {
 	id            string
-	converter     currency.Converter
+	converter     Converter
 	banker        Banker
 	mu            sync.RWMutex
 	owner         string
@@ -87,7 +91,7 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(ctx context.Context, converter currency.Converter, banker Banker, owner string, anteUSD float64) (*Game, error) {
+func New(ctx context.Context, converter Converter, banker Banker, owner string, anteUSD float64) (*Game, error) {
 	balance, err := banker.AccountBalance(ctx, owner)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", owner)
@@ -232,8 +236,9 @@ func (g *Game) ApplyOut(account string, outs int) error {
 	return nil
 }
 
-// RollDice will generate 5 new random integers for the players cup.
-func (g *Game) RollDice(account string) error {
+// RollDice will generate 5 new random integers for the players cup. The caller
+// can specific the dice if they choose.
+func (g *Game) RollDice(account string, manualRole ...int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -250,8 +255,14 @@ func (g *Game) RollDice(account string) error {
 		return fmt.Errorf("account [%s] does not exist in the game", account)
 	}
 
-	for i := range cup.Dice {
-		cup.Dice[i] = rand.Intn(6) + 1
+	if manualRole == nil || len(manualRole) < 5 {
+		for i := range cup.Dice {
+			cup.Dice[i] = rand.Intn(6) + 1
+		}
+	} else {
+		for i := range cup.Dice {
+			cup.Dice[i] = manualRole[i]
+		}
 	}
 
 	return nil
