@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
@@ -22,8 +21,8 @@ Options:
 `
 
 // PrintUsage displays the usage information.
-func PrintUsage(log *log.Logger) {
-	log.Print(usage)
+func PrintUsage() {
+	fmt.Print(usage)
 }
 
 // =============================================================================

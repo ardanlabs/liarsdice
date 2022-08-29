@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -11,10 +10,8 @@ import (
 )
 
 func main() {
-	log := log.New(os.Stderr, "", 0)
-
 	if len(os.Args) == 1 {
-		commands.PrintUsage(log)
+		commands.PrintUsage()
 		return
 	}
 

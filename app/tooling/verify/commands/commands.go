@@ -4,7 +4,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
@@ -60,15 +59,15 @@ func TXHash(ctx context.Context, network string, hash string) error {
 	txHash := common.HexToHash(hash)
 	tx, pending, err := client.TransactionByHash(ctx, txHash)
 	if err != nil {
-		log.Print("status            : Not Found")
+		fmt.Print("status            : Not Found")
 		return err
 	}
 
 	if pending {
-		log.Print("status            : Pending")
+		fmt.Print("status            : Pending")
 		return nil
 	}
-	log.Print("status            : Completed")
+	fmt.Print("status            : Completed")
 	fmt.Print(converter.FmtTransaction(tx))
 
 	receipt, err := client.TransactionReceipt(ctx, txHash)
