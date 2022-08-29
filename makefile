@@ -32,6 +32,9 @@ game-run:
 game-cli:
 	go run app/cli/liars/main.go
 
+verify:
+	go run app/tooling/verify/main.go
+
 # ==============================================================================
 # Browser Application
 # This will start the React Frontend
