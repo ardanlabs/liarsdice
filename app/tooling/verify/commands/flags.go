@@ -14,10 +14,13 @@ const usage = `Usage:
 	verify -b 0x8e113078adf6888b7ba84967f299f29aece24c55 -c 0xE7811C584E23419e1952fa3158DEED345901bd0e
 
 Options:
-	-t, --tx       Show transaction details for the specified transaction hash.
-	-b, --balance  Show the smart contract balance for the specified account.
-	-c, --contract Provides the contract id for required calls.
-	-n, --network  Sets the network to use. Default: zarf/ethereum/geth.ipc
+	-t, --tx         Show transaction details for the specified transaction hash.
+	-b, --balance    Show the smart contract balance for the specified account.
+	-c, --contract   Provides the contract id for required calls.
+	-n, --network    Sets the network to use. Default: zarf/ethereum/geth.ipc
+	-f, --keyfile    Sets the path to the key file. Default: zarf/ethereum/keystore/...6327a38415c53ffb36c11db55ea74cc9cb4976fd
+	-p, --passphrase Sets the pass phrase for the key file. Default: 123
+	-k, --coinkey    Sets the key for the coin market cap API. Default: a8cd12fb-d056-423f-877b-659046af0aa5
 `
 
 // PrintUsage displays the usage information.
@@ -27,55 +30,81 @@ func PrintUsage() {
 
 // =============================================================================
 
-// flags represent the values from the command line.
-type Flags struct {
-	Network    string
-	TX         string
-	Balance    string
-	ContractID string
+// Flags represents the flags that were provided.
+type Flags map[string]struct{}
+
+// Values represent the values for each of the specified flags.
+type Values struct {
+	Network          string
+	KeyFile          string
+	PassPhrase       string
+	Hex              string
+	Address          string
+	ContractID       string
+	CoinMarketCapKey string
 }
 
 // Parse will parse the environment variables and command line flags. The command
 // line flags will overwrite environment variables. Validation takes place.
-func Parse() (Flags, error) {
+func Parse() (Flags, Values, error) {
+	const (
+		keyFile          = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+		passPhrase       = "123"
+		coinMarketCapKey = "a8cd12fb-d056-423f-877b-659046af0aa5"
+	)
+
 	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }
 
-	f := Flags{
-		Network: contract.NetworkLocalhost,
+	v := Values{
+		Network:          contract.NetworkLocalhost,
+		KeyFile:          keyFile,
+		PassPhrase:       passPhrase,
+		CoinMarketCapKey: coinMarketCapKey,
 	}
-	parseCmdline(&f)
+	flags := parseCmdline(&v)
 
-	if err := validateFlags(f); err != nil {
-		return Flags{}, err
+	if err := validate(flags, v); err != nil {
+		return nil, Values{}, err
 	}
 
-	return f, nil
+	return flags, v, nil
 }
 
 // parseCmdline will parse all the command line flags.
 // The default value is set to the values parsed by the environment variables.
-func parseCmdline(f *Flags) *Flags {
-	flag.StringVar(&f.Network, "n", f.Network, "transaction details for the specified tx hash")
-	flag.StringVar(&f.Network, "network", f.Network, "transaction details for the specified tx hash")
-	flag.StringVar(&f.TX, "t", f.TX, "transaction details for the specified tx hash")
-	flag.StringVar(&f.TX, "tx", f.TX, "transaction details for the specified tx hash")
-	flag.StringVar(&f.Balance, "b", f.Balance, "the balance of the specified account")
-	flag.StringVar(&f.Balance, "balance", f.Balance, "the balance of the specified account")
-	flag.StringVar(&f.ContractID, "c", f.ContractID, "the id of the smart contract")
-	flag.StringVar(&f.ContractID, "contract", f.ContractID, "the id of the smart contract")
+func parseCmdline(v *Values) Flags {
+	flag.StringVar(&v.Network, "n", v.Network, "transaction details for the specified tx hash")
+	flag.StringVar(&v.Network, "network", v.Network, "transaction details for the specified tx hash")
+	flag.StringVar(&v.Hex, "t", v.Hex, "transaction details for the specified tx hash")
+	flag.StringVar(&v.Hex, "tx", v.Hex, "transaction details for the specified tx hash")
+	flag.StringVar(&v.Address, "b", v.Address, "the balance of the specified account")
+	flag.StringVar(&v.Address, "balance", v.Address, "the balance of the specified account")
+	flag.StringVar(&v.ContractID, "c", v.ContractID, "the id of the smart contract")
+	flag.StringVar(&v.ContractID, "contract", v.ContractID, "the id of the smart contract")
+	flag.StringVar(&v.KeyFile, "k", v.KeyFile, "the path to the key file")
+	flag.StringVar(&v.KeyFile, "keyfile", v.KeyFile, "the path to the key file")
+	flag.StringVar(&v.PassPhrase, "p", v.PassPhrase, "the pass phrase for the key file")
+	flag.StringVar(&v.PassPhrase, "passphrase", v.PassPhrase, "the pass phrase for the key file")
+	flag.StringVar(&v.CoinMarketCapKey, "m", v.CoinMarketCapKey, "the key for the coin market cap api")
+	flag.StringVar(&v.CoinMarketCapKey, "market", v.CoinMarketCapKey, "the key for the coin market cap api")
 
 	flag.Parse()
 
-	return f
+	flags := Flags{}
+	flag.Visit(func(f *flag.Flag) {
+		flags[f.Name[:1]] = struct{}{}
+	})
+
+	return flags
 }
 
-// validateFlags performs a sanity check of the provided flag information.
-func validateFlags(f Flags) error {
-	switch {
-	case f.Balance != "":
-		if f.ContractID == "" {
+// validate performs a sanity check of the provided flag information.
+func validate(f Flags, v Values) error {
+	if _, exists := f["b"]; exists {
+		if v.ContractID == "" {
 			return errors.New("missing contract id")
 		}
+		return nil
 	}
 
 	return nil
