@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func balance(ctx context.Context, address string) error {
+func balance(ctx context.Context, network string, address string, contractID string) error {
 	_, err := bank.New(ctx, network, keyPath, passPhrase, contractID)
 	if err != nil {
 		return err
@@ -20,7 +20,7 @@ func balance(ctx context.Context, address string) error {
 	return nil
 }
 
-func txHash(ctx context.Context, hash string) error {
+func txHash(ctx context.Context, network string, hash string) error {
 	converter, err := currency.NewConverter(coinMarketCapKey)
 	if err != nil {
 		log.Println("unable to create converter, using default:", err)
