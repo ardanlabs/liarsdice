@@ -48,14 +48,10 @@ func (b *Bank) AccountBalance(ctx context.Context, account string) (GWei *big.Fl
 		return nil, fmt.Errorf("new call opts: %w", err)
 	}
 
-	fmt.Println("********> Bank Account:", account)
-
 	wei, err := b.contract.AccountBalance(tranOpts, common.HexToAddress(account))
 	if err != nil {
 		return nil, fmt.Errorf("player balance: %w", err)
 	}
-
-	fmt.Println("********> Bank Account:", account, " - WEI:", wei)
 
 	return currency.Wei2GWei(wei), nil
 }
