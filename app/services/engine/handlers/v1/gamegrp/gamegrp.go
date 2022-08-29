@@ -369,10 +369,18 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	address := claims.Subject
 
-	fmt.Println("******* Balance:", address)
+	fmt.Println("******* Balance1:", address)
 
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
+
+	claims, err = auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
+	}
+	address = claims.Subject
+
+	fmt.Println("******* Balance2:", address)
 
 	balanceGWei, err := h.Banker.AccountBalance(ctx, address)
 	if err != nil {
