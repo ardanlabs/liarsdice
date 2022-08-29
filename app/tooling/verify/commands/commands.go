@@ -1,4 +1,5 @@
-package main
+// Package commands provides all the different command options and logic.
+package commands
 
 import (
 	"context"
@@ -11,19 +12,40 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func balance(ctx context.Context, network string, address string, contractID string) error {
-	_, err := bank.New(ctx, network, keyPath, passPhrase, contractID)
+// Harded this here for now just to make life easier.
+const (
+	keyPath          = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+	passPhrase       = "123"
+	coinMarketCapKey = "a8cd12fb-d056-423f-877b-659046af0aa5"
+)
+
+func Balance(ctx context.Context, network string, address string, contractID string) error {
+	b, err := bank.New(ctx, network, keyPath, passPhrase, contractID)
 	if err != nil {
 		return err
 	}
 
+	gwei, err := b.AccountBalance(ctx, address)
+	if err != nil {
+		return err
+	}
+
+	converter, err := currency.NewConverter(coinMarketCapKey)
+	if err != nil {
+		converter = currency.NewDefaultConverter()
+	}
+
+	fmt.Println("Balances        :", address)
+	fmt.Println("WEI             :", currency.GWei2Wei(gwei))
+	fmt.Println("GWEI            :", gwei)
+	fmt.Println("USD             :", converter.GWei2USD(gwei))
+
 	return nil
 }
 
-func txHash(ctx context.Context, network string, hash string) error {
+func TXHash(ctx context.Context, network string, hash string) error {
 	converter, err := currency.NewConverter(coinMarketCapKey)
 	if err != nil {
-		log.Println("unable to create converter, using default:", err)
 		converter = currency.NewDefaultConverter()
 	}
 
@@ -32,15 +54,7 @@ func txHash(ctx context.Context, network string, hash string) error {
 		return err
 	}
 
-	oneETHToUSD, oneUSDToETH := converter.Values()
-
-	fmt.Println("network         :", network)
 	fmt.Println("fromAddress     :", client.Account())
-	fmt.Println("oneETHToUSD     :", oneETHToUSD)
-	fmt.Println("oneUSDToETH     :", oneUSDToETH)
-
-	// =========================================================================
-
 	fmt.Println("hash to check   :", hash)
 
 	txHash := common.HexToHash(hash)

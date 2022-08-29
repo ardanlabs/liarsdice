@@ -33,7 +33,7 @@ game-cli:
 	go run app/cli/liars/main.go
 
 verify:
-	go run app/tooling/verify/main.go -t "YOUR_HASH"
+	go run app/tooling/verify/main.go
 
 # ==============================================================================
 # Browser Application
