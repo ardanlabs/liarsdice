@@ -56,10 +56,12 @@ func run() (dErr error) {
 		return err
 	}
 
-	fmt.Print("PENDING:", pending)
-	if !pending {
-		fmt.Print(converter.FmtTransaction(tx))
+	fmt.Print("Transaction Pending")
+	if pending {
+		fmt.Print("Transaction Pending")
+		return nil
 	}
+	fmt.Print(converter.FmtTransaction(tx))
 
 	receipt, err := client.TransactionReceipt(ctx, txHash)
 	if err != nil {
