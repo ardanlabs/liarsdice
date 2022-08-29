@@ -24,7 +24,8 @@ const ethID = 27
 func FromAddress(value any, signature string) (string, error) {
 
 	// Perform a basic check that the signature is formatted properly.
-	if err := verifySignature(signature); err != nil {
+	sig, err := verifySignature(signature)
+	if err != nil {
 		return "", fmt.Errorf("validating signature: %w", err)
 	}
 
@@ -35,12 +36,6 @@ func FromAddress(value any, signature string) (string, error) {
 
 	// Prepare the data for public key extraction.
 	data, err := stamp(value)
-	if err != nil {
-		return "", err
-	}
-
-	// Convert the signature to a 65 bytes.
-	sig, err := hex.DecodeString(signature[2:])
 	if err != nil {
 		return "", err
 	}
@@ -61,11 +56,16 @@ func FromAddress(value any, signature string) (string, error) {
 // =============================================================================
 
 // verifySignature verifies the signature conforms to our standards.
-func verifySignature(signature string) error {
+func verifySignature(signature string) ([]byte, error) {
+
+	// Convert the signature to a 65 bytes.
+	sig, err := hex.DecodeString(signature[2:])
+	if err != nil {
+		return nil, err
+	}
 
 	// Convert the string to the underlying slice of bytes and extract
 	// the [R|S|V] values from the signature.
-	sig := []byte(signature[:])
 	r := new(big.Int).SetBytes(sig[:32])
 	s := new(big.Int).SetBytes(sig[32:64])
 	v := new(big.Int).SetBytes([]byte{sig[64]})
@@ -73,15 +73,15 @@ func verifySignature(signature string) error {
 	// Check the recovery id is either 0 or 1.
 	uintV := v.Uint64() - ethID
 	if uintV != 0 && uintV != 1 {
-		return errors.New("invalid recovery id")
+		return nil, errors.New("invalid recovery id")
 	}
 
 	// Check the signature values are valid.
 	if !crypto.ValidateSignatureValues(byte(uintV), r, s, false) {
-		return errors.New("invalid signature values")
+		return nil, errors.New("invalid signature values")
 	}
 
-	return nil
+	return sig, nil
 }
 
 // stamp returns a hash of 32 bytes that represents this data with
