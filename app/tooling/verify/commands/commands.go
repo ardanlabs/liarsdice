@@ -38,7 +38,7 @@ func Balance(ctx context.Context, network string, address string, contractID str
 
 	fmt.Println("oneETHToUSD     :", oneETHToUSD)
 	fmt.Println("oneUSDToETH     :", oneUSDToETH)
-	fmt.Println("Balance         :", address)
+	fmt.Println("Address         :", address)
 	fmt.Println("WEI             :", currency.GWei2Wei(gwei))
 	fmt.Println("GWEI            :", gwei)
 	fmt.Println("USD             :", converter.GWei2USD(gwei))
