@@ -1,63 +1,69 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"log"
-	"os"
+
+	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ethereum/go-ethereum/common"
 )
 
-const usage = `Usage:
-	verify -t 0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3
-	verify --balance 0x8e113078adf6888b7ba84967f299f29aece24c55
-
-Options:
-	-t, --tx       Show transaction details for the specified transaction hash.
-	-b, --balance  Show the smart contract balance for the specified account.
-`
-
-// PrintUsage displays the usage information.
-func PrintUsage(log *log.Logger) {
-	log.Print(usage)
-}
-
-// =============================================================================
-
-// flags represent the values from the command line.
-type Flags struct {
-	TXHash  string
-	Balance string
-}
-
-// Parse will parse the environment variables and command line flags. The command
-// line flags will overwrite environment variables. Validation takes place.
-func Parse() (Flags, error) {
-	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }
-
-	var f Flags
-	parseCmdline(&f)
-
-	if err := validateFlags(f); err != nil {
-		return Flags{}, err
+func balance(ctx context.Context, address string) error {
+	_, err := bank.New(ctx, network, keyPath, passPhrase, contractID)
+	if err != nil {
+		return err
 	}
 
-	return f, nil
+	return nil
 }
 
-// parseCmdline will parse all the command line flags.
-// The default value is set to the values parsed by the environment variables.
-func parseCmdline(f *Flags) *Flags {
-	flag.StringVar(&f.TXHash, "t", f.TXHash, "transaction details for the specified tx hash")
-	flag.StringVar(&f.TXHash, "tx", f.TXHash, "transaction details for the specified tx hash")
-	flag.StringVar(&f.Balance, "b", f.Balance, "the balance of the specified account")
-	flag.StringVar(&f.Balance, "balance", f.Balance, "the balance of the specified account")
+func txHash(ctx context.Context, hash string) error {
+	converter, err := currency.NewConverter(coinMarketCapKey)
+	if err != nil {
+		log.Println("unable to create converter, using default:", err)
+		converter = currency.NewDefaultConverter()
+	}
 
-	flag.Parse()
+	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
+	if err != nil {
+		return err
+	}
 
-	return f
-}
+	oneETHToUSD, oneUSDToETH := converter.Values()
 
-// validateFlags performs a sanity check of the provided flag information.
-func validateFlags(f Flags) error {
+	fmt.Println("network         :", network)
+	fmt.Println("fromAddress     :", client.Account())
+	fmt.Println("oneETHToUSD     :", oneETHToUSD)
+	fmt.Println("oneUSDToETH     :", oneUSDToETH)
+
+	// =========================================================================
+
+	fmt.Println("hash to check   :", hash)
+
+	txHash := common.HexToHash(hash)
+	tx, pending, err := client.TransactionByHash(ctx, txHash)
+	if err != nil {
+		log.Print("status            : Not Found")
+		return err
+	}
+
+	if pending {
+		log.Print("status            : Pending")
+		return nil
+	}
+	log.Print("status            : Completed")
+	fmt.Print(converter.FmtTransaction(tx))
+
+	receipt, err := client.TransactionReceipt(ctx, txHash)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Output          :")
+	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
+
 	return nil
 }

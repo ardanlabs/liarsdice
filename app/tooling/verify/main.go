@@ -7,10 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // Harded this here for now just to make life easier.
@@ -36,7 +33,7 @@ func main() {
 	}
 }
 
-func run() (dErr error) {
+func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -46,68 +43,11 @@ func run() (dErr error) {
 	}
 
 	switch {
-	case f.TXHash != "":
-		return txHash(ctx, f.TXHash)
+	case f.TX != "":
+		return txHash(ctx, f.TX)
 	case f.Balance != "":
 		return balance(ctx, f.Balance)
 	}
-
-	return nil
-}
-
-func balance(ctx context.Context, address string) error {
-	_, err := bank.New(ctx, network, keyPath, passPhrase, contractID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func txHash(ctx context.Context, hash string) error {
-	converter, err := currency.NewConverter(coinMarketCapKey)
-	if err != nil {
-		log.Println("unable to create converter, using default:", err)
-		converter = currency.NewDefaultConverter()
-	}
-
-	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
-	if err != nil {
-		return err
-	}
-
-	oneETHToUSD, oneUSDToETH := converter.Values()
-
-	fmt.Println("network         :", network)
-	fmt.Println("fromAddress     :", client.Account())
-	fmt.Println("oneETHToUSD     :", oneETHToUSD)
-	fmt.Println("oneUSDToETH     :", oneUSDToETH)
-
-	// =========================================================================
-
-	fmt.Println("hash to check   :", hash)
-
-	txHash := common.HexToHash(hash)
-	tx, pending, err := client.TransactionByHash(ctx, txHash)
-	if err != nil {
-		log.Print("status            : Not Found")
-		return err
-	}
-
-	if pending {
-		log.Print("status            : Pending")
-		return nil
-	}
-	log.Print("status            : Completed")
-	fmt.Print(converter.FmtTransaction(tx))
-
-	receipt, err := client.TransactionReceipt(ctx, txHash)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Output          :")
-	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	return nil
 }
