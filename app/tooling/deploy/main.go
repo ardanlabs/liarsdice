@@ -45,6 +45,8 @@ func run() (dErr error) {
 
 	oneETHToUSD, oneUSDToETH := converter.Values()
 
+	fmt.Println("\nSettings")
+	fmt.Println("----------------------------------------------------")
 	fmt.Println("network         :", network)
 	fmt.Println("key address     :", client.Address())
 	fmt.Println("oneETHToUSD     :", oneETHToUSD)
@@ -56,7 +58,6 @@ func run() (dErr error) {
 	if err != nil {
 		return err
 	}
-	fmt.Println("starting Balance:", currency.Wei2GWei(startingBalance))
 	defer func() {
 		endingBalance, err := client.CurrentBalance(ctx)
 		if err != nil {
@@ -92,7 +93,6 @@ func run() (dErr error) {
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("contract id     :", address.Hex())
 	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
-	fmt.Println("----------------------------------------------------")
 
 	// =========================================================================
 
@@ -101,6 +101,8 @@ func run() (dErr error) {
 		return err
 	}
 
+	fmt.Println("\nWaiting Logs")
+	fmt.Println("----------------------------------------------------")
 	log.Root().SetHandler(log.StdoutHandler)
 	receipt, err := clientWait.WaitMined(ctx, tx)
 	if err != nil {

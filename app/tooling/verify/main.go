@@ -19,7 +19,9 @@ func main() {
 	}
 
 	if err := run(); err != nil {
-		fmt.Println("ERROR           :", err)
+		fmt.Println("\nError")
+		fmt.Println("----------------------------------------------------")
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
@@ -46,7 +48,6 @@ func run() error {
 
 	fmt.Println("\nSettings")
 	fmt.Println("----------------------------------------------------")
-
 	fmt.Println("network         :", v.Network)
 	fmt.Println("privatekey      :", v.KeyFile)
 	fmt.Println("passphrase      :", v.PassPhrase)

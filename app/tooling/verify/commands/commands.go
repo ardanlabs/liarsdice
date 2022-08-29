@@ -3,6 +3,7 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
@@ -35,7 +36,7 @@ func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank,
 
 	fmt.Println("\nGame Balance")
 	fmt.Println("----------------------------------------------------")
-	fmt.Println("address         :", v.Address)
+	fmt.Println("account         :", v.Address)
 	fmt.Println("wei             :", currency.GWei2Wei(gwei))
 	fmt.Println("gwei            :", gwei)
 	fmt.Println("usd             :", converter.GWei2USD(gwei))
@@ -49,13 +50,11 @@ func Transaction(ctx context.Context, converter currency.Converter, bank *bank.B
 	txHash := common.HexToHash(v.Hex)
 	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
 	if err != nil {
-		fmt.Println("tx status       : Not Found")
 		return err
 	}
 
 	if pending {
-		fmt.Println("tx status       : Pending")
-		return nil
+		return errors.New("transaction pending")
 	}
 
 	fmt.Print(converter.FmtTransaction(tx))

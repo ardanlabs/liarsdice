@@ -14,7 +14,7 @@ import (
 )
 
 // Bank represents a bank that allows for the reconciling of a game and
-// information about player balances.
+// information about account balances.
 type Bank struct {
 	client   *contract.Client
 	contract *bank.Bank
@@ -55,7 +55,7 @@ func (b *Bank) AccountBalance(ctx context.Context, account string) (GWei *big.Fl
 
 	wei, err := b.contract.AccountBalance(tranOpts, common.HexToAddress(account))
 	if err != nil {
-		return nil, fmt.Errorf("player balance: %w", err)
+		return nil, fmt.Errorf("account balance: %w", err)
 	}
 
 	return currency.Wei2GWei(wei), nil
@@ -70,7 +70,7 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 
 	wei, err := b.contract.Balance(tranOpts)
 	if err != nil {
-		return nil, fmt.Errorf("player balance: %w", err)
+		return nil, fmt.Errorf("account balance: %w", err)
 	}
 
 	return currency.Wei2GWei(wei), nil
@@ -108,7 +108,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccou
 	return tx, receipt, nil
 }
 
-// Deposit will add the given amount to the player's contract balance.
+// Deposit will add the given amount to the account's contract balance.
 func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, amountGWei)
 	if err != nil {
@@ -128,7 +128,7 @@ func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Trans
 	return tx, receipt, nil
 }
 
-// Withdraw will move all the player's balance in the contract, to the player's wallet.
+// Withdraw will move all the account's balance in the contract, to the account's wallet.
 func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
