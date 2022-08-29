@@ -13,13 +13,12 @@ const PlayerBalance = () => {
 
   const updateBalance = useCallback(
     (balance: number = -1) => {
-      if (balance !== -2) {
-        if (account)
-          axios
-            .get(`http://${apiUrl}/balance`, axiosConfig)
-            .then((balanceResponse: AxiosResponse) => {
-              setBalance(parseFloat(balanceResponse.data.balance))
-            })
+      if (balance !== -2 && account) {
+        axios
+          .get(`http://${apiUrl}/balance`, axiosConfig)
+          .then((balanceResponse: AxiosResponse) => {
+            setBalance(parseFloat(balanceResponse.data.balance))
+          })
       }
     },
     [account, apiUrl],

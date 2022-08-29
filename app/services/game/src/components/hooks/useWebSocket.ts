@@ -10,11 +10,13 @@
 import { shortenIfAddress } from '@usedapp/core'
 import { useContext, useRef } from 'react'
 import { toast } from 'react-toastify'
+import { useNotificationCenter } from 'react-toastify/addons/use-notification-center'
 import { GameContext } from '../../gameContext'
 import { apiUrl } from '../../utils/axiosConfig'
 import useGame from './useGame'
 
 const useWebSocket = (resetTimer: Function) => {
+  const { add } = useNotificationCenter()
   let wsStatus = useRef('closed')
   let { setGame } = useContext(GameContext)
   const { rolldice, updateStatus } = useGame()
@@ -26,9 +28,9 @@ const useWebSocket = (resetTimer: Function) => {
       wsStatus.current !== 'attemptingConnection'
     ) {
       ws.onopen = () => {
+        toast('Connection established')
         updateStatus()
         wsStatus.current = 'open'
-        toast.info('Connection established')
       }
       ws.onmessage = (evt: MessageEvent) => {
         updateStatus()
@@ -45,13 +47,13 @@ const useWebSocket = (resetTimer: Function) => {
               const gameOwnerAccount = shortenIfAddress(
                 message.substring(gameStartStart.length),
               )
-              toast.info(`Game has been started by ${gameOwnerAccount}!`)
+              toast(`Game has been started by ${gameOwnerAccount}!`)
               // We roll the dices
               rolldice()
               break
             // Message received when dices are rolled
             case message === 'rolldice':
-              toast.info(`Rolling dice's`)
+              toast(`Rolling dice's`)
               break
             // Message received when a player joins the game
             case message.startsWith('join:'):
@@ -61,21 +63,22 @@ const useWebSocket = (resetTimer: Function) => {
               const joinAccount = shortenIfAddress(
                 message.substring(joinStart.length),
               )
-              toast.info(`Account ${joinAccount} just joined`)
+              toast(`Account ${joinAccount} just joined`)
               break
             // Message received when claim is maded
             case message === 'claim':
               // We reset the timer because a new turn has started
+              toast('Someone made a claim')
               resetTimer()
               break
             // Message received when new round starts
             case message === 'newround':
-              toast.info('New round!')
+              toast('Next Round!')
               rolldice()
               break
             // Message received when next turn is started
             case message === 'nextturn':
-              toast.info('Next turn!')
+              toast('Next Turn!')
               // We reset the timer because a new turn has started
               resetTimer()
               break
@@ -87,13 +90,14 @@ const useWebSocket = (resetTimer: Function) => {
               const strikedAccount = shortenIfAddress(
                 message.substring(outsStart.length),
               )
-              toast.info(`Player ${strikedAccount} timed out and got striked`)
+              toast(`Player ${strikedAccount} timed out and got striked`)
               break
             // Message received when a player gets called a liar
             case message.startsWith('callliar:'):
               // We reset the timer because a new turn has started
               resetTimer()
-              toast.info('A player was called a liar and lost!')
+
+              toast('A player was called a liar and lost!')
               break
           }
         }
@@ -101,10 +105,7 @@ const useWebSocket = (resetTimer: Function) => {
       }
       ws.onclose = (evt: CloseEvent) => {
         // If the socket closes we show the user an error and set the game to it's initial state.
-        toast.error(
-          'Connection is closed. Reconnect will be attempted in 1 second. ' +
-            evt.reason,
-        )
+        toast(`Connection is closed. Reconnect will be attempted in 1 second.`)
         wsStatus.current = 'closed'
         setTimeout(function () {
           setGame({
@@ -122,8 +123,8 @@ const useWebSocket = (resetTimer: Function) => {
           connect()
         }, 1000)
       }
-
       ws.onerror = function (err) {
+        toast(`Socket encountered error. Closing socket.`)
         console.error('Socket encountered error: ', err, 'Closing socket')
         ws.close()
         wsStatus.current = 'close'

@@ -1,4 +1,5 @@
 import React, { FC } from 'react'
+import NotificationCenter from './notificationCenter/notificationCenter'
 import PlayerBalance from './playerBalance'
 
 interface AppHeaderProps {
@@ -12,6 +13,7 @@ const AppHeader: FC<AppHeaderProps> = (AppHeaderProps) => {
   }
   return (
     <header data-testid="app-header" className="App-header">
+      <NotificationCenter />
       <h1>Ardan's Liar's Dice</h1>
       <PlayerBalance />
     </header>

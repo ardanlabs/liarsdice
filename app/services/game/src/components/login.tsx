@@ -11,6 +11,7 @@ import getNowDate from '../utils/getNowDate'
 import { token } from '../utils/axiosConfig'
 
 export default function Login() {
+  // const { notification } = useNotificationCenter()
   const { account, library, activateBrowserWallet } = useEthers()
   function handleConnectAccount() {
     activateBrowserWallet()
@@ -40,7 +41,7 @@ export default function Login() {
       axios
         .post('http://localhost:3000/v1/game/connect', data)
         .then((response) => {
-          toast.info('Connected to game engine')
+          // notification.info('Connected to game engine')
           window.sessionStorage.setItem(
             'token',
             `bearer ${response.data.token}`,
@@ -52,11 +53,9 @@ export default function Login() {
             / \[.+\]/gm,
             '',
           )
-          toast.error(
-            <div style={{ textAlign: 'start' }}>
-              {capitalize(errorMessage)}
-            </div>,
-          )
+          // <div style={{ textAlign: 'start' }}>
+          //   {capitalize(errorMessage)}
+          // </div>
           console.group()
           console.error('Error:', (error as any).response.data.error)
           console.groupEnd()

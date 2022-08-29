@@ -5,16 +5,18 @@ interface ButtonProps {
   classes?: string
   id?: string
   disabled?: boolean
-  children: JSX.Element[] | JSX.Element
+  children: JSX.Element[] | JSX.Element | string
   style?: React.CSSProperties
+  tooltip?: string
 }
 
 const Button: FC<ButtonProps> = (ButtonProps) => {
   let { classes } = ButtonProps
-  const { clickHandler, id, disabled, children, style } = ButtonProps
+  const { clickHandler, id, disabled, children, style, tooltip } = ButtonProps
   classes = classes ? `${classes} btn btn-block` : 'btn btn-block'
   return (
     <button
+      title={tooltip}
       type="button"
       style={style}
       id={id}

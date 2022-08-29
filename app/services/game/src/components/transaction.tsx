@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import Button from './button'
 // Contract and contract Abi
 import { getContractAddress } from '../contracts'
@@ -26,19 +26,6 @@ interface usd2weiResponse {
 }
 
 const Transaction = (props: transactionProps) => {
-  async function usd2Wei(usdAmount: number) {
-    try {
-      axios.get(`http://${apiUrl}/usd2wei/${usdAmount}`).then((response) => {
-        return response.data
-      })
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error('error message: ', error.message)
-      } else {
-        console.error('unexpected error: ', error)
-      }
-    }
-  }
   const { buttonText, action, updateBalance } = props
   // Sets local state
   const [transactionAmount, setTransactionAmount] = useState(0)
@@ -58,19 +45,24 @@ const Transaction = (props: transactionProps) => {
     setTransactionAmount(parseFloat(event.target.value))
   }
   const sendTransaction = () => {
-    usd2Wei(transactionAmount).then((response) => {
-      console.log(response)
-    })
-
-    // send(sendValue.wei).then((response) => {
-    //   if (response === undefined) {
-    //     toast.error(`${action} failed`)
-    //   } else {
-    //     updateBalance(-1)
-    //     setInputValue('')
-    //     toast.info(`${action} successful`)
-    //   }
-    // })
+    axios
+      .get(`http://${apiUrl}/usd2wei/${transactionAmount}`)
+      .then((response: usd2weiResponse) => {
+        send({ value: `${response.data.wei}` })
+          .then((response) => {
+            if (response === undefined) {
+              toast.error(`${action} failed`)
+            } else {
+              updateBalance(-1)
+              setInputValue('')
+              toast.info(`${action} successful`)
+            }
+          })
+          .catch((error: AxiosError) => {
+            console.error(error)
+          })
+        return response
+      })
   }
 
   return !account ? (

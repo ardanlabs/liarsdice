@@ -6,7 +6,7 @@ import { GameContext } from './gameContext'
 import { game } from './types/index.d'
 import AppHeader from './components/appHeader'
 import { ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
+import 'react-toastify/ReactToastify.min.css'
 
 export function App() {
   const [game, setGame] = useState({
@@ -39,16 +39,8 @@ export function App() {
       style={{ scrollSnapType: 'y mandatory' }}
       onClick={hideDropdowns}
     >
+      <ToastContainer />
       <GameContext.Provider value={providerGame}>
-        <ToastContainer
-          position="top-left"
-          autoClose={2000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          draggable
-        />
         <AppHeader show={true} />
         <div className="container-fluid d-flex align-items-center justify-content-center px-0">
           <Login />

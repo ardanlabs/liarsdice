@@ -7,9 +7,13 @@
   --secondary-color: #35495C;
   --ternary-color: #EFEFEF;
   --modals: #F0EAD6;
-  --borders:#00284d;
+  --borders: #00284d;
   box-sizing: border-box;
   overflow: hidden;
+}
+
+.Toastify__toast-container {
+  display: none;
 }
 
 #root {
@@ -31,7 +35,8 @@ code {
     monospace;
 }
 
-.dropdown-item:focus, .dropdown-item:hover {
+.dropdown-item:focus,
+.dropdown-item:hover {
   background-color: var(--modals);
 }
 
@@ -40,6 +45,7 @@ code {
   font-weight: 700;
   width: 100%;
 }
+
 #login__wrapper {
   font-weight: 400;
   width: 600px;
@@ -47,6 +53,7 @@ code {
   border-radius: 8px;
   padding: 20px;
 }
+
 #wallets__wrapper {
   width: 100%;
   border: 2px solid var(--secondary-color);
@@ -56,19 +63,25 @@ code {
 
 /******** Main Board ********/
 /* Hide scrollbar but allows scroll for main Content in Chrome, Safari and Opera */
-#mainRoom::-webkit-scrollbar, #cupsContainer::-webkit-scrollbar {
+#mainRoom::-webkit-scrollbar,
+#cupsContainer::-webkit-scrollbar {
   display: none;
 }
+
 /* Hide scrollbar but allows scroll for main Content in IE, Edge and Firefox */
-#mainRoom, #cupsContainer {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+#mainRoom,
+#cupsContainer {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 #cupsContainer {
   overflow-x: scroll !important;
   padding-right: 0 400px;
 }
+
 /***** SideBar *****/
 /* Details */
 .details div {
@@ -79,12 +92,14 @@ code {
   color: var(--borders);
   font-weight: 500;
 }
+
 .details div strong {
   color: var(--primary-color);
   font-weight: 400;
 }
+
 /* Players */
-.players div[class$="__players"] span{
+.players div[class$="__players"] span {
   color: var(--primary-color);
   font-weight: 500;
 }
@@ -92,9 +107,11 @@ code {
 .players div[class$="__players"] li {
   color: var(--borders)
 }
-.players div[class$="__players"] li.out{
+
+.players div[class$="__players"] li.out {
   color: var(--secondary-color)
 }
+
 .players div[class$="__players"] li.active {
   color: var(--primary-color)
 }
@@ -116,12 +133,15 @@ code {
 .dice svg:first-child {
   margin: 4px 36px;
 }
+
 .dice svg {
   margin: 4px 12px;
 }
-.die .question_die{
+
+.die .question_die {
   margin: 6px;
 }
+
 .dice {
   margin: auto;
 }
@@ -132,9 +152,11 @@ code {
   margin: 0 20px;
   color: var(--modals)
 }
+
 .player__ui .active {
   color: var(--primary-color);
 }
+
 .player__cup {
   background-image: url(./assets/cupInactive.svg);
   background-repeat: no-repeat;
@@ -143,6 +165,7 @@ code {
   width: 213px;
   display: flex;
 }
+
 .player__cup.active {
   background-image: url(./assets/cup.svg);
 }
@@ -160,6 +183,7 @@ code {
   align-items: center;
   font-weight: 500;
 }
+
 .claim span {
   display: flex;
   height: 100%;
@@ -172,13 +196,72 @@ code {
 
 
 /* Metamask svg */
-.st0{fill:#E2761B;stroke:#E2761B;stroke-linecap:round;stroke-linejoin:round;}
-.st1{fill:#E4761B;stroke:#E4761B;stroke-linecap:round;stroke-linejoin:round;}
-.st2{fill:#D7C1B3;stroke:#D7C1B3;stroke-linecap:round;stroke-linejoin:round;}
-.st3{fill:#233447;stroke:#233447;stroke-linecap:round;stroke-linejoin:round;}
-.st4{fill:#CD6116;stroke:#CD6116;stroke-linecap:round;stroke-linejoin:round;}
-.st5{fill:#E4751F;stroke:#E4751F;stroke-linecap:round;stroke-linejoin:round;}
-.st6{fill:#F6851B;stroke:#F6851B;stroke-linecap:round;stroke-linejoin:round;}
-.st7{fill:#C0AD9E;stroke:#C0AD9E;stroke-linecap:round;stroke-linejoin:round;}
-.st8{fill:#161616;stroke:#161616;stroke-linecap:round;stroke-linejoin:round;}
-.st9{fill:#763D16;stroke:#763D16;stroke-linecap:round;stroke-linejoin:round;}
+.st0 {
+  fill: #E2761B;
+  stroke: #E2761B;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st1 {
+  fill: #E4761B;
+  stroke: #E4761B;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st2 {
+  fill: #D7C1B3;
+  stroke: #D7C1B3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st3 {
+  fill: #233447;
+  stroke: #233447;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st4 {
+  fill: #CD6116;
+  stroke: #CD6116;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st5 {
+  fill: #E4751F;
+  stroke: #E4751F;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st6 {
+  fill: #F6851B;
+  stroke: #F6851B;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st7 {
+  fill: #C0AD9E;
+  stroke: #C0AD9E;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st8 {
+  fill: #161616;
+  stroke: #161616;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.st9 {
+  fill: #763D16;
+  stroke: #763D16;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

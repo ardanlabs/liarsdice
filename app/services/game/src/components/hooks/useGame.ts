@@ -31,7 +31,7 @@ const useGame = () => {
 
   const updateStatus = () => {
     axios
-      .get(`http://${apiUrl}/status`, axiosConfig)
+      .get(`http://${apiUrl}/status`)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
