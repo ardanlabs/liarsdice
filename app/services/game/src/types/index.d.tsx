@@ -3,10 +3,10 @@ export type die = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export interface user {
   account: string
   outs: number
-  claim: claim
+  bet: bet
 }
 
-export interface claim {
+export interface bet {
   account: string
   number: number
   suite: die
@@ -21,7 +21,7 @@ export interface game {
   round: number
   cups: user[]
   player_order: string[]
-  claims: claim[]
+  bets: bet[]
   ante_usd: number
 }
 

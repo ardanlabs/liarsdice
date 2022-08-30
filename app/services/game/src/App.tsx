@@ -18,7 +18,7 @@ export function App() {
     round: 1,
     cups: [],
     player_order: [],
-    claims: [],
+    bets: [],
     ante_usd: 0,
   } as game)
 

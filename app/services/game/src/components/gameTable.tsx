@@ -4,7 +4,7 @@ import { GameContext } from '../gameContext'
 import { dice } from '../types/index.d'
 import Counter from './counter'
 import Cups from './cups'
-import CurrentClaim from './currentClaim'
+import CurrentBet from './currentBet'
 import Dice from './dice'
 import LiarsCall from './liarsCall'
 import NotificationCenter from './notificationCenter/notificationCenter'
@@ -53,10 +53,10 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
               }
               diceNumber={playerDice}
             />
-            <CurrentClaim
-              currentClaim={
-                game.claims[game.claims.length - 1]
-                  ? game.claims[game.claims.length - 1]
+            <CurrentBet
+              currentBet={
+                game.bets[game.bets.length - 1]
+                  ? game.bets[game.bets.length - 1]
                   : { account: '', number: 0, suite: 1 }
               }
             />

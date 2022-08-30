@@ -1,7 +1,7 @@
 import React, { FC, useContext } from 'react'
-import { claim, CupsProps, user } from '../types/index.d'
+import { bet, CupsProps, user } from '../types/index.d'
 import Star from './icons/star'
-import Claim from './claim'
+import Bet from './bet'
 import { GameContext } from '../gameContext'
 import { shortenIfAddress } from '@usedapp/core'
 
@@ -11,8 +11,8 @@ const Cups: FC<CupsProps> = (CupsProps) => {
   const cupsElements: JSX.Element[] = []
 
   ;(cups as user[]).forEach((player: user, i: number) => {
-    const claims = game.claims
-      ? game.claims.filter((claim: claim) => claim.account === player.account)
+    const bets = game.bets
+      ? game.bets.filter((bet: bet) => bet.account === player.account)
       : []
     const isPlayerTurn =
       (player_order as string[])[current_cup] === player.account &&
@@ -39,10 +39,10 @@ const Cups: FC<CupsProps> = (CupsProps) => {
           className={isPlayerTurn ? 'own_turn' : ''}
         >{`Player ${shortenIfAddress(player.account)}`}</p>
         {isPlayerActive ? (
-          <div className={`claim`}>
-            {claims[0] ? 'Claim: ' : ''}
-            <Claim
-              claim={claims[0]}
+          <div className={`bet`}>
+            {bets[0] ? 'Bet: ' : ''}
+            <Bet
+              bet={bets[0]}
               dieWidth="27"
               dieHeight="27"
               fill="var(--modals)"

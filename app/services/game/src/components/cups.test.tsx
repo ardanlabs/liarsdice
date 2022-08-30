@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react'
 import Cups from './cups'
-import { game, dice, CupsProps, claim, die } from '../types/index.d'
+import { game, dice, CupsProps, bet, die } from '../types/index.d'
 import { GameContext } from '../gameContext'
 
 let props = {
@@ -36,7 +36,7 @@ test('renders all cups', () => {
         {
           account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',
           outs: 0,
-          claim: {
+          bet: {
             account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',
             number: 3,
             suite: 5 as die,
@@ -45,7 +45,7 @@ test('renders all cups', () => {
         {
           account: '0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7',
           outs: 0,
-          claim: {
+          bet: {
             account: '0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7',
             number: 5,
             suite: 6 as die,
@@ -53,7 +53,7 @@ test('renders all cups', () => {
         },
       ],
       player_order: [],
-      claims: [] as claim[],
+      bets: [] as bet[],
       ante_usd: 0,
     } as game,
     setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
@@ -75,7 +75,7 @@ test('renders all cups', () => {
       round: 1,
       cups: [],
       player_order: [],
-      claims: [] as claim[],
+      bets: [] as bet[],
       ante_usd: 0,
     } as game,
     setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,

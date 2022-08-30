@@ -6,7 +6,7 @@ let props = {
   player: {
     account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',
     outs: 0,
-    claim: {
+    bet: {
       account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',
       number: 3,
       suite: 5 as die,

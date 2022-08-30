@@ -1,18 +1,18 @@
 import React, { FC } from 'react'
-import Claim from './claim'
-import { claim } from '../types/index.d'
+import Bet from './bet'
+import { bet } from '../types/index.d'
 import { shortenIfAddress } from '@usedapp/core'
 
-interface CurrentClaimProps {
-  currentClaim: claim
+interface CurrentBetProps {
+  currentBet: bet
 }
 
-const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
-  const { currentClaim } = CurrentClaimProps
+const CurrentBet: FC<CurrentBetProps> = (CurrentBetProps) => {
+  const { currentBet } = CurrentBetProps
 
   return (
     <div
-      data-testid="current_claim_text_container"
+      data-testid="current_bet_text_container"
       style={{
         display: 'flex',
         justifyContent: 'center',
@@ -26,17 +26,17 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
         height: '100%',
       }}
     >
-      {/* Checks if there's a claim and display who maded it */}
-      {currentClaim.account?.length ? (
+      {/* Checks if there's a bet and display who maded it */}
+      {currentBet.account?.length ? (
         <span>
-          Current claim by Player {shortenIfAddress(currentClaim.account)}
+          Current bet by Player {shortenIfAddress(currentBet.account)}
         </span>
       ) : (
         ''
       )}
-      {/* Returns an empty box if there's no claim. Works with Claim Component logic. */}
+      {/* Returns an empty box if there's no bet. Works with Bet Component logic. */}
       <div
-        data-testid="current_claim_container"
+        data-testid="current_bet_container"
         style={{
           color: 'var(--secondary-color)',
           fontSize: '28px',
@@ -52,10 +52,10 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
           marginBottom: '20px',
         }}
       >
-        <Claim claim={currentClaim} fill="var(--secondary-color)" />
+        <Bet bet={currentBet} fill="var(--secondary-color)" />
       </div>
     </div>
   )
 }
 
-export default CurrentClaim
+export default CurrentBet

@@ -34,68 +34,50 @@ const useWebSocket = (resetTimer: Function) => {
         updateStatus()
 
         if (evt.data) {
-          let message = evt.data
+          let message = JSON.parse(evt.data)
+          const account = shortenIfAddress(message.address)
           // We force a switch in order to check for every type of message
-          switch (true) {
+          switch (message.type) {
             // Message received when the game starts
-            case message.startsWith('start:'):
-              // We cut the gameOwner account from the end of message
-              // Message receive is like start:0x0342235k522j2234h41
-              const gameStartStart = 'start:'
-              const gameOwnerAccount = shortenIfAddress(
-                message.substring(gameStartStart.length),
-              )
-              toast(`Game has been started by ${gameOwnerAccount}!`)
+            case 'start':
+              toast(`Game has been started by ${account}!`)
               // We roll the dices
               rolldice()
               break
             // Message received when dices are rolled
-            case message === 'rolldice':
+            case 'rolldice':
               toast(`Rolling dice's`)
               break
             // Message received when a player joins the game
-            case message.startsWith('join:'):
-              // We cut the account that joined from the end of message
-              // Message receive is like join:0x0342235k522j2234h41
-              const joinStart = 'join:'
-              const joinAccount = shortenIfAddress(
-                message.substring(joinStart.length),
-              )
-              toast(`Account ${joinAccount} just joined`)
+            case 'join':
+              toast(`Account ${account} just joined`)
               break
-            // Message received when claim is maded
-            case message === 'claim':
+            // Message received when bet is maded
+            case 'bet':
+              toast(`${account} made a bet`)
               // We reset the timer because a new turn has started
-              toast('Someone made a claim')
               resetTimer()
               break
             // Message received when new round starts
-            case message === 'newround':
+            case 'newround':
               toast('Next Round!')
               rolldice()
               break
             // Message received when next turn is started
-            case message === 'nextturn':
+            case 'nextturn':
               toast('Next Turn!')
               // We reset the timer because a new turn has started
               resetTimer()
               break
             // Message received when player gets an out
-            case message.startsWith('outs:'):
-              // We cut the account that joined from the end of message
-              // Message receive is like outs:0x0342235k522j2234h41
-              const outsStart = 'outs:'
-              const strikedAccount = shortenIfAddress(
-                message.substring(outsStart.length),
-              )
-              toast(`Player ${strikedAccount} timed out and got striked`)
+            case 'outs':
+              toast(`Player ${account} timed out and got striked`)
               break
             // Message received when a player gets called a liar
-            case message.startsWith('callliar:'):
+            case 'callliar':
+              toast(`${account} was called a liar and lost!`)
               // We reset the timer because a new turn has started
               resetTimer()
-
-              toast('A player was called a liar and lost!')
               break
           }
         }
@@ -115,7 +97,7 @@ const useWebSocket = (resetTimer: Function) => {
             round: 1,
             cups: [],
             player_order: [],
-            claims: [],
+            bets: [],
             ante_usd: 0,
           })
           connect()

@@ -8,7 +8,7 @@ const apiUrl = process.env.REACT_APP_GO_HOST
 
 const setNewGame = (data: game) => {
   let newGame = data
-  newGame = newGame.claims ? newGame : { ...newGame, claims: [] }
+  newGame = newGame.bets ? newGame : { ...newGame, bets: [] }
   newGame = newGame.cups ? newGame : { ...newGame, cups: [] }
   newGame = newGame.player_order ? newGame : { ...newGame, player_order: [] }
   return newGame

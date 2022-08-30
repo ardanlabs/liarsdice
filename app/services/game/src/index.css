@@ -178,7 +178,7 @@ code {
 }
 
 
-.claim {
+.bet {
   width: 161px;
   height: 47px;
   margin-bottom: -1px;
@@ -191,7 +191,7 @@ code {
   font-weight: 500;
 }
 
-.claim span {
+.bet span {
   display: flex;
   height: 100%;
   justify-content: center;

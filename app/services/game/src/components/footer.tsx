@@ -26,9 +26,9 @@ function Footer() {
     setGame(newGame)
   }
 
-  const sendClaim = () => {
+  const sendBet = () => {
     axios
-      .get(`http://${apiUrl}/claim/${number}/${suite}`, axiosConfig)
+      .get(`http://${apiUrl}/bet/${number}/${suite}`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
@@ -56,10 +56,10 @@ function Footer() {
   }
 
   const handleForm = (event: BaseSyntheticEvent) => {
-    if (event.target.id === 'claim__number') {
+    if (event.target.id === 'bet__number') {
       setNumber(event.target.value)
     }
-    if (event.target.id === 'claim__suite') {
+    if (event.target.id === 'bet__suite') {
       setSuite(event.target.value)
     }
   }
@@ -100,14 +100,14 @@ function Footer() {
               color: 'var(--secondary-color)',
             }}
           >
-            My Claim:{' '}
+            My Bet:{' '}
           </strong>
           <div className="form-group mx-2 my-2">
             <input
               type="number"
               min={1}
               className="form-control"
-              id="claim__number"
+              id="bet__number"
               onChange={handleForm}
               style={{
                 backgroundColor: 'transparent',
@@ -119,7 +119,7 @@ function Footer() {
             <select
               defaultValue="1"
               className="form-control"
-              id="claim__suite"
+              id="bet__suite"
               onChange={handleForm}
               style={{
                 backgroundColor: 'transparent',
@@ -143,11 +143,11 @@ function Footer() {
                 color: 'white',
                 fontWeight: '600',
               },
-              clickHandler: sendClaim,
+              clickHandler: sendBet,
               classes: 'd-flex align-items-center pa-4',
             }}
           >
-            <>Make Claim</>
+            <>Make Bet</>
           </Button>
           <Button
             {...{
