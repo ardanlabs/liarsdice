@@ -130,10 +130,6 @@ code {
 
 /***** BoardGame *****/
 /* Dice */
-.dice svg:first-child {
-  margin: 4px 36px;
-}
-
 .dice svg {
   margin: 4px 12px;
 }
@@ -143,22 +139,37 @@ code {
 }
 
 .dice {
-  margin: auto;
+  margin: 2rem 0;
 }
 
 /*** Players UI ***/
 /* Players Cup */
 .player__ui {
   margin: 0 20px;
-  color: var(--modals)
+  color: var(--modals);
+  display: flex;
+  flex-direction: column;
+  width: 160px;
+  justify-content: start;
+  align-items: center;
+  padding: 10px;
+  margin: 0 20px;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-image: url(./assets/cupInactive.svg);
+  aspect-ratio: 1;
 }
 
-.player__ui .active {
-  color: var(--primary-color);
+.player__ui.active {
+  background-image: url(./assets/cup.svg);
+  color: var(--secondary-color)
+}
+
+.player__ui .own_turn {
+  color: var(--primary-color)
 }
 
 .player__cup {
-  background-image: url(./assets/cupInactive.svg);
   background-repeat: no-repeat;
   background-position: center center;
   height: 56%;
@@ -166,18 +177,14 @@ code {
   display: flex;
 }
 
-.player__cup.active {
-  background-image: url(./assets/cup.svg);
-}
 
 .claim {
   width: 161px;
   height: 47px;
   margin-bottom: -1px;
-  background-color: var(--primary-color);
   color: var(--modals);
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  background-color: var(--primary-color);
+  border-radius: 8px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -20,6 +20,7 @@ const Claim: FC<ClaimProps> = (ClaimProps) => {
         fill={fill}
         width={dieWidth}
         height={dieHeight}
+        style={{ marginLeft: '20px' }}
       />
     </>
   ) : null

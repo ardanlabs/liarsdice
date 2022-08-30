@@ -23,7 +23,6 @@ const CurrentClaim: FC<CurrentClaimProps> = (CurrentClaimProps) => {
         borderRadius: '8px',
         fontSize: '28px',
         fontWeight: '500',
-        marginTop: '38px',
         height: '100%',
       }}
     >

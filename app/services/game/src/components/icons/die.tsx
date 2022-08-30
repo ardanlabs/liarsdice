@@ -7,10 +7,11 @@ interface DieProps {
   height?: string
   dieNumber?: die
   fill?: string
+  style?: React.CSSProperties
 }
 
 const Die: FC<DieProps> = (DieProps) => {
-  const { dieNumber } = DieProps
+  const { dieNumber, style } = DieProps
   let { width, height, fill } = DieProps
   const dice: JSX.Element[] = [
     <Die1 />,
@@ -29,7 +30,7 @@ const Die: FC<DieProps> = (DieProps) => {
         role="img"
         className="die"
         fill={fill}
-        style={{ width: width, height: height }}
+        style={{ width: width, height: height, ...style }}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="3 3 18 18"
       >

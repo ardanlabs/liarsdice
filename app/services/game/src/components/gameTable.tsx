@@ -5,6 +5,7 @@ import { dice } from '../types/index.d'
 import Counter from './counter'
 import Cups from './cups'
 import CurrentClaim from './currentClaim'
+import Dice from './dice'
 import LiarsCall from './liarsCall'
 import NotificationCenter from './notificationCenter/notificationCenter'
 
@@ -45,7 +46,13 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
         <Cups playerDice={playerDice} />
         {game.status === 'playing' ? (
           <>
-            <LiarsCall />
+            <Dice
+              isPlayerTurn={
+                (game.player_order as string[])[game.current_cup] === account &&
+                game.status === 'playing'
+              }
+              diceNumber={playerDice}
+            />
             <CurrentClaim
               currentClaim={
                 game.claims[game.claims.length - 1]
@@ -53,6 +60,7 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
                   : { account: '', number: 0, suite: 1 }
               }
             />
+            <LiarsCall />
           </>
         ) : (
           ''

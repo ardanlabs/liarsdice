@@ -8,27 +8,19 @@ interface DiceProps {
   // This type spec is to prevent user from passing an array bigger than 5
   diceNumber: dice
   isPlayerTurn: boolean
-  playerAccount: string
 }
 
 const Dice = (props: DiceProps) => {
-  const { diceNumber, isPlayerTurn, playerAccount } = props
-  const { account } = useEthers()
+  const { diceNumber, isPlayerTurn } = props
   const dice: JSX.Element[] = []
   const { game } = useContext(GameContext)
 
-  if (
-    diceNumber.length &&
-    account === playerAccount &&
-    game.status === 'playing'
-  ) {
+  if (diceNumber.length && game.status === 'playing') {
     diceNumber.forEach((die, i) => {
       dice.push(
         <Die
           key={i}
-          fill={
-            isPlayerTurn ? 'var(--primary-color)' : 'var(--secondary-color)'
-          }
+          fill={isPlayerTurn ? 'var(--primary-color)' : 'var(--modals)'}
           dieNumber={die}
         ></Die>,
       )
@@ -38,9 +30,7 @@ const Dice = (props: DiceProps) => {
       dice.push(
         <Die
           key={i}
-          fill={
-            isPlayerTurn ? 'var(--primary-color)' : 'var(--secondary-color)'
-          }
+          fill={isPlayerTurn ? 'var(--primary-color)' : 'var(--modals)'}
         />,
       )
     }

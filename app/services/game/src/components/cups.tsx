@@ -2,13 +2,10 @@ import React, { FC, useContext } from 'react'
 import { claim, CupsProps, user } from '../types/index.d'
 import Star from './icons/star'
 import Claim from './claim'
-import Cup from './cup'
 import { GameContext } from '../gameContext'
 import { shortenIfAddress } from '@usedapp/core'
 
 const Cups: FC<CupsProps> = (CupsProps) => {
-  const playerDice =
-    JSON.parse(window.localStorage.getItem('playerDice') as string) ?? []
   const { game } = useContext(GameContext)
   const { cups, player_order, current_cup, status } = game
   const cupsElements: JSX.Element[] = []
@@ -17,6 +14,10 @@ const Cups: FC<CupsProps> = (CupsProps) => {
     const claims = game.claims
       ? game.claims.filter((claim: claim) => claim.account === player.account)
       : []
+    const isPlayerTurn =
+      (player_order as string[])[current_cup] === player.account &&
+      status === 'playing'
+    const isPlayerActive = player.outs < 3
     const stars: JSX.Element[] = []
     for (let i = 1; i <= 3; i++) {
       stars.push(
@@ -28,37 +29,26 @@ const Cups: FC<CupsProps> = (CupsProps) => {
     }
     cupsElements.push(
       <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          height: '414px',
-          width: '213px',
-          justifyContent: 'start',
-          alignItems: 'center',
-        }}
         key={player.account}
-        className="player__ui"
+        className={`player__ui ${isPlayerActive ? 'active' : ''}`}
         data-testid="player__ui"
       >
         <div className="d-flex">{stars}</div>
-        <h2
-          className={
-            (player_order as string[])[current_cup] === player.account &&
-            status === 'playing'
-              ? 'active'
-              : ''
-          }
-        >{`Player ${shortenIfAddress(player.account)}`}</h2>
-        <div className="claim">
-          {claims[0] ? 'Claim: ' : ''}
-          <Claim
-            claim={claims[0]}
-            dieWidth="27"
-            dieHeight="27"
-            fill="var(--modals)"
-          />
-        </div>
-        <Cup player={player} playerDice={playerDice} />
+        <p
+          style={{ fontWeight: '600' }}
+          className={isPlayerTurn ? 'own_turn' : ''}
+        >{`Player ${shortenIfAddress(player.account)}`}</p>
+        {isPlayerActive ? (
+          <div className={`claim`}>
+            {claims[0] ? 'Claim: ' : ''}
+            <Claim
+              claim={claims[0]}
+              dieWidth="27"
+              dieHeight="27"
+              fill="var(--modals)"
+            />
+          </div>
+        ) : null}
       </div>,
     )
   })
@@ -67,10 +57,10 @@ const Cups: FC<CupsProps> = (CupsProps) => {
       style={{
         display: 'flex',
         width: '100%',
-        alignItems: 'start',
+        alignItems: 'center',
+        justifyContent: 'center',
         minHeight: '414px',
         flexWrap: 'wrap',
-        scale: '0.8',
       }}
       id="cupsContainer"
     >

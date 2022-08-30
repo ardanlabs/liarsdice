@@ -100,7 +100,7 @@ const NotificationCenter = (props: NotificationCenterProps) => {
             variants={variants.content}
             animate={isOpen ? 'open' : 'closed'}
             style={{
-              background: '#fff',
+              background: 'var(--modals)',
               height: `${trigger ? '400px' : '100%'}`,
               overflowY: 'scroll',
               overflowX: 'hidden',
@@ -118,6 +118,7 @@ const NotificationCenter = (props: NotificationCenterProps) => {
                   margin: '0',
                   textAlign: 'center',
                   padding: '2rem',
+                  color: 'var(--secondary-color)',
                 }}
               >
                 Your queue is empty! you are all set{' '}

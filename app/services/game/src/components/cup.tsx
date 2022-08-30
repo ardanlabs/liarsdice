@@ -18,7 +18,6 @@ const Cup: FC<CupProps> = (CupProps) => {
         diceNumber={
           playerDice && status === 'playing' ? playerDice : [0, 0, 0, 0, 0]
         }
-        playerAccount={player.account}
       />
     </div>
   ) : (
