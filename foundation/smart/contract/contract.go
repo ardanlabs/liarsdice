@@ -70,6 +70,16 @@ func (c *Client) Address() common.Address {
 	return c.address
 }
 
+// Network returns the network information.
+func (c *Client) Network() string {
+	return c.network
+}
+
+// ChainID returns the chain information for the connected network.
+func (c *Client) ChainID() int {
+	return int(c.chainID.Int64())
+}
+
 // NewCallOpts constructs a new CallOpts which is used to call contract methods
 // that does not require a transaction.
 func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {

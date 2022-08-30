@@ -19,7 +19,6 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
@@ -28,6 +27,8 @@ import (
 /*
 	Build CLI based version of the game flow for easier use and testing.
 	We could choose a random person to start a new game from those that join.
+	Add flags to the deploy program to change defaults.
+	Add names to addresses on connect call.
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.
@@ -90,6 +91,7 @@ func run(log *zap.SugaredLogger) error {
 		Bank struct {
 			KeyPath          string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
 			PassPhrase       string        `conf:"default:123"`
+			Network          string        `conf:"default:http://localhost:8545"`
 			Timeout          time.Duration `conf:"default:10s"`
 			CoinMarketCapKey string        `conf:"default:a8cd12fb-d056-423f-877b-659046af0aa5"`
 		}
@@ -162,7 +164,7 @@ func run(log *zap.SugaredLogger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bank, err := bank.New(ctx, contract.NetworkLocalhost, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
+	bank, err := bank.New(ctx, cfg.Bank.Network, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
 	if err != nil {
 		return fmt.Errorf("connecting to bank: %w", err)
 	}

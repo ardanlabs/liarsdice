@@ -16,8 +16,9 @@ import (
 // Bank represents a bank that allows for the reconciling of a game and
 // information about account balances.
 type Bank struct {
-	client   *contract.Client
-	contract *bank.Bank
+	contractID string
+	client     *contract.Client
+	contract   *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
@@ -33,11 +34,17 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 	}
 
 	bank := Bank{
-		client:   client,
-		contract: contract,
+		contractID: contractID,
+		client:     client,
+		contract:   contract,
 	}
 
 	return &bank, nil
+}
+
+// ContractID returns contract id in use.
+func (b *Bank) ContractID() string {
+	return b.contractID
 }
 
 // Client returns the underlying contract client.

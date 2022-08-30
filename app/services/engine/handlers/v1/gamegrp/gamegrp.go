@@ -86,6 +86,21 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 }
 
+// Configuration returns the basic configuration the front end needs to use.
+func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	info := struct {
+		Network    string
+		ChainID    int
+		ContractID string
+	}{
+		Network:    h.Bank.Client().Network(),
+		ChainID:    h.Bank.Client().ChainID(),
+		ContractID: h.Bank.ContractID(),
+	}
+
+	return web.Respond(ctx, w, info, http.StatusOK)
+}
+
 // Status will return information about the game.
 func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
