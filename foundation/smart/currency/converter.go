@@ -50,7 +50,8 @@ func NewConverter(coinMarketCapKey string) (Converter, error) {
 	}, nil
 }
 
-// SetDefaultConverter can be used if the API is failing.
+// NewDefaultConverter can be used if the API is failing to set reasonable
+// defaults. Also good for tests.
 func NewDefaultConverter() Converter {
 	oneGWeiToUSD := big.NewFloat(0).SetPrec(1024).Mul(defaultOneETHToUSD, big.NewFloat(0.000000001))
 	oneUSDToGWei := big.NewFloat(0).SetPrec(1024).Mul(defaultOneUSDToETH, big.NewFloat(1000000000))
@@ -102,7 +103,7 @@ func (c Converter) USD2GWei(amountUSD *big.Float) *big.Float {
 	return big.NewFloat(0).SetPrec(1024).Mul(amountUSD, c.oneUSDToGWei)
 }
 
-// CalculateTranactionDetails performs calculations on the transaction.
+// CalculateTransactionDetails performs calculations on the transaction.
 func (c Converter) CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
 	return TransactionDetails{
 		Hash:              tx.Hash().Hex(),
@@ -158,7 +159,7 @@ func (c Converter) FmtTransaction(tx *types.Transaction) string {
 	return formatTranCostDetails(tcd)
 }
 
-// FmtTransaction produces a easy to read format of the specified transaction.
+// FmtTransactionReceipt produces a easy to read format of the specified receipt.
 func (c Converter) FmtTransactionReceipt(receipt *types.Receipt, gasPrice *big.Int) string {
 	rcd := c.CalculateReceiptDetails(receipt, gasPrice)
 

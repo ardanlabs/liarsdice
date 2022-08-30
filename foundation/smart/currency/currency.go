@@ -1,4 +1,4 @@
-// Pckage currency provides information on the price of ETH.
+// Package currency provides information on the price of ETH.
 package currency
 
 import (

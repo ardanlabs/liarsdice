@@ -1,12 +1,12 @@
-// contract client provides access to executing smart contracts.
+// Package contract provides support for executing smart contract APIs.
 package contract
 
 import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
-	"io/ioutil"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -92,7 +92,7 @@ func (c *Client) NewCallOpts(ctx context.Context) (*bind.CallOpts, error) {
 	return &call, nil
 }
 
-// NewTransaction constructs a new TransactOpts which is the collection of
+// NewTransactOpts constructs a new TransactOpts which is the collection of
 // authorization data required to create a valid Ethereum transaction.
 func (c *Client) NewTransactOpts(ctx context.Context, gasLimit uint64, valueGWei *big.Float) (*bind.TransactOpts, error) {
 	nonce, err := c.ethClient.PendingNonceAt(ctx, c.address)
@@ -137,7 +137,7 @@ func (c *Client) WaitMined(ctx context.Context, tx *types.Transaction) (*types.R
 	return receipt, nil
 }
 
-// Transaction returns a transaction value for the specified transaction hash.
+// TransactionByHash returns a transaction value for the specified transaction hash.
 func (c *Client) TransactionByHash(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
 	return c.ethClient.TransactionByHash(ctx, txHash)
 }
@@ -191,7 +191,7 @@ func (c *Client) extractError(ctx context.Context, tx *types.Transaction) error 
 
 // privateKeyByKeyFile opens a key file for the private key.
 func privateKeyByKeyFile(keyPath string, passPhrase string) (*ecdsa.PrivateKey, error) {
-	data, err := ioutil.ReadFile(keyPath)
+	data, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
