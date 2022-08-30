@@ -78,6 +78,7 @@ export default function Login() {
   }, [account])
   return (
     <div
+      className="container-fluid d-flex align-items-center justify-content-center px-0 flex-column"
       style={{
         display: 'flex',
         alignItems: 'center',

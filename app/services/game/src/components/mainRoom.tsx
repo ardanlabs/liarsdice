@@ -66,9 +66,6 @@ const MainRoom = (props: MainRoomProps) => {
 
   // First render effect to connect the websocket, clear the round timer and set Player dice if needed.
   useEffect(() => {
-    if (!account || !token() || !(state as appConfig).config) {
-      navigate('/')
-    }
     connect()
     wsStatus.current = 'attemptingConnection'
     setPlayerDice(
@@ -77,6 +74,12 @@ const MainRoom = (props: MainRoomProps) => {
     setTimer(parseInt(window.sessionStorage.getItem('round_timer') as string))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (!account || !token() || !(state as appConfig).config) {
+      navigate('/')
+    }
+  }, [account, state])
 
   return (
     <div className="container-fluid d-flex align-items-center justify-content-center px-0 flex-column">
