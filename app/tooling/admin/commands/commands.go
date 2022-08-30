@@ -16,7 +16,7 @@ import (
 )
 
 // Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) (dErr error) {
+func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) (err error) {
 	client := bank.Client()
 
 	startingBalance, err := client.CurrentBalance(ctx)
@@ -24,9 +24,9 @@ func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 		return err
 	}
 	defer func() {
-		endingBalance, err := client.CurrentBalance(ctx)
-		if err != nil {
-			dErr = err
+		endingBalance, dErr := client.CurrentBalance(ctx)
+		if dErr != nil {
+			err = dErr
 			return
 		}
 		fmt.Print(converter.FmtBalanceSheet(startingBalance, endingBalance))
