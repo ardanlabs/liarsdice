@@ -202,7 +202,7 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("newgame:" + address)
+	h.Evts.Send(fmt.Sprintf(`{"type":"newgame","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -224,7 +224,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("join:" + address)
+	h.Evts.Send(fmt.Sprintf(`{"type":"join","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -246,7 +246,7 @@ func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("start:" + address)
+	h.Evts.Send(fmt.Sprintf(`{"type":"start","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -274,7 +274,7 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1Web.NewRequestError(errors.New("address not found"), http.StatusBadRequest)
 	}
 
-	h.Evts.Send("rolldice:" + address)
+	h.Evts.Send(fmt.Sprintf(`{"type":"rolldice","address":%q}`, address))
 
 	resp := struct {
 		Dice []int `json:"dice"`
@@ -312,7 +312,7 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("claim")
+	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -334,12 +334,11 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	playersLeft, err := g.NextRound()
-	if err != nil {
+	if _, err := g.NextRound(); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send(fmt.Sprintf("callliar:%d", playersLeft))
+	h.Evts.Send(fmt.Sprintf(`{"type":"callliar","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -372,7 +371,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 	h.Log.Infow("reconcile results", "traceid", v.TraceID, "tx", h.Converter.CalculateTransactionDetails(tx), "receipt", h.Converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
-	h.Evts.Send("reconcile")
+	h.Evts.Send(fmt.Sprintf(`{"type":"reconcile","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -419,7 +418,7 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("nextturn")
+	h.Evts.Send(fmt.Sprintf(`{"type":"nextturn","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
@@ -448,7 +447,7 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send("outs:" + address)
+	h.Evts.Send(fmt.Sprintf(`{"type":"outs","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
