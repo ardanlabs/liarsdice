@@ -92,14 +92,16 @@ func makeBoard(s tcell.Screen, style tcell.Style) {
 	emitStr(s, 50, 6, style, "$12,000 USD")
 
 	emitStr(s, 3, 8, style, "My Dice: [3] [2] [6] [6] [1]")
-	emitStr(s, 35, 8, style, "Pot: $15 USD")
+	emitStr(s, 35, 8, style, "Ante:  $5 USD")
+	emitStr(s, 35, 9, style, "Pot : $15 USD")
 
 	emitStr(s, 3, 10, style, "My Bet: ___ ______")
 
-	emitStr(s, 65, 2, style, "<1-6>   : multiple times to set bet")
+	emitStr(s, 65, 2, style, "<1-6>   : set/increment bet")
 	emitStr(s, 65, 3, style, "<minus> : decrement bet")
-	emitStr(s, 65, 4, style, "<enter> : place bet")
-	emitStr(s, 65, 5, style, "<l>     : call liar")
+	emitStr(s, 65, 4, style, "<0>     : reset bet")
+	emitStr(s, 65, 5, style, "<enter> : place bet")
+	emitStr(s, 65, 6, style, "<l>     : call liar")
 
 	s.Show()
 }
