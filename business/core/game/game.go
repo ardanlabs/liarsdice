@@ -53,7 +53,7 @@ type Status struct {
 	Round         int
 	Cups          map[string]Cup
 	CupsOrder     []string
-	Claims        []Claim
+	Bets          []Bet
 }
 
 // Cup represents an individual cup being held by a player.
@@ -64,8 +64,8 @@ type Cup struct {
 	Dice     []int
 }
 
-// Claim represents a claim of dice by a player.
-type Claim struct {
+// Bet represents a bet of dice made by a player.
+type Bet struct {
 	Account string
 	Number  int
 	Suite   int
@@ -87,7 +87,7 @@ type Game struct {
 	anteUSD       float64
 	cups          map[string]Cup
 	cupsOrder     []string
-	claims        []Claim
+	bets          []Bet
 }
 
 // New creates a new game.
@@ -268,10 +268,10 @@ func (g *Game) RollDice(account string, manualRole ...int) error {
 	return nil
 }
 
-// Claim accepts a claim from an account, but validates the claim is valid first.
+// Bet accepts a claim from an account, but validates the claim is valid first.
 // If the claim is valid, it's added to the list of claims for the game. Then
 // the next player is determined and set.
-func (g *Game) Claim(account string, number int, suite int) error {
+func (g *Game) Bet(account string, number int, suite int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -287,29 +287,29 @@ func (g *Game) Claim(account string, number int, suite int) error {
 	// should be making this claim.
 	currentAccount := g.cupsOrder[g.currentCup]
 	if currentAccount != account {
-		return fmt.Errorf("account [%s] can't make a claim now", account)
+		return fmt.Errorf("account [%s] can't make a bet now", account)
 	}
 
-	// If this is not the first claim, we need to validate the claim is valid.
-	if len(g.claims) > 0 {
-		lastClaim := g.claims[len(g.claims)-1]
+	// If this is not the first bet, we need to validate the bet is valid.
+	if len(g.bets) > 0 {
+		lastClaim := g.bets[len(g.bets)-1]
 
 		if number < lastClaim.Number {
-			return fmt.Errorf("claim number must be greater or equal to the last claim number: number[%d] last[%d]", number, lastClaim.Number)
+			return fmt.Errorf("claim number must be greater or equal to the last bet number: number[%d] last[%d]", number, lastClaim.Number)
 		}
 
 		if number == lastClaim.Number && suite <= lastClaim.Suite {
-			return fmt.Errorf("claim suite must be greater than the last claim suite: suite[%d] last[%d]", suite, lastClaim.Suite)
+			return fmt.Errorf("claim suite must be greater than the last bet suite: suite[%d] last[%d]", suite, lastClaim.Suite)
 		}
 	}
 
-	// Add the claim to the list.
-	c := Claim{
+	// Add the bet to the list.
+	bet := Bet{
 		Account: account,
 		Number:  number,
 		Suite:   suite,
 	}
-	g.claims = append(g.claims, c)
+	g.bets = append(g.bets, bet)
 
 	// Move the turn to the next player.
 	g.nextTurn(account)
@@ -365,8 +365,8 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		return "", "", fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
-	if len(g.claims) == 0 {
-		return "", "", errors.New("no claims have been made yet")
+	if len(g.bets) == 0 {
+		return "", "", errors.New("no bets have been made yet")
 	}
 
 	// Validate that the account who is making the claim is the account that
@@ -387,17 +387,17 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		}
 	}
 
-	// Capture the last claim that was made.
-	lastClaim := g.claims[len(g.claims)-1]
+	// Capture the last bet that was made.
+	lastBet := g.bets[len(g.bets)-1]
 
 	// Identify the winner and the loser.
 	switch {
-	case dice[lastClaim.Suite] < lastClaim.Number:
+	case dice[lastBet.Suite] < lastBet.Number:
 
 		// The account who made the last claim lost.
-		cup := g.cups[lastClaim.Account]
+		cup := g.cups[lastBet.Account]
 		cup.Outs++
-		g.cups[lastClaim.Account] = cup
+		g.cups[lastBet.Account] = cup
 
 		g.lastOutAcct = cup.Account
 		g.lastWinAcct = account
@@ -410,7 +410,7 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		g.cups[account] = cup
 
 		g.lastOutAcct = account
-		g.lastWinAcct = lastClaim.Account
+		g.lastWinAcct = lastBet.Account
 	}
 
 	return g.lastWinAcct, g.lastOutAcct, nil
@@ -453,7 +453,7 @@ func (g *Game) NextRound() (int, error) {
 	}
 
 	// Reset the game state.
-	g.claims = []Claim{}
+	g.bets = []Bet{}
 	g.status = StatusPlaying
 	g.round++
 
@@ -519,8 +519,8 @@ func (g *Game) Info() Status {
 	cupsOrder := make([]string, len(g.cupsOrder))
 	copy(cupsOrder, g.cupsOrder)
 
-	claims := make([]Claim, len(g.claims))
-	copy(claims, g.claims)
+	bets := make([]Bet, len(g.bets))
+	copy(bets, g.bets)
 
 	return Status{
 		Status:        g.status,
@@ -531,6 +531,6 @@ func (g *Game) Info() Status {
 		Round:         g.round,
 		Cups:          cups,
 		CupsOrder:     cupsOrder,
-		Claims:        claims,
+		Bets:          bets,
 	}
 }

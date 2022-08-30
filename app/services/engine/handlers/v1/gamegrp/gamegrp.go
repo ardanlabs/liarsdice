@@ -115,9 +115,9 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		cups = append(cups, Cup{Account: cup.Account, Outs: cup.Outs})
 	}
 
-	var claims []Claim
-	for _, claim := range status.Claims {
-		claims = append(claims, Claim{Account: claim.Account, Number: claim.Number, Suite: claim.Suite})
+	var bets []Bet
+	for _, bet := range status.Bets {
+		bets = append(bets, Bet{Account: bet.Account, Number: bet.Number, Suite: bet.Suite})
 	}
 
 	resp := struct {
@@ -130,7 +130,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		Round         int      `json:"round"`
 		Cups          []Cup    `json:"cups"`
 		CupsOrder     []string `json:"player_order"`
-		Claims        []Claim  `json:"claims"`
+		Bets          []Bet    `json:"bets"`
 	}{
 		Status:        status.Status,
 		AnteUSD:       h.AnteUSD,
@@ -141,7 +141,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		Round:         status.Round,
 		Cups:          cups,
 		CupsOrder:     status.CupsOrder,
-		Claims:        claims,
+		Bets:          bets,
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
@@ -285,8 +285,8 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
-// Claim processes a claim made by a player in a game.
-func (h *Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// Bet processes a bet made by a player in a game.
+func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -308,7 +308,7 @@ func (h *Handlers) Claim(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return v1Web.NewRequestError(fmt.Errorf("converting suite: %s", err), http.StatusBadRequest)
 	}
 
-	if err := g.Claim(address, number, suite); err != nil {
+	if err := g.Bet(address, number, suite); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 

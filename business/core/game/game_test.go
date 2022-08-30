@@ -172,12 +172,12 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play.
 
-	if err := g.Claim(Player1, 2, 3); err != nil {
-		t.Fatalf("unexpected error making claim for player1: %s", err)
+	if err := g.Bet(Player1, 2, 3); err != nil {
+		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	if err := g.Claim(Player2, 3, 4); err != nil {
-		t.Fatalf("unexpected error making claim for player2: %s", err)
+	if err := g.Bet(Player2, 3, 4); err != nil {
+		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
 	// Player1 calls Player2 a liar.
@@ -238,9 +238,9 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play.
 
-	err = g.Claim(Player1, 2, 1)
+	err = g.Bet(Player1, 2, 1)
 	if err != nil {
-		t.Fatalf("unexpected error making claim for player1: %s", err)
+		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
 	winner, loser, err = g.CallLiar(Player2)
@@ -300,9 +300,9 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play.
 
-	err = g.Claim(Player2, 4, 3)
+	err = g.Bet(Player2, 4, 3)
 	if err != nil {
-		t.Fatalf("unexpected error making claim for player2: %s", err)
+		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
 	winner, loser, err = g.CallLiar(Player1)
@@ -450,14 +450,14 @@ func Test_InvalidClaim(t *testing.T) {
 	// =========================================================================
 	// Game Play.
 
-	if err := g.Claim(Player1, 3, 3); err != nil {
-		t.Fatalf("unexpected error making claim for player1: %s", err)
+	if err := g.Bet(Player1, 3, 3); err != nil {
+		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
 	g.NextTurn(Player1)
 
-	if err := g.Claim(Player2, 2, 6); err == nil {
-		t.Fatal("expecting error making an invalid claim")
+	if err := g.Bet(Player2, 2, 6); err == nil {
+		t.Fatal("expecting error making an invalid bet")
 	}
 }
 
@@ -530,9 +530,9 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	err = g.Claim(Player2, 1, 1)
+	err = g.Bet(Player2, 1, 1)
 	if err == nil {
-		t.Fatal("expecting error making claim with a player not in the game")
+		t.Fatal("expecting error making bet with a player not in the game")
 	}
 }
 

@@ -6,8 +6,8 @@ type Cup struct {
 	Outs    int    `json:"outs"`
 }
 
-// Claim represents the claim response.
-type Claim struct {
+// Bet represents the bet response.
+type Bet struct {
 	Account string `json:"account"`
 	Number  int    `json:"number"`
 	Suite   int    `json:"suite"`

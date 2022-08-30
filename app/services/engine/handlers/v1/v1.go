@@ -57,7 +57,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Log, cfg.Auth))
 
-	app.Handle(http.MethodGet, version, "/game/claim/:number/:suite", ggh.Claim, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/bet/:number/:suite", ggh.Bet, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Log, cfg.Auth))
 
 	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Log, cfg.Auth))
