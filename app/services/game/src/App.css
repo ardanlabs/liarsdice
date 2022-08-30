@@ -14,6 +14,7 @@
   justify-content: center;
   font-size: 19px;
   color: var(--ternary-color);
+  width: 100%;
 }
 
 .App-link {
@@ -24,6 +25,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

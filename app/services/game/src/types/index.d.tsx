@@ -34,3 +34,11 @@ export interface CupProps {
 export interface CupsProps {
   playerDice: dice
 }
+
+export interface appConfig {
+  config: {
+    ChainID: number
+    ContractID: string
+    Network: string
+  }
+}

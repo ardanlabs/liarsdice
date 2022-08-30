@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { Icons, toast } from 'react-toastify'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, MotionStyle } from 'framer-motion'
 
 import { useNotificationCenter } from 'react-toastify/addons/use-notification-center'
 import { Trigger } from './trigger'
@@ -51,29 +51,36 @@ const variants = {
   },
 }
 
-const NotificationCenter = () => {
+interface NotificationCenterProps {
+  trigger?: boolean
+  mainContainerStyle?: React.CSSProperties
+  asideContainerStyle?: MotionStyle
+}
+
+const NotificationCenter = (props: NotificationCenterProps) => {
+  const { trigger, asideContainerStyle } = props
+  let { mainContainerStyle } = props
   const { notifications, clear, remove, unreadCount } = useNotificationCenter()
   const [isOpen, setIsOpen] = useState(false)
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        top: '35px',
-        left: '-275px',
-        zIndex: '4',
-      }}
-    >
-      <Trigger onClick={() => setIsOpen(!isOpen)} count={unreadCount} />
-      <motion.aside
-        initial={false}
-        variants={variants.container}
-        animate={isOpen ? 'open' : 'closed'}
-        style={{
+  mainContainerStyle =
+    trigger && !mainContainerStyle
+      ? {
           width: 'min(60ch, 100ch)',
           borderRadius: '8px',
           overflow: 'hidden',
           border: '1px inset var(--secondary-color)',
-        }}
+        }
+      : mainContainerStyle
+
+  return (
+    <div style={mainContainerStyle}>
+      {trigger ? (
+        <Trigger onClick={() => setIsOpen(!isOpen)} count={unreadCount} />
+      ) : null}
+      <motion.aside
+        initial={!trigger}
+        variants={variants.container}
+        style={asideContainerStyle}
       >
         <header
           style={{
@@ -94,7 +101,7 @@ const NotificationCenter = () => {
             animate={isOpen ? 'open' : 'closed'}
             style={{
               background: '#fff',
-              height: '400px',
+              height: `${trigger ? '400px' : '100%'}`,
               overflowY: 'scroll',
               overflowX: 'hidden',
               color: '#000',

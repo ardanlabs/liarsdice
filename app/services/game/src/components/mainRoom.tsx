@@ -5,9 +5,16 @@ import { GameContext } from '../gameContext'
 import useGame from './hooks/useGame'
 import useWebSocket from './hooks/useWebSocket'
 import { useEthers } from '@usedapp/core'
+import { token } from '../utils/axiosConfig'
+import { useLocation, useNavigate } from 'react-router-dom'
+import AppHeader from './appHeader'
+import Footer from './footer'
+import { appConfig } from '../types/index.d'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
+  const navigate = useNavigate()
+  const { state } = useLocation()
   let { game } = useContext(GameContext),
     roundInterval: NodeJS.Timer
 
@@ -59,6 +66,9 @@ const MainRoom = (props: MainRoomProps) => {
 
   // First render effect to connect the websocket, clear the round timer and set Player dice if needed.
   useEffect(() => {
+    if (!account || !token() || !(state as appConfig).config) {
+      navigate('/')
+    }
     connect()
     wsStatus.current = 'attemptingConnection'
     setPlayerDice(
@@ -69,19 +79,23 @@ const MainRoom = (props: MainRoomProps) => {
   }, [])
 
   return (
-    <div
-      style={{
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'start',
-        alignItems: 'center',
-        maxWidth: '100vw',
-        marginTop: '15px',
-      }}
-      id="mainRoom"
-    >
-      <SideBar ante={game.ante_usd} gamePot={gamePot} />
-      <GameTable playerDice={playerDice} timer={timer} />
+    <div className="container-fluid d-flex align-items-center justify-content-center px-0 flex-column">
+      <AppHeader show={true} />
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'start',
+          alignItems: 'start',
+          maxWidth: '100vw',
+          marginTop: '15px',
+        }}
+        id="mainRoom"
+      >
+        <SideBar ante={game.ante_usd} gamePot={gamePot} />
+        <GameTable playerDice={playerDice} timer={timer} />
+      </div>
+      <Footer />
     </div>
   )
 }

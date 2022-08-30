@@ -69,6 +69,8 @@ const Cups: FC<CupsProps> = (CupsProps) => {
         width: '100%',
         alignItems: 'start',
         minHeight: '414px',
+        flexWrap: 'wrap',
+        scale: '0.8',
       }}
       id="cupsContainer"
     >

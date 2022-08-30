@@ -10,13 +10,11 @@
 import { shortenIfAddress } from '@usedapp/core'
 import { useContext, useRef } from 'react'
 import { toast } from 'react-toastify'
-import { useNotificationCenter } from 'react-toastify/addons/use-notification-center'
 import { GameContext } from '../../gameContext'
 import { apiUrl } from '../../utils/axiosConfig'
 import useGame from './useGame'
 
 const useWebSocket = (resetTimer: Function) => {
-  const { add } = useNotificationCenter()
   let wsStatus = useRef('closed')
   let { setGame } = useContext(GameContext)
   const { rolldice, updateStatus } = useGame()

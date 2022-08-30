@@ -1,17 +1,18 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
 import { useEthers } from '@usedapp/core'
-import MainRoom from './mainRoom'
 import { utils } from 'ethers'
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
 import getNowDate from '../utils/getNowDate'
+import { useNavigate } from 'react-router-dom'
+import { getAppConfig } from '..'
 import { token } from '../utils/axiosConfig'
 
 export default function Login() {
-  // const { notification } = useNotificationCenter()
+  const navigate = useNavigate()
   const { account, library, activateBrowserWallet } = useEthers()
   function handleConnectAccount() {
     activateBrowserWallet()
@@ -46,25 +47,36 @@ export default function Login() {
             'token',
             `bearer ${response.data.token}`,
           )
-          window.location.reload()
+          getAppConfig.then((response) => {
+            navigate('/mainRoom', { state: { config: response } })
+          })
         })
         .catch((error: AxiosError) => {
           let errorMessage = (error as any).response.data.error.replace(
             / \[.+\]/gm,
             '',
           )
-          // <div style={{ textAlign: 'start' }}>
-          //   {capitalize(errorMessage)}
-          // </div>
+
+          toast(
+            <div style={{ textAlign: 'start' }}>
+              {capitalize(errorMessage)}
+            </div>,
+          )
+
           console.group()
           console.error('Error:', (error as any).response.data.error)
           console.groupEnd()
         })
     })
   }
-  return account && token() ? (
-    <MainRoom />
-  ) : (
+  useEffect(() => {
+    if (token() && account) {
+      getAppConfig.then((response) => {
+        navigate('/mainRoom', { state: { config: response } })
+      })
+    }
+  }, [account])
+  return (
     <div
       style={{
         display: 'flex',

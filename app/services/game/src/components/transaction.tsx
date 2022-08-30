@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import axios, { AxiosError } from 'axios'
 import Button from './button'
 // Contract and contract Abi
-import { getContractAddress } from '../contracts'
 import contractAbi from '../abi/Contract.json'
 // Contract utils from DApp library
 import { useContractFunction, useEthers } from '@usedapp/core'
@@ -11,6 +10,8 @@ import { utils } from 'ethers'
 // Another utils
 import { toast } from 'react-toastify'
 import { apiUrl } from '../utils/axiosConfig'
+import { useLocation } from 'react-router-dom'
+import { appConfig } from '../types/index.d'
 
 type transactionProps = {
   buttonText: string
@@ -26,14 +27,15 @@ interface usd2weiResponse {
 }
 
 const Transaction = (props: transactionProps) => {
+  const { state } = useLocation()
   const { buttonText, action, updateBalance } = props
   // Sets local state
   const [transactionAmount, setTransactionAmount] = useState(0)
   // Creates the interface with the contract aby
   const contractInterface = new utils.Interface(contractAbi)
-  const contractAddress = useMemo(() => getContractAddress(), [])
-  // Creates a new contract object
+  const contractAddress = (state as appConfig).config.ContractID
   const contract = new Contract(contractAddress, contractInterface)
+  // Creates a new contract object
   // Extracts the functions from the contract
   const { send } = useContractFunction(contract, action, {
     gasLimitBufferPercentage: 100,

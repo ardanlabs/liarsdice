@@ -6,6 +6,7 @@ import Counter from './counter'
 import Cups from './cups'
 import CurrentClaim from './currentClaim'
 import LiarsCall from './liarsCall'
+import NotificationCenter from './notificationCenter/notificationCenter'
 
 interface GameTableProps {
   timer: number
@@ -16,39 +17,63 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
   const { timer, playerDice } = GameTableProps
   const { game } = useContext(GameContext)
   const { account } = useEthers()
+  const notificationCenterWidth = '340px'
 
   return (
     <div
       style={{
         display: 'flex',
-        width: '100%',
-        justifyContent: 'start',
-        alignItems: 'center',
-        flexDirection: 'column',
+        flexGrow: '1',
       }}
     >
-      <Counter
-        show={
-          (game.player_order as string[])[game.current_cup] === account &&
-          game.status === 'playing'
-        }
-        timer={timer}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'start',
+          alignItems: 'center',
+          flexDirection: 'column',
+          width: `calc(100% - ${notificationCenterWidth})`,
+        }}
+      >
+        <Counter
+          show={
+            (game.player_order as string[])[game.current_cup] === account &&
+            game.status === 'playing'
+          }
+          timer={timer}
+        />
+        <Cups playerDice={playerDice} />
+        {game.status === 'playing' ? (
+          <>
+            <LiarsCall />
+            <CurrentClaim
+              currentClaim={
+                game.claims[game.claims.length - 1]
+                  ? game.claims[game.claims.length - 1]
+                  : { account: '', number: 0, suite: 1 }
+              }
+            />
+          </>
+        ) : (
+          ''
+        )}
+      </div>
+      <NotificationCenter
+        trigger={false}
+        asideContainerStyle={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        mainContainerStyle={{
+          border: '1px inset var(--secondary-color)',
+          height: 'calc(100% - 165px)',
+          right: '0px',
+          position: 'fixed',
+          top: '95px',
+          width: `${notificationCenterWidth}`,
+        }}
       />
-      <Cups playerDice={playerDice} />
-      {game.status === 'playing' ? (
-        <>
-          <LiarsCall />
-          <CurrentClaim
-            currentClaim={
-              game.claims[game.claims.length - 1]
-                ? game.claims[game.claims.length - 1]
-                : { account: '', number: 0, suite: 1 }
-            }
-          />
-        </>
-      ) : (
-        ''
-      )}
     </div>
   )
 }

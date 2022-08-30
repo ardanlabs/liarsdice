@@ -2,11 +2,14 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import App from './App'
+import { BrowserRouter } from 'react-router-dom'
 import reportWebVitals from './reportWebVitals'
-import { Localhost } from '@usedapp/core'
 // Connect dApp
+import { Localhost } from '@usedapp/core'
 import { getDefaultProvider } from 'ethers'
 import { Mainnet, DAppProvider, Config } from '@usedapp/core'
+import axios, { AxiosResponse } from 'axios'
+import { apiUrl } from './utils/axiosConfig'
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 const mainnetConfig: Config = {
@@ -15,6 +18,20 @@ const mainnetConfig: Config = {
     [Mainnet.chainId]: getDefaultProvider('mainnet'),
   },
 }
+
+let providerConfig: Config = {}
+export const getAppConfig = axios
+  .get(`http://${apiUrl}/config`)
+  .then((response: AxiosResponse) => {
+    const data = response.data
+    providerConfig = {
+      readOnlyChainId: data.ChainID,
+      readOnlyUrls: {
+        [data.ChainID]: data.Network,
+      },
+    }
+    return data
+  })
 
 const ardansLocalHostConfig: Config = {
   readOnlyChainId: Localhost.chainId,
@@ -26,14 +43,17 @@ const ardansLocalHostConfig: Config = {
 const chainsConfig = {
   Ardans: ardansLocalHostConfig,
   EthMainnet: mainnetConfig,
+  default: providerConfig,
 }
 
 // TODO: ADD dinamic .env support
 root.render(
   <React.StrictMode>
-    <DAppProvider config={chainsConfig['Ardans']}>
-      <App />
-    </DAppProvider>
+    <BrowserRouter>
+      <DAppProvider config={chainsConfig['default']}>
+        <App />
+      </DAppProvider>
+    </BrowserRouter>
   </React.StrictMode>,
 )
 
