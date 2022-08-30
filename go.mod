@@ -14,6 +14,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
+	github.com/mattn/go-runewidth v0.0.13
 	go.uber.org/automaxprocs v1.5.1
 	go.uber.org/zap v1.23.0
 )
@@ -28,7 +29,6 @@ require (
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
