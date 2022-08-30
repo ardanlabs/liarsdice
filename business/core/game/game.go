@@ -268,8 +268,8 @@ func (g *Game) RollDice(account string, manualRole ...int) error {
 	return nil
 }
 
-// Bet accepts a claim from an account, but validates the claim is valid first.
-// If the claim is valid, it's added to the list of claims for the game. Then
+// Bet accepts a bet from an account, but validates the bet is valid first.
+// If the bet is valid, it's added to the list of bets for the game. Then
 // the next player is determined and set.
 func (g *Game) Bet(account string, number int, suite int) error {
 	g.mu.Lock()
@@ -283,8 +283,8 @@ func (g *Game) Bet(account string, number int, suite int) error {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
-	// Validate that the account who is making the claim is the account that
-	// should be making this claim.
+	// Validate that the account who is making the bet is the account that
+	// should be making this bet.
 	currentAccount := g.cupsOrder[g.currentCup]
 	if currentAccount != account {
 		return fmt.Errorf("account [%s] can't make a bet now", account)
@@ -292,14 +292,14 @@ func (g *Game) Bet(account string, number int, suite int) error {
 
 	// If this is not the first bet, we need to validate the bet is valid.
 	if len(g.bets) > 0 {
-		lastClaim := g.bets[len(g.bets)-1]
+		lastBet := g.bets[len(g.bets)-1]
 
-		if number < lastClaim.Number {
-			return fmt.Errorf("claim number must be greater or equal to the last bet number: number[%d] last[%d]", number, lastClaim.Number)
+		if number < lastBet.Number {
+			return fmt.Errorf("bet number must be greater or equal to the last bet number: number[%d] last[%d]", number, lastBet.Number)
 		}
 
-		if number == lastClaim.Number && suite <= lastClaim.Suite {
-			return fmt.Errorf("claim suite must be greater than the last bet suite: suite[%d] last[%d]", suite, lastClaim.Suite)
+		if number == lastBet.Number && suite <= lastBet.Suite {
+			return fmt.Errorf("bet suite must be greater than the last bet suite: suite[%d] last[%d]", suite, lastBet.Suite)
 		}
 	}
 
@@ -344,14 +344,14 @@ func (g *Game) nextTurn(account string) {
 		}
 
 		// If the account information for this index is not empty, this
-		// player is still in the game and the next player to make a claim.
+		// player is still in the game and the next player to make a bet.
 		if g.cupsOrder[g.currentCup] != "" {
 			break
 		}
 	}
 }
 
-// CallLiar checks the last claim that was made and determines the winner and
+// CallLiar checks the last bet that was made and determines the winner and
 // loser of the current round.
 func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, err error) {
 	g.mu.Lock()
@@ -369,14 +369,14 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 		return "", "", errors.New("no bets have been made yet")
 	}
 
-	// Validate that the account who is making the claim is the account that
-	// should be making this claim.
+	// Validate that the account who is making the bet is the account that
+	// should be making this bet.
 	currentAccount := g.cupsOrder[g.currentCup]
 	if currentAccount != account {
 		return "", "", fmt.Errorf("account [%s] can't call liar now", account)
 	}
 
-	// This call ends the round, not allowing any more claims to be made.
+	// This call ends the round, not allowing any more bets to be made.
 	g.status = StatusRoundOver
 
 	// Hold the sum of all the dice values.
@@ -394,7 +394,7 @@ func (g *Game) CallLiar(account string) (winningAcct string, losingAcct string, 
 	switch {
 	case dice[lastBet.Suite] < lastBet.Number:
 
-		// The account who made the last claim lost.
+		// The account who made the last bet lost.
 		cup := g.cups[lastBet.Account]
 		cup.Outs++
 		g.cups[lastBet.Account] = cup

@@ -393,7 +393,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	}
 }
 
-func Test_InvalidClaim(t *testing.T) {
+func Test_InvalidBet(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
