@@ -24,28 +24,19 @@ dev.setup:
 	brew list geth || brew install geth
 
 # ==============================================================================
-# Game Engine
+# Game Engine and UI
 
 game-up:
 	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
-game-cli:
+game-tui:
 	go run app/cli/liars/main.go
-
-# ==============================================================================
-# Browser Application
-# This will start the React Frontend
-# You need to first run react-install to install all dependecies, and then once that is done run react-start
-# Your default localhost will open at http://localhost:3001
 
 react-install:
 	npm install --prefix app/services/game/
 
-react-start:
+game-gui: react-install
 	PORT=3001 npm start --prefix app/services/game/
-
-react-test:
-	npm test --prefix app/services/game/
 
 # ==============================================================================
 # These commands build and deploy basic smart contract.
@@ -102,9 +93,12 @@ geth-deposit:
 # ==============================================================================
 # Running tests within the local computer
 
-test:
+test-engine:
 	go test ./... -count=1
 	staticcheck -checks=all ./...
+
+test-ui:
+	npm test --prefix app/services/game/
 
 # ==============================================================================
 # Modules support
