@@ -10,10 +10,12 @@ import (
 )
 
 const usage = `Usage:
-	verify -t 0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3
-	verify -b 0x8e113078adf6888b7ba84967f299f29aece24c55 -c 0xE7811C584E23419e1952fa3158DEED345901bd0e
+	admin -d 
+	admin -t 0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3
+	admin -b 0x8e113078adf6888b7ba84967f299f29aece24c55 -c 0xE7811C584E23419e1952fa3158DEED345901bd0e
 
 Options:
+	-d, --deploy     Deploy the smart contract.
 	-t, --tx         Show transaction details for the specified transaction hash.
 	-b, --balance    Show the smart contract balance for the specified account.
 	-w, --wallet     Show the wallet balance for the keyfile account.
@@ -89,6 +91,8 @@ func parseCmdline(v *Values) Flags {
 	flag.StringVar(&v.CoinMarketCapKey, "m", v.CoinMarketCapKey, "key for the coin market cap api")
 	flag.StringVar(&v.CoinMarketCapKey, "market", v.CoinMarketCapKey, "key for the coin market cap api")
 
+	flag.Bool("d", false, "deploy the smart contract")
+	flag.Bool("deploy", false, "deploy the smart contract")
 	flag.Bool("w", false, "show the wallet balance")
 	flag.Bool("wallet", false, "show the wallet balance")
 

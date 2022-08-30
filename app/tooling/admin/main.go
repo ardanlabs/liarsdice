@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/app/tooling/verify/commands"
+	"github.com/ardanlabs/liarsdice/app/tooling/admin/commands"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 )
@@ -63,6 +63,9 @@ func run() error {
 	}
 	if _, exists := f["w"]; exists {
 		return commands.Wallet(ctx, converter, bank, v)
+	}
+	if _, exists := f["d"]; exists {
+		return commands.Deploy(ctx, converter, bank, v)
 	}
 
 	return errors.New("no functional command provided")

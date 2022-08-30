@@ -1,9 +1,10 @@
 app/services/game/node_modules
 zarf/ethereum/geth
+zarf/ethereum/geth.ipc
 zarf/contract
 source.env
 history
-verify
+/admin
 
 # Binaries for programs and plugins
 *.exe

@@ -5,11 +5,74 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 
+	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 )
+
+// Deploy will deploy the smart contract to the configured network.
+func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) (dErr error) {
+	client := bank.Client()
+
+	startingBalance, err := client.CurrentBalance(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		endingBalance, err := client.CurrentBalance(ctx)
+		if err != nil {
+			dErr = err
+			return
+		}
+		fmt.Print(converter.FmtBalanceSheet(startingBalance, endingBalance))
+	}()
+
+	// =========================================================================
+
+	const gasLimit = 3000000
+	const valueGwei = 0.0
+	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
+	if err != nil {
+		return err
+	}
+
+	// =========================================================================
+
+	address, tx, _, err := scbank.DeployBank(tranOpts, client.ContractBackend())
+	if err != nil {
+		return err
+	}
+	fmt.Print(converter.FmtTransaction(tx))
+
+	fmt.Println("\nContract Details")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("contract id     :", address.Hex())
+	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
+
+	// =========================================================================
+
+	clientWait, err := contract.NewClient(ctx, v.Network, v.KeyFile, v.PassPhrase)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("\nWaiting Logs")
+	fmt.Println("----------------------------------------------------")
+	log.Root().SetHandler(log.StdoutHandler)
+	receipt, err := clientWait.WaitMined(ctx, tx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
+
+	return nil
+}
 
 // Wallet returns the current wallet balance
 func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {

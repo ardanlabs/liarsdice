@@ -26,17 +26,11 @@ dev.setup:
 # ==============================================================================
 # Game Engine
 
-game-run:
+game-up:
 	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
 game-cli:
 	go run app/cli/liars/main.go
-
-# ==============================================================================
-# Verify Tooling
-
-verify-build:
-	go build -o verify app/tooling/verify/main.go
 
 # ==============================================================================
 # Browser Application
@@ -65,7 +59,13 @@ contract-build:
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 contract-deploy:
-	go run app/tooling/deploy/main.go
+	go run app/tooling/admin/main.go -d
+
+# ==============================================================================
+# Admin Tooling
+
+admin-build:
+	go build -o admin app/tooling/admin/main.go
 
 # ==============================================================================
 # These commands start the Ethereum node and provide examples of attaching
