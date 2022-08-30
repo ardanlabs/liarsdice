@@ -97,7 +97,7 @@ test-engine:
 	go test ./... -count=1
 	staticcheck -checks=all ./...
 
-test-ui:
+test-gui:
 	npm test --prefix app/services/game/
 
 # ==============================================================================
