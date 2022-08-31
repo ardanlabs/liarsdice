@@ -11,7 +11,8 @@ func formatTranCostDetails(tcd TransactionDetails) string {
 
 	fmt.Fprintf(&b, "\nTransaction Details\n")
 	fmt.Fprintf(&b, "----------------------------------------------------\n")
-	fmt.Fprintf(&b, "sent            : %v\n", tcd.Hash)
+	fmt.Fprintf(&b, "hash            : %v\n", tcd.Hash)
+	fmt.Fprintf(&b, "nonce           : %v\n", tcd.Nonce)
 	fmt.Fprintf(&b, "gas limit       : %v\n", tcd.GasLimit)
 	fmt.Fprintf(&b, "gas offer price : %v GWei\n", tcd.GasOfferPriceGWei)
 	fmt.Fprintf(&b, "value           : %v GWei\n", tcd.Value)
