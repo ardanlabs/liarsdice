@@ -33,12 +33,26 @@ const PlayersList = (props: PlayersListProps) => {
   return (
     <div
       className="list_of__players"
-      style={{ height: '50%', flexGrow: '1', textAlign: 'start' }}
+      style={{
+        height: '50%',
+        flexGrow: '1',
+        textAlign: 'start',
+        flexDirection: 'column',
+        display: 'flex',
+        fontWeight: '500',
+      }}
     >
       <span>
         {title} ({(cups as user[]).length ? (cups as user[]).length : 0})
       </span>
-      <ul>{playersElements}</ul>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: '0',
+        }}
+      >
+        {playersElements}
+      </ul>
     </div>
   )
 }

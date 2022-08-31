@@ -52,6 +52,7 @@ const Transaction = (props: transactionProps) => {
       .then((response: usd2weiResponse) => {
         send({ value: `${response.data.wei}` })
           .then((response) => {
+            console.log(response)
             if (response === undefined) {
               toast.error(`${action} failed`)
             } else {

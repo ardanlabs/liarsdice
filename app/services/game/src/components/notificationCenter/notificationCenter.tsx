@@ -89,7 +89,7 @@ const NotificationCenter = (props: NotificationCenterProps) => {
             margin: '0',
             padding: '5px 1rem',
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             alignItems: 'center',
           }}
         >
@@ -152,6 +152,7 @@ const NotificationCenter = (props: NotificationCenterProps) => {
                         padding: '0.8rem',
                         background: 'rgba(0, 0, 0, 0.1)',
                         borderRadius: '8px',
+                        overflowWrap: 'anywhere',
                       }}
                     >
                       <div style={{ width: '32px' }}>
@@ -190,13 +191,19 @@ const NotificationCenter = (props: NotificationCenterProps) => {
           style={{
             background: 'var(--primary-color)',
             color: 'var(--modals)',
-            padding: '1rem',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <Button style={{ color: 'var(--modals)' }} clickHandler={clear}>
+          <Button
+            style={{
+              color: 'var(--modals)',
+              fontSize: '20px',
+              fontWeight: '500',
+            }}
+            clickHandler={clear}
+          >
             Clear All
           </Button>
         </footer>

@@ -18,7 +18,7 @@ const Button: FC<ButtonProps> = (ButtonProps) => {
     <button
       title={tooltip}
       type="button"
-      style={style}
+      style={{ cursor: 'pointer', ...style }}
       id={id}
       className={classes}
       disabled={disabled}

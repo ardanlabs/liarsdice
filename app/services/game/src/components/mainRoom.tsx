@@ -1,5 +1,4 @@
 import React, { useEffect, useContext, useState } from 'react'
-import SideBar from './sidebar'
 import GameTable from './gameTable'
 import { GameContext } from '../gameContext'
 import useGame from './hooks/useGame'
@@ -26,7 +25,7 @@ const MainRoom = (props: MainRoomProps) => {
       : timeoutTime,
     [timer, setTimer] = useState(sessionTimer),
     { account } = useEthers(),
-    { gamePot, playerDice, setPlayerDice, addOut } = useGame()
+    { playerDice, setPlayerDice, addOut } = useGame()
 
   const resetTimer = () => {
     window.sessionStorage.removeItem('round_timer')
@@ -82,7 +81,10 @@ const MainRoom = (props: MainRoomProps) => {
   }, [account, state])
 
   return (
-    <div className="container-fluid d-flex align-items-center justify-content-center px-0 flex-column">
+    <div
+      className="container-fluid d-flex align-items-center justify-content-start px-0 flex-column"
+      style={{ height: '100%', maxHeight: '100vh' }}
+    >
       <AppHeader show={true} />
       <div
         style={{
@@ -92,10 +94,10 @@ const MainRoom = (props: MainRoomProps) => {
           alignItems: 'start',
           maxWidth: '100vw',
           marginTop: '15px',
+          height: 'calc(100vh - 181px)',
         }}
         id="mainRoom"
       >
-        <SideBar ante={game.ante_usd} gamePot={gamePot} />
         <GameTable playerDice={playerDice} timer={timer} />
       </div>
       <Footer />

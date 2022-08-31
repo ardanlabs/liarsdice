@@ -29,6 +29,9 @@ export const getAppConfig = axios
       readOnlyUrls: {
         [data.ChainID]: data.Network,
       },
+      multicallAddresses: {
+        [data.ChainID]: data.Network,
+      },
     }
     return data
   })
@@ -46,7 +49,6 @@ const chainsConfig = {
   default: providerConfig,
 }
 
-// TODO: ADD dinamic .env support
 root.render(
   <React.StrictMode>
     <BrowserRouter>

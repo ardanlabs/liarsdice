@@ -83,19 +83,30 @@ code {
 }
 
 /***** SideBar *****/
+#side-bar {
+  -webkit-box-shadow: -20px 0px 22px -13px rgba(0, 0, 0, 0.50);
+  -moz-box-shadow: -20px 0px 22px -13px rgba(0, 0, 0, 0.50);
+  box-shadow: -20px 0px 22px -13px rgba(0, 0, 0, 0.50);
+}
+
 /* Details */
 .details div {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
   color: var(--borders);
   font-weight: 500;
 }
 
-.details div strong {
+.details {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.details strong {
   color: var(--primary-color);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 /* Players */
@@ -118,14 +129,12 @@ code {
 
 .join__buton {
   border-radius: 0;
-  border-bottom-right-radius: 8px;
   background-color: var(--primary-color);
   width: 100%;
   color: var(--ternary-color);
   font-size: 32px;
   font-weight: 600;
   text-transform: uppercase;
-  aspect-ratio: 4 / 1;
 }
 
 /***** BoardGame *****/

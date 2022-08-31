@@ -6,8 +6,9 @@ import Counter from './counter'
 import Cups from './cups'
 import CurrentBet from './currentBet'
 import Dice from './dice'
+import useGame from './hooks/useGame'
 import LiarsCall from './liarsCall'
-import NotificationCenter from './notificationCenter/notificationCenter'
+import SideBar from './sidebar'
 
 interface GameTableProps {
   timer: number
@@ -18,6 +19,7 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
   const { timer, playerDice } = GameTableProps
   const { game } = useContext(GameContext)
   const { account } = useEthers()
+  const { gamePot } = useGame()
   const notificationCenterWidth = '340px'
 
   return (
@@ -66,21 +68,10 @@ const GameTable: FC<GameTableProps> = (GameTableProps) => {
           ''
         )}
       </div>
-      <NotificationCenter
-        trigger={false}
-        asideContainerStyle={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        mainContainerStyle={{
-          border: '1px inset var(--secondary-color)',
-          height: 'calc(100% - 165px)',
-          right: '0px',
-          position: 'fixed',
-          top: '95px',
-          width: `${notificationCenterWidth}`,
-        }}
+      <SideBar
+        ante={game.ante_usd}
+        gamePot={gamePot}
+        notificationCenterWidth={notificationCenterWidth}
       />
     </div>
   )
