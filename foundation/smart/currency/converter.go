@@ -107,6 +107,7 @@ func (c Converter) USD2GWei(amountUSD *big.Float) *big.Float {
 func (c Converter) CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
 	return TransactionDetails{
 		Hash:              tx.Hash().Hex(),
+		Nonce:             tx.Nonce(),
 		GasLimit:          tx.Gas(),
 		GasOfferPriceGWei: Wei2GWei(tx.GasPrice()).String(),
 		Value:             Wei2GWei(tx.Value()).String(),

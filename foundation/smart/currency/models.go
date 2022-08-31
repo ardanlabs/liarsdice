@@ -50,6 +50,7 @@ type ResponseUSD2ETH struct {
 // TransactionDetails provides details about a transaction and it's cost.
 type TransactionDetails struct {
 	Hash              string
+	Nonce             uint64
 	GasLimit          uint64
 	GasOfferPriceGWei string
 	Value             string
