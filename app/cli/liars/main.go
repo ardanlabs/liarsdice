@@ -41,24 +41,13 @@ func run() error {
 				case tcell.KeyEscape:
 					close(quit)
 					return
+
 				case tcell.KeyEnter:
 					enter(s, style)
-				case tcell.KeyCtrlL:
-					s.Sync()
+
 				case tcell.KeyRune:
 					r := ev.Rune()
-					switch {
-					case r == rune('d'):
-						enterDeposit(s, style)
-					case r == rune('b'):
-						enterBet(s, style)
-					case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
-						key(s, style, ev.Rune())
-					case r == rune('-'):
-						minus(s, style)
-					default:
-						s.Beep()
-					}
+					processKeyEvent(s, style, r)
 				}
 			}
 		}
@@ -69,23 +58,70 @@ func run() error {
 	return nil
 }
 
-var bets []rune
-var deposit []rune
-var cursor string
+// processKeyEvent is the first line of processing for any key that is
+// pressed during the game.
+func processKeyEvent(s tcell.Screen, style tcell.Style, r rune) {
+	switch {
+	case r == rune('d'):
+		depositMode(s, style)
 
-func enter(s tcell.Screen, style tcell.Style) {
-	switch cursor {
-	case "bet":
-		enterBet(s, style)
+	case r == rune('b'):
+		betMode(s, style)
 
-	case "deposit":
-		enterDeposit(s, style)
+	case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
+		value(s, style, r)
+
+	case r == rune('-'):
+		minus(s, style)
 
 	default:
 		s.Beep()
 	}
 }
 
+// =============================================================================
+
+var bets []rune
+var deposit []rune
+var cursor string
+
+var depositRowX = 11
+var depositRowY = 19
+var betRowX = 13
+var betRowY = 10
+var boardWidth = 63
+var boardHeight = 18
+
+var messageHeight = 12
+var columnHeight = 2
+var playersX = 3
+var betX = 30
+var balX = 50
+var myDiceX = 12
+var myDiceY = 8
+var anteX = 40
+var anteY = 8
+var potX = 40
+var potY = 9
+var helpX = 65
+
+// =============================================================================
+
+// enter is called to submit a bet or deposit.
+func enter(s tcell.Screen, style tcell.Style) {
+	switch cursor {
+	case "bet":
+		betMode(s, style)
+
+	case "deposit":
+		depositMode(s, style)
+
+	default:
+		s.Beep()
+	}
+}
+
+// minus is called to remove the latest value from the bet or deposit.
 func minus(s tcell.Screen, style tcell.Style) {
 	switch cursor {
 	case "bet":
@@ -99,7 +135,8 @@ func minus(s tcell.Screen, style tcell.Style) {
 	}
 }
 
-func key(s tcell.Screen, style tcell.Style, r rune) {
+// value processes the keystroke based on the mode.
+func value(s tcell.Screen, style tcell.Style, r rune) {
 	switch cursor {
 	case "bet":
 		if r >= rune('1') && r <= rune('6') {
@@ -116,141 +153,152 @@ func key(s tcell.Screen, style tcell.Style, r rune) {
 	}
 }
 
-func enterDeposit(s tcell.Screen, style tcell.Style) {
+// =============================================================================
+
+// depositMode puts the UI into the mode to accept deposit information and
+// process a deposit.
+func depositMode(s tcell.Screen, style tcell.Style) {
 	cursor = "deposit"
 	deposit = []rune{}
 
-	s.ShowCursor(12, 19)
-	s.SetContent(12, 19, ' ', nil, style)
+	s.ShowCursor(depositRowX+1, depositRowY)
+	s.SetContent(depositRowX, depositRowY, ' ', nil, style)
 	s.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
 
-	emitStr(s, 12, 19, style, "                             ")
-	emitStr(s, 13, 10, style, "                             ")
+	emitStr(s, depositRowX, depositRowY, style, "                             ")
+	emitStr(s, betRowX, betRowY, style, "                             ")
 }
 
+// addDeposit takes the value selected on the keyboard and adds it to the
+// deposit slice and screen.
 func addDeposit(s tcell.Screen, style tcell.Style, r rune) {
 	if cursor != "deposit" {
 		s.Beep()
 		return
 	}
 
-	x := 11
+	x := depositRowX
 	deposit = append(deposit, r)
 	x += len(deposit)
 
-	s.ShowCursor(x+1, 19)
-	emitStr(s, x, 19, style, string(r))
+	s.ShowCursor(x+1, depositRowY)
+	emitStr(s, x, depositRowY, style, string(r))
 }
 
+// subDeposit removes a value from the deposit slice and screen.
 func subDeposit(s tcell.Screen, style tcell.Style) {
 	if cursor != "deposit" || len(deposit) == 0 {
 		s.Beep()
 		return
 	}
 
-	x := 11
+	x := depositRowX
 	x += len(deposit)
 	deposit = deposit[:len(deposit)-1]
 
-	s.ShowCursor(x, 19)
-	emitStr(s, x, 19, style, " ")
+	s.ShowCursor(x, depositRowY)
+	emitStr(s, x, depositRowY, style, " ")
 }
 
-func enterBet(s tcell.Screen, style tcell.Style) {
+// =============================================================================
+
+// betMode puts the UI into the mode to accept bet information and
+// process a bet.
+func betMode(s tcell.Screen, style tcell.Style) {
 	cursor = "bet"
 	bets = []rune{}
 
-	s.ShowCursor(13, 10)
-	s.SetContent(13, 10, ' ', nil, style)
+	s.ShowCursor(betRowX+1, betRowY)
+	s.SetContent(betRowX, betRowY, ' ', nil, style)
 	s.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
 
-	emitStr(s, 12, 19, style, "                             ")
-	emitStr(s, 13, 10, style, "                             ")
+	emitStr(s, depositRowX, depositRowY, style, "                             ")
+	emitStr(s, betRowX, betRowY, style, "                             ")
 }
 
-func subBet(s tcell.Screen, style tcell.Style) {
-	if cursor != "bet" || len(bets) == 0 {
-		s.Beep()
-		return
-	}
-
-	x := 12
-	x += len(bets)
-	bets = bets[:len(bets)-1]
-
-	s.ShowCursor(x, 10)
-	emitStr(s, x, 10, style, " ")
-}
-
+// addBet takes the value selected on the keyboard and adds it to the
+// bet slice and screen.
 func addBet(s tcell.Screen, style tcell.Style, r rune) {
 	if cursor != "bet" || (len(bets) > 0 && bets[0] != r) {
 		s.Beep()
 		return
 	}
 
-	x := 12
+	x := betRowX
 	bets = append(bets, r)
 	x += len(bets)
 
-	s.ShowCursor(x+1, 10)
-	emitStr(s, x, 10, style, string(r))
+	s.ShowCursor(x+1, betRowY)
+	emitStr(s, x, betRowY, style, string(r))
 }
 
+// subBet removes a value from the bet slice and screen.
+func subBet(s tcell.Screen, style tcell.Style) {
+	if cursor != "bet" || len(bets) == 0 {
+		s.Beep()
+		return
+	}
+
+	x := betRowX
+	x += len(bets)
+	bets = bets[:len(bets)-1]
+
+	s.ShowCursor(x, betRowY)
+	emitStr(s, x, betRowY, style, " ")
+}
+
+// =============================================================================
+
+// makeBoard generates the initial game board.
 func makeBoard(s tcell.Screen, style tcell.Style) {
 	s.Clear()
 
-	for i := 1; i < 63; i++ {
+	for i := 1; i < boardWidth; i++ {
 		s.SetContent(i, 1, '=', nil, style)
 	}
-	for i := 1; i < 63; i++ {
-		s.SetContent(i, 18, '=', nil, style)
+	for i := 1; i < boardWidth; i++ {
+		s.SetContent(i, boardHeight, '=', nil, style)
 	}
-	for i := 2; i < 18; i++ {
+	for i := 2; i < boardHeight; i++ {
 		s.SetContent(1, i, '|', nil, style)
 	}
-	for i := 2; i < 18; i++ {
-		s.SetContent(62, i, '|', nil, style)
+	for i := 2; i < boardHeight; i++ {
+		s.SetContent(boardWidth-1, i, '|', nil, style)
 	}
 
-	for i := 1; i < 63; i++ {
-		s.SetContent(i, 12, '=', nil, style)
+	for i := 1; i < boardWidth; i++ {
+		s.SetContent(i, messageHeight, '=', nil, style)
 	}
-	emitStr(s, 3, 12, style, " Message Center ")
+	emitStr(s, 3, messageHeight, style, " Message Center ")
 
-	emitStr(s, 3, 2, style, "Players:")
-	emitStr(s, 3, 4, style, "   Me (0x6327A384)")
-	emitStr(s, 3, 5, style, "   0x8e113078")
-	emitStr(s, 3, 6, style, "-> 0x0070742f")
+	emitStr(s, playersX, columnHeight, style, "Players:")
 
-	emitStr(s, 30, 2, style, "Last Bet:")
-	emitStr(s, 30, 4, style, "5 Two's")
-	emitStr(s, 30, 5, style, "6 One's")
-	emitStr(s, 30, 6, style, "")
+	emitStr(s, betX, columnHeight, style, "Last Bet:")
 
-	emitStr(s, 50, 2, style, "  Balances:")
-	emitStr(s, 50, 4, style, "  $1032 USD")
-	emitStr(s, 50, 5, style, "   $864 USD")
-	emitStr(s, 50, 6, style, "$12,000 USD")
+	emitStr(s, balX, columnHeight, style, "  Balances:")
 
-	emitStr(s, 3, 8, style, "My Dice: [3] [2] [6] [6] [1]")
-	emitStr(s, 35, 8, style, "Ante:  $5 USD")
-	emitStr(s, 35, 9, style, "Pot : $15 USD")
+	emitStr(s, myDiceX-8, myDiceY, style, "My Dice:")
 
-	emitStr(s, 3, 10, style, "My Bet :>")
-	emitStr(s, 1, 19, style, "Deposit :>")
+	emitStr(s, anteX-6, anteY, style, "Ante:")
+	emitStr(s, potX-6, potY, style, "Pot :")
 
-	emitStr(s, 65, 2, style, "<1-6>   : set/increment bet")
-	emitStr(s, 65, 3, style, "<minus> : decrement bet")
-	emitStr(s, 65, 4, style, "<b>     : place bet")
-	emitStr(s, 65, 5, style, "<l>     : call liar")
-	emitStr(s, 65, 6, style, "<d>     : deposit funds")
+	emitStr(s, betRowX-9, betRowY, style, "My Bet :>")
+	emitStr(s, depositRowX-10, depositRowY, style, "Deposit :>")
+
+	emitStr(s, helpX, 2, style, "<1-6>   : set/increment bet")
+	emitStr(s, helpX, 3, style, "<minus> : decrement bet")
+	emitStr(s, helpX, 4, style, "<b>     : place bet")
+	emitStr(s, helpX, 5, style, "<l>     : call liar")
+	emitStr(s, helpX, 6, style, "<d>     : deposit funds")
 }
 
+// message adds a message to the message center.
 func message(s tcell.Screen, style tcell.Style, message string) {
-	emitStr(s, 3, 14, style, message)
+	emitStr(s, 3, messageHeight+2, style, message)
 	s.Show()
 }
 
+// emitStr knows how to print a string on the screen.
 func emitStr(s tcell.Screen, x, y int, style tcell.Style, str string) {
 	for _, c := range str {
 		var comb []rune
