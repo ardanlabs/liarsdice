@@ -49,14 +49,11 @@ contract-build:
 	abigen --bin=business/contract/abi/bank/Bank.bin --abi=business/contract/abi/bank/Bank.abi --pkg=bank --out=business/contract/go/bank/bank.go
 
 # This will deploy the smart contract to the locally running Ethereum environment.
-contract-deploy:
-	go run app/tooling/admin/main.go -d
-
-# ==============================================================================
-# Admin Tooling
-
 admin-build:
 	go build -o admin app/tooling/admin/main.go
+
+contract-deploy: contract-build admin-build
+	./admin -d
 
 # ==============================================================================
 # These commands start the Ethereum node and provide examples of attaching

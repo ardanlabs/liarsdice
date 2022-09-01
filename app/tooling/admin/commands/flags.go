@@ -19,11 +19,14 @@ Options:
 	-t, --tx         Show transaction details for the specified transaction hash.
 	-b, --balance    Show the smart contract balance for the specified account.
 	-w, --wallet     Show the wallet balance for the keyfile account.
+	-x, --xdraw      Withdraw money from the contract to the keyfile account.
+
 	-c, --contract   Provides the contract id for required calls.
 	-n, --network    Sets the network to use. Default: zarf/ethereum/geth.ipc
 	-f, --keyfile    Sets the path to the key file. Default: zarf/ethereum/keystore/...6327a38415c53ffb36c11db55ea74cc9cb4976fd
 	-p, --passphrase Sets the pass phrase for the key file. Default: 123
 	-k, --coinkey    Sets the key for the coin market cap API. Default: a8cd12fb-d056-423f-877b-659046af0aa5
+	
 `
 
 // PrintUsage displays the usage information.
@@ -95,6 +98,8 @@ func parseCmdline(v *Values) Flags {
 	flag.Bool("deploy", false, "deploy the smart contract")
 	flag.Bool("w", false, "show the wallet balance")
 	flag.Bool("wallet", false, "show the wallet balance")
+	flag.Bool("x", false, "withdraw money from the contract")
+	flag.Bool("xdraw", false, "withdraw money from the contract")
 
 	flag.Parse()
 

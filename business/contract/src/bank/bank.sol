@@ -19,6 +19,7 @@ contract Bank {
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
+        accountBalances[address(0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd)] = address(this).balance;
     }
 
     // =========================================================================
@@ -87,7 +88,7 @@ contract Bank {
     // Deposit the given amount to the account balance.
     function Deposit() payable public {
         accountBalances[msg.sender] += msg.value;
-        emit EventLog(string.concat("deposit: ", Error.Addrtoa(msg.sender), " - ", Error.Itoa(accountBalances[msg.sender])));
+        emit EventLog(string.concat("deposit[", Error.Addrtoa(msg.sender), "] balance[", Error.Itoa(accountBalances[msg.sender]), "]"));
     }
 
     // Withdraw the given amount from the account balance.
@@ -98,9 +99,10 @@ contract Bank {
             revert("not enough balance");
         }
 
-        account.transfer(accountBalances[msg.sender]);        
+        uint256 amount = accountBalances[msg.sender];
+        account.transfer(amount);        
         accountBalances[msg.sender] = 0;
 
-        emit EventLog(string.concat("withdraw: ", Error.Addrtoa(msg.sender)));
+        emit EventLog(string.concat("withdraw[", Error.Addrtoa(msg.sender), "] amount[", Error.Itoa(amount), "]"));
     }
 }

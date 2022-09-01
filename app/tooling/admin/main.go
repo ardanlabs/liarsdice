@@ -67,6 +67,9 @@ func run() error {
 	if _, exists := f["d"]; exists {
 		return commands.Deploy(ctx, converter, bank, v)
 	}
+	if _, exists := f["x"]; exists {
+		return commands.Withdraw(ctx, converter, bank, v)
+	}
 
 	return errors.New("no functional command provided")
 }

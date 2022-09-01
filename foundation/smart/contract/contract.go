@@ -130,8 +130,9 @@ func (c *Client) WaitMined(ctx context.Context, tx *types.Transaction) (*types.R
 	}
 
 	if receipt.Status == 0 {
-		err := c.extractError(ctx, tx)
-		return nil, fmt.Errorf("extracting tx error: %w", err)
+		if err := c.extractError(ctx, tx); err != nil {
+			return nil, fmt.Errorf("extracting tx error: %w", err)
+		}
 	}
 
 	return receipt, nil

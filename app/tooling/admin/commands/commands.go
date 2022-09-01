@@ -15,6 +15,19 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+// Withdraw will remove any balance from the contract back into the calling account.
+func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
+	tx, receipt, err := bank.Withdraw(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(converter.FmtTransaction(tx))
+	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
+
+	return nil
+}
+
 // Deploy will deploy the smart contract to the configured network.
 func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) (err error) {
 	client := bank.Client()
@@ -34,7 +47,7 @@ func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 
 	// =========================================================================
 
-	const gasLimit = 3000000
+	const gasLimit = 1600000
 	const valueGwei = 0.0
 	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
 	if err != nil {
