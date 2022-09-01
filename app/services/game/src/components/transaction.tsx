@@ -1,17 +1,15 @@
 import React, { useState } from 'react'
 import axios, { AxiosError } from 'axios'
 import Button from './button'
-// Contract and contract Abi
+// Contract Abi
 import contractAbi from '../abi/Contract.json'
-// Contract utils from DApp library
-import { useContractFunction, useEthers } from '@usedapp/core'
-import { Contract } from '@ethersproject/contracts'
-import { utils } from 'ethers'
+import { ethers, utils } from 'ethers'
 // Another utils
 import { toast } from 'react-toastify'
 import { apiUrl } from '../utils/axiosConfig'
 import { useLocation } from 'react-router-dom'
 import { appConfig } from '../types/index.d'
+import useEthersConnection from './hooks/useEthersConnection'
 
 type transactionProps = {
   buttonText: string
@@ -31,16 +29,32 @@ const Transaction = (props: transactionProps) => {
   const { buttonText, action, updateBalance } = props
   // Sets local state
   const [transactionAmount, setTransactionAmount] = useState(0)
+  const { account, signer, provider } = useEthersConnection()
+
   // Creates the interface with the contract aby
   const contractInterface = new utils.Interface(contractAbi)
+
   const contractAddress = (state as appConfig).config.ContractID
-  const contract = new Contract(contractAddress, contractInterface)
-  // Creates a new contract object
-  // Extracts the functions from the contract
-  const { send } = useContractFunction(contract, action, {
-    gasLimitBufferPercentage: 100,
-  })
-  const { account } = useEthers()
+
+  // Creates a new contract object and connects it to the signer
+  const contract = new ethers.Contract(
+    contractAddress,
+    contractInterface,
+    signer,
+  )
+
+  const send = async (value?: string) => {
+    const tx = {
+      gasPrice: provider.getGasPrice(),
+      gasLimit: '10000000',
+    }
+    if (action === 'Withdraw') {
+      return contract.Withdraw(tx)
+    }
+
+    return contract.Deposit({ ...tx, value })
+  }
+
   const [inputValue, setInputValue] = useState('')
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value)
@@ -49,11 +63,12 @@ const Transaction = (props: transactionProps) => {
   const sendTransaction = () => {
     axios
       .get(`http://${apiUrl}/usd2wei/${transactionAmount}`)
-      .then((response: usd2weiResponse) => {
-        send({ value: `${response.data.wei}` })
-          .then((response) => {
-            console.log(response)
-            if (response === undefined) {
+      .then(async (response: usd2weiResponse) => {
+        await send(`${response.data.wei}`)
+          .then(async (txResponse: any) => {
+            const transaction = await txResponse.wait(0)
+
+            if (transaction.status !== 1) {
               toast.error(`${action} failed`)
             } else {
               updateBalance(-1)

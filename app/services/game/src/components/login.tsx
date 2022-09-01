@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
-import { useEthers } from '@usedapp/core'
 import { utils } from 'ethers'
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-toastify'
@@ -10,20 +9,57 @@ import getNowDate from '../utils/getNowDate'
 import { useNavigate } from 'react-router-dom'
 import { getAppConfig } from '..'
 import { token } from '../utils/axiosConfig'
+import useEthersConnection from './hooks/useEthersConnection'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { account, library, activateBrowserWallet } = useEthers()
-  function handleConnectAccount() {
-    activateBrowserWallet()
+  const { setSigner, account, signer, setAccount, provider } =
+    useEthersConnection()
+  const [loading, setLoading] = useState(true)
+
+  async function handleConnectAccount() {
+    await provider.send('eth_requestAccounts', [])
+    const signer = provider.getSigner()
+    const signerAddress = await signer.getAddress()
+    setAccount(signerAddress)
+    setSigner(signer)
   }
+
+  const init = async () => {
+    const signer = provider.getSigner()
+    const signerAddress = await signer.getAddress()
+
+    setAccount(signerAddress)
+    setSigner(signer)
+  }
+  useEffect(() => {
+    // Note that this event is emitted on page load.
+    // If the array of accounts is non-empty, you're already
+    // connected.
+    window.ethereum.on('accountsChanged', handleAccountsChanged)
+
+    // For now, 'eth_accounts' will continue to always return an array
+    function handleAccountsChanged(accounts: string[]) {
+      if (accounts.length === 0) {
+        // MetaMask is locked or the user has not connected any accounts
+        console.log('Please connect to MetaMask.')
+        setLoading(true)
+      } else if (accounts[0] !== account) {
+        init().then(() => {
+          setLoading(false)
+        })
+      }
+    }
+    init().then(() => {
+      setLoading(false)
+    })
+    // eslint-disable-next-line
+  }, [])
   const signTransaction = () => {
     toast.info('Connecting to game engine')
     const date = getNowDate()
 
     let doc = { date_time: date }
-
-    const signer = library?.getSigner()
 
     // Marshal the transaction to a string and convert the string to bytes.
     const marshal = JSON.stringify(doc)
@@ -36,19 +72,18 @@ export default function Login() {
 
     // Now sign the data. The underlying code will apply the Ardan stamp and
     // ID to the signature thanks to changes made to the ether.js api.
-
-    signer?.signMessage(bytes).then((response: any) => {
-      const data = { ...doc, sig: response }
+    signer?.signMessage(bytes).then((signerResponse: any) => {
+      const data = { ...doc, sig: signerResponse }
       axios
         .post('http://localhost:3000/v1/game/connect', data)
-        .then((response) => {
+        .then((connectResponse) => {
           // notification.info('Connected to game engine')
           window.sessionStorage.setItem(
             'token',
-            `bearer ${response.data.token}`,
+            `bearer ${connectResponse.data.token}`,
           )
-          getAppConfig.then((response) => {
-            navigate('/mainRoom', { state: { config: response } })
+          getAppConfig.then((getConfigResponse) => {
+            navigate('/mainRoom', { state: { config: getConfigResponse } })
           })
         })
         .catch((error: AxiosError) => {
@@ -70,11 +105,13 @@ export default function Login() {
     })
   }
   useEffect(() => {
+    console.log(token() && account)
     if (token() && account) {
       getAppConfig.then((response) => {
         navigate('/mainRoom', { state: { config: response } })
       })
     }
+    // eslint-disable-next-line
   }, [account])
   return (
     <div
@@ -94,7 +131,7 @@ export default function Login() {
         </h2>
         Or you can also select a provider to create one.
         <div id="wallets__wrapper" className="mt-4">
-          {account ? (
+          {account && !loading ? (
             <div className="d-flex">
               <span className="ml-2">Wallet {account} connected</span>
             </div>

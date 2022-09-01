@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import Bet from './bet'
 import { bet } from '../types/index.d'
-import { shortenIfAddress } from '@usedapp/core'
+import { shortenIfAddress } from '../utils/address'
 
 interface CurrentBetProps {
   currentBet: bet

@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react'
 import Cups from './cups'
 import { game, dice, CupsProps, bet, die } from '../types/index.d'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 
 let props = {
   playerDice: [4, 3, 5, 6, 2] as dice,

@@ -1,5 +1,5 @@
 import React, { FC, useContext } from 'react'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 import { CupProps } from '../types/index.d'
 import Dice from './dice'
 

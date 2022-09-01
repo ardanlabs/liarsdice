@@ -1,13 +1,14 @@
 import React, { useContext } from 'react'
 import { user } from '../types/index.d'
 import PlayersList from './playersList'
-import { useEthers } from '@usedapp/core'
-import { GameContext } from '../gameContext'
+
+import { GameContext } from '../contexts/gameContext'
 import Join from './join'
+import useEthersConnection from './hooks/useEthersConnection'
 
 interface PlayersProps {}
 const Players = (props: PlayersProps) => {
-  const { account } = useEthers()
+  const { account } = useEthersConnection()
   const { game } = useContext(GameContext)
   const isUserPlaying = (game.cups as user[]).filter((user) => {
     return user.account === account
