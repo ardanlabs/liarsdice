@@ -6,11 +6,9 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -43,7 +41,7 @@ func NewClient(ctx context.Context, network string, keyPath string, passPhrase s
 		return nil, fmt.Errorf("dial network: %w", err)
 	}
 
-	privateKey, err := privateKeyByKeyFile(keyPath, passPhrase)
+	privateKey, err := PrivateKeyByKeyFile(keyPath, passPhrase)
 	if err != nil {
 		return nil, fmt.Errorf("extract private key: %w", err)
 	}
@@ -188,19 +186,4 @@ func (c *Client) extractError(ctx context.Context, tx *types.Transaction) error 
 
 	_, err := c.ethClient.CallContract(ctx, msg, nil)
 	return err
-}
-
-// privateKeyByKeyFile opens a key file for the private key.
-func privateKeyByKeyFile(keyPath string, passPhrase string) (*ecdsa.PrivateKey, error) {
-	data, err := os.ReadFile(keyPath)
-	if err != nil {
-		return nil, err
-	}
-
-	key, err := keystore.DecryptKey(data, passPhrase)
-	if err != nil {
-		return nil, err
-	}
-
-	return key.PrivateKey, nil
 }

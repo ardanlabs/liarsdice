@@ -19,6 +19,7 @@ const (
 	potX          = 40
 	potY          = 9
 	helpX         = 65
+	configY       = 15
 )
 
 // Game positioning values for user input.
@@ -127,11 +128,29 @@ func (b *Board) Init() {
 	b.print(helpX, 4, "<b>      : place bet")
 	b.print(helpX, 5, "<l>      : call liar")
 	b.print(helpX, 6, "<d>      : deposit funds")
+	b.print(helpX, configY, "network  :")
+	b.print(helpX, configY+1, "chainid  :")
+	b.print(helpX, configY+2, "contract :")
+	b.print(helpX, configY+3, "address  :")
 
 	b.betMode()
 }
 
-// =============================================================================
+// PrintMessage adds a message to the message center.
+func (b *Board) PrintMessage(message string) {
+	const width = boardWidth - 4
+	msg := fmt.Sprintf("%-*s", width, message)
+
+	b.messages[2] = b.messages[1]
+	b.messages[1] = b.messages[0]
+	b.messages[0] = msg
+
+	b.print(3, messageHeight+2, b.messages[0])
+	b.print(3, messageHeight+3, b.messages[1])
+	b.print(3, messageHeight+4, b.messages[2])
+
+	b.screen.Show()
+}
 
 // StartEventLoop starts a goroutine to handle keyboard input.
 func (b *Board) StartEventLoop() chan struct{} {
@@ -207,6 +226,14 @@ func (b *Board) SetDice(dice []int) error {
 func (b *Board) SetAnte(ante float64) {
 	b.ante = ante
 	b.printAnte()
+}
+
+// SetSettings draws the settings on the board.
+func (b *Board) SetSettings(network string, chainID int, contractID string, address string) {
+	b.print(helpX+11, configY, network)
+	b.print(helpX+11, configY+1, fmt.Sprintf("%d", chainID))
+	b.print(helpX+11, configY+2, contractID)
+	b.print(helpX+11, configY+3, address)
 }
 
 // =============================================================================
@@ -410,22 +437,6 @@ func (b *Board) printDice() {
 // printAnte draws the ante on the board.
 func (b *Board) printAnte() {
 	b.print(anteX, anteY, fmt.Sprintf("$%.2f", b.ante))
-}
-
-// message adds a message to the message center.
-func (b *Board) printMessage(message string) {
-	const width = boardWidth - 4
-	msg := fmt.Sprintf("%-*s", width, message)
-
-	b.messages[2] = b.messages[1]
-	b.messages[1] = b.messages[0]
-	b.messages[0] = msg
-
-	b.print(3, messageHeight+2, b.messages[0])
-	b.print(3, messageHeight+3, b.messages[1])
-	b.print(3, messageHeight+4, b.messages[2])
-
-	b.screen.Show()
 }
 
 // print knows how to print a string on the screen.

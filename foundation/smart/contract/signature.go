@@ -1,12 +1,15 @@
 package contract
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -19,6 +22,56 @@ const ZeroHash string = "0x00000000000000000000000000000000000000000000000000000
 const ethID = 27
 
 // =============================================================================
+
+// PrivateKeyByKeyFile opens a key file for the private key.
+func PrivateKeyByKeyFile(keyFile string, passPhrase string) (*ecdsa.PrivateKey, error) {
+	data, err := os.ReadFile(keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("read key file: %w", err)
+	}
+
+	key, err := keystore.DecryptKey(data, passPhrase)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt key file: %w", err)
+	}
+
+	return key.PrivateKey, nil
+}
+
+// Sign uses the specified private key to sign the data.
+func Sign(value any, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+
+	// Prepare the data for signing.
+	data, err := stamp(value)
+	if err != nil {
+		return nil, err
+	}
+
+	// Sign the hash with the private key to produce a signature.
+	sig, err := crypto.Sign(data, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the bytes for the original public key.
+	publicKeyOrg := privateKey.Public()
+	publicKeyECDSA, ok := publicKeyOrg.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, errors.New("error casting public key to ECDSA")
+	}
+	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
+
+	// Check the public key validates the data and signature.
+	rs := sig[:crypto.RecoveryIDOffset]
+	if !crypto.VerifySignature(publicKeyBytes, data, rs) {
+		return nil, errors.New("invalid signature produced")
+	}
+
+	// Add the Ethereum ID to the last byte represents v.
+	sig[crypto.RecoveryIDOffset] += ethID
+
+	return sig, nil
+}
 
 // FromAddress extracts the address for the account that signed the data.
 func FromAddress(value any, signature string) (string, error) {

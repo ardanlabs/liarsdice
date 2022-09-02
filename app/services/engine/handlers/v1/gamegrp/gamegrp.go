@@ -89,9 +89,9 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 // Configuration returns the basic configuration the front end needs to use.
 func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	info := struct {
-		Network    string
-		ChainID    int
-		ContractID string
+		Network    string `json:"network"`
+		ChainID    int    `json:"chain_id"`
+		ContractID string `json:"contract_id"`
 	}{
 		Network:    h.Bank.Client().Network(),
 		ChainID:    h.Bank.Client().ChainID(),
@@ -160,9 +160,11 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	data := struct {
-		Token string `json:"token"`
+		Token   string `json:"token"`
+		Address string `json:"address"`
 	}{
-		Token: token,
+		Token:   token,
+		Address: address,
 	}
 
 	return web.Respond(ctx, w, data, http.StatusOK)
