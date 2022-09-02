@@ -69,8 +69,8 @@ const MainRoom = (props: MainRoomProps) => {
       wsStatus.current !== 'open' &&
       wsStatus.current !== 'attemptingConnection'
     ) {
-      wsStatus.current = 'attemptingConnection'
       connect()
+      wsStatus.current = 'attemptingConnection'
     }
     setPlayerDice(
       JSON.parse(window.localStorage.getItem('playerDice') as string),

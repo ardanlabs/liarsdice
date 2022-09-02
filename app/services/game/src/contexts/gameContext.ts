@@ -1,6 +1,11 @@
 import React from 'react'
 import { bet, game } from '../types/index.d'
 
+export interface gameContextInterface {
+  game: game
+  setGame: React.Dispatch<React.SetStateAction<game>>
+}
+
 export const GameContext = React.createContext({
   game: {
     status: 'gameover',
