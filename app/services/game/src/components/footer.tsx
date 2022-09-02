@@ -67,6 +67,7 @@ function Footer() {
 
   return account ? (
     <footer
+      id="footer"
       style={{
         backgroundColor: 'var(--modals)',
         position: 'fixed',

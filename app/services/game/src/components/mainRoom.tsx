@@ -75,7 +75,7 @@ const MainRoom = (props: MainRoomProps) => {
   }, [])
 
   useEffect(() => {
-    if (!account || !token() || !(state as appConfig).config) {
+    if (!account || !token() || !(state as appConfig)) {
       navigate('/')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -31,19 +31,18 @@ const Transaction = (props: transactionProps) => {
   const [transactionAmount, setTransactionAmount] = useState(0)
   const { account, signer, provider } = useEthersConnection()
 
-  // Creates the interface with the contract aby
-  const contractInterface = new utils.Interface(contractAbi)
-
-  const contractAddress = (state as appConfig).config.ContractID
-
-  // Creates a new contract object and connects it to the signer
-  const contract = new ethers.Contract(
-    contractAddress,
-    contractInterface,
-    signer,
-  )
-
   const send = async (value?: string) => {
+    // Creates the interface with the contract aby
+    const contractInterface = new utils.Interface(contractAbi)
+
+    const contractAddress = (state as appConfig).ContractID
+
+    // Creates a new contract object and connects it to the signer
+    const contract = new ethers.Contract(
+      contractAddress,
+      contractInterface,
+      signer,
+    )
     const tx = {
       gasPrice: provider.getGasPrice(),
       gasLimit: '10000000',

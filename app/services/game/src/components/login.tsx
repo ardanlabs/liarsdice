@@ -83,7 +83,7 @@ export default function Login() {
             `bearer ${connectResponse.data.token}`,
           )
           getAppConfig.then((getConfigResponse) => {
-            navigate('/mainRoom', { state: { config: getConfigResponse } })
+            navigate('/mainRoom', { state: { ...getConfigResponse } })
           })
         })
         .catch((error: AxiosError) => {
@@ -105,10 +105,9 @@ export default function Login() {
     })
   }
   useEffect(() => {
-    console.log(token() && account)
     if (token() && account) {
       getAppConfig.then((response) => {
-        navigate('/mainRoom', { state: { config: response } })
+        navigate('/mainRoom', { state: { ...response } })
       })
     }
     // eslint-disable-next-line

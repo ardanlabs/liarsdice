@@ -36,11 +36,9 @@ export interface CupsProps {
 }
 
 export interface appConfig {
-  config: {
-    ChainID: number
-    ContractID: string
-    Network: string
-  }
+  ChainID: number
+  ContractID: string
+  Network: string
 }
 
 export type Falsy = false | 0 | '' | null | undefined

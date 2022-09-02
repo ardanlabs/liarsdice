@@ -46,12 +46,26 @@ code {
   width: 100%;
 }
 
+#notNetwork__wrapper {
+  font-weight: 400;
+  width: 600px;
+  background-color: var(--modals);
+  border-radius: 8px;
+  padding: 20px;
+  -webkit-box-shadow: 1px 3px 22px 5px rgba(0, 0, 0, 0.7);
+  -moz-box-shadow: 1px 3px 22px 5px rgba(0, 0, 0, 0.7);
+  box-shadow: 1px 3px 22px 5px rgba(0, 0, 0, 0.7);
+}
+
 #login__wrapper {
   font-weight: 400;
   width: 600px;
   background-color: var(--modals);
   border-radius: 8px;
   padding: 20px;
+  -webkit-box-shadow: 1px 3px 22px 5px rgba(0, 0, 0, 0.7);
+  -moz-box-shadow: 1px 3px 22px 5px rgba(0, 0, 0, 0.7);
+  box-shadow: 1px 3px 22px 5px rgba(0, 0, 0, 0.7);
 }
 
 #wallets__wrapper {
@@ -209,7 +223,11 @@ code {
   font-weight: 400;
 }
 
-
+#footer {
+  -webkit-box-shadow: 0px -20px 22px -17px rgba(0, 0, 0, 0.75);
+  -moz-box-shadow: 0px -20px 22px -17px rgba(0, 0, 0, 0.75);
+  box-shadow: 0px -20px 22px -17px rgba(0, 0, 0, 0.75);
+}
 
 /* Metamask svg */
 .st0 {
