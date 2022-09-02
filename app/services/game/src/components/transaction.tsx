@@ -35,7 +35,7 @@ const Transaction = (props: transactionProps) => {
     // Creates the interface with the contract aby
     const contractInterface = new utils.Interface(contractAbi)
 
-    const contractAddress = (state as appConfig).ContractID
+    const contractAddress = (state as appConfig).contract_id
 
     // Creates a new contract object and connects it to the signer
     const contract = new ethers.Contract(

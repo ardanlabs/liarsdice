@@ -1,7 +1,7 @@
 import { AxiosRequestConfig } from 'axios'
 
-export const token = () => {
-  // Returns the token stored in the session storage of the player, produced when you join a game
+// Returns the token stored in the session storage of the player, produced when you join a game
+export function token() {
   return (window.sessionStorage.getItem('token') as string)
     ? (window.sessionStorage.getItem('token') as string)
     : ''

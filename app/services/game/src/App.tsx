@@ -1,4 +1,4 @@
-import React, { FC, useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import './App.css'
 import Login from './components/login'
 import { GameContext, gameContextInterface } from './contexts/gameContext'
@@ -18,7 +18,7 @@ import WrongNetwork from './components/wrongNetwork'
 import { Network } from '@ethersproject/networks'
 
 // App component. First React component after Index.ts
-export function App(): FC {
+function App() {
   const [game, setGame] = useState({
     status: 'gameover',
     last_out: '',
@@ -72,7 +72,7 @@ export function App(): FC {
   // oldNetwork exists, it represents a changing network
   function handleNetworkChange(newNetwork: Network, oldNetwork: Network): void {
     getAppConfig.then(async (getConfigResponse) => {
-      if (newNetwork.chainId !== getConfigResponse.ChainID) {
+      if (newNetwork.chainId !== getConfigResponse.chain_id) {
         window.sessionStorage.removeItem('token')
         navigate('/wrongNetwork', { state: { ...getConfigResponse } })
       } else {

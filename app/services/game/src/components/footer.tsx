@@ -43,7 +43,7 @@ function Footer() {
     axios
       .get(`http://${apiUrl}/liar`, axiosConfig)
       .then(function (response: AxiosResponse) {
-        if (getActivePlayersLength(game) === 1) {
+        if (getActivePlayersLength(game.player_order) === 1) {
           toast.info(
             `Game finished! Winner is ${shortenIfAddress(
               response.data.cups[0].account,

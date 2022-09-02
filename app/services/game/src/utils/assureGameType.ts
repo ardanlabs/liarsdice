@@ -1,6 +1,7 @@
 import { game } from '../types/index.d'
 
-const assureGameType = (data: game): game => {
+// Assures that the game that's passed contains all neccesary keys.
+function assureGameType(data: game): game {
   let newGame = data
   newGame = newGame.bets ? newGame : { ...newGame, bets: [] }
   newGame = newGame.cups ? newGame : { ...newGame, cups: [] }

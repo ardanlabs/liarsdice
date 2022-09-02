@@ -14,9 +14,6 @@ export function shortenAddress(address: string): string {
   }
 }
 
-/**
- * @public
- */
 export function shortenIfAddress(address: string | Falsy): string {
   if (typeof address === 'string' && address.length > 0) {
     return shortenAddress(address)

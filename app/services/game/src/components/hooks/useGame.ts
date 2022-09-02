@@ -42,13 +42,13 @@ const useGame = () => {
             //   newRound()
             //   break
             case 'newgame':
-              if (getActivePlayersLength(response.data) >= 2) {
+              if (getActivePlayersLength(response.data.player_order) >= 2) {
                 startGame()
               }
               break
             case 'gameover':
               if (
-                getActivePlayersLength(response.data) === 1 &&
+                getActivePlayersLength(response.data.player_order) === 1 &&
                 response.data.last_win === account
               ) {
                 axios
