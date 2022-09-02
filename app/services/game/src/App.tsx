@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { FC, useState, useMemo, useEffect } from 'react'
 import './App.css'
 import Login from './components/login'
 import { GameContext, gameContextInterface } from './contexts/gameContext'
@@ -17,7 +17,8 @@ import useEthersConnection from './components/hooks/useEthersConnection'
 import WrongNetwork from './components/wrongNetwork'
 import { Network } from '@ethersproject/networks'
 
-export function App() {
+// App component. First React component after Index.ts
+export function App(): FC {
   const [game, setGame] = useState({
     status: 'gameover',
     last_out: '',
