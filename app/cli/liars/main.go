@@ -21,11 +21,18 @@ func main() {
 }
 
 func run() error {
+
+	// =========================================================================
+	// Establish a client connection to the game engine.
+
 	client := client.New("http://0.0.0.0:3000")
 	token, err := client.Connect(keyFile, passPhrase)
 	if err != nil {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}
+
+	// =========================================================================
+	// Initialize the board and display the configuration and token information.
 
 	board, err := initalizeBoard(client, token)
 	if err != nil {
@@ -33,9 +40,39 @@ func run() error {
 	}
 	defer board.Shutdown()
 
-	// board.SetAnte(5.0)
+	// =========================================================================
+	// Establish a websocket connection to capture the game events.
 
-	// board.AddPlayer("0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "$1,000.00")
+	events := func(message string) {
+		board.PrintMessage(message)
+	}
+	teardown, err := client.Events(events)
+	if err != nil {
+		return err
+	}
+	defer teardown()
+
+	// =========================================================================
+	// Get the current game status
+
+	status, err := client.Status()
+	if err != nil {
+
+		// No Game exists so let's create a game.
+		status, err = client.NewGame()
+		if err != nil {
+			return err
+		}
+	}
+
+	board.SetStatus(status)
+
+	balance, err := client.Balance()
+	if err != nil {
+		return err
+	}
+	board.AddPlayer(token.Address, balance)
+
 	// board.AddPlayer("0x8e113078adf6888b7ba84967f299f29aece24c55", "$235.65")
 	// board.AddPlayer("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7", "$12,765.44")
 
