@@ -1,14 +1,14 @@
 import React, { useEffect, useContext, useState } from 'react'
 import GameTable from './gameTable'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 import useGame from './hooks/useGame'
 import useWebSocket from './hooks/useWebSocket'
-import { useEthers } from '@usedapp/core'
 import { token } from '../utils/axiosConfig'
 import { useLocation, useNavigate } from 'react-router-dom'
 import AppHeader from './appHeader'
 import Footer from './footer'
 import { appConfig } from '../types/index.d'
+import useEthersConnection from './hooks/useEthersConnection'
 
 interface MainRoomProps {}
 const MainRoom = (props: MainRoomProps) => {
@@ -24,7 +24,7 @@ const MainRoom = (props: MainRoomProps) => {
       ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
       : timeoutTime,
     [timer, setTimer] = useState(sessionTimer),
-    { account } = useEthers(),
+    { account } = useEthersConnection(),
     { playerDice, setPlayerDice, addOut } = useGame()
 
   const resetTimer = () => {
@@ -75,9 +75,10 @@ const MainRoom = (props: MainRoomProps) => {
   }, [])
 
   useEffect(() => {
-    if (!account || !token() || !(state as appConfig).config) {
+    if (!account || !token() || !(state as appConfig)) {
       navigate('/')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, state])
 
   return (

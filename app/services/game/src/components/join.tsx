@@ -1,12 +1,13 @@
 import React, { useContext } from 'react'
-import { useEthers } from '@usedapp/core'
+
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import Button from './button'
 import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
 import { axiosConfig } from '../utils/axiosConfig'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 import { game, user } from '../types/index.d'
+import useEthersConnection from './hooks/useEthersConnection'
 
 interface JoinProps {
   disabled: boolean
@@ -14,7 +15,7 @@ interface JoinProps {
 
 const Join = (props: JoinProps) => {
   const { game, setGame } = useContext(GameContext)
-  const { account } = useEthers()
+  const { account } = useEthersConnection()
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'

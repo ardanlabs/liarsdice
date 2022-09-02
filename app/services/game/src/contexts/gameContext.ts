@@ -1,5 +1,5 @@
 import React from 'react'
-import { bet, game } from './types/index.d'
+import { bet, game } from '../types/index.d'
 
 export const GameContext = React.createContext({
   game: {

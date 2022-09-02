@@ -1,16 +1,17 @@
 import React, { BaseSyntheticEvent, useContext, useState } from 'react'
 import Button from './button'
-import { shortenIfAddress, useEthers } from '@usedapp/core'
-import { GameContext } from '../gameContext'
+import { shortenIfAddress } from '../utils/address'
+import { GameContext } from '../contexts/gameContext'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { game } from '../types/index.d'
 import { axiosConfig } from '../utils/axiosConfig'
 import { toast } from 'react-toastify'
 import SignOut from './signout'
 import getActivePlayersLength from '../utils/getActivePlayers'
+import useEthersConnection from './hooks/useEthersConnection'
 
 function Footer() {
-  const { account } = useEthers()
+  const { account } = useEthersConnection()
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
     : 'localhost:3000/v1/game'
@@ -66,6 +67,7 @@ function Footer() {
 
   return account ? (
     <footer
+      id="footer"
       style={{
         backgroundColor: 'var(--modals)',
         position: 'fixed',

@@ -9,15 +9,16 @@
   **************************************** */
 import { useEffect, useContext, useState, useMemo } from 'react'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import { GameContext } from '../../gameContext'
-import { useEthers } from '@usedapp/core'
+import { GameContext } from '../../contexts/gameContext'
+
 import { dice, game, user } from '../../types/index.d'
 import assureGameType from '../../utils/assureGameType'
 import { axiosConfig, apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
+import useEthersConnection from './useEthersConnection'
 
 const useGame = () => {
-  const { account } = useEthers()
+  const { account } = useEthersConnection()
   let { game, setGame } = useContext(GameContext)
   const [playerDice, setPlayerDice] = useState([] as dice)
   const gamePot = useMemo(

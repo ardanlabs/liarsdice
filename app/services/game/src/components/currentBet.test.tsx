@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import CurrentBet from './currentBet'
 import { die, bet } from '../types/index.d'
-import { shortenIfAddress } from '@usedapp/core'
+import { shortenIfAddress } from '../utils/address'
 
 let currentBet = {
   account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',

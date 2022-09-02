@@ -1,8 +1,7 @@
 import Die from './icons/die'
 import { dice } from '../types/index.d'
-import { useEthers } from '@usedapp/core'
 import { useContext } from 'react'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 
 interface DiceProps {
   // This type spec is to prevent user from passing an array bigger than 5

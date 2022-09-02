@@ -1,6 +1,6 @@
-import { shortenIfAddress } from '@usedapp/core'
+import { shortenIfAddress } from '../utils/address'
 import { useContext } from 'react'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 import { user } from '../types/index.d'
 
 interface PlayersListProps {

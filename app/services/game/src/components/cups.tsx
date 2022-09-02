@@ -2,8 +2,8 @@ import React, { FC, useContext } from 'react'
 import { bet, CupsProps, user } from '../types/index.d'
 import Star from './icons/star'
 import Bet from './bet'
-import { GameContext } from '../gameContext'
-import { shortenIfAddress } from '@usedapp/core'
+import { GameContext } from '../contexts/gameContext'
+import { shortenIfAddress } from '../utils/address'
 
 const Cups: FC<CupsProps> = (CupsProps) => {
   const { game } = useContext(GameContext)

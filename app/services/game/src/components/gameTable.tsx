@@ -1,11 +1,11 @@
-import { useEthers } from '@usedapp/core'
 import React, { FC, useContext } from 'react'
-import { GameContext } from '../gameContext'
+import { GameContext } from '../contexts/gameContext'
 import { dice } from '../types/index.d'
 import Counter from './counter'
 import Cups from './cups'
 import CurrentBet from './currentBet'
 import Dice from './dice'
+import useEthersConnection from './hooks/useEthersConnection'
 import useGame from './hooks/useGame'
 import LiarsCall from './liarsCall'
 import SideBar from './sidebar'
@@ -18,7 +18,7 @@ interface GameTableProps {
 const GameTable: FC<GameTableProps> = (GameTableProps) => {
   const { timer, playerDice } = GameTableProps
   const { game } = useContext(GameContext)
-  const { account } = useEthers()
+  const { account } = useEthersConnection()
   const { gamePot } = useGame()
   const notificationCenterWidth = '340px'
 

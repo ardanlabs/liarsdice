@@ -7,10 +7,10 @@
 
   **************************************** */
 
-import { shortenIfAddress } from '@usedapp/core'
+import { shortenIfAddress } from '../../utils/address'
 import { useContext, useRef } from 'react'
 import { toast } from 'react-toastify'
-import { GameContext } from '../../gameContext'
+import { GameContext } from '../../contexts/gameContext'
 import { apiUrl } from '../../utils/axiosConfig'
 import useGame from './useGame'
 

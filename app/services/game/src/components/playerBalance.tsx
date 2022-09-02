@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useEthers } from '@usedapp/core'
+
 import axios, { AxiosResponse } from 'axios'
 import { axiosConfig } from '../utils/axiosConfig'
 import Transaction from './transaction'
+import useEthersConnection from './hooks/useEthersConnection'
 
 const PlayerBalance = () => {
-  const { account } = useEthers()
+  const { account } = useEthersConnection()
   const [balance, setBalance] = useState(0)
   const apiUrl = process.env.REACT_APP_GO_HOST
     ? process.env.REACT_APP_GO_HOST
