@@ -118,19 +118,20 @@ function MainRoom() {
   }, [])
 
   useEffect(() => {
-    //
+    // Handles if the user is logged and has a token.
+    // If not, we redirect it to the login page. (<Login />)
     function checkAuth() {
       if (!account || !token() || !(state as appConfig)) {
         navigate('/')
       }
     }
 
-    // We handle if the user is logged and has a token. If not, we send it to the login
     checkAuth()
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, state])
 
+  // Render
   return (
     <div
       className="container-fluid d-flex align-items-center justify-content-start px-0 flex-column"
