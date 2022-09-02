@@ -2,6 +2,7 @@
 package board
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gdamore/tcell/v2"
@@ -34,19 +35,31 @@ const (
 	playersX     = 3
 	betX         = 30
 	balX         = 50
-	myDiceX      = 12
+	myDiceX      = 13
 	myDiceY      = 8
 )
 
 // =============================================================================
 
+// player represents a player in the game.
+type player struct {
+	address string
+	lastBet string
+	balance string
+	active  bool
+}
+
 // Board represents the game board and all its state.
 type Board struct {
-	screen  tcell.Screen
-	style   tcell.Style
-	bets    []rune
-	deposit []rune
-	cursor  string
+	screen   tcell.Screen
+	style    tcell.Style
+	cursor   string
+	bets     []rune
+	deposit  []rune
+	messages []string
+	players  []*player
+	dice     []int
+	ante     float64
 }
 
 // New contructs a game board.
@@ -66,8 +79,9 @@ func New() (*Board, error) {
 	style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 
 	board := Board{
-		screen: screen,
-		style:  style,
+		screen:   screen,
+		style:    style,
+		messages: make([]string, 3),
 	}
 
 	return &board, nil
@@ -78,8 +92,8 @@ func (b *Board) Shutdown() {
 	b.screen.Fini()
 }
 
-// Run generates the initial game board and starts the event loop.
-func (b *Board) Run() chan struct{} {
+// Init generates the initial game board and starts the event loop.
+func (b *Board) Init() {
 	b.screen.Clear()
 
 	for i := 1; i < boardWidth; i++ {
@@ -103,24 +117,24 @@ func (b *Board) Run() chan struct{} {
 	b.print(playersX, columnHeight, "Players:")
 	b.print(betX, columnHeight, "Last Bet:")
 	b.print(balX, columnHeight, "  Balances:")
-	b.print(myDiceX-8, myDiceY, "My Dice:")
+	b.print(myDiceX-9, myDiceY, "My Dice:")
 	b.print(anteX-6, anteY, "Ante:")
 	b.print(potX-6, potY, "Pot :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
 	b.print(depositRowX-10, depositRowY, "Deposit :>")
-	b.print(helpX, 2, "<1-6>   : set/increment bet")
-	b.print(helpX, 3, "<minus> : decrement bet")
-	b.print(helpX, 4, "<b>     : place bet")
-	b.print(helpX, 5, "<l>     : call liar")
-	b.print(helpX, 6, "<d>     : deposit funds")
+	b.print(helpX, 2, "<1-6>    : set/increment bet")
+	b.print(helpX, 3, "<delete> : decrement bet")
+	b.print(helpX, 4, "<b>      : place bet")
+	b.print(helpX, 5, "<l>      : call liar")
+	b.print(helpX, 6, "<d>      : deposit funds")
 
-	return b.startEventLoop()
+	b.betMode()
 }
 
 // =============================================================================
 
 // StartEventLoop starts a goroutine to handle keyboard input.
-func (b *Board) startEventLoop() chan struct{} {
+func (b *Board) StartEventLoop() chan struct{} {
 	quit := make(chan struct{})
 
 	go func() {
@@ -133,6 +147,9 @@ func (b *Board) startEventLoop() chan struct{} {
 					close(quit)
 					return
 
+				case tcell.KeyDEL:
+					b.delete()
+
 				case tcell.KeyEnter:
 					b.enter()
 
@@ -144,6 +161,52 @@ func (b *Board) startEventLoop() chan struct{} {
 	}()
 
 	return quit
+}
+
+// AddPlayer adds a player to the list of players.
+func (b *Board) AddPlayer(address string, balance string) {
+	b.players = append(b.players, &player{address: address, balance: balance})
+	b.printPlayers()
+}
+
+// NextPlayer sets the player as the active player.
+func (b *Board) ActivePlayer(address string) {
+	for i := range b.players {
+		b.players[i].active = false
+		if b.players[i].address == address {
+			b.players[i].active = true
+		}
+	}
+	b.printPlayers()
+}
+
+// UpdatePlayerBet updates the players last bet.
+func (b *Board) UpdatePlayerBet(address string, lastBet string) {
+	for i := range b.players {
+		if b.players[i].address == address {
+			b.players[i].lastBet = lastBet
+			break
+		}
+	}
+	b.printPlayers()
+}
+
+// SetDice captures the dice for the player and displays them.
+func (b *Board) SetDice(dice []int) error {
+	if len(dice) != 5 {
+		return errors.New("five dice are required")
+	}
+
+	b.dice = dice
+	b.printDice()
+
+	return nil
+}
+
+// SetAnte displays the ante information.
+func (b *Board) SetAnte(ante float64) {
+	b.ante = ante
+	b.printAnte()
 }
 
 // =============================================================================
@@ -161,13 +224,12 @@ func (b *Board) processKeyEvent(r rune) {
 	case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
 		b.value(r)
 
-	case r == rune('-'):
-		b.minus()
-
 	default:
 		b.screen.Beep()
 	}
 }
+
+var i int
 
 // enter is called to submit a bet or deposit.
 func (b *Board) enter() {
@@ -183,8 +245,8 @@ func (b *Board) enter() {
 	}
 }
 
-// minus is called to remove the latest value from the bet or deposit.
-func (b *Board) minus() {
+// delete is called to remove the latest value from the bet or deposit.
+func (b *Board) delete() {
 	switch b.cursor {
 	case "bet":
 		b.subBet()
@@ -311,9 +373,58 @@ func (b *Board) subBet() {
 
 // =============================================================================
 
+// printPlayers draws the players information on the screen.
+func (b *Board) printPlayers() {
+	const balWidth = 15
+	var pot float64
+
+	for i, p := range b.players {
+		pot += b.ante
+
+		addrY := columnHeight + 2 + i
+		addr := fmt.Sprintf("%s...%s", p.address[:5], p.address[39:])
+		bal := fmt.Sprintf("%*s", balWidth, p.balance)
+		if p.active {
+			b.print(playersX, addrY, "->")
+		}
+		b.print(playersX+4, addrY, addr)
+		b.print(betX, addrY, p.lastBet)
+		b.print(boardWidth-(balWidth+2), addrY, bal)
+	}
+
+	b.printPot(pot)
+	b.screen.Show()
+}
+
+// printPot draws the pot information on the screen.
+func (b *Board) printPot(pot float64) {
+	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
+}
+
+// printDice draws the players dice on the screen.
+func (b *Board) printDice() {
+	dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", b.dice[0], b.dice[1], b.dice[2], b.dice[3], b.dice[4])
+	b.print(myDiceX, myDiceY, dice)
+}
+
+// printAnte draws the ante on the board.
+func (b *Board) printAnte() {
+	b.print(anteX, anteY, fmt.Sprintf("$%.2f", b.ante))
+}
+
 // message adds a message to the message center.
-func (b *Board) message(message string) {
-	b.print(3, messageHeight+2, message)
+func (b *Board) printMessage(message string) {
+	const width = boardWidth - 4
+	msg := fmt.Sprintf("%-*s", width, message)
+
+	b.messages[2] = b.messages[1]
+	b.messages[1] = b.messages[0]
+	b.messages[0] = msg
+
+	b.print(3, messageHeight+2, b.messages[0])
+	b.print(3, messageHeight+3, b.messages[1])
+	b.print(3, messageHeight+4, b.messages[2])
+
 	b.screen.Show()
 }
 
