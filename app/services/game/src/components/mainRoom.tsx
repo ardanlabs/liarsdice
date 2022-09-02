@@ -10,24 +10,44 @@ import Footer from './footer'
 import { appConfig } from '../types/index.d'
 import useEthersConnection from './hooks/useEthersConnection'
 
-interface MainRoomProps {}
-const MainRoom = (props: MainRoomProps) => {
+// MainRoom component
+function MainRoom() {
+  // Extracts navigate from useNavigate Hook
   const navigate = useNavigate()
+
+  // Extracts state (a prop send by the router) from useLocation Hook
   const { state } = useLocation()
-  let { game } = useContext(GameContext),
-    roundInterval: NodeJS.Timer
 
-  const // Timer time in seconds
-    timeoutTime = 30,
-    // Get the timer that's set inside the sessionStorage
-    sessionTimer = window.sessionStorage.getItem('round_timer')
-      ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
-      : timeoutTime,
-    [timer, setTimer] = useState(sessionTimer),
-    { account } = useEthersConnection(),
-    { addOut, setPlayerDice } = useGame()
+  // Extracts game from the gameContext using useContext Hook
+  let { game } = useContext(GameContext)
 
-  const resetTimer = () => {
+  // Extracts account from ethersConnection Hook
+  const { account } = useEthersConnection()
+
+  // Extracts addOut and setPlayerDice from useGame Hook
+  const { addOut, setPlayerDice } = useGame()
+
+  // Extracts function to connect to ws (connect)
+  // and websocket current status from useWebSocket Hook
+  const { connect, wsStatus } = useWebSocket(resetTimer)
+
+  // ------------------Timer-------------------
+  // Round Interval timer.
+  let roundInterval: NodeJS.Timer
+
+  // Timer time in seconds
+  const timeoutTime = 30
+
+  // Get the timer that's set inside the sessionStorage
+  const sessionTimer = window.sessionStorage.getItem('round_timer')
+    ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
+    : timeoutTime
+
+  // Creates a state to handle the timer
+  const [timer, setTimer] = useState(sessionTimer)
+
+  // Sets timer to 0 and removes it from every place is stored at.
+  function resetTimer(): void {
     window.sessionStorage.removeItem('round_timer')
     clearInterval(roundInterval)
     setTimer(timeoutTime)
@@ -61,10 +81,10 @@ const MainRoom = (props: MainRoomProps) => {
     return () => clearInterval(roundInterval)
   }, [timer, account, game.player_order, game.current_cup, game.status])
 
-  const { connect, wsStatus } = useWebSocket(resetTimer)
+  // ---------------Finish timer----------------
 
-  // First render effect to connect the websocket, clear the round timer and set Player dice if needed.
-  useEffect(() => {
+  // Connects to websocket depending on status.
+  function connectToWs() {
     if (
       wsStatus.current !== 'open' &&
       wsStatus.current !== 'attemptingConnection'
@@ -72,20 +92,42 @@ const MainRoom = (props: MainRoomProps) => {
       connect()
       wsStatus.current = 'attemptingConnection'
     }
+  }
+  // First render effect to connect the websocket, clear the round timer and set Player dice if needed.
+  useEffect(() => {
+    connectToWs()
+
+    // Sets the player dice with the localstore value
     setPlayerDice(
       JSON.parse(window.localStorage.getItem('playerDice') as string),
     )
+
+    // Given that this is the first component that access the game,
+    // we set the playerDice item on localStorage with it's zero value.
     if (!window.localStorage.getItem('playerDice')) {
       window.localStorage.setItem('playerDice', JSON.stringify([]))
     }
+
+    // We set the timer with the sessionStorage value.
+    // This is to persit the value on refresh.
     setTimer(parseInt(window.sessionStorage.getItem('round_timer') as string))
+
+    // An empty dependecies array triggers useEffect only on the first render of the component
+    // We disable the next line so eslint doens't complain about missing dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    if (!account || !token() || !(state as appConfig)) {
-      navigate('/')
+    //
+    function checkAuth() {
+      if (!account || !token() || !(state as appConfig)) {
+        navigate('/')
+      }
     }
+
+    // We handle if the user is logged and has a token. If not, we send it to the login
+    checkAuth()
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account, state])
 
