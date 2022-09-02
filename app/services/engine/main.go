@@ -35,6 +35,12 @@ import (
 	Can I send money to a contract address after contract is in place?
 
 	-- Browser UI
+	Reach at least 80% testing coverage.
+	Make the network change work.
+	Change players inditifiers from addresses to names.
+	// Maybe?? 
+	Add subtle animations to some game elements (For Ex. Cups).
+	Make the game playable on mobile.
 
 	-- Terminal UI
 	Finish basic game play
