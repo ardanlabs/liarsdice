@@ -32,7 +32,6 @@ const useWebSocket = (resetTimer: Function) => {
       }
       ws.onmessage = (evt: MessageEvent) => {
         updateStatus()
-
         if (evt.data) {
           let message = JSON.parse(evt.data)
           const account = shortenIfAddress(message.address)

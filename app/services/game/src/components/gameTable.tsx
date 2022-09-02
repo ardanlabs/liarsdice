@@ -12,16 +12,17 @@ import SideBar from './sidebar'
 
 interface GameTableProps {
   timer: number
-  playerDice: dice
 }
 
 const GameTable: FC<GameTableProps> = (GameTableProps) => {
-  const { timer, playerDice } = GameTableProps
+  const { timer } = GameTableProps
   const { game } = useContext(GameContext)
   const { account } = useEthersConnection()
   const { gamePot } = useGame()
   const notificationCenterWidth = '340px'
-
+  const playerDice = JSON.parse(
+    window.localStorage.getItem('playerDice') as string,
+  ) as dice
   return (
     <div
       style={{

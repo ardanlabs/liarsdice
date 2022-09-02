@@ -84,9 +84,8 @@ const useGame = () => {
 
   // Effect to persits players dice
   useEffect(() => {
-    if (playerDice.length) {
+    if (playerDice?.length)
       window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
-    }
   }, [playerDice])
 
   const rolldice = () => {

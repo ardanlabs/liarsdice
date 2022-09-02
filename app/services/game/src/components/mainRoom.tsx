@@ -25,7 +25,7 @@ const MainRoom = (props: MainRoomProps) => {
       : timeoutTime,
     [timer, setTimer] = useState(sessionTimer),
     { account } = useEthersConnection(),
-    { playerDice, setPlayerDice, addOut } = useGame()
+    { addOut, setPlayerDice } = useGame()
 
   const resetTimer = () => {
     window.sessionStorage.removeItem('round_timer')
@@ -65,11 +65,19 @@ const MainRoom = (props: MainRoomProps) => {
 
   // First render effect to connect the websocket, clear the round timer and set Player dice if needed.
   useEffect(() => {
-    connect()
-    wsStatus.current = 'attemptingConnection'
+    if (
+      wsStatus.current !== 'open' &&
+      wsStatus.current !== 'attemptingConnection'
+    ) {
+      wsStatus.current = 'attemptingConnection'
+      connect()
+    }
     setPlayerDice(
       JSON.parse(window.localStorage.getItem('playerDice') as string),
     )
+    if (!window.localStorage.getItem('playerDice')) {
+      window.localStorage.setItem('playerDice', JSON.stringify([]))
+    }
     setTimer(parseInt(window.sessionStorage.getItem('round_timer') as string))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -99,7 +107,7 @@ const MainRoom = (props: MainRoomProps) => {
         }}
         id="mainRoom"
       >
-        <GameTable playerDice={playerDice} timer={timer} />
+        <GameTable timer={timer} />
       </div>
       <Footer />
     </div>

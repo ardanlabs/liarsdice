@@ -11,8 +11,6 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 export const getAppConfig = axios
   .get(`http://${apiUrl}/config`)
   .then((response: AxiosResponse) => {
-    console.log(response)
-
     const data = response.data
     return data
   })

@@ -26,6 +26,7 @@ const SideBar = (props: SideBarProps) => {
         position: 'fixed',
         top: '95px',
         width: `${notificationCenterWidth}`,
+        zIndex: '3',
       }}
     >
       <SidebarDetails ante={ante} round={round} pot={gamePot} />

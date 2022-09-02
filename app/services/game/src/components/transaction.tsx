@@ -70,7 +70,7 @@ const Transaction = (props: transactionProps) => {
             if (transaction.status !== 1) {
               toast.error(`${action} failed`)
             } else {
-              updateBalance(-1)
+              updateBalance()
               setInputValue('')
               toast.info(`${action} successful`)
             }
