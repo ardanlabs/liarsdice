@@ -28,6 +28,10 @@ import (
 	Build CLI based version of the game flow for easier use and testing.
 	We could choose a random person to start a new game from those that join.
 	Add names to addresses on connect call.
+	Add a Drain function to the smart contract.
+	Add a account fix function to adjust balances.
+	Can I check contract balance against the account distribution?
+	Can I send money to a contract address after contract is in place?
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.
