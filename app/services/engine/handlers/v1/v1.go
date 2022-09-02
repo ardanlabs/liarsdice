@@ -44,13 +44,13 @@ func Routes(app *web.App, cfg Config) {
 		BankTimeout: cfg.BankTimeout,
 	}
 
+	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
 	app.Handle(http.MethodGet, version, "/game/config", ggh.Configuration)
 	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
 	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", ggh.USD2Wei)
 
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
 
-	app.Handle(http.MethodGet, version, "/game/events", ggh.Events, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Log, cfg.Auth))
 
