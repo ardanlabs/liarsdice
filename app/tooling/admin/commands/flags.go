@@ -10,16 +10,18 @@ import (
 )
 
 const usage = `Usage:
-	admin -d 
-	admin -t 0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3
+	admin -d -c 0xE7811C584E23419e1952fa3158DEED345901bd0e
+	admin -a 1000.00 -c 0xE7811C584E23419e1952fa3158DEED345901bd0e
 	admin -b 0x8e113078adf6888b7ba84967f299f29aece24c55 -c 0xE7811C584E23419e1952fa3158DEED345901bd0e
+	admin -t 0x46e40587966f02f5dff2cc63d3ff29a01e963a5360cf05094b54ad9dbc230dd3
 
 Options:
 	-d, --deploy     Deploy the smart contract.
-	-t, --tx         Show transaction details for the specified transaction hash.
 	-b, --balance    Show the smart contract balance for the specified account.
 	-w, --wallet     Show the wallet balance for the keyfile account.
-	-x, --xdraw      Withdraw money from the contract to the keyfile account.
+	-a, --addmoney   Deposit USD into the game contract.
+	-r, --rmvmoney   Withdraw money from the game contract.
+	-t, --tx         Show transaction details for the specified transaction hash.
 
 	-c, --contract   Provides the contract id for required calls.
 	-n, --network    Sets the network to use. Default: zarf/ethereum/geth.ipc
@@ -48,6 +50,7 @@ type Values struct {
 	Address          string
 	ContractID       string
 	CoinMarketCapKey string
+	Amount           float64
 }
 
 // Parse will parse the environment variables and command line flags. The command
@@ -65,6 +68,7 @@ func Parse() (Flags, Values, error) {
 		Network:          contract.NetworkLocalhost,
 		KeyFile:          keyFile,
 		PassPhrase:       passPhrase,
+		ContractID:       os.Getenv("GAME_CONTRACT_ID"),
 		CoinMarketCapKey: coinMarketCapKey,
 	}
 	flags := parseCmdline(&v)
@@ -93,13 +97,15 @@ func parseCmdline(v *Values) Flags {
 	flag.StringVar(&v.PassPhrase, "passphrase", v.PassPhrase, "pass phrase for the key file")
 	flag.StringVar(&v.CoinMarketCapKey, "m", v.CoinMarketCapKey, "key for the coin market cap api")
 	flag.StringVar(&v.CoinMarketCapKey, "market", v.CoinMarketCapKey, "key for the coin market cap api")
+	flag.Float64Var(&v.Amount, "a", v.Amount, "deposit money into the game contract")
+	flag.Float64Var(&v.Amount, "addmoney", v.Amount, "deposit money into the game contract")
 
 	flag.Bool("d", false, "deploy the smart contract")
 	flag.Bool("deploy", false, "deploy the smart contract")
 	flag.Bool("w", false, "show the wallet balance")
 	flag.Bool("wallet", false, "show the wallet balance")
-	flag.Bool("x", false, "withdraw money from the contract")
-	flag.Bool("xdraw", false, "withdraw money from the contract")
+	flag.Bool("r", false, "withdraw money from the game contract")
+	flag.Bool("rmvmoney", false, "withdraw money from the game contract")
 
 	flag.Parse()
 

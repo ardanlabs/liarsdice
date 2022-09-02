@@ -100,7 +100,7 @@ func New(ctx context.Context, converter Converter, banker Banker, owner string, 
 	// If comparison is negative, the player has no balance.
 	anteGwei := converter.USD2GWei(big.NewFloat(anteUSD))
 	if balance.Cmp(anteGwei) < 0 {
-		return nil, fmt.Errorf("account [%s] does not have enough balance to play", owner)
+		return nil, fmt.Errorf("account [%s] does not have enough balance to play, balance[%v]", owner, balance)
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())

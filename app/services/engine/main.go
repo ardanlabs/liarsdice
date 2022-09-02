@@ -33,12 +33,14 @@ import (
 	Add a account fix function to adjust balances.
 	Can I check contract balance against the account distribution?
 	Can I send money to a contract address after contract is in place?
+	Change JS tags from _ to camel case.
 
 	-- Browser UI
 	Convert everything into functions.
 	Make the network change work.
 	Add subtle animations to some game elements (For Ex. Cups).
 	Change players inditifiers from addresses to names.
+	Change JS tags from _ to camel case.
 
 	-- Terminal UI
 	Finish basic game play.

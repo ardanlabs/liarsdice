@@ -15,8 +15,22 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
-// Withdraw will remove any balance from the contract back into the calling account.
-func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
+// Deposit will move money from the wallet into the game contract.
+func Deposit(ctx context.Context, converter currency.Converter, bank *bank.Bank, amountUSD float64) error {
+	amountGWei := converter.USD2GWei(big.NewFloat(amountUSD))
+	tx, receipt, err := bank.Deposit(ctx, amountGWei)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(converter.FmtTransaction(tx))
+	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
+
+	return nil
+}
+
+// Withdraw will remove money from the game contract back into the wallet.
+func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank) error {
 	tx, receipt, err := bank.Withdraw(ctx)
 	if err != nil {
 		return err
@@ -88,7 +102,7 @@ func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 }
 
 // Wallet returns the current wallet balance
-func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
+func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank) error {
 	wei, err := bank.WalletBalance(ctx)
 	if err != nil {
 		return err
@@ -104,15 +118,15 @@ func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 }
 
 // Balance returns the current balance of the specified address.
-func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
-	gwei, err := bank.AccountBalance(ctx, v.Address)
+func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank, address string) error {
+	gwei, err := bank.AccountBalance(ctx, address)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("\nGame Balance")
 	fmt.Println("----------------------------------------------------")
-	fmt.Println("account         :", v.Address)
+	fmt.Println("account         :", address)
 	fmt.Println("wei             :", currency.GWei2Wei(gwei))
 	fmt.Println("gwei            :", gwei)
 	fmt.Println("usd             :", converter.GWei2USD(gwei))
@@ -122,8 +136,8 @@ func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank,
 
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) error {
-	txHash := common.HexToHash(v.Hex)
+func Transaction(ctx context.Context, converter currency.Converter, bank *bank.Bank, hex string) error {
+	txHash := common.HexToHash(hex)
 	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
 	if err != nil {
 		return err

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ardanlabs/liarsdice/app/cli/liars/client"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 )
@@ -19,22 +20,20 @@ const (
 	potX          = 40
 	potY          = 9
 	helpX         = 65
-	configY       = 15
+	statusY       = 14
 )
 
 // Game positioning values for user input.
 const (
-	depositRowX = 11
-	depositRowY = 19
-	betRowX     = 13
-	betRowY     = 10
+	betRowX = 13
+	betRowY = 10
 )
 
 // Game positioning values for changing values.
 const (
 	columnHeight = 2
 	playersX     = 3
-	betX         = 30
+	betX         = 26
 	balX         = 50
 	myDiceX      = 13
 	myDiceY      = 8
@@ -122,16 +121,18 @@ func (b *Board) Init() {
 	b.print(anteX-6, anteY, "Ante:")
 	b.print(potX-6, potY, "Pot :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
-	b.print(depositRowX-10, depositRowY, "Deposit :>")
 	b.print(helpX, 2, "<1-6>    : set/increment bet")
 	b.print(helpX, 3, "<delete> : decrement bet")
-	b.print(helpX, 4, "<b>      : place bet")
+	b.print(helpX, 4, "<enter>  : place bet")
 	b.print(helpX, 5, "<l>      : call liar")
-	b.print(helpX, 6, "<d>      : deposit funds")
-	b.print(helpX, configY, "network  :")
-	b.print(helpX, configY+1, "chainid  :")
-	b.print(helpX, configY+2, "contract :")
-	b.print(helpX, configY+3, "address  :")
+	b.print(helpX, statusY-6, "status   :")
+	b.print(helpX, statusY-5, "round    :")
+	b.print(helpX, statusY-4, "lastwin  :")
+	b.print(helpX, statusY-3, "lastlose :")
+	b.print(helpX, statusY, "network  :")
+	b.print(helpX, statusY+1, "chainid  :")
+	b.print(helpX, statusY+2, "contract :")
+	b.print(helpX, statusY+3, "address  :")
 
 	b.betMode()
 }
@@ -222,18 +223,26 @@ func (b *Board) SetDice(dice []int) error {
 	return nil
 }
 
-// SetAnte displays the ante information.
-func (b *Board) SetAnte(ante float64) {
-	b.ante = ante
-	b.printAnte()
-}
-
 // SetSettings draws the settings on the board.
 func (b *Board) SetSettings(network string, chainID int, contractID string, address string) {
-	b.print(helpX+11, configY, network)
-	b.print(helpX+11, configY+1, fmt.Sprintf("%d", chainID))
-	b.print(helpX+11, configY+2, contractID)
-	b.print(helpX+11, configY+3, address)
+	b.print(helpX+11, statusY, network)
+	b.print(helpX+11, statusY+1, fmt.Sprintf("%d", chainID))
+	b.print(helpX+11, statusY+2, contractID)
+	b.print(helpX+11, statusY+3, address)
+}
+
+// SetStatus display the status information.
+func (b *Board) SetStatus(status client.Status) {
+	b.print(helpX+11, statusY-6, status.Status)
+	b.print(helpX+11, statusY-5, fmt.Sprintf("%d", status.Round))
+
+	if status.LastWinAcct != "" {
+		b.print(helpX+11, statusY-4, fmt.Sprintf("%s...%s", status.LastWinAcct[:5], status.LastWinAcct[39:]))
+		b.print(helpX+11, statusY-3, fmt.Sprintf("%s...%s", status.LastOutAcct[:5], status.LastOutAcct[39:]))
+	}
+
+	b.ante = status.AnteUSD
+	b.printAnte()
 }
 
 // =============================================================================
@@ -242,12 +251,6 @@ func (b *Board) SetSettings(network string, chainID int, contractID string, addr
 // pressed during the game.
 func (b *Board) processKeyEvent(r rune) {
 	switch {
-	case r == rune('d'):
-		b.depositMode()
-
-	case r == rune('b'):
-		b.betMode()
-
 	case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
 		b.value(r)
 
@@ -256,16 +259,11 @@ func (b *Board) processKeyEvent(r rune) {
 	}
 }
 
-var i int
-
 // enter is called to submit a bet or deposit.
 func (b *Board) enter() {
 	switch b.cursor {
 	case "bet":
 		b.betMode()
-
-	case "deposit":
-		b.depositMode()
 
 	default:
 		b.screen.Beep()
@@ -277,9 +275,6 @@ func (b *Board) delete() {
 	switch b.cursor {
 	case "bet":
 		b.subBet()
-
-	case "deposit":
-		b.subDeposit()
 
 	default:
 		b.screen.Beep()
@@ -296,59 +291,9 @@ func (b *Board) value(r rune) {
 		}
 		b.screen.Beep()
 
-	case "deposit":
-		b.addDeposit(r)
-
 	default:
 		b.screen.Beep()
 	}
-}
-
-// =============================================================================
-
-// depositMode puts the UI into the mode to accept deposit information and
-// process a deposit.
-func (b *Board) depositMode() {
-	b.cursor = "deposit"
-	b.deposit = []rune{}
-
-	b.screen.ShowCursor(depositRowX+1, depositRowY)
-	b.screen.SetContent(depositRowX, depositRowY, ' ', nil, b.style)
-	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
-
-	b.print(depositRowX, depositRowY, "                             ")
-	b.print(betRowX, betRowY, "                             ")
-}
-
-// addDeposit takes the value selected on the keyboard and adds it to the
-// deposit slice and screen.
-func (b *Board) addDeposit(r rune) {
-	if b.cursor != "deposit" {
-		b.screen.Beep()
-		return
-	}
-
-	x := depositRowX
-	b.deposit = append(b.deposit, r)
-	x += len(b.deposit)
-
-	b.screen.ShowCursor(x+1, depositRowY)
-	b.print(x, depositRowY, string(r))
-}
-
-// subDeposit removes a value from the deposit slice and screen.
-func (b *Board) subDeposit() {
-	if b.cursor != "deposit" || len(b.deposit) == 0 {
-		b.screen.Beep()
-		return
-	}
-
-	x := depositRowX
-	x += len(b.deposit)
-	b.deposit = b.deposit[:len(b.deposit)-1]
-
-	b.screen.ShowCursor(x, depositRowY)
-	b.print(x, depositRowY, " ")
 }
 
 // =============================================================================
@@ -363,7 +308,6 @@ func (b *Board) betMode() {
 	b.screen.SetContent(betRowX, betRowY, ' ', nil, b.style)
 	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
 
-	b.print(depositRowX, depositRowY, "                             ")
 	b.print(betRowX, betRowY, "                             ")
 }
 
@@ -410,11 +354,11 @@ func (b *Board) printPlayers() {
 
 		addrY := columnHeight + 2 + i
 		addr := fmt.Sprintf("%s...%s", p.address[:5], p.address[39:])
-		bal := fmt.Sprintf("%*s", balWidth, p.balance)
+		bal := fmt.Sprintf("%*s", balWidth, "$"+p.balance)
 		if p.active {
 			b.print(playersX, addrY, "->")
 		}
-		b.print(playersX+4, addrY, addr)
+		b.print(playersX+2, addrY, addr)
 		b.print(betX, addrY, p.lastBet)
 		b.print(boardWidth-(balWidth+2), addrY, bal)
 	}
