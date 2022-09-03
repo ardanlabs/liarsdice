@@ -20,7 +20,7 @@ const (
 	potX          = 40
 	potY          = 9
 	helpX         = 65
-	statusY       = 14
+	statusY       = 13
 )
 
 // Game positioning values for user input.
@@ -123,16 +123,17 @@ func (b *Board) Init() {
 	b.print(betRowX-9, betRowY, "My Bet :>")
 	b.print(helpX, 2, "<1-6>    : set/increment bet")
 	b.print(helpX, 3, "<delete> : decrement bet")
-	b.print(helpX, 4, "<enter>  : place bet")
+	b.print(helpX, 4, "<s>      : start game")
 	b.print(helpX, 5, "<l>      : call liar")
 	b.print(helpX, statusY-6, "status   :")
 	b.print(helpX, statusY-5, "round    :")
 	b.print(helpX, statusY-4, "lastwin  :")
 	b.print(helpX, statusY-3, "lastlose :")
-	b.print(helpX, statusY, "network  :")
-	b.print(helpX, statusY+1, "chainid  :")
-	b.print(helpX, statusY+2, "contract :")
-	b.print(helpX, statusY+3, "address  :")
+	b.print(helpX, statusY, "engine   :")
+	b.print(helpX, statusY+1, "blockchn :")
+	b.print(helpX, statusY+2, "chainid  :")
+	b.print(helpX, statusY+3, "contract :")
+	b.print(helpX, statusY+4, "address  :")
 
 	b.betMode()
 }
@@ -224,11 +225,12 @@ func (b *Board) SetDice(dice []int) error {
 }
 
 // SetSettings draws the settings on the board.
-func (b *Board) SetSettings(network string, chainID int, contractID string, address string) {
-	b.print(helpX+11, statusY, network)
-	b.print(helpX+11, statusY+1, fmt.Sprintf("%d", chainID))
-	b.print(helpX+11, statusY+2, contractID)
-	b.print(helpX+11, statusY+3, address)
+func (b *Board) SetSettings(engine string, network string, chainID int, contractID string, address string) {
+	b.print(helpX+11, statusY, engine)
+	b.print(helpX+11, statusY+1, network)
+	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", chainID))
+	b.print(helpX+11, statusY+3, b.FmtAddress(contractID))
+	b.print(helpX+11, statusY+4, b.FmtAddress(address))
 }
 
 // SetStatus display the status information.
@@ -237,12 +239,20 @@ func (b *Board) SetStatus(status client.Status) {
 	b.print(helpX+11, statusY-5, fmt.Sprintf("%d", status.Round))
 
 	if status.LastWinAcct != "" {
-		b.print(helpX+11, statusY-4, fmt.Sprintf("%s...%s", status.LastWinAcct[:5], status.LastWinAcct[39:]))
-		b.print(helpX+11, statusY-3, fmt.Sprintf("%s...%s", status.LastOutAcct[:5], status.LastOutAcct[39:]))
+		b.print(helpX+11, statusY-4, b.FmtAddress(status.LastWinAcct))
+		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastOutAcct))
 	}
 
 	b.ante = status.AnteUSD
 	b.printAnte()
+}
+
+// FmtAddress provides a shortened version of an address.
+func (*Board) FmtAddress(address string) string {
+	if len(address) != 42 {
+		return address
+	}
+	return fmt.Sprintf("%s..%s", address[:5], address[39:])
 }
 
 // =============================================================================
@@ -253,6 +263,12 @@ func (b *Board) processKeyEvent(r rune) {
 	switch {
 	case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
 		b.value(r)
+
+	case r == rune('s'):
+		b.PrintMessage("START GAME")
+
+	case r == rune('l'):
+		b.PrintMessage("CALL LIAR")
 
 	default:
 		b.screen.Beep()
@@ -353,7 +369,7 @@ func (b *Board) printPlayers() {
 		pot += b.ante
 
 		addrY := columnHeight + 2 + i
-		addr := fmt.Sprintf("%s...%s", p.address[:5], p.address[39:])
+		addr := b.FmtAddress(p.address)
 		bal := fmt.Sprintf("%*s", balWidth, "$"+p.balance)
 		if p.active {
 			b.print(playersX, addrY, "->")

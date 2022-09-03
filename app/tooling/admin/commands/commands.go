@@ -43,7 +43,7 @@ func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank
 }
 
 // Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, v Values) (err error) {
+func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, args Args) (err error) {
 	client := bank.Client()
 
 	startingBalance, err := client.CurrentBalance(ctx)
@@ -83,7 +83,7 @@ func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 
 	// =========================================================================
 
-	clientWait, err := contract.NewClient(ctx, v.Network, v.KeyFile, v.PassPhrase)
+	clientWait, err := contract.NewClient(ctx, args.Network, args.KeyFile, args.PassPhrase)
 	if err != nil {
 		return err
 	}
