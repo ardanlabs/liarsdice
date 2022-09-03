@@ -15,7 +15,7 @@ Usage:
 
 Options:
 	-e, --engine     The url of the game engine. Default: http://0.0.0.0:3000
-	-a, --address    The players public address. Default: 6327a38415c53ffb36c11db55ea74cc9cb4976fd
+	-a, --address    The players public address. Default: 0x6327a38415c53ffb36c11db55ea74cc9cb4976fd
 `
 
 // PrintUsage displays the usage information.
@@ -39,7 +39,7 @@ type Args struct {
 func Parse() (Flags, Args, error) {
 	const (
 		engine  = "http://0.0.0.0:3000"
-		address = "6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+		address = "0x6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	)
 
 	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }

@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/board"
-	"github.com/ardanlabs/liarsdice/app/cli/liars/client"
+	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 	"github.com/ardanlabs/liarsdice/app/cli/liars/settings"
 )
 
@@ -39,8 +40,8 @@ func run() error {
 	// =========================================================================
 	// Establish a client connection to the game engine.
 
-	client := client.New(args.Engine)
-	token, err := client.Connect(keyStorePath, args.Address, passPhrase)
+	eng := engine.New(args.Engine)
+	token, err := eng.Connect(keyStorePath, args.Address, passPhrase)
 	if err != nil {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}
@@ -48,7 +49,7 @@ func run() error {
 	// =========================================================================
 	// Initialize the board and display the configuration and token information.
 
-	board, err := initalizeBoard(args.Engine, client, token)
+	board, err := initalizeBoard(eng, token)
 	if err != nil {
 		return err
 	}
@@ -60,33 +61,54 @@ func run() error {
 	events := func(event string, address string) {
 		message := fmt.Sprintf("type: %s  addr: %s", event, board.FmtAddress(address))
 		board.PrintMessage(message)
+
+		switch event {
+		case "join":
+			status, err := eng.QueryStatus()
+			if err != nil {
+				return
+			}
+			board.PrintStatus(status)
+		}
 	}
-	teardown, err := client.Events(events)
+	teardown, err := eng.Events(events)
 	if err != nil {
 		return err
 	}
 	defer teardown()
 
 	// =========================================================================
-	// Get the current game status
+	// Start or join the game.
 
-	status, err := client.Status()
+	status, err := eng.QueryStatus()
 	if err != nil {
-
-		// No Game exists so let's create a game.
-		status, err = client.NewGame()
+		status, err = eng.NewGame()
 		if err != nil {
 			return err
 		}
 	}
 
-	board.SetStatus(status)
-
-	balance, err := client.Balance()
-	if err != nil {
-		return err
+	var found bool
+	for _, address := range status.CupsOrder {
+		if strings.EqualFold(address, args.Address) {
+			found = true
+			break
+		}
 	}
-	board.AddPlayer(token.Address, balance)
+
+	if !found {
+		status, err = eng.JoinGame()
+		if err != nil {
+			return err
+		}
+	}
+	board.PrintStatus(status)
+
+	// balance, err := eng.Balance()
+	// if err != nil {
+	// 	return err
+	// }
+	// board.AddPlayer(token.Address, balance)
 
 	// board.ActivePlayer("0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd")
 
@@ -99,8 +121,8 @@ func run() error {
 }
 
 // initalizeBoard draws the board with the configuation.
-func initalizeBoard(engine string, client *client.Client, token client.Token) (*board.Board, error) {
-	config, err := client.Configuration()
+func initalizeBoard(engine *engine.Engine, token engine.Token) (*board.Board, error) {
+	config, err := engine.Configuration()
 	if err != nil {
 		return nil, fmt.Errorf("get game configuration: %w", err)
 	}
@@ -111,7 +133,7 @@ func initalizeBoard(engine string, client *client.Client, token client.Token) (*
 	}
 
 	board.Init()
-	board.SetSettings(engine, config.Network, config.ChainID, config.ContractID, token.Address)
+	board.SetSettings(engine.URL(), config.Network, config.ChainID, config.ContractID, token.Address)
 
 	return board, nil
 }

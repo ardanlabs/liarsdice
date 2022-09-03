@@ -43,7 +43,7 @@ func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank
 }
 
 // Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, args Args) (err error) {
+func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, args Args, keyFile string) (err error) {
 	client := bank.Client()
 
 	startingBalance, err := client.CurrentBalance(ctx)
@@ -83,7 +83,7 @@ func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 
 	// =========================================================================
 
-	clientWait, err := contract.NewClient(ctx, args.Network, args.KeyFile, args.PassPhrase)
+	clientWait, err := contract.NewClient(ctx, args.Network, keyFile, args.PassPhrase)
 	if err != nil {
 		return err
 	}
@@ -136,8 +136,8 @@ func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank,
 
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter currency.Converter, bank *bank.Bank, hex string) error {
-	txHash := common.HexToHash(hex)
+func Transaction(ctx context.Context, converter currency.Converter, bank *bank.Bank, tranID string) error {
+	txHash := common.HexToHash(tranID)
 	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
 	if err != nil {
 		return err

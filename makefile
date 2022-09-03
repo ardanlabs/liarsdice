@@ -13,6 +13,11 @@
 #   eth.getBlockByNumber(8)
 #   eth.getTransaction("0xaea41e7c13a7ea627169c74ade4d5ea86664ff1f740cd90e499f3f842656d4ad")
 #
+# make geth-deposit
+# ./admin -a 1000.00 -f 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd -c 0x531130464929826c57BBBF989e44085a02eeB120
+# ./admin -a 1000.00 -f 0x8e113078adf6888b7ba84967f299f29aece24c55 -c 0x531130464929826c57BBBF989e44085a02eeB120
+# ./admin -a 1000.00 -f 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -c 0x531130464929826c57BBBF989e44085a02eeB120
+#
 # Web3 API
 # https://web3js.readthedocs.io/en/v1.7.4/
 
@@ -29,8 +34,11 @@ dev.setup:
 game-up:
 	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
-game-tui:
+game-tui1:
 	go run app/cli/liars/main.go
+
+game-tui2:
+	go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
 
 react-install:
 	npm install --prefix app/services/game/

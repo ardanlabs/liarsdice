@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"os"
 	"testing"
 	"time"
 
@@ -29,7 +28,11 @@ const (
 )
 
 func Test_PlayerBalance(t *testing.T) {
-	contractID := deployContract()
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -81,7 +84,11 @@ func Test_PlayerBalance(t *testing.T) {
 }
 
 func Test_Withdraw(t *testing.T) {
-	contractID := deployContract()
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -156,7 +163,11 @@ func Test_Withdraw(t *testing.T) {
 }
 
 func Test_WithdrawWithoutBalance(t *testing.T) {
-	contractID := deployContract()
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -173,7 +184,11 @@ func Test_WithdrawWithoutBalance(t *testing.T) {
 }
 
 func Test_Reconcile(t *testing.T) {
-	contractID := deployContract()
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -266,7 +281,7 @@ func Test_Reconcile(t *testing.T) {
 
 // =============================================================================
 
-func deployContract() string {
+func deployContract() (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -275,10 +290,10 @@ func deployContract() string {
 	contractID, err := smartContract(ctx)
 	if err != nil {
 		fmt.Println("error deploying a new contract:", err)
-		os.Exit(1)
+		return "", err
 	}
 
-	return contractID
+	return contractID, nil
 }
 
 func smartContract(ctx context.Context) (string, error) {

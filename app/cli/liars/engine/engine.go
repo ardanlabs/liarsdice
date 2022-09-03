@@ -1,5 +1,5 @@
-// Package client provides access to the game engine.
-package client
+// Package engine provides access to the game engine.
+package engine
 
 import (
 	"bytes"
@@ -18,22 +18,27 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Client provides access to the game engine API.
-type Client struct {
+// Engine provides access to the game engine API.
+type Engine struct {
 	url   string
 	token string
 }
 
 // New constructs a client that provides access to the game engine.
-func New(url string) *Client {
+func New(url string) *Engine {
 	url = strings.TrimSuffix(url, "/")
-	return &Client{
+	return &Engine{
 		url: url,
 	}
 }
 
+// URL returns the url of the game engine.
+func (e *Engine) URL() string {
+	return e.url
+}
+
 // Connect authenticates the use to the game engine.
-func (c *Client) Connect(keyStorePath string, address string, passPhrase string) (Token, error) {
+func (e *Engine) Connect(keyStorePath string, address string, passPhrase string) (Token, error) {
 	keyFile, err := findKeyFile(keyStorePath, address)
 	if err != nil {
 		return Token{}, fmt.Errorf("find key file: %w", err)
@@ -68,21 +73,21 @@ func (c *Client) Connect(keyStorePath string, address string, passPhrase string)
 		return Token{}, fmt.Errorf("marshal: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/v1/game/connect", c.url)
+	url := fmt.Sprintf("%s/v1/game/connect", e.url)
 
 	var token Token
-	if err := c.do(url, &token, data); err != nil {
+	if err := e.do(url, &token, data); err != nil {
 		return Token{}, err
 	}
 
-	c.token = token.Token
+	e.token = token.Token
 
 	return token, nil
 }
 
 // Events establishes a web socket connection to the game engine.
-func (c *Client) Events(f func(event string, address string)) (func(), error) {
-	url := strings.Replace(c.url, "http", "ws", 1)
+func (e *Engine) Events(f func(event string, address string)) (func(), error) {
+	url := strings.Replace(e.url, "http", "ws", 1)
 	url = fmt.Sprintf("%s/v1/game/events", url)
 
 	socket, _, err := websocket.DefaultDialer.Dial(url, nil)
@@ -123,23 +128,23 @@ func (c *Client) Events(f func(event string, address string)) (func(), error) {
 }
 
 // Configuration returns the configuration of the game engine.
-func (c *Client) Configuration() (Config, error) {
-	url := fmt.Sprintf("%s/v1/game/config", c.url)
+func (e *Engine) Configuration() (Config, error) {
+	url := fmt.Sprintf("%s/v1/game/config", e.url)
 
 	var config Config
-	if err := c.do(url, &config, nil); err != nil {
+	if err := e.do(url, &config, nil); err != nil {
 		return Config{}, err
 	}
 
 	return config, nil
 }
 
-// Status starts a new game on the game engine.
-func (c *Client) Status() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/status", c.url)
+// QueryStatus starts a new game on the game engine.
+func (e *Engine) QueryStatus() (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/status", e.url)
 
 	var status Status
-	if err := c.do(url, &status, nil); err != nil {
+	if err := e.do(url, &status, nil); err != nil {
 		return Status{}, err
 	}
 
@@ -147,11 +152,11 @@ func (c *Client) Status() (Status, error) {
 }
 
 // NewGame starts a new game on the game engine.
-func (c *Client) NewGame() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/new", c.url)
+func (e *Engine) NewGame() (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/new", e.url)
 
 	var status Status
-	if err := c.do(url, &status, nil); err != nil {
+	if err := e.do(url, &status, nil); err != nil {
 		return Status{}, err
 	}
 
@@ -159,13 +164,13 @@ func (c *Client) NewGame() (Status, error) {
 }
 
 // Balance returns the accounts balance.
-func (c *Client) Balance() (string, error) {
-	url := fmt.Sprintf("%s/v1/game/balance", c.url)
+func (e *Engine) Balance() (string, error) {
+	url := fmt.Sprintf("%s/v1/game/balance", e.url)
 
 	var account struct {
 		Balance string `json:"balance"`
 	}
-	if err := c.do(url, &account, nil); err != nil {
+	if err := e.do(url, &account, nil); err != nil {
 		return "", err
 	}
 
@@ -173,11 +178,11 @@ func (c *Client) Balance() (string, error) {
 }
 
 // StartGame generates the five dice for the player.
-func (c *Client) StartGame() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/start", c.url)
+func (e *Engine) StartGame() (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/start", e.url)
 
 	var status Status
-	if err := c.do(url, &status, nil); err != nil {
+	if err := e.do(url, &status, nil); err != nil {
 		return Status{}, err
 	}
 
@@ -185,23 +190,35 @@ func (c *Client) StartGame() (Status, error) {
 }
 
 // RollDice generates the five dice for the player.
-func (c *Client) RollDice() ([]int, error) {
-	url := fmt.Sprintf("%s/v1/game/rolldice", c.url)
+func (e *Engine) RollDice() ([]int, error) {
+	url := fmt.Sprintf("%s/v1/game/rolldice", e.url)
 
 	var dice struct {
 		Dice []int `json:"dice"`
 	}
 
-	if err := c.do(url, &dice, nil); err != nil {
+	if err := e.do(url, &dice, nil); err != nil {
 		return nil, err
 	}
 
 	return dice.Dice, nil
 }
 
+// JoinGame adds a player to the current game.
+func (e *Engine) JoinGame() (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/join", e.url)
+
+	var status Status
+	if err := e.do(url, &status, nil); err != nil {
+		return Status{}, err
+	}
+
+	return status, nil
+}
+
 // =============================================================================
 
-func (c Client) do(url string, result interface{}, input []byte) error {
+func (e Engine) do(url string, result interface{}, input []byte) error {
 	var req *http.Request
 	var err error
 
@@ -216,7 +233,7 @@ func (c Client) do(url string, result interface{}, input []byte) error {
 		return fmt.Errorf("new request: %w", err)
 	}
 
-	req.Header.Add("authorization", fmt.Sprintf("bearer %s", c.token))
+	req.Header.Add("authorization", fmt.Sprintf("bearer %s", e.token))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -254,7 +271,7 @@ func findKeyFile(keyStorePath string, address string) (string, error) {
 			return nil
 		}
 
-		if strings.Contains(fileName, fileName) {
+		if strings.Contains(fileName, address[2:]) {
 			filePath = fmt.Sprintf("%s/%s", keyStorePath, fileName)
 			return errFound
 		}

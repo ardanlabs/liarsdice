@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ardanlabs/liarsdice/app/cli/liars/client"
+	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 )
@@ -41,14 +41,6 @@ const (
 
 // =============================================================================
 
-// player represents a player in the game.
-type player struct {
-	address string
-	lastBet string
-	balance string
-	active  bool
-}
-
 // Board represents the game board and all its state.
 type Board struct {
 	screen   tcell.Screen
@@ -57,9 +49,7 @@ type Board struct {
 	bets     []rune
 	deposit  []rune
 	messages []string
-	players  []*player
 	dice     []int
-	ante     float64
 }
 
 // New contructs a game board.
@@ -184,34 +174,6 @@ func (b *Board) StartEventLoop() chan struct{} {
 	return quit
 }
 
-// AddPlayer adds a player to the list of players.
-func (b *Board) AddPlayer(address string, balance string) {
-	b.players = append(b.players, &player{address: address, balance: balance})
-	b.printPlayers()
-}
-
-// NextPlayer sets the player as the active player.
-func (b *Board) ActivePlayer(address string) {
-	for i := range b.players {
-		b.players[i].active = false
-		if b.players[i].address == address {
-			b.players[i].active = true
-		}
-	}
-	b.printPlayers()
-}
-
-// UpdatePlayerBet updates the players last bet.
-func (b *Board) UpdatePlayerBet(address string, lastBet string) {
-	for i := range b.players {
-		if b.players[i].address == address {
-			b.players[i].lastBet = lastBet
-			break
-		}
-	}
-	b.printPlayers()
-}
-
 // SetDice captures the dice for the player and displays them.
 func (b *Board) SetDice(dice []int) error {
 	if len(dice) != 5 {
@@ -233,8 +195,8 @@ func (b *Board) SetSettings(engine string, network string, chainID int, contract
 	b.print(helpX+11, statusY+4, b.FmtAddress(address))
 }
 
-// SetStatus display the status information.
-func (b *Board) SetStatus(status client.Status) {
+// PrintStatus display the status information.
+func (b *Board) PrintStatus(status engine.Status) {
 	b.print(helpX+11, statusY-6, status.Status)
 	b.print(helpX+11, statusY-5, fmt.Sprintf("%d", status.Round))
 
@@ -243,8 +205,8 @@ func (b *Board) SetStatus(status client.Status) {
 		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastOutAcct))
 	}
 
-	b.ante = status.AnteUSD
-	b.printAnte()
+	b.printAnte(status.AnteUSD)
+	b.printPlayers(status)
 }
 
 // FmtAddress provides a shortened version of an address.
@@ -361,21 +323,21 @@ func (b *Board) subBet() {
 // =============================================================================
 
 // printPlayers draws the players information on the screen.
-func (b *Board) printPlayers() {
+func (b *Board) printPlayers(status engine.Status) {
 	const balWidth = 15
 	var pot float64
 
-	for i, p := range b.players {
-		pot += b.ante
+	for i, cup := range status.Cups {
+		pot += status.AnteUSD
 
 		addrY := columnHeight + 2 + i
-		addr := b.FmtAddress(p.address)
-		bal := fmt.Sprintf("%*s", balWidth, "$"+p.balance)
-		if p.active {
-			b.print(playersX, addrY, "->")
-		}
+		addr := b.FmtAddress(cup.Account)
+		bal := fmt.Sprintf("%*s", balWidth, "$0.00")
+		// if p.active {
+		// 	b.print(playersX, addrY, "->")
+		// }
 		b.print(playersX+2, addrY, addr)
-		b.print(betX, addrY, p.lastBet)
+		b.print(betX, addrY, "TBD")
 		b.print(boardWidth-(balWidth+2), addrY, bal)
 	}
 
@@ -395,8 +357,8 @@ func (b *Board) printDice() {
 }
 
 // printAnte draws the ante on the board.
-func (b *Board) printAnte() {
-	b.print(anteX, anteY, fmt.Sprintf("$%.2f", b.ante))
+func (b *Board) printAnte(ante float64) {
+	b.print(anteX, anteY, fmt.Sprintf("$%.2f", ante))
 }
 
 // print knows how to print a string on the screen.
