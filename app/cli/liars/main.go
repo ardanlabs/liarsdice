@@ -41,7 +41,7 @@ func run() error {
 	// Establish a client connection to the game engine.
 
 	eng := engine.New(args.Engine)
-	token, err := eng.Connect(keyStorePath, args.Address, passPhrase)
+	token, err := eng.Connect(keyStorePath, args.AccountID, passPhrase)
 	if err != nil {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}
@@ -79,10 +79,10 @@ func run() error {
 
 	default:
 
-		// See if the address connected is already in the game.
+		// See if the account already joined the game.
 		var found bool
-		for _, address := range status.CupsOrder {
-			if strings.EqualFold(address, args.Address) {
+		for _, accountID := range status.CupsOrder {
+			if strings.EqualFold(accountID, args.AccountID) {
 				found = true
 				break
 			}

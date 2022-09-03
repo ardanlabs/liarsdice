@@ -57,10 +57,10 @@ func newMockBank() *mockBank {
 
 // AccountBalance implements the game.Banker interface and will return the
 // account balance for the specified account.
-func (mb *mockBank) AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error) {
-	amountWei, exists := mb.Balances[account]
+func (mb *mockBank) AccountBalance(ctx context.Context, accountID string) (GWei *big.Float, err error) {
+	amountWei, exists := mb.Balances[accountID]
 	if !exists {
-		return nil, fmt.Errorf("account %q does not exist", account)
+		return nil, fmt.Errorf("account id %q does not exist", accountID)
 	}
 
 	return currency.Wei2GWei(amountWei), nil
@@ -68,7 +68,7 @@ func (mb *mockBank) AccountBalance(ctx context.Context, account string) (GWei *b
 
 // Reconcile implements the game.Banker interface and will reconcile a game with
 // the same logic the bank smart contract is using.
-func (mb *mockBank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
+func (mb *mockBank) Reconcile(ctx context.Context, winningAccountID string, losingAccountIDs []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 
 	// The smart contract deals in wei.
 	anteWei := currency.GWei2Wei(anteGWei)
@@ -77,13 +77,13 @@ func (mb *mockBank) Reconcile(ctx context.Context, winningAccount string, losing
 	// Add the ante for each player to the pot. The initialization is
 	// for the winner's ante.
 	pot := anteWei
-	for _, account := range losingAccounts {
-		if mb.Balances[account].Cmp(anteWei) == -1 {
-			pot = big.NewInt(0).Add(pot, mb.Balances[account])
-			mb.Balances[account] = big.NewInt(0)
+	for _, accountID := range losingAccountIDs {
+		if mb.Balances[accountID].Cmp(anteWei) == -1 {
+			pot = big.NewInt(0).Add(pot, mb.Balances[accountID])
+			mb.Balances[accountID] = big.NewInt(0)
 		} else {
 			pot = big.NewInt(0).Add(pot, anteWei)
-			mb.Balances[account] = big.NewInt(0).Sub(mb.Balances[account], anteWei)
+			mb.Balances[accountID] = big.NewInt(0).Sub(mb.Balances[accountID], anteWei)
 		}
 	}
 
@@ -104,7 +104,7 @@ func (mb *mockBank) Reconcile(ctx context.Context, winningAccount string, losing
 	// Take the game fee from the pot and give the winner the remaining pot
 	// and the owner the game fee.
 	pot = big.NewInt(0).Sub(pot, gameFeeWei)
-	mb.Balances[winningAccount] = big.NewInt(0).Add(mb.Balances[winningAccount], pot)
+	mb.Balances[winningAccountID] = big.NewInt(0).Add(mb.Balances[winningAccountID], pot)
 	mb.Balances[mb.Owner] = big.NewInt(0).Add(mb.Balances[mb.Owner], gameFeeWei)
 
 	return nil, nil, nil
@@ -350,8 +350,8 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusGameOver, status.Status)
 	}
 
-	if status.LastWinAcct != Player1 {
-		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", status.LastWinAcct)
+	if status.LastWinAcctID != Player1 {
+		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", status.LastWinAcctID)
 	}
 
 	// =========================================================================

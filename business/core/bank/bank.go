@@ -54,13 +54,13 @@ func (b *Bank) Client() *contract.Client {
 
 // AccountBalance will return the balance for the specified account. Only the
 // owner of the smart contract can make this call.
-func (b *Bank) AccountBalance(ctx context.Context, account string) (GWei *big.Float, err error) {
+func (b *Bank) AccountBalance(ctx context.Context, accountID string) (GWei *big.Float, err error) {
 	tranOpts, err := b.client.NewCallOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("new call opts: %w", err)
 	}
 
-	wei, err := b.contract.AccountBalance(tranOpts, common.HexToAddress(account))
+	wei, err := b.contract.AccountBalance(tranOpts, common.HexToAddress(accountID))
 	if err != nil {
 		return nil, fmt.Errorf("account balance: %w", err)
 	}
@@ -85,24 +85,22 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
-func (b *Bank) Reconcile(ctx context.Context, winningAccount string, losingAccounts []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
+func (b *Bank) Reconcile(ctx context.Context, winningAccountID string, losingAccountIDs []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
 
-	winner := common.HexToAddress(winningAccount)
-
-	var losers []common.Address
-
-	for _, loser := range losingAccounts {
-		losers = append(losers, common.HexToAddress(loser))
+	var loserIDs []common.Address
+	for _, accountID := range losingAccountIDs {
+		loserIDs = append(loserIDs, common.HexToAddress(accountID))
 	}
 
+	winnerID := common.HexToAddress(winningAccountID)
 	anteWei := currency.GWei2Wei(anteGWei)
 	gameFeeWei := currency.GWei2Wei(gameFeeGWei)
 
-	tx, err := b.contract.Reconcile(tranOpts, winner, losers, anteWei, gameFeeWei)
+	tx, err := b.contract.Reconcile(tranOpts, winnerID, loserIDs, anteWei, gameFeeWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reconcile: %w", err)
 	}

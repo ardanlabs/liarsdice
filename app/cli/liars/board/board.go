@@ -43,16 +43,16 @@ const (
 
 // Board represents the game board and all its state.
 type Board struct {
-	address  string
-	engine   *engine.Engine
-	screen   tcell.Screen
-	style    tcell.Style
-	bets     []rune
-	messages []string
+	accountID string
+	engine    *engine.Engine
+	screen    tcell.Screen
+	style     tcell.Style
+	bets      []rune
+	messages  []string
 }
 
 // New contructs a game board.
-func New(engine *engine.Engine, address string) (*Board, error) {
+func New(engine *engine.Engine, accountID string) (*Board, error) {
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
 	screen, err := tcell.NewScreen()
@@ -68,11 +68,11 @@ func New(engine *engine.Engine, address string) (*Board, error) {
 	style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 
 	board := Board{
-		address:  address,
-		engine:   engine,
-		screen:   screen,
-		style:    style,
-		messages: make([]string, 3),
+		accountID: accountID,
+		engine:    engine,
+		screen:    screen,
+		style:     style,
+		messages:  make([]string, 3),
 	}
 
 	return &board, nil
@@ -124,7 +124,7 @@ func (b *Board) Init() {
 	b.print(helpX, statusY+1, "blockchn :")
 	b.print(helpX, statusY+2, "chainid  :")
 	b.print(helpX, statusY+3, "contract :")
-	b.print(helpX, statusY+4, "address  :")
+	b.print(helpX, statusY+4, "account  :")
 
 	b.bets = []rune{}
 	b.screen.ShowCursor(betRowX+1, betRowY)
@@ -165,7 +165,7 @@ func (b *Board) StartEventLoop() chan struct{} {
 
 // Events handles any events from the websocket.
 func (b *Board) Events(event string, address string) {
-	message := fmt.Sprintf("type: %s  addr: %s", event, b.FmtAddress(address))
+	message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
 	b.printMessage(message)
 
 	switch event {
@@ -203,9 +203,9 @@ func (b *Board) PrintStatus(status engine.Status) {
 	b.print(helpX+11, statusY-6, status.Status)
 	b.print(helpX+11, statusY-5, fmt.Sprintf("%d", status.Round))
 
-	if status.LastWinAcct != "" {
-		b.print(helpX+11, statusY-4, b.FmtAddress(status.LastWinAcct))
-		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastOutAcct))
+	if status.LastWinAcctID != "" {
+		b.print(helpX+11, statusY-4, b.FmtAddress(status.LastWinAcctID))
+		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastOutAcctID))
 	}
 
 	b.printAnte(status.AnteUSD)
@@ -322,7 +322,7 @@ func (b *Board) printPlayers(status engine.Status) {
 		pot += status.AnteUSD
 
 		addrY := columnHeight + 2 + i
-		addr := b.FmtAddress(cup.Account)
+		addr := b.FmtAddress(cup.AccountID)
 		b.print(playersX+3, addrY, addr)
 		b.print(betX, addrY, "")
 
@@ -333,7 +333,7 @@ func (b *Board) printPlayers(status engine.Status) {
 			b.print(playersX, addrY, "->")
 		}
 
-		if strings.EqualFold(cup.Account, b.address) {
+		if strings.EqualFold(cup.AccountID, b.accountID) {
 			dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", cup.Dice[0], cup.Dice[1], cup.Dice[2], cup.Dice[3], status.Cups[i].Dice[4])
 			b.print(myDiceX, myDiceY, dice)
 		}

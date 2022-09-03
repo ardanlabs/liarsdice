@@ -15,7 +15,7 @@ Usage:
 
 Options:
 	-e, --engine     The url of the game engine. Default: http://0.0.0.0:3000
-	-a, --address    The players public address. Default: 0x6327a38415c53ffb36c11db55ea74cc9cb4976fd
+	-a, --account    The players account id. Default: 0x6327a38415c53ffb36c11db55ea74cc9cb4976fd
 `
 
 // PrintUsage displays the usage information.
@@ -30,23 +30,23 @@ type Flags map[string]struct{}
 
 // Args represents the values provided in the command line arguments.
 type Args struct {
-	Engine  string
-	Address string
+	Engine    string
+	AccountID string
 }
 
 // Parse will parse the command line flags. The command line flags will overwrite
 // the defaults.
 func Parse() (Flags, Args, error) {
 	const (
-		engine  = "http://0.0.0.0:3000"
-		address = "0x6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+		engine    = "http://0.0.0.0:3000"
+		accountID = "0x6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	)
 
 	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }
 
 	args := Args{
-		Engine:  engine,
-		Address: address,
+		Engine:    engine,
+		AccountID: accountID,
 	}
 	flags := parseCmdline(&args)
 
@@ -58,8 +58,8 @@ func Parse() (Flags, Args, error) {
 func parseCmdline(args *Args) Flags {
 	flag.StringVar(&args.Engine, "e", args.Engine, "url of the game engine")
 	flag.StringVar(&args.Engine, "engine", args.Engine, "url of the game engine")
-	flag.StringVar(&args.Address, "a", args.Address, "players public address")
-	flag.StringVar(&args.Address, "address", args.Address, "players public address")
+	flag.StringVar(&args.AccountID, "a", args.AccountID, "players account id")
+	flag.StringVar(&args.AccountID, "address", args.AccountID, "players account id")
 
 	flag.Bool("h", false, "show help usage")
 	flag.Bool("help", false, "show help usage")
