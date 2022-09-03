@@ -2,8 +2,8 @@
 package board
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 	"github.com/gdamore/tcell/v2"
@@ -43,17 +43,16 @@ const (
 
 // Board represents the game board and all its state.
 type Board struct {
+	address  string
+	engine   *engine.Engine
 	screen   tcell.Screen
 	style    tcell.Style
-	cursor   string
 	bets     []rune
-	deposit  []rune
 	messages []string
-	dice     []int
 }
 
 // New contructs a game board.
-func New() (*Board, error) {
+func New(engine *engine.Engine, address string) (*Board, error) {
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
 	screen, err := tcell.NewScreen()
@@ -69,6 +68,8 @@ func New() (*Board, error) {
 	style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 
 	board := Board{
+		address:  address,
+		engine:   engine,
 		screen:   screen,
 		style:    style,
 		messages: make([]string, 3),
@@ -125,23 +126,11 @@ func (b *Board) Init() {
 	b.print(helpX, statusY+3, "contract :")
 	b.print(helpX, statusY+4, "address  :")
 
-	b.betMode()
-}
-
-// PrintMessage adds a message to the message center.
-func (b *Board) PrintMessage(message string) {
-	const width = boardWidth - 4
-	msg := fmt.Sprintf("%-*s", width, message)
-
-	b.messages[2] = b.messages[1]
-	b.messages[1] = b.messages[0]
-	b.messages[0] = msg
-
-	b.print(3, messageHeight+2, b.messages[0])
-	b.print(3, messageHeight+3, b.messages[1])
-	b.print(3, messageHeight+4, b.messages[2])
-
-	b.screen.Show()
+	b.bets = []rune{}
+	b.screen.ShowCursor(betRowX+1, betRowY)
+	b.screen.SetContent(betRowX, betRowY, ' ', nil, b.style)
+	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
+	b.print(betRowX, betRowY, "                             ")
 }
 
 // StartEventLoop starts a goroutine to handle keyboard input.
@@ -159,10 +148,10 @@ func (b *Board) StartEventLoop() chan struct{} {
 					return
 
 				case tcell.KeyDEL:
-					b.delete()
+					b.subBet()
 
 				case tcell.KeyEnter:
-					b.enter()
+					b.enterBet()
 
 				case tcell.KeyRune:
 					b.processKeyEvent(ev.Rune())
@@ -174,20 +163,34 @@ func (b *Board) StartEventLoop() chan struct{} {
 	return quit
 }
 
-// SetDice captures the dice for the player and displays them.
-func (b *Board) SetDice(dice []int) error {
-	if len(dice) != 5 {
-		return errors.New("five dice are required")
+// Events handles any events from the websocket.
+func (b *Board) Events(event string, address string) {
+	message := fmt.Sprintf("type: %s  addr: %s", event, b.FmtAddress(address))
+	b.printMessage(message)
+
+	switch event {
+	case "join":
+		status, err := b.engine.QueryStatus()
+		if err != nil {
+			return
+		}
+		b.PrintStatus(status)
+
+	case "start":
+		if _, err := b.engine.RollDice(); err != nil {
+			b.printMessage("error rolling dice")
+			return
+		}
+		status, err := b.engine.QueryStatus()
+		if err != nil {
+			return
+		}
+		b.PrintStatus(status)
 	}
-
-	b.dice = dice
-	b.printDice()
-
-	return nil
 }
 
-// SetSettings draws the settings on the board.
-func (b *Board) SetSettings(engine string, network string, chainID int, contractID string, address string) {
+// PrintSettings draws the settings on the board.
+func (b *Board) PrintSettings(engine string, network string, chainID int, contractID string, address string) {
 	b.print(helpX+11, statusY, engine)
 	b.print(helpX+11, statusY+1, network)
 	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", chainID))
@@ -227,32 +230,10 @@ func (b *Board) processKeyEvent(r rune) {
 		b.value(r)
 
 	case r == rune('s'):
-		b.PrintMessage("START GAME")
+		b.startGame()
 
 	case r == rune('l'):
-		b.PrintMessage("CALL LIAR")
-
-	default:
-		b.screen.Beep()
-	}
-}
-
-// enter is called to submit a bet or deposit.
-func (b *Board) enter() {
-	switch b.cursor {
-	case "bet":
-		b.betMode()
-
-	default:
-		b.screen.Beep()
-	}
-}
-
-// delete is called to remove the latest value from the bet or deposit.
-func (b *Board) delete() {
-	switch b.cursor {
-	case "bet":
-		b.subBet()
+		b.printMessage("CALL LIAR")
 
 	default:
 		b.screen.Beep()
@@ -261,38 +242,28 @@ func (b *Board) delete() {
 
 // value processes the keystroke based on the mode.
 func (b *Board) value(r rune) {
-	switch b.cursor {
-	case "bet":
-		if r >= rune('1') && r <= rune('6') {
-			b.addBet(r)
-			return
-		}
-		b.screen.Beep()
-
-	default:
-		b.screen.Beep()
+	if r >= rune('1') && r <= rune('6') {
+		b.addBet(r)
+		return
 	}
+	b.screen.Beep()
+}
+
+// startGame puts the game in playing mode.
+func (b *Board) startGame() {
+	status, err := b.engine.StartGame()
+	if err != nil {
+		b.printMessage("only owner can start game.")
+	}
+	b.PrintStatus(status)
 }
 
 // =============================================================================
 
-// betMode puts the UI into the mode to accept bet information and
-// process a bet.
-func (b *Board) betMode() {
-	b.cursor = "bet"
-	b.bets = []rune{}
-
-	b.screen.ShowCursor(betRowX+1, betRowY)
-	b.screen.SetContent(betRowX, betRowY, ' ', nil, b.style)
-	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
-
-	b.print(betRowX, betRowY, "                             ")
-}
-
 // addBet takes the value selected on the keyboard and adds it to the
 // bet slice and screen.
 func (b *Board) addBet(r rune) {
-	if b.cursor != "bet" || (len(b.bets) > 0 && b.bets[0] != r) {
+	if len(b.bets) > 0 && b.bets[0] != r {
 		b.screen.Beep()
 		return
 	}
@@ -307,7 +278,7 @@ func (b *Board) addBet(r rune) {
 
 // subBet removes a value from the bet slice and screen.
 func (b *Board) subBet() {
-	if b.cursor != "bet" || len(b.bets) == 0 {
+	if len(b.bets) == 0 {
 		b.screen.Beep()
 		return
 	}
@@ -320,7 +291,27 @@ func (b *Board) subBet() {
 	b.print(x, betRowY, " ")
 }
 
+// enterBet is called to submit a bet.
+func (b *Board) enterBet() {
+}
+
 // =============================================================================
+
+// PrintMessage adds a message to the message center.
+func (b *Board) printMessage(message string) {
+	const width = boardWidth - 4
+	msg := fmt.Sprintf("%-*s", width, message)
+
+	b.messages[2] = b.messages[1]
+	b.messages[1] = b.messages[0]
+	b.messages[0] = msg
+
+	b.print(3, messageHeight+2, b.messages[0])
+	b.print(3, messageHeight+3, b.messages[1])
+	b.print(3, messageHeight+4, b.messages[2])
+
+	b.screen.Show()
+}
 
 // printPlayers draws the players information on the screen.
 func (b *Board) printPlayers(status engine.Status) {
@@ -332,13 +323,20 @@ func (b *Board) printPlayers(status engine.Status) {
 
 		addrY := columnHeight + 2 + i
 		addr := b.FmtAddress(cup.Account)
-		bal := fmt.Sprintf("%*s", balWidth, "$0.00")
-		// if p.active {
-		// 	b.print(playersX, addrY, "->")
-		// }
-		b.print(playersX+2, addrY, addr)
-		b.print(betX, addrY, "TBD")
+		b.print(playersX+3, addrY, addr)
+		b.print(betX, addrY, "")
+
+		bal := fmt.Sprintf("%*s", balWidth, "$"+status.Balances[i])
 		b.print(boardWidth-(balWidth+2), addrY, bal)
+
+		if i == status.CurrentPlayer {
+			b.print(playersX, addrY, "->")
+		}
+
+		if strings.EqualFold(cup.Account, b.address) {
+			dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", cup.Dice[0], cup.Dice[1], cup.Dice[2], cup.Dice[3], status.Cups[i].Dice[4])
+			b.print(myDiceX, myDiceY, dice)
+		}
 	}
 
 	b.printPot(pot)
@@ -348,12 +346,6 @@ func (b *Board) printPlayers(status engine.Status) {
 // printPot draws the pot information on the screen.
 func (b *Board) printPot(pot float64) {
 	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
-}
-
-// printDice draws the players dice on the screen.
-func (b *Board) printDice() {
-	dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", b.dice[0], b.dice[1], b.dice[2], b.dice[3], b.dice[4])
-	b.print(myDiceX, myDiceY, dice)
 }
 
 // printAnte draws the ante on the board.

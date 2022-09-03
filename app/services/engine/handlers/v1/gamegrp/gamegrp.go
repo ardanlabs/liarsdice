@@ -112,7 +112,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	var cups []Cup
 	for _, cup := range status.Cups {
-		cups = append(cups, Cup{Account: cup.Account, Outs: cup.Outs})
+		cups = append(cups, Cup{Account: cup.Account, Dice: cup.Dice, Outs: cup.Outs})
 	}
 
 	var bets []Bet
@@ -120,18 +120,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		bets = append(bets, Bet{Account: bet.Account, Number: bet.Number, Suite: bet.Suite})
 	}
 
-	resp := struct {
-		Status        string   `json:"status"`
-		AnteUSD       float64  `json:"ante_usd"`
-		LastOutAcct   string   `json:"last_out"`
-		LastWinAcct   string   `json:"last_win"`
-		CurrentPlayer string   `json:"current_player"`
-		CurrentCup    int      `json:"current_cup"`
-		Round         int      `json:"round"`
-		Cups          []Cup    `json:"cups"`
-		CupsOrder     []string `json:"player_order"`
-		Bets          []Bet    `json:"bets"`
-	}{
+	resp := Status{
 		Status:        status.Status,
 		AnteUSD:       h.AnteUSD,
 		LastOutAcct:   status.LastOutAcct,
@@ -142,6 +131,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		Cups:          cups,
 		CupsOrder:     status.CupsOrder,
 		Bets:          bets,
+		Balances:      status.Balances,
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
@@ -314,7 +304,7 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q}`, address))
+	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info().Cups[address].OrderIdx))
 
 	return h.Status(ctx, w, r)
 }

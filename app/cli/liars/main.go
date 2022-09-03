@@ -58,63 +58,49 @@ func run() error {
 	// =========================================================================
 	// Establish a websocket connection to capture the game events.
 
-	events := func(event string, address string) {
-		message := fmt.Sprintf("type: %s  addr: %s", event, board.FmtAddress(address))
-		board.PrintMessage(message)
-
-		switch event {
-		case "join":
-			status, err := eng.QueryStatus()
-			if err != nil {
-				return
-			}
-			board.PrintStatus(status)
-		}
-	}
-	teardown, err := eng.Events(events)
+	teardown, err := eng.Events(board.Events)
 	if err != nil {
 		return err
 	}
 	defer teardown()
 
 	// =========================================================================
-	// Start or join the game.
+	// Game and player setup.
 
 	status, err := eng.QueryStatus()
-	if err != nil {
+	switch {
+	case err != nil:
+
+		// No game exists yet so create one.
 		status, err = eng.NewGame()
 		if err != nil {
 			return err
 		}
-	}
 
-	var found bool
-	for _, address := range status.CupsOrder {
-		if strings.EqualFold(address, args.Address) {
-			found = true
-			break
+	default:
+
+		// See if the address connected is already in the game.
+		var found bool
+		for _, address := range status.CupsOrder {
+			if strings.EqualFold(address, args.Address) {
+				found = true
+				break
+			}
+		}
+
+		// If the address is not in the game yet, join.
+		if !found {
+			status, err = eng.JoinGame()
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	if !found {
-		status, err = eng.JoinGame()
-		if err != nil {
-			return err
-		}
-	}
 	board.PrintStatus(status)
 
-	// balance, err := eng.Balance()
-	// if err != nil {
-	// 	return err
-	// }
-	// board.AddPlayer(token.Address, balance)
-
-	// board.ActivePlayer("0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd")
-
-	// if err := board.SetDice([]int{1, 3, 2, 5, 5}); err != nil {
-	// 	return err
-	// }
+	// =========================================================================
+	// Start the game loop.
 
 	<-board.StartEventLoop()
 	return nil
@@ -127,13 +113,13 @@ func initalizeBoard(engine *engine.Engine, token engine.Token) (*board.Board, er
 		return nil, fmt.Errorf("get game configuration: %w", err)
 	}
 
-	board, err := board.New()
+	board, err := board.New(engine, token.Address)
 	if err != nil {
 		return nil, err
 	}
 
 	board.Init()
-	board.SetSettings(engine.URL(), config.Network, config.ChainID, config.ContractID, token.Address)
+	board.PrintSettings(engine.URL(), config.Network, config.ChainID, config.ContractID, token.Address)
 
 	return board, nil
 }

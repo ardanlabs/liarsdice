@@ -32,6 +32,7 @@ const minNumberPlayers = 2
 // Converter represents the ability to convert USD to GWei for game play.
 type Converter interface {
 	USD2GWei(amountUSD *big.Float) *big.Float
+	GWei2USD(amountGWei *big.Float) string
 }
 
 // Banker represents the ability to manage money for the game. Deposits and
@@ -48,12 +49,13 @@ type Status struct {
 	Status        string
 	LastOutAcct   string
 	LastWinAcct   string
-	CurrentPlayer string
+	CurrentPlayer int
 	CurrentCup    int
 	Round         int
 	Cups          map[string]Cup
 	CupsOrder     []string
 	Bets          []Bet
+	Balances      []string
 }
 
 // Cup represents an individual cup being held by a player.
@@ -88,6 +90,7 @@ type Game struct {
 	cups          map[string]Cup
 	cupsOrder     []string
 	bets          []Bet
+	balancesGWei  []*big.Float
 }
 
 // New creates a new game.
@@ -161,6 +164,7 @@ func (g *Game) AddAccount(ctx context.Context, account string) error {
 	}
 
 	g.cupsOrder = append(g.cupsOrder, account)
+	g.balancesGWei = append(g.balancesGWei, balance)
 
 	return nil
 }
@@ -522,15 +526,21 @@ func (g *Game) Info() Status {
 	bets := make([]Bet, len(g.bets))
 	copy(bets, g.bets)
 
+	balances := make([]string, len(g.balancesGWei))
+	for i, bal := range g.balancesGWei {
+		balances[i] = g.converter.GWei2USD(bal)
+	}
+
 	return Status{
 		Status:        g.status,
 		LastOutAcct:   g.lastOutAcct,
 		LastWinAcct:   g.lastWinAcct,
-		CurrentPlayer: g.currentPlayer,
+		CurrentPlayer: g.cups[g.currentPlayer].OrderIdx,
 		CurrentCup:    g.currentCup,
 		Round:         g.round,
 		Cups:          cups,
 		CupsOrder:     cupsOrder,
 		Bets:          bets,
+		Balances:      balances,
 	}
 }
