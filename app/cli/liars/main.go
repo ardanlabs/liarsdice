@@ -22,6 +22,10 @@ func main() {
 }
 
 func run() error {
+
+	// =========================================================================
+	// Parse flags for settings.
+
 	flags, args, err := settings.Parse()
 	if err != nil {
 		return fmt.Errorf("parsing arguments: %w", err)
