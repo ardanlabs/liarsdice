@@ -59,7 +59,7 @@ func parseCmdline(args *Args) Flags {
 	flag.StringVar(&args.Engine, "e", args.Engine, "url of the game engine")
 	flag.StringVar(&args.Engine, "engine", args.Engine, "url of the game engine")
 	flag.StringVar(&args.AccountID, "a", args.AccountID, "players account id")
-	flag.StringVar(&args.AccountID, "address", args.AccountID, "players account id")
+	flag.StringVar(&args.AccountID, "account", args.AccountID, "players account id")
 
 	flag.Bool("h", false, "show help usage")
 	flag.Bool("help", false, "show help usage")
