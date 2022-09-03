@@ -200,16 +200,52 @@ func (b *Board) PrintSettings(engine string, network string, chainID int, contra
 
 // PrintStatus display the status information.
 func (b *Board) PrintStatus(status engine.Status) {
+
+	// Print the current game status and round.
 	b.print(helpX+11, statusY-6, status.Status)
 	b.print(helpX+11, statusY-5, fmt.Sprintf("%d", status.Round))
 
+	// Show the account who last won and lost.
 	if status.LastWinAcctID != "" {
 		b.print(helpX+11, statusY-4, b.FmtAddress(status.LastWinAcctID))
 		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastOutAcctID))
 	}
 
-	b.printAnte(status.AnteUSD)
-	b.printPlayers(status)
+	var pot float64
+
+	for i, cup := range status.Cups {
+		pot += status.AnteUSD
+
+		// Players Column.
+		addrY := columnHeight + 2 + i
+		accountID := b.FmtAddress(cup.AccountID)
+		b.print(playersX+3, addrY, accountID)
+		b.print(betX, addrY, "")
+
+		// Show the active player.
+		if i == status.CurrentPlayer {
+			b.print(playersX, addrY, "->")
+		}
+
+		// Balance Column.
+		const balWidth = 15
+		bal := fmt.Sprintf("%*s", balWidth, "$"+status.Balances[i])
+		b.print(boardWidth-(balWidth+2), addrY, bal)
+
+		// Show the dice for the connected account.
+		if strings.EqualFold(cup.AccountID, b.accountID) {
+			if cup.Dice[0] != 0 {
+				dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", cup.Dice[0], cup.Dice[1], cup.Dice[2], cup.Dice[3], status.Cups[i].Dice[4])
+				b.print(myDiceX, myDiceY, dice)
+			}
+		}
+	}
+
+	// Show the ante and pot information.
+	b.print(anteX, anteY, fmt.Sprintf("$%.2f", status.AnteUSD))
+	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
+
+	b.screen.Show()
 }
 
 // FmtAddress provides a shortened version of an address.
@@ -311,46 +347,6 @@ func (b *Board) printMessage(message string) {
 	b.print(3, messageHeight+4, b.messages[2])
 
 	b.screen.Show()
-}
-
-// printPlayers draws the players information on the screen.
-func (b *Board) printPlayers(status engine.Status) {
-	const balWidth = 15
-	var pot float64
-
-	for i, cup := range status.Cups {
-		pot += status.AnteUSD
-
-		addrY := columnHeight + 2 + i
-		addr := b.FmtAddress(cup.AccountID)
-		b.print(playersX+3, addrY, addr)
-		b.print(betX, addrY, "")
-
-		bal := fmt.Sprintf("%*s", balWidth, "$"+status.Balances[i])
-		b.print(boardWidth-(balWidth+2), addrY, bal)
-
-		if i == status.CurrentPlayer {
-			b.print(playersX, addrY, "->")
-		}
-
-		if strings.EqualFold(cup.AccountID, b.accountID) {
-			dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", cup.Dice[0], cup.Dice[1], cup.Dice[2], cup.Dice[3], status.Cups[i].Dice[4])
-			b.print(myDiceX, myDiceY, dice)
-		}
-	}
-
-	b.printPot(pot)
-	b.screen.Show()
-}
-
-// printPot draws the pot information on the screen.
-func (b *Board) printPot(pot float64) {
-	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
-}
-
-// printAnte draws the ante on the board.
-func (b *Board) printAnte(ante float64) {
-	b.print(anteX, anteY, fmt.Sprintf("$%.2f", ante))
 }
 
 // print knows how to print a string on the screen.

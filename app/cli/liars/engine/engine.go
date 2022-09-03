@@ -218,6 +218,7 @@ func (e *Engine) JoinGame() (Status, error) {
 
 // =============================================================================
 
+// do makes the actual http call to the engine.
 func (e Engine) do(url string, result interface{}, input []byte) error {
 	var req *http.Request
 	var err error
