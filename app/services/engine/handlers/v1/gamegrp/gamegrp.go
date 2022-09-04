@@ -105,7 +105,11 @@ func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *
 func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
-		return err
+		resp := Status{
+			Status:  "nogame",
+			AnteUSD: h.AnteUSD,
+		}
+		return web.Respond(ctx, w, resp, http.StatusOK)
 	}
 
 	status := g.Info()
@@ -446,17 +450,11 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 
 // =============================================================================
 
-// SetGame safely sets a game pointer.
+// SetGame resets the existing game. At this time we let this happen at any
+// time regardless of game state.
 func (h *Handlers) createGame(ctx context.Context, address string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-
-	if h.game != nil {
-		status := h.game.Info()
-		if status.Status != game.StatusGameOver {
-			return errors.New("game is currently being played")
-		}
-	}
 
 	g, err := game.New(ctx, h.Converter, h.Bank, address, h.AnteUSD)
 	if err != nil {

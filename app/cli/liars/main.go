@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/board"
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
@@ -65,42 +64,13 @@ func run() error {
 	defer teardown()
 
 	// =========================================================================
-	// Game and player setup.
+	// Print the game board and start the event loop.
 
 	status, err := eng.QueryStatus()
-	switch {
-	case err != nil:
-
-		// No game exists yet so create one.
-		status, err = eng.NewGame()
-		if err != nil {
-			return err
-		}
-
-	default:
-
-		// See if the account already joined the game.
-		var found bool
-		for _, accountID := range status.CupsOrder {
-			if strings.EqualFold(accountID, args.AccountID) {
-				found = true
-				break
-			}
-		}
-
-		// If the address is not in the game yet, join.
-		if !found {
-			status, err = eng.JoinGame()
-			if err != nil {
-				return err
-			}
-		}
+	if err != nil {
+		return err
 	}
-
 	board.PrintStatus(status)
-
-	// =========================================================================
-	// Start the game loop.
 
 	<-board.StartEventLoop()
 	return nil

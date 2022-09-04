@@ -21,7 +21,7 @@ const (
 	potX          = 40
 	potY          = 9
 	helpX         = 65
-	statusY       = 13
+	statusY       = 14
 )
 
 // Game positioning values for user input.
@@ -118,10 +118,12 @@ func (b *Board) Init() {
 	b.print(potX-6, potY, "Pot :")
 	b.print(potX-6, potY+1, "Bet :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
-	b.print(helpX, 2, "<1-6>    : set/increment bet")
-	b.print(helpX, 3, "<delete> : decrement bet")
-	b.print(helpX, 4, "<s>      : start game")
-	b.print(helpX, 5, "<l>      : call liar")
+	b.print(helpX, 1, "<1-6>    : set/increment bet")
+	b.print(helpX, 2, "<delete> : decrement bet")
+	b.print(helpX, 3, "<l>      : call liar")
+	b.print(helpX, 4, "<n>      : new game")
+	b.print(helpX, 5, "<j>      : join game")
+	b.print(helpX, 6, "<s>      : start game")
 	b.print(helpX, statusY-6, "status   :")
 	b.print(helpX, statusY-5, "round    :")
 	b.print(helpX, statusY-4, "lastbet  :")
@@ -202,8 +204,8 @@ func (b *Board) PrintSettings(engine string, network string, chainID int, contra
 func (b *Board) PrintStatus(status engine.Status) {
 
 	// Print the current game status and round.
-	b.print(helpX+11, statusY-6, status.Status)
-	b.print(helpX+11, statusY-5, fmt.Sprintf("%d", status.Round))
+	b.print(helpX+11, statusY-6, fmt.Sprintf("%-10s", status.Status))
+	b.print(helpX+11, statusY-5, fmt.Sprintf("%d   ", status.Round))
 
 	// Show the account who last won and lost.
 	if status.LastWinAcctID != "" {
@@ -216,9 +218,18 @@ func (b *Board) PrintStatus(status engine.Status) {
 		bet := status.Bets[len(status.Bets)-1]
 		betStr := fmt.Sprintf("%d %-10s", bet.Number, words[bet.Suite])
 		b.print(helpX+11, statusY-4, betStr)
+	} else {
+		b.print(helpX+11, statusY-4, "                 ")
 	}
 
 	var pot float64
+
+	// Clear the player lines.
+	for i := 0; i < 5; i++ {
+		addrY := columnHeight + 1 + i
+		b.print(playersX, addrY, fmt.Sprintf("%-*s", boardWidth-4, " "))
+		b.print(myDiceX, myDiceY, fmt.Sprintf("%-20s", " "))
+	}
 
 	for i, cup := range status.Cups {
 		pot += status.AnteUSD
@@ -227,7 +238,6 @@ func (b *Board) PrintStatus(status engine.Status) {
 		addrY := columnHeight + 2 + i
 		accountID := b.FmtAddress(cup.AccountID)
 		b.print(playersX+3, addrY, accountID)
-		b.print(betX, addrY, "")
 
 		// Outs.
 		b.print(outX, addrY, fmt.Sprintf("%d", cup.Outs))
@@ -265,6 +275,11 @@ func (b *Board) PrintStatus(status engine.Status) {
 	b.print(anteX, anteY, fmt.Sprintf("$%.2f", status.AnteUSD))
 	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
 
+	// Hide the cursor to show the game is over.
+	if status.Status == "gameover" {
+		b.screen.HideCursor()
+	}
+
 	b.screen.Show()
 }
 
@@ -284,6 +299,12 @@ func (b *Board) processKeyEvent(r rune) {
 	switch {
 	case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
 		b.value(r)
+
+	case r == rune('n'):
+		b.newGame()
+
+	case r == rune('j'):
+		b.joinGame()
 
 	case r == rune('s'):
 		b.startGame()
@@ -305,8 +326,46 @@ func (b *Board) value(r rune) {
 	b.screen.Beep()
 }
 
+// newGame starts a new game.
+func (b *Board) newGame() {
+	if _, err := b.engine.NewGame(); err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+}
+
+// joinGame adds the account to the game.
+func (b *Board) joinGame() {
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	if status.Status != "newgame" {
+		b.printMessage("error: invalid status state: %s" + status.Status)
+		return
+	}
+
+	if _, err = b.engine.JoinGame(); err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+}
+
 // startGame start the game so it can be played.
 func (b *Board) startGame() {
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	if status.Status != "newgame" {
+		b.printMessage("error: invalid status state: %s" + status.Status)
+		return
+	}
+
 	if _, err := b.engine.StartGame(); err != nil {
 		b.printMessage("error: " + err.Error())
 		return
@@ -318,6 +377,11 @@ func (b *Board) callLiar() {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
 		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	if status.Status != "playing" {
+		b.printMessage("error: invalid status state: " + status.Status)
 		return
 	}
 
@@ -392,6 +456,11 @@ func (b *Board) enterBet() {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
 		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	if status.Status != "playing" {
+		b.printMessage("error: invalid status state: " + status.Status)
 		return
 	}
 
