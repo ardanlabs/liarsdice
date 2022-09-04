@@ -148,12 +148,6 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// Start first round
 	// =========================================================================
 
-	// Only the owner can start the game.
-	err = g.StartGame(Player1)
-	if err != nil {
-		t.Fatalf("unexpected error starting the game: %s", err)
-	}
-
 	status = g.Info()
 
 	if status.Status != game.StatusPlaying {
@@ -427,7 +421,7 @@ func Test_InvalidBet(t *testing.T) {
 	// =========================================================================
 
 	// Only the owner can start the game.
-	err = g.StartGame(Player1)
+	err = g.StartGame()
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
@@ -479,7 +473,7 @@ func Test_GameWithoutEnoughPlayers(t *testing.T) {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
 
-	err = g.StartGame(Player1)
+	err = g.StartGame()
 	if err == nil {
 		t.Fatal("expecting error trying to start a game without enough players")
 	}
@@ -517,12 +511,6 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 	// =========================================================================
 	// Start first round
 	// =========================================================================
-
-	// Only the owner can start the game.
-	err = g.StartGame(Player1)
-	if err != nil {
-		t.Fatalf("unexpected error starting the game: %s", err)
-	}
 
 	status = g.Info()
 

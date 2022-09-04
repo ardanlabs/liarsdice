@@ -170,16 +170,12 @@ func (g *Game) AddAccount(ctx context.Context, accountID string) error {
 }
 
 // StartGame changes the status to Playing to allow the game to begin.
-func (g *Game) StartGame(owner string) error {
+func (g *Game) StartGame() error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
-	}
-
-	if g.owner != owner {
-		return fmt.Errorf("only the game owner can start the game: owner[%s] caller[%s]", g.owner, owner)
 	}
 
 	if len(g.cups) < minNumberPlayers {

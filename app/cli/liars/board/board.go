@@ -289,7 +289,7 @@ func (b *Board) value(r rune) {
 func (b *Board) startGame() {
 	status, err := b.engine.StartGame()
 	if err != nil {
-		b.printMessage("only owner can start game.")
+		b.printMessage("error: " + err.Error())
 	}
 	b.PrintStatus(status)
 }
@@ -337,6 +337,9 @@ func (b *Board) enterBet() {
 func (b *Board) printMessage(message string) {
 	const width = boardWidth - 4
 	msg := fmt.Sprintf("%-*s", width, message)
+	if len(msg) > 58 {
+		msg = msg[:58]
+	}
 
 	b.messages[2] = b.messages[1]
 	b.messages[1] = b.messages[0]
