@@ -445,8 +445,10 @@ func (g *Game) NextRound() (int, error) {
 	}
 
 	// If an account has three outs, remove their account from game play.
+	// Reset the last bet value.
 	var leftToPlay int
 	for _, cup := range g.cups {
+		cup.LastBet = Bet{}
 		if cup.Outs == 3 {
 			g.cupsOrder[cup.OrderIdx] = ""
 			continue

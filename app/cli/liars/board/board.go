@@ -34,7 +34,8 @@ const (
 const (
 	columnHeight = 2
 	playersX     = 3
-	betX         = 26
+	outX         = 22
+	betX         = 35
 	balX         = 50
 	myDiceX      = 13
 	myDiceY      = 8
@@ -109,6 +110,7 @@ func (b *Board) Init() {
 
 	b.print(3, messageHeight, " Message Center ")
 	b.print(playersX, columnHeight, "Players:")
+	b.print(outX, columnHeight, "Outs:")
 	b.print(betX, columnHeight, "Last Bet:")
 	b.print(balX, columnHeight, "  Balances:")
 	b.print(myDiceX-9, myDiceY, "My Dice:")
@@ -227,6 +229,9 @@ func (b *Board) PrintStatus(status engine.Status) {
 		b.print(playersX+3, addrY, accountID)
 		b.print(betX, addrY, "")
 
+		// Outs.
+		b.print(outX, addrY, fmt.Sprintf("%d", cup.Outs))
+
 		// Show the active player.
 		if i == status.CurrentCup {
 			b.print(playersX, addrY, "->")
@@ -238,6 +243,8 @@ func (b *Board) PrintStatus(status engine.Status) {
 		if cup.LastBet.Number != 0 {
 			bet := fmt.Sprintf("%d %-10s", cup.LastBet.Number, words[cup.LastBet.Suite])
 			b.print(betX, addrY, bet)
+		} else {
+			b.print(betX, addrY, "                 ")
 		}
 
 		// Balance Column.
@@ -282,7 +289,7 @@ func (b *Board) processKeyEvent(r rune) {
 		b.startGame()
 
 	case r == rune('l'):
-		b.printMessage("CALL LIAR")
+		b.callLiar()
 
 	default:
 		b.screen.Beep()
@@ -298,14 +305,32 @@ func (b *Board) value(r rune) {
 	b.screen.Beep()
 }
 
-// startGame puts the game in playing mode.
+// startGame start the game so it can be played.
 func (b *Board) startGame() {
-	status, err := b.engine.StartGame()
+	if _, err := b.engine.StartGame(); err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+}
+
+// callLiar calls the last bet a lie.
+func (b *Board) callLiar() {
+	status, err := b.engine.QueryStatus()
 	if err != nil {
 		b.printMessage("error: " + err.Error())
 		return
 	}
-	b.PrintStatus(status)
+
+	if status.CupsOrder[status.CurrentCup] != b.accountID {
+		b.printMessage("error: not your turn")
+		b.screen.Beep()
+		return
+	}
+
+	if _, err := b.engine.Liar(); err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
 }
 
 // =============================================================================
