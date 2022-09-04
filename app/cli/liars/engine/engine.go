@@ -240,6 +240,18 @@ func (e *Engine) Liar() (Status, error) {
 	return status, nil
 }
 
+// Reconcile submits a reconcile call when the game is over.
+func (e *Engine) Reconcile() (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/reconcile", e.url)
+
+	var status Status
+	if err := e.do(url, &status, nil); err != nil {
+		return Status{}, err
+	}
+
+	return status, nil
+}
+
 // =============================================================================
 
 // do makes the actual http call to the engine.

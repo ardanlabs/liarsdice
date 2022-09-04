@@ -118,12 +118,13 @@ func (b *Board) Init() {
 	b.print(potX-6, potY, "Pot :")
 	b.print(potX-6, potY+1, "Bet :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
-	b.print(helpX, 1, "<1-6>    : set/increment bet")
-	b.print(helpX, 2, "<delete> : decrement bet")
-	b.print(helpX, 3, "<l>      : call liar")
-	b.print(helpX, 4, "<n>      : new game")
-	b.print(helpX, 5, "<j>      : join game")
-	b.print(helpX, 6, "<s>      : start game")
+
+	b.print(helpX, 2, "<l>      : call liar")
+	b.print(helpX, 3, "<n>      : new game")
+	b.print(helpX, 4, "<j>      : join game")
+	b.print(helpX, 5, "<s>      : start game")
+	b.print(helpX, 6, "<r>      : reconcile game")
+
 	b.print(helpX, statusY-6, "status   :")
 	b.print(helpX, statusY-5, "round    :")
 	b.print(helpX, statusY-4, "lastbet  :")
@@ -312,6 +313,9 @@ func (b *Board) processKeyEvent(r rune) {
 	case r == rune('l'):
 		b.callLiar()
 
+	case r == rune('r'):
+		b.reconcile()
+
 	default:
 		b.screen.Beep()
 	}
@@ -343,7 +347,7 @@ func (b *Board) joinGame() {
 	}
 
 	if status.Status != "newgame" {
-		b.printMessage("error: invalid status state: %s" + status.Status)
+		b.printMessage("error: invalid status state: " + status.Status)
 		return
 	}
 
@@ -362,7 +366,7 @@ func (b *Board) startGame() {
 	}
 
 	if status.Status != "newgame" {
-		b.printMessage("error: invalid status state: %s" + status.Status)
+		b.printMessage("error: invalid status state: " + status.Status)
 		return
 	}
 
@@ -392,6 +396,25 @@ func (b *Board) callLiar() {
 	}
 
 	if _, err := b.engine.Liar(); err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+}
+
+// reconcile the game the winner gets paid.
+func (b *Board) reconcile() {
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	if status.Status != "gameover" {
+		b.printMessage("error: invalid status state: " + status.Status)
+		return
+	}
+
+	if _, err := b.engine.Reconcile(); err != nil {
 		b.printMessage("error: " + err.Error())
 		return
 	}

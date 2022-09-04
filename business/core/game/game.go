@@ -501,23 +501,10 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID string) (*types.T
 		return nil, nil, fmt.Errorf("game status is required to be gameover: status[%s]", g.status)
 	}
 
-	// Find the winner.
-	// cupsOrders holds the remaining (winner) account, the others are "".
-	var winnerID string
-	for _, accountID := range g.cupsOrder {
-		if _, found := g.cups[accountID]; found {
-			winnerID = accountID
-		}
-	}
-
-	if winnerID != winningAccountID {
-		return nil, nil, fmt.Errorf("only winning account can reconcile the game, winner[%s]", winnerID)
-	}
-
 	// Find the losers.
 	var loserIDs []string
 	for _, cup := range g.cups {
-		if winnerID != cup.AccountID {
+		if g.lastWinAcctID != cup.AccountID {
 			loserIDs = append(loserIDs, cup.AccountID)
 		}
 	}
@@ -527,7 +514,7 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID string) (*types.T
 	gameFeeGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
 	// Perform the reconcile against the bank.
-	tx, receipt, err := g.banker.Reconcile(ctx, winnerID, loserIDs, antiGWei, gameFeeGWei)
+	tx, receipt, err := g.banker.Reconcile(ctx, g.lastWinAcctID, loserIDs, antiGWei, gameFeeGWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
 	}
