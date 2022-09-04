@@ -119,11 +119,12 @@ func (b *Board) Init() {
 	b.print(potX-6, potY+1, "Bet :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
 
-	b.print(helpX, 2, "<l>      : call liar")
-	b.print(helpX, 3, "<n>      : new game")
-	b.print(helpX, 4, "<j>      : join game")
-	b.print(helpX, 5, "<s>      : start game")
-	b.print(helpX, 6, "<r>      : reconcile game")
+	b.print(helpX, 1, "<1-6>+   : set bet")
+	b.print(helpX, 2, "<del>    : remove bet number")
+	b.print(helpX, 3, "<l>      : call liar")
+	b.print(helpX, 4, "<n>      : new game")
+	b.print(helpX, 5, "<j>      : join game")
+	b.print(helpX, 6, "<s>      : start game")
 
 	b.print(helpX, statusY-6, "status   :")
 	b.print(helpX, statusY-5, "round    :")
@@ -183,6 +184,9 @@ func (b *Board) Events(event string, address string) {
 		if _, err := b.engine.RollDice(); err != nil {
 			b.printMessage("error rolling dice")
 		}
+
+	case "callliar":
+		b.reconcile()
 	}
 
 	status, err := b.engine.QueryStatus()
@@ -313,9 +317,6 @@ func (b *Board) processKeyEvent(r rune) {
 	case r == rune('l'):
 		b.callLiar()
 
-	case r == rune('r'):
-		b.reconcile()
-
 	default:
 		b.screen.Beep()
 	}
@@ -410,7 +411,11 @@ func (b *Board) reconcile() {
 	}
 
 	if status.Status != "gameover" {
-		b.printMessage("error: invalid status state: " + status.Status)
+		return
+	}
+
+	if status.LastWinAcctID != b.accountID {
+		b.printMessage("gameover: winner will call reconcile")
 		return
 	}
 
