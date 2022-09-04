@@ -237,12 +237,12 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play.
 
-	err = g.Bet(Player1, 2, 1)
+	err = g.Bet(Player2, 5, 1)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	winner, loser, err = g.CallLiar(Player2)
+	winner, loser, err = g.CallLiar(Player1)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player2: %s", err)
 	}
