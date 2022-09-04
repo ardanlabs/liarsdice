@@ -346,11 +346,6 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	v, err := web.GetValues(ctx)
-	if err != nil {
-		return web.NewShutdownError("missing web context values")
-	}
-
 	claims, err := auth.GetClaims(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
@@ -360,12 +355,9 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
-	tx, receipt, err := g.Reconcile(ctx, address)
-	if err != nil {
+	if _, _, err := g.Reconcile(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
-
-	h.Log.Infow("reconcile results", "traceid", v.TraceID, "tx", h.Converter.CalculateTransactionDetails(tx), "receipt", h.Converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"reconcile","address":%q}`, address))
 
@@ -456,7 +448,7 @@ func (h *Handlers) createGame(ctx context.Context, address string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	g, err := game.New(ctx, h.Converter, h.Bank, address, h.AnteUSD)
+	g, err := game.New(ctx, h.Log, h.Converter, h.Bank, address, h.AnteUSD)
 	if err != nil {
 		return fmt.Errorf("unable to create game: %w", err)
 	}

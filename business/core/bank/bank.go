@@ -9,20 +9,23 @@ import (
 	"github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"go.uber.org/zap"
 )
 
 // Bank represents a bank that allows for the reconciling of a game and
 // information about account balances.
 type Bank struct {
+	logger     *zap.SugaredLogger
 	contractID string
 	client     *contract.Client
 	contract   *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
-func New(ctx context.Context, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
+func New(ctx context.Context, log *zap.SugaredLogger, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
 	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return nil, fmt.Errorf("network connect: %w", err)
@@ -34,6 +37,7 @@ func New(ctx context.Context, network string, keyPath string, passPhrase string,
 	}
 
 	bank := Bank{
+		logger:     log,
 		contractID: contractID,
 		client:     client,
 		contract:   contract,
@@ -162,4 +166,16 @@ func (b *Bank) WalletBalance(ctx context.Context) (wei *big.Int, err error) {
 	}
 
 	return balance, nil
+}
+
+// =============================================================================
+
+// log will write to the configured log if a traceid exists in the context.
+func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
+	if b.logger == nil {
+		return
+	}
+
+	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
+	b.logger.Infow(msg, keysAndvalues...)
 }

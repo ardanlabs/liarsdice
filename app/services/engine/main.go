@@ -178,7 +178,7 @@ func run(log *zap.SugaredLogger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bank, err := bank.New(ctx, cfg.Bank.Network, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
+	bank, err := bank.New(ctx, log, cfg.Bank.Network, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
 	if err != nil {
 		return fmt.Errorf("connecting to bank: %w", err)
 	}

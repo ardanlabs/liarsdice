@@ -70,7 +70,7 @@ func run() error {
 	// =========================================================================
 	// Construct the bank API.
 
-	bank, err := bank.New(ctx, args.Network, keyFile, args.PassPhrase, args.ContractID)
+	bank, err := bank.New(ctx, nil, args.Network, keyFile, args.PassPhrase, args.ContractID)
 	if err != nil {
 		return err
 	}

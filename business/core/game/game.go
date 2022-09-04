@@ -10,8 +10,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // Represents the different game status.
@@ -28,12 +31,6 @@ const (
 const minNumberPlayers = 2
 
 // =============================================================================
-
-// Converter represents the ability to convert USD to GWei for game play.
-type Converter interface {
-	USD2GWei(amountUSD *big.Float) *big.Float
-	GWei2USD(amountGWei *big.Float) string
-}
 
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
@@ -75,8 +72,9 @@ type Cup struct {
 
 // Game represents a single game that is being played.
 type Game struct {
+	logger        *zap.SugaredLogger
 	id            string
-	converter     Converter
+	converter     currency.Converter
 	banker        Banker
 	mu            sync.RWMutex
 	status        string
@@ -93,7 +91,7 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(ctx context.Context, converter Converter, banker Banker, accountID string, anteUSD float64) (*Game, error) {
+func New(ctx context.Context, log *zap.SugaredLogger, converter currency.Converter, banker Banker, accountID string, anteUSD float64) (*Game, error) {
 	balance, err := banker.AccountBalance(ctx, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", accountID)
@@ -108,6 +106,7 @@ func New(ctx context.Context, converter Converter, banker Banker, accountID stri
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	g := Game{
+		logger:    log,
 		id:        uuid.NewString(),
 		converter: converter,
 		banker:    banker,
@@ -146,15 +145,17 @@ func (g *Game) AddAccount(ctx context.Context, accountID string) error {
 		return fmt.Errorf("account id [%s] is already in the game", accountID)
 	}
 
-	balance, err := g.banker.AccountBalance(ctx, accountID)
+	balanceGwei, err := g.banker.AccountBalance(ctx, accountID)
 	if err != nil {
 		return fmt.Errorf("unable to retrieve account id [%s] balance", accountID)
 	}
 
-	ante := big.NewFloat(float64(g.anteUSD))
+	anteGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
+
+	g.log(ctx, "game.addaccount", "accountid", accountID, "anteUSD", g.anteUSD, "anteGWei", anteGWei, "balanceGWei", balanceGwei)
 
 	// If comparison is negative, the player has no balance.
-	if balance.Cmp(ante) < 0 {
+	if balanceGwei.Cmp(anteGWei) < 0 {
 		return fmt.Errorf("account [%s] does not have enough balance to play", accountID)
 	}
 
@@ -168,7 +169,7 @@ func (g *Game) AddAccount(ctx context.Context, accountID string) error {
 
 	g.orgOrder = append(g.orgOrder, accountID)
 	g.cupsOrder = append(g.cupsOrder, accountID)
-	g.balancesGWei = append(g.balancesGWei, balance)
+	g.balancesGWei = append(g.balancesGWei, balanceGwei)
 
 	return nil
 }
@@ -513,13 +514,33 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID string) (*types.T
 	antiGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 	gameFeeGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
+	// Log the winner and losers.
+	g.log(ctx, "game.reconcole", "winner", g.lastWinAcctID)
+	for _, accountID := range loserIDs {
+		g.log(ctx, "game.reconcole", "loser", accountID)
+	}
+
 	// Perform the reconcile against the bank.
 	tx, receipt, err := g.banker.Reconcile(ctx, g.lastWinAcctID, loserIDs, antiGWei, gameFeeGWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
 	}
+	g.log(ctx, "game.reconcole.contract", "tx", g.converter.CalculateTransactionDetails(tx), "receipt", g.converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
 	g.status = StatusReconciled
+
+	// Update the player balances.
+	g.log(ctx, "game.reconcole.fees", "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
+	for i, accountID := range g.orgOrder {
+		balanceGwei, err := g.banker.AccountBalance(ctx, accountID)
+		if err != nil {
+			g.log(ctx, "game.reconcole.updatebalance", "ERROR", err)
+			continue
+		}
+		oldBalanceGWei := g.balancesGWei[i]
+		g.balancesGWei[i] = balanceGwei
+		g.log(ctx, "game.reconcole.updatebalance", "accountid", accountID, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
+	}
 
 	return tx, receipt, nil
 }
@@ -556,4 +577,16 @@ func (g *Game) Info() Status {
 		Bets:          bets,
 		Balances:      balances,
 	}
+}
+
+// =============================================================================
+
+// log will write to the configured log if a traceid exists in the context.
+func (g *Game) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
+	if g.logger == nil {
+		return
+	}
+
+	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
+	g.logger.Infow(msg, keysAndvalues...)
 }

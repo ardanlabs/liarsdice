@@ -127,7 +127,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 
 	// Create a game and add player1 and the owner and first player in the game.
-	g, err := game.New(ctx, converter, bank, Player1, anteUSD)
+	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
 	if err != nil {
 		t.Fatalf("unexpected error creating game: %s", err)
 	}
@@ -405,7 +405,7 @@ func Test_InvalidBet(t *testing.T) {
 	// Create game and add players
 	// =========================================================================
 
-	g, err := game.New(ctx, converter, bank, Player1, anteUSD)
+	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
 	if err != nil {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
@@ -472,7 +472,7 @@ func Test_GameWithoutEnoughPlayers(t *testing.T) {
 	// Create game and add players
 	// =========================================================================
 
-	g, err := game.New(ctx, converter, bank, Player1, anteUSD)
+	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
 	if err != nil {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
@@ -496,7 +496,7 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 	// Create game and add players
 	// =========================================================================
 
-	g, err := game.New(ctx, converter, bank, Player1, anteUSD)
+	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
 	if err != nil {
 		t.Fatalf("unexpected error adding owner: %s", err)
 	}
@@ -546,7 +546,7 @@ func Test_NewGameNotEnoughBalance(t *testing.T) {
 	// Create game where account doesn't have enough money
 	// =========================================================================
 
-	if _, err := game.New(ctx, converter, bank, Owner, anteUSD); err == nil {
+	if _, err := game.New(ctx, nil, converter, bank, Owner, anteUSD); err == nil {
 		t.Fatal("expecting error adding player without enough balance")
 	}
 }
