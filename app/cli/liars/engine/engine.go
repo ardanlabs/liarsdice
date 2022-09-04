@@ -216,6 +216,18 @@ func (e *Engine) JoinGame() (Status, error) {
 	return status, nil
 }
 
+// Bet submits a bet to the game engine.
+func (e *Engine) Bet(number int, suite rune) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/bet/%d/%c", e.url, number, suite)
+
+	var status Status
+	if err := e.do(url, &status, nil); err != nil {
+		return Status{}, err
+	}
+
+	return status, nil
+}
+
 // =============================================================================
 
 // do makes the actual http call to the engine.

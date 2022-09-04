@@ -111,8 +111,9 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	status := g.Info()
 
 	var cups []Cup
-	for _, cup := range status.Cups {
-		cups = append(cups, Cup{AccountID: cup.AccountID, Dice: cup.Dice, Outs: cup.Outs})
+	for _, accountID := range status.CupsOrder {
+		cup := status.Cups[accountID]
+		cups = append(cups, Cup{AccountID: cup.AccountID, Dice: cup.Dice, LastBet: Bet(cup.LastBet), Outs: cup.Outs})
 	}
 
 	var bets []Bet
@@ -125,7 +126,6 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		AnteUSD:       h.AnteUSD,
 		LastOutAcctID: status.LastOutAcctID,
 		LastWinAcctID: status.LastWinAcctID,
-		CurrentPlayer: status.CurrentPlayer,
 		CurrentCup:    status.CurrentCup,
 		Round:         status.Round,
 		Cups:          cups,

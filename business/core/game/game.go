@@ -49,7 +49,6 @@ type Status struct {
 	Status        string
 	LastOutAcctID string
 	LastWinAcctID string
-	CurrentPlayer int
 	CurrentCup    int
 	Round         int
 	Cups          map[string]Cup
@@ -58,19 +57,20 @@ type Status struct {
 	Balances      []string
 }
 
-// Cup represents an individual cup being held by a player.
-type Cup struct {
-	OrderIdx  int
-	AccountID string
-	Outs      int
-	Dice      []int
-}
-
 // Bet represents a bet of dice made by a player.
 type Bet struct {
 	AccountID string
 	Number    int
 	Suite     int
+}
+
+// Cup represents an individual cup being held by a player.
+type Cup struct {
+	OrderIdx  int
+	AccountID string
+	LastBet   Bet
+	Outs      int
+	Dice      []int
 }
 
 // Game represents a single game that is being played.
@@ -83,7 +83,6 @@ type Game struct {
 	status        string
 	lastOutAcctID string
 	lastWinAcctID string
-	currentPlayer string
 	currentCup    int
 	round         int
 	anteUSD       float64
@@ -136,6 +135,10 @@ func (g *Game) AddAccount(ctx context.Context, accountID string) error {
 		return errors.New("account id provided is empty")
 	}
 
+	if _, exists := g.cups[accountID]; exists {
+		return fmt.Errorf("account id [%s] is already in the game", accountID)
+	}
+
 	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
 	}
@@ -159,6 +162,7 @@ func (g *Game) AddAccount(ctx context.Context, accountID string) error {
 	g.cups[accountID] = Cup{
 		OrderIdx:  len(g.cupsOrder),
 		AccountID: accountID,
+		LastBet:   Bet{},
 		Outs:      0,
 		Dice:      make([]int, 5),
 	}
@@ -190,12 +194,17 @@ func (g *Game) StartGame() error {
 // ApplyOut will apply the specified number of outs to the account.
 // If an account is out, it will check the number of active accounts, and end
 // the round if there is only 1 left.
-func (g *Game) ApplyOut(account string, outs int) error {
+func (g *Game) ApplyOut(accountID string, outs int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	if account == "" {
+	if accountID == "" {
 		return errors.New("account provided is empty")
+	}
+
+	cup, exists := g.cups[accountID]
+	if !exists {
+		return fmt.Errorf("account id [%s] does not exist in the game", accountID)
 	}
 
 	if outs < 0 || outs > 3 {
@@ -206,13 +215,8 @@ func (g *Game) ApplyOut(account string, outs int) error {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
-	cup, exists := g.cups[account]
-	if !exists {
-		return fmt.Errorf("account [%s] does not exist in the game", account)
-	}
-
 	cup.Outs = outs
-	g.cups[account] = cup
+	g.cups[accountID] = cup
 
 	// After 3 outs, an account is out of the game.
 	// We need to check if there is only 1 account left, end the round.
@@ -279,6 +283,11 @@ func (g *Game) Bet(accountID string, number int, suite int) error {
 		return errors.New("account id provided is empty")
 	}
 
+	cup, exists := g.cups[accountID]
+	if !exists {
+		return fmt.Errorf("account [%s] does not exist in the game", accountID)
+	}
+
 	if g.status != StatusPlaying {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
@@ -310,6 +319,10 @@ func (g *Game) Bet(accountID string, number int, suite int) error {
 		Suite:     suite,
 	}
 	g.bets = append(g.bets, bet)
+
+	// Add the last bet to the cup.
+	cup.LastBet = bet
+	g.cups[accountID] = cup
 
 	// Move the turn to the next player.
 	g.nextTurn(accountID)
@@ -359,6 +372,10 @@ func (g *Game) CallLiar(accountID string) (winningAcct string, losingAcct string
 
 	if accountID == "" {
 		return "", "", errors.New("account provided is empty")
+	}
+
+	if _, exists := g.cups[accountID]; !exists {
+		return "", "", fmt.Errorf("account [%s] does not exist in the game", accountID)
 	}
 
 	if g.status != StatusPlaying {
@@ -447,9 +464,9 @@ func (g *Game) NextRound() (int, error) {
 	// Figure out who starts the next round.
 	// The person who was last out should start the round unless they are out.
 	if g.cups[g.lastOutAcctID].Outs != 3 {
-		g.currentPlayer = g.lastOutAcctID
+		g.currentCup = g.cups[g.lastOutAcctID].OrderIdx
 	} else {
-		g.currentPlayer = g.lastWinAcctID
+		g.currentCup = g.cups[g.lastWinAcctID].OrderIdx
 	}
 
 	// Reset the game state.
@@ -531,7 +548,6 @@ func (g *Game) Info() Status {
 		Status:        g.status,
 		LastOutAcctID: g.lastOutAcctID,
 		LastWinAcctID: g.lastWinAcctID,
-		CurrentPlayer: g.cups[g.currentPlayer].OrderIdx,
 		CurrentCup:    g.currentCup,
 		Round:         g.round,
 		Cups:          cups,

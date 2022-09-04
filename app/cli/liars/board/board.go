@@ -3,6 +3,7 @@ package board
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
@@ -38,6 +39,8 @@ const (
 	myDiceX      = 13
 	myDiceY      = 8
 )
+
+var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's"}
 
 // =============================================================================
 
@@ -111,6 +114,7 @@ func (b *Board) Init() {
 	b.print(myDiceX-9, myDiceY, "My Dice:")
 	b.print(anteX-6, anteY, "Ante:")
 	b.print(potX-6, potY, "Pot :")
+	b.print(potX-6, potY+1, "Bet :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
 	b.print(helpX, 2, "<1-6>    : set/increment bet")
 	b.print(helpX, 3, "<delete> : decrement bet")
@@ -118,8 +122,9 @@ func (b *Board) Init() {
 	b.print(helpX, 5, "<l>      : call liar")
 	b.print(helpX, statusY-6, "status   :")
 	b.print(helpX, statusY-5, "round    :")
-	b.print(helpX, statusY-4, "lastwin  :")
-	b.print(helpX, statusY-3, "lastlose :")
+	b.print(helpX, statusY-4, "lastbet  :")
+	b.print(helpX, statusY-3, "lastwin  :")
+	b.print(helpX, statusY-2, "lastlose :")
 	b.print(helpX, statusY, "engine   :")
 	b.print(helpX, statusY+1, "blockchn :")
 	b.print(helpX, statusY+2, "chainid  :")
@@ -130,7 +135,7 @@ func (b *Board) Init() {
 	b.screen.ShowCursor(betRowX+1, betRowY)
 	b.screen.SetContent(betRowX, betRowY, ' ', nil, b.style)
 	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
-	b.print(betRowX, betRowY, "                             ")
+	b.print(betRowX, betRowY, "                 ")
 }
 
 // StartEventLoop starts a goroutine to handle keyboard input.
@@ -169,24 +174,17 @@ func (b *Board) Events(event string, address string) {
 	b.printMessage(message)
 
 	switch event {
-	case "join":
-		status, err := b.engine.QueryStatus()
-		if err != nil {
-			return
-		}
-		b.PrintStatus(status)
-
 	case "start":
 		if _, err := b.engine.RollDice(); err != nil {
 			b.printMessage("error rolling dice")
-			return
 		}
-		status, err := b.engine.QueryStatus()
-		if err != nil {
-			return
-		}
-		b.PrintStatus(status)
 	}
+
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		return
+	}
+	b.PrintStatus(status)
 }
 
 // PrintSettings draws the settings on the board.
@@ -207,8 +205,15 @@ func (b *Board) PrintStatus(status engine.Status) {
 
 	// Show the account who last won and lost.
 	if status.LastWinAcctID != "" {
-		b.print(helpX+11, statusY-4, b.FmtAddress(status.LastWinAcctID))
-		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastOutAcctID))
+		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastWinAcctID))
+		b.print(helpX+11, statusY-2, b.FmtAddress(status.LastOutAcctID))
+	}
+
+	// Show the last bet.
+	if len(status.Bets) > 0 {
+		bet := status.Bets[len(status.Bets)-1]
+		betStr := fmt.Sprintf("%d %-10s", bet.Number, words[bet.Suite])
+		b.print(helpX+11, statusY-4, betStr)
 	}
 
 	var pot float64
@@ -223,8 +228,16 @@ func (b *Board) PrintStatus(status engine.Status) {
 		b.print(betX, addrY, "")
 
 		// Show the active player.
-		if i == status.CurrentPlayer {
+		if i == status.CurrentCup {
 			b.print(playersX, addrY, "->")
+		} else {
+			b.print(playersX, addrY, "  ")
+		}
+
+		// Last Bets.
+		if cup.LastBet.Number != 0 {
+			bet := fmt.Sprintf("%d %-10s", cup.LastBet.Number, words[cup.LastBet.Suite])
+			b.print(betX, addrY, bet)
 		}
 
 		// Balance Column.
@@ -290,6 +303,7 @@ func (b *Board) startGame() {
 	status, err := b.engine.StartGame()
 	if err != nil {
 		b.printMessage("error: " + err.Error())
+		return
 	}
 	b.PrintStatus(status)
 }
@@ -310,6 +324,15 @@ func (b *Board) addBet(r rune) {
 
 	b.screen.ShowCursor(x+1, betRowY)
 	b.print(x, betRowY, string(r))
+
+	suite, err := strconv.Atoi(string(b.bets[0]))
+	if err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	bet := fmt.Sprintf("%d %-10s", len(b.bets), words[suite])
+	b.print(potX, potY+1, bet)
 }
 
 // subBet removes a value from the bet slice and screen.
@@ -325,10 +348,49 @@ func (b *Board) subBet() {
 
 	b.screen.ShowCursor(x, betRowY)
 	b.print(x, betRowY, " ")
+
+	bet := "                 "
+	if len(b.bets) > 0 {
+		suite, err := strconv.Atoi(string(b.bets[0]))
+		if err != nil {
+			b.printMessage("error: " + err.Error())
+			return
+		}
+
+		bet = fmt.Sprintf("%d %-10s", len(b.bets), words[suite])
+	}
+	b.print(potX, potY+1, bet)
 }
 
 // enterBet is called to submit a bet.
 func (b *Board) enterBet() {
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	if status.CupsOrder[status.CurrentCup] != b.accountID {
+		b.printMessage("error: not your turn")
+		b.screen.Beep()
+		return
+	}
+
+	if len(b.bets) == 0 {
+		b.printMessage("error: missing bet information")
+		b.screen.Beep()
+		return
+	}
+
+	if _, err = b.engine.Bet(len(b.bets), b.bets[0]); err != nil {
+		b.printMessage("error: " + err.Error())
+		return
+	}
+
+	b.bets = []rune{}
+	b.screen.ShowCursor(betRowX+1, betRowY)
+	b.print(betRowX, betRowY, "                 ")
+	b.print(potX, potY+1, "                 ")
 }
 
 // =============================================================================
