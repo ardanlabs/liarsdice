@@ -130,7 +130,7 @@ func findKeyFile(keyStorePath string, address string) (string, error) {
 			return nil
 		}
 
-		if strings.Contains(fileName, address[2:]) {
+		if strings.Contains(strings.ToLower(fileName), strings.ToLower(address[2:])) {
 			filePath = fmt.Sprintf("%s/%s", keyStorePath, fileName)
 			return errFound
 		}

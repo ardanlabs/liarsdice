@@ -40,6 +40,9 @@ game-tui1:
 game-tui2:
 	go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
 
+game-tuio:
+	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
+
 react-install:
 	npm install --prefix app/services/game/
 
