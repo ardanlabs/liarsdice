@@ -42,6 +42,13 @@ const (
 	myDiceY      = 8
 )
 
+// Unicode characters for the game board.
+const (
+	hozTopRune = '\u2580'
+	hozBotRune = '\u2584'
+	verRune    = '\u2588'
+)
+
 var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's"}
 
 // =============================================================================
@@ -49,6 +56,9 @@ var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's
 // Board represents the game board and all its state.
 type Board struct {
 	accountID  string
+	network    string
+	chainID    int
+	contractID string
 	engine     *engine.Engine
 	screen     tcell.Screen
 	style      tcell.Style
@@ -60,7 +70,7 @@ type Board struct {
 }
 
 // New contructs a game board.
-func New(engine *engine.Engine, accountID string) (*Board, error) {
+func New(engine *engine.Engine, accountID string, network string, chainID int, contractID string) (*Board, error) {
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
 	screen, err := tcell.NewScreen()
@@ -76,11 +86,18 @@ func New(engine *engine.Engine, accountID string) (*Board, error) {
 	style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 
 	board := Board{
-		accountID: accountID,
-		engine:    engine,
-		screen:    screen,
-		style:     style,
-		messages:  make([]string, 5),
+		accountID:  accountID,
+		network:    network,
+		chainID:    chainID,
+		contractID: contractID,
+		engine:     engine,
+		screen:     screen,
+		style:      style,
+		messages:   make([]string, 5),
+	}
+
+	if err := board.display(); err != nil {
+		return nil, fmt.Errorf("display: %w", err)
 	}
 
 	return &board, nil
@@ -91,21 +108,18 @@ func (b *Board) Shutdown() {
 	b.screen.Fini()
 }
 
-// Init generates the initial game board and starts the event loop.
-func (b *Board) Init() {
+// display generates the initial game board and starts the event loop.
+func (b *Board) display() error {
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		return err
+	}
+
 	b.screen.Clear()
 
-	b.drawGameBox(false, 1, 1, boardWidth, boardHeight)
-
-	b.print(playersX, columnHeight, "Players:")
-	b.print(outX, columnHeight, "Outs:")
-	b.print(betX, columnHeight, "Last Bet:")
-	b.print(balX, columnHeight, "  Balances:")
-	b.print(myDiceX-9, myDiceY, "My Dice:")
-	b.print(anteX-6, anteY, "Ante:")
-	b.print(potX-6, potY, "Pot :")
-	b.print(potX-6, potY+1, "Bet :")
-	b.print(betRowX-9, betRowY, "My Bet :>")
+	b.drawGameBoard(false)
+	b.printLables()
+	b.printSettings(b.engine.URL(), b.network, b.chainID, b.contractID, b.accountID)
 
 	b.print(helpX, 1, "<1-6>+   : set bet")
 	b.print(helpX, 2, "<del>    : remove bet number")
@@ -130,10 +144,14 @@ func (b *Board) Init() {
 	b.screen.SetContent(betRowX, betRowY, ' ', nil, b.style)
 	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
 	b.print(betRowX, betRowY, "                 ")
+
+	b.printStatus(status)
+
+	return nil
 }
 
-// StartEventLoop starts a goroutine to handle keyboard input.
-func (b *Board) StartEventLoop() chan struct{} {
+// Run starts a goroutine to handle keyboard input.
+func (b *Board) Run() chan struct{} {
 	quit := make(chan struct{})
 
 	go func() {
@@ -189,7 +207,7 @@ func (b *Board) StartEventLoop() chan struct{} {
 // Events handles any events from the websocket.
 func (b *Board) Events(event string, address string) {
 	if !strings.Contains(address, "read tcp") {
-		message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
+		message := fmt.Sprintf("addr: %s type: %s", b.fmtAddress(address), event)
 		b.printMessage(message, true)
 	}
 
@@ -214,20 +232,22 @@ func (b *Board) Events(event string, address string) {
 	if err != nil {
 		return
 	}
-	b.PrintStatus(status)
+	b.printStatus(status)
 }
 
-// PrintSettings draws the settings on the board.
-func (b *Board) PrintSettings(engine string, network string, chainID int, contractID string, address string) {
+// =============================================================================
+
+// printSettings draws the settings on the board.
+func (b *Board) printSettings(engine string, network string, chainID int, contractID string, address string) {
 	b.print(helpX+11, statusY, engine)
 	b.print(helpX+11, statusY+1, network)
 	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", chainID))
-	b.print(helpX+11, statusY+3, b.FmtAddress(contractID))
-	b.print(helpX+11, statusY+4, b.FmtAddress(address))
+	b.print(helpX+11, statusY+3, b.fmtAddress(contractID))
+	b.print(helpX+11, statusY+4, b.fmtAddress(address))
 }
 
-// PrintStatus display the status information.
-func (b *Board) PrintStatus(status engine.Status) {
+// printStatus display the status information.
+func (b *Board) printStatus(status engine.Status) {
 
 	// Save this status for modal support.
 	b.lastStatus = status
@@ -238,8 +258,8 @@ func (b *Board) PrintStatus(status engine.Status) {
 
 	// Show the account who last won and lost.
 	if status.LastWinAcctID != "" {
-		b.print(helpX+11, statusY-3, b.FmtAddress(status.LastWinAcctID))
-		b.print(helpX+11, statusY-2, b.FmtAddress(status.LastOutAcctID))
+		b.print(helpX+11, statusY-3, b.fmtAddress(status.LastWinAcctID))
+		b.print(helpX+11, statusY-2, b.fmtAddress(status.LastOutAcctID))
 	}
 
 	// Show the last bet.
@@ -265,7 +285,7 @@ func (b *Board) PrintStatus(status engine.Status) {
 
 		// Players Column.
 		addrY := columnHeight + 2 + i
-		accountID := b.FmtAddress(cup.AccountID)
+		accountID := b.fmtAddress(cup.AccountID)
 		b.print(playersX+3, addrY, accountID)
 
 		// Outs.
@@ -312,10 +332,10 @@ func (b *Board) PrintStatus(status engine.Status) {
 				b.print(betRowX+x+1, betRowY, string(r))
 			}
 			b.screen.ShowCursor(betRowX+len(b.bets)+1, betRowY)
-			b.drawGameBox(true, 1, 1, boardWidth, boardHeight)
+			b.drawGameBoard(true)
 		} else {
 			b.screen.HideCursor()
-			b.drawGameBox(false, 1, 1, boardWidth, boardHeight)
+			b.drawGameBoard(false)
 		}
 	}
 
@@ -330,14 +350,6 @@ func (b *Board) PrintStatus(status engine.Status) {
 	}
 
 	b.screen.Show()
-}
-
-// FmtAddress provides a shortened version of an address.
-func (*Board) FmtAddress(address string) string {
-	if len(address) != 42 {
-		return address
-	}
-	return fmt.Sprintf("%s..%s", address[:5], address[39:])
 }
 
 // =============================================================================
@@ -574,35 +586,38 @@ func (b *Board) showWinnerLoser(win string, los string) error {
 		b.showModal(win)
 		return nil
 	}
-
 	b.showModal(los)
+
 	return nil
 }
 
-// drawGameBox draws the game box.
-func (b *Board) drawGameBox(active bool, x int, y int, width int, height int) {
-	hozTRune := '\u2580'
-	hozBRune := '\u2584'
-	verRune := '\u2588'
+// drawGameBoard draws the game box.
+func (b *Board) drawGameBoard(white bool) {
+	x := 1
+	y := 1
+	width := boardWidth
+	height := boardHeight
 
 	style := b.style
-	if active {
+	if white {
 		style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 	} else {
 		style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorGrey)
 	}
 
+	// This places the message bar.
 	for i := 1; i < boardWidth; i++ {
-		b.screen.SetContent(i, messageHeight, hozTRune, nil, style)
+		b.screen.SetContent(i, messageHeight, hozTopRune, nil, style)
 	}
 
+	// This places the outer lines.
 	for h := y; h < height; h++ {
 		for w := x; w < width; w++ {
 			if h == y {
-				b.screen.SetContent(w, h, hozTRune, nil, style)
+				b.screen.SetContent(w, h, hozTopRune, nil, style)
 			}
 			if h == height-1 {
-				b.screen.SetContent(w, h, hozBRune, nil, style)
+				b.screen.SetContent(w, h, hozBotRune, nil, style)
 			}
 			if w == x || w == width-1 {
 				b.screen.SetContent(w, h, verRune, nil, style)
@@ -615,11 +630,8 @@ func (b *Board) drawGameBox(active bool, x int, y int, width int, height int) {
 
 // drawModalBox draws an empty box on the screen.
 func (b *Board) drawBox(x int, y int, width int, height int) {
-	hozTRune := '\u2580'
-	hozBRune := '\u2584'
-	verRune := '\u2588'
-
-	style := b.style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
+	style := b.style
+	style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 
 	for h := y; h < height; h++ {
 		for w := x; w < width; w++ {
@@ -630,10 +642,10 @@ func (b *Board) drawBox(x int, y int, width int, height int) {
 	for h := y; h < height; h++ {
 		for w := x; w < width; w++ {
 			if h == y {
-				b.screen.SetContent(w, h, hozTRune, nil, style)
+				b.screen.SetContent(w, h, hozTopRune, nil, style)
 			}
 			if h == height-1 {
-				b.screen.SetContent(w, h, hozBRune, nil, style)
+				b.screen.SetContent(w, h, hozBotRune, nil, style)
 			}
 			if w == x || w == width-1 {
 				b.screen.SetContent(w, h, verRune, nil, style)
@@ -677,8 +689,28 @@ func (b *Board) closeModal() {
 	b.modalUp = false
 	b.modalMsg = ""
 
-	b.drawBox(1, 1, boardWidth, boardHeight)
+	active := false
+	if b.lastStatus.CupsOrder[b.lastStatus.CurrentCup] == b.accountID {
+		active = true
+	}
 
+	b.drawGameBoard(active)
+	b.printLables()
+	b.printStatus(b.lastStatus)
+}
+
+// =============================================================================
+
+// fmtAddress provides a shortened version of an address.
+func (*Board) fmtAddress(address string) string {
+	if len(address) != 42 {
+		return address
+	}
+	return fmt.Sprintf("%s..%s", address[:5], address[39:])
+}
+
+// printLables places the labels on the board.
+func (b *Board) printLables() {
 	b.print(playersX, columnHeight, "Players:")
 	b.print(outX, columnHeight, "Outs:")
 	b.print(betX, columnHeight, "Last Bet:")
@@ -688,8 +720,6 @@ func (b *Board) closeModal() {
 	b.print(potX-6, potY, "Pot :")
 	b.print(potX-6, potY+1, "Bet :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
-
-	b.PrintStatus(b.lastStatus)
 }
 
 // PrintMessage adds a message to the message center.
@@ -717,25 +747,8 @@ func (b *Board) printMessage(message string, beep bool) {
 	}
 
 	b.screen.Show()
-}
 
-// print knows how to print a string on the screen.
-func (b *Board) printHighlight(x, y int, str string) {
-	style := tcell.StyleDefault
-	style = style.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
-
-	for _, c := range str {
-		var comb []rune
-		w := runewidth.RuneWidth(c)
-		if w == 0 {
-			comb = []rune{c}
-			c = ' '
-			w = 1
-		}
-		b.screen.SetContent(x, y, c, comb, style)
-		x += w
-	}
-	b.screen.Show()
+	b.showModal(message)
 }
 
 // print knows how to print a string on the screen.

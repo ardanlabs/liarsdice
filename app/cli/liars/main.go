@@ -37,7 +37,7 @@ func run() error {
 	}
 
 	// =========================================================================
-	// Establish a client connection to the game engine.
+	// Establish a client connection to the game engine and get configuration.
 
 	eng := engine.New(args.Engine)
 	token, err := eng.Connect(keyStorePath, args.AccountID, passPhrase)
@@ -45,10 +45,15 @@ func run() error {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}
 
-	// =========================================================================
-	// Initialize the board and display the configuration and token information.
+	config, err := eng.Configuration()
+	if err != nil {
+		return fmt.Errorf("get game configuration: %w", err)
+	}
 
-	board, err := initalizeBoard(eng, token)
+	// =========================================================================
+	// Create the board and initalize the display.
+
+	board, err := board.New(eng, token.Address, config.Network, config.ChainID, config.ContractID)
 	if err != nil {
 		return err
 	}
@@ -64,32 +69,9 @@ func run() error {
 	defer teardown()
 
 	// =========================================================================
-	// Print the game board and start the event loop.
+	// Start handling board input.
 
-	status, err := eng.QueryStatus()
-	if err != nil {
-		return err
-	}
-	board.PrintStatus(status)
+	<-board.Run()
 
-	<-board.StartEventLoop()
 	return nil
-}
-
-// initalizeBoard draws the board with the configuation.
-func initalizeBoard(engine *engine.Engine, token engine.Token) (*board.Board, error) {
-	config, err := engine.Configuration()
-	if err != nil {
-		return nil, fmt.Errorf("get game configuration: %w", err)
-	}
-
-	board, err := board.New(engine, token.Address)
-	if err != nil {
-		return nil, err
-	}
-
-	board.Init()
-	board.PrintSettings(engine.URL(), config.Network, config.ChainID, config.ContractID, token.Address)
-
-	return board, nil
 }
