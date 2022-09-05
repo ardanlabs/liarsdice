@@ -56,6 +56,7 @@ type Board struct {
 	bets       []rune
 	messages   []string
 	lastStatus engine.Status
+	modalUp    bool
 }
 
 // New contructs a game board.
@@ -148,6 +149,10 @@ func (b *Board) StartEventLoop() chan struct{} {
 			case *tcell.EventKey:
 				switch ev.Key() {
 				case tcell.KeyEscape:
+					if b.modalUp {
+						b.closeModal()
+						continue
+					}
 					close(quit)
 					return
 
@@ -286,10 +291,15 @@ func (b *Board) PrintStatus(status engine.Status) {
 	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
 
 	// Show the cursor only if the active player.
-	if status.CupsOrder[status.CurrentCup] == b.accountID {
-		b.screen.ShowCursor(betRowX+1, betRowY)
-	} else {
-		b.screen.HideCursor()
+	if len(status.CupsOrder) > 0 {
+		if status.CupsOrder[status.CurrentCup] == b.accountID {
+			for x, r := range b.bets {
+				b.print(betRowX+x+1, betRowY, string(r))
+			}
+			b.screen.ShowCursor(betRowX+len(b.bets)+1, betRowY)
+		} else {
+			b.screen.HideCursor()
+		}
 	}
 
 	// Hide the cursor to show the game is over.
@@ -562,10 +572,32 @@ func (b *Board) drawBox(x int, y int, width int, height int) {
 
 // showModal displays a modal dialog box.
 func (b *Board) showModal(message string) error {
+	b.modalUp = true
 	b.screen.HideCursor()
-	b.drawBox(4, 3, 60, 11)
+	b.drawBox(4, 3, 60, 12)
 
 	return nil
+}
+
+// closeModal closes the modal dialog box.
+func (b *Board) closeModal() {
+	b.modalUp = false
+
+	b.print(myDiceX-9, myDiceY, "My Dice:")
+	b.print(anteX-6, anteY, "Ante:")
+	b.print(potX-6, potY, "Pot :")
+	b.print(potX-6, potY+1, "Bet :")
+	b.print(betRowX-9, betRowY, "My Bet :>")
+
+	for w := 4; w < 60; w++ {
+		b.screen.SetContent(w, 11, ' ', nil, b.style)
+	}
+	b.screen.SetContent(4, 9, ' ', nil, b.style)
+	b.screen.SetContent(59, 8, ' ', nil, b.style)
+	b.screen.SetContent(59, 9, ' ', nil, b.style)
+	b.screen.SetContent(59, 10, ' ', nil, b.style)
+
+	b.PrintStatus(b.lastStatus)
 }
 
 // PrintMessage adds a message to the message center.
