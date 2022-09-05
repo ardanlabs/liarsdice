@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 	"github.com/gdamore/tcell/v2"
@@ -176,12 +177,11 @@ func (b *Board) StartEventLoop() chan struct{} {
 
 // Events handles any events from the websocket.
 func (b *Board) Events(event string, address string) {
-	b.screen.Beep()
-	b.screen.Beep()
-	b.screen.Beep()
-
-	message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
-	b.printMessage(message)
+	if !strings.Contains(address, "read tcp") {
+		message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
+		b.printMessage(message)
+		b.beep(3)
+	}
 
 	switch event {
 	case "start":
@@ -323,6 +323,14 @@ func (b *Board) processKeyEvent(r rune) {
 
 	default:
 		b.screen.Beep()
+	}
+}
+
+// beep will provide a number of consecutive beeps.
+func (b *Board) beep(number int) {
+	for i := 0; i < number; i++ {
+		b.screen.Beep()
+		time.Sleep(150 * time.Millisecond)
 	}
 }
 
