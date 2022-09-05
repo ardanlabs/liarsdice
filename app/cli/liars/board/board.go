@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 	"github.com/gdamore/tcell/v2"
@@ -139,31 +138,45 @@ func (b *Board) StartEventLoop() chan struct{} {
 
 	go func() {
 		for {
-			var err error
+			event := b.screen.PollEvent()
 
-			ev := b.screen.PollEvent()
-			switch ev := ev.(type) {
-			case *tcell.EventKey:
-				switch ev.Key() {
-				case tcell.KeyEscape:
-					if b.modalUp {
-						b.closeModal()
-						continue
-					}
-					close(quit)
-					return
-
-				case tcell.KeyDEL, tcell.KeyDelete:
-					err = b.subBet()
-
-				case tcell.KeyEnter:
-					err = b.enterBet()
-
-				case tcell.KeyRune:
-					err = b.processKeyEvent(ev.Rune())
-				}
+			// Check if we received a key event.
+			ev, isEventKey := event.(*tcell.EventKey)
+			if !isEventKey {
+				continue
 			}
 
+			// Check if the escape key was selected.
+			keyType := ev.Key()
+			if keyType == tcell.KeyEscape {
+				if b.modalUp {
+					b.closeModal()
+					continue
+				}
+				close(quit)
+				return
+			}
+
+			// If the modal is up, ignore the keystroke.
+			if b.modalUp {
+				b.screen.Beep()
+				continue
+			}
+
+			// Process the specified keys.
+			var err error
+			switch keyType {
+			case tcell.KeyDEL, tcell.KeyDelete:
+				err = b.subBet()
+
+			case tcell.KeyEnter:
+				err = b.enterBet()
+
+			case tcell.KeyRune:
+				err = b.processKeyEvent(ev.Rune())
+			}
+
+			// Print an error message that was returned.
 			if err != nil {
 				b.printMessage(err.Error(), true)
 			}
@@ -349,9 +362,6 @@ func (b *Board) processKeyEvent(r rune) error {
 
 	case r == rune('l'):
 		err = b.callLiar()
-
-	case r == rune('m'):
-		err = b.showModal("bill")
 
 	default:
 		err = errors.New("invalid selection")
@@ -552,14 +562,6 @@ func (b *Board) enterBet() error {
 }
 
 // =============================================================================
-
-// beep will provide a number of consecutive beeps.
-func (b *Board) beep(number int) {
-	for i := 0; i < number; i++ {
-		b.screen.Beep()
-		time.Sleep(150 * time.Millisecond)
-	}
-}
 
 // showWinnerLoser shows the user if they won or lost.
 func (b *Board) showWinnerLoser(win string, los string) error {
