@@ -74,7 +74,7 @@ type Cup struct {
 type Game struct {
 	logger        *zap.SugaredLogger
 	id            string
-	converter     currency.Converter
+	converter     *currency.Converter
 	banker        Banker
 	mu            sync.RWMutex
 	status        string
@@ -91,7 +91,7 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(ctx context.Context, log *zap.SugaredLogger, converter currency.Converter, banker Banker, accountID string, anteUSD float64) (*Game, error) {
+func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Converter, banker Banker, accountID string, anteUSD float64) (*Game, error) {
 	balance, err := banker.AccountBalance(ctx, accountID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", accountID)

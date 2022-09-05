@@ -24,6 +24,7 @@ func GWei2Wei(amountGWei *big.Float) *big.Int {
 
 // =============================================================================
 
+// captureETH2USD calls the coinmarketcap API to get the current price in USD of 1 ETH.
 func captureETH2USD(coinMarketCapKey string) (*big.Float, error) {
 	url := "https://pro-api.coinmarketcap.com/v2/tools/price-conversion?amount=1&symbol=ETH&convert=USD"
 
@@ -51,6 +52,7 @@ func captureETH2USD(coinMarketCapKey string) (*big.Float, error) {
 	return big.NewFloat(result.Data[0].Quote.USD.Price), nil
 }
 
+// captureETH2USD calls the coinmarketcap API to get the current price in ETH of 1 USD.
 func captureUSD2ETH(coinMarketCapKey string) (*big.Float, error) {
 	url := "https://pro-api.coinmarketcap.com/v2/tools/price-conversion?amount=1&symbol=USD&convert=ETH"
 

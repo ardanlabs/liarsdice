@@ -27,21 +27,21 @@ type Converter struct {
 }
 
 // NewConverter constructs a conversion for working with ETH and USD.
-func NewConverter(coinMarketCapKey string) (Converter, error) {
+func NewConverter(coinMarketCapKey string) (*Converter, error) {
 	oneETHToUSD, err := captureETH2USD(coinMarketCapKey)
 	if err != nil {
-		return Converter{}, fmt.Errorf("captureETH2USD: %w", err)
+		return nil, fmt.Errorf("captureETH2USD: %w", err)
 	}
 
 	oneUSDToETH, err := captureUSD2ETH(coinMarketCapKey)
 	if err != nil {
-		return Converter{}, fmt.Errorf("captureUSD2ETH: %w", err)
+		return nil, fmt.Errorf("captureUSD2ETH: %w", err)
 	}
 
 	oneGWeiToUSD := big.NewFloat(0).SetPrec(1024).Mul(oneETHToUSD, big.NewFloat(0.000000001))
 	oneUSDToGWei := big.NewFloat(0).SetPrec(1024).Mul(oneUSDToETH, big.NewFloat(1000000000))
 
-	return Converter{
+	return &Converter{
 		coinMarketCapKey: coinMarketCapKey,
 		oneETHToUSD:      oneETHToUSD,
 		oneUSDToETH:      oneUSDToETH,
@@ -52,11 +52,11 @@ func NewConverter(coinMarketCapKey string) (Converter, error) {
 
 // NewDefaultConverter can be used if the API is failing to set reasonable
 // defaults. Also good for tests.
-func NewDefaultConverter() Converter {
+func NewDefaultConverter() *Converter {
 	oneGWeiToUSD := big.NewFloat(0).SetPrec(1024).Mul(defaultOneETHToUSD, big.NewFloat(0.000000001))
 	oneUSDToGWei := big.NewFloat(0).SetPrec(1024).Mul(defaultOneUSDToETH, big.NewFloat(1000000000))
 
-	return Converter{
+	return &Converter{
 		oneETHToUSD:  defaultOneETHToUSD,
 		oneUSDToETH:  defaultOneUSDToETH,
 		oneGWeiToUSD: oneGWeiToUSD,
@@ -64,18 +64,13 @@ func NewDefaultConverter() Converter {
 	}
 }
 
-// Update creates a new Currency value with updated pricing.
-func (c Converter) Update() (Converter, error) {
-	return NewConverter(c.coinMarketCapKey)
-}
-
 // Values returns the currency values being used.
-func (c Converter) Values() (oneETHToUSD *big.Float, oneUSDToETH *big.Float) {
+func (c *Converter) Values() (oneETHToUSD *big.Float, oneUSDToETH *big.Float) {
 	return c.oneETHToUSD, c.oneUSDToETH
 }
 
 // Wei2USD converts Wei to USD.
-func (c Converter) Wei2USD(amountWei *big.Int) string {
+func (c *Converter) Wei2USD(amountWei *big.Int) string {
 	unit := ethUnit.NewWei(amountWei)
 	gWeiAmount := unit.GWei()
 
@@ -83,7 +78,7 @@ func (c Converter) Wei2USD(amountWei *big.Int) string {
 }
 
 // GWei2USD converts GWei to USD.
-func (c Converter) GWei2USD(amountGWei *big.Float) string {
+func (c *Converter) GWei2USD(amountGWei *big.Float) string {
 	cost := big.NewFloat(0).SetPrec(1024).Mul(amountGWei, c.oneGWeiToUSD)
 	costFloat, _ := cost.Float64()
 
@@ -91,7 +86,7 @@ func (c Converter) GWei2USD(amountGWei *big.Float) string {
 }
 
 // USD2Wei converts USD to Wei.
-func (c Converter) USD2Wei(amountUSD *big.Float) *big.Int {
+func (c *Converter) USD2Wei(amountUSD *big.Float) *big.Int {
 	gwei := big.NewFloat(0).SetPrec(1024).Mul(amountUSD, c.oneUSDToGWei)
 	v, _ := big.NewFloat(0).SetPrec(1024).Mul(gwei, big.NewFloat(1e9)).Int64()
 
@@ -99,12 +94,12 @@ func (c Converter) USD2Wei(amountUSD *big.Float) *big.Int {
 }
 
 // USD2GWei converts USD to GWei.
-func (c Converter) USD2GWei(amountUSD *big.Float) *big.Float {
+func (c *Converter) USD2GWei(amountUSD *big.Float) *big.Float {
 	return big.NewFloat(0).SetPrec(1024).Mul(amountUSD, c.oneUSDToGWei)
 }
 
 // CalculateTransactionDetails performs calculations on the transaction.
-func (c Converter) CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
+func (c *Converter) CalculateTransactionDetails(tx *types.Transaction) TransactionDetails {
 	return TransactionDetails{
 		Hash:              tx.Hash().Hex(),
 		Nonce:             tx.Nonce(),
@@ -117,7 +112,7 @@ func (c Converter) CalculateTransactionDetails(tx *types.Transaction) Transactio
 }
 
 // CalculateReceiptDetails performs calculations on the receipt.
-func (c Converter) CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.Int) ReceiptDetails {
+func (c *Converter) CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big.Int) ReceiptDetails {
 	cost := big.NewInt(0).Mul(big.NewInt(int64(receipt.GasUsed)), gasPrice)
 
 	return ReceiptDetails{
@@ -131,7 +126,7 @@ func (c Converter) CalculateReceiptDetails(receipt *types.Receipt, gasPrice *big
 }
 
 // CalculateBalanceDiff performs calculations on the starting and ending balance.
-func (c Converter) CalculateBalanceDiff(startingBalance *big.Int, endingBalance *big.Int) (BalanceDiff, error) {
+func (c *Converter) CalculateBalanceDiff(startingBalance *big.Int, endingBalance *big.Int) (BalanceDiff, error) {
 	cost := big.NewInt(0).Sub(startingBalance, endingBalance)
 
 	return BalanceDiff{
@@ -144,7 +139,7 @@ func (c Converter) CalculateBalanceDiff(startingBalance *big.Int, endingBalance 
 
 // FmtBalanceSheet produces a easy to read format of the starting and ending
 // balance for the connected account.
-func (c Converter) FmtBalanceSheet(startingBalance *big.Int, endingBalance *big.Int) string {
+func (c *Converter) FmtBalanceSheet(startingBalance *big.Int, endingBalance *big.Int) string {
 	diff, err := c.CalculateBalanceDiff(startingBalance, endingBalance)
 	if err != nil {
 		return ""
@@ -154,14 +149,14 @@ func (c Converter) FmtBalanceSheet(startingBalance *big.Int, endingBalance *big.
 }
 
 // FmtTransaction produces a easy to read format of the specified transaction.
-func (c Converter) FmtTransaction(tx *types.Transaction) string {
+func (c *Converter) FmtTransaction(tx *types.Transaction) string {
 	tcd := c.CalculateTransactionDetails(tx)
 
 	return formatTranCostDetails(tcd)
 }
 
 // FmtTransactionReceipt produces a easy to read format of the specified receipt.
-func (c Converter) FmtTransactionReceipt(receipt *types.Receipt, gasPrice *big.Int) string {
+func (c *Converter) FmtTransactionReceipt(receipt *types.Receipt, gasPrice *big.Int) string {
 	rcd := c.CalculateReceiptDetails(receipt, gasPrice)
 
 	var b bytes.Buffer

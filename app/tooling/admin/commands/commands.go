@@ -16,7 +16,7 @@ import (
 )
 
 // Deposit will move money from the wallet into the game contract.
-func Deposit(ctx context.Context, converter currency.Converter, bank *bank.Bank, amountUSD float64) error {
+func Deposit(ctx context.Context, converter *currency.Converter, bank *bank.Bank, amountUSD float64) error {
 	amountGWei := converter.USD2GWei(big.NewFloat(amountUSD))
 	tx, receipt, err := bank.Deposit(ctx, amountGWei)
 	if err != nil {
@@ -30,7 +30,7 @@ func Deposit(ctx context.Context, converter currency.Converter, bank *bank.Bank,
 }
 
 // Withdraw will remove money from the game contract back into the wallet.
-func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank) error {
+func Withdraw(ctx context.Context, converter *currency.Converter, bank *bank.Bank) error {
 	tx, receipt, err := bank.Withdraw(ctx)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func Withdraw(ctx context.Context, converter currency.Converter, bank *bank.Bank
 }
 
 // Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, args Args, keyFile string) (err error) {
+func Deploy(ctx context.Context, converter *currency.Converter, bank *bank.Bank, args Args, keyFile string) (err error) {
 	client := bank.Client()
 
 	startingBalance, err := client.CurrentBalance(ctx)
@@ -102,7 +102,7 @@ func Deploy(ctx context.Context, converter currency.Converter, bank *bank.Bank, 
 }
 
 // Wallet returns the current wallet balance
-func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank) error {
+func Wallet(ctx context.Context, converter *currency.Converter, bank *bank.Bank) error {
 	wei, err := bank.WalletBalance(ctx)
 	if err != nil {
 		return err
@@ -118,7 +118,7 @@ func Wallet(ctx context.Context, converter currency.Converter, bank *bank.Bank) 
 }
 
 // Balance returns the current balance of the specified address.
-func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank, address string) error {
+func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank, address string) error {
 	gwei, err := bank.AccountBalance(ctx, address)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func Balance(ctx context.Context, converter currency.Converter, bank *bank.Bank,
 
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter currency.Converter, bank *bank.Bank, tranID string) error {
+func Transaction(ctx context.Context, converter *currency.Converter, bank *bank.Bank, tranID string) error {
 	txHash := common.HexToHash(tranID)
 	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
 	if err != nil {

@@ -37,7 +37,7 @@ type APIMuxConfig struct {
 	Shutdown    chan os.Signal
 	Log         *zap.SugaredLogger
 	Auth        *auth.Auth
-	Converter   currency.Converter
+	Converter   *currency.Converter
 	Bank        *bank.Bank
 	Evts        *events.Events
 	AnteUSD     float64

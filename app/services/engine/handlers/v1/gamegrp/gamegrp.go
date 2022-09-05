@@ -27,7 +27,7 @@ import (
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
-	Converter   currency.Converter
+	Converter   *currency.Converter
 	Bank        *bank.Bank
 	Log         *zap.SugaredLogger
 	WS          websocket.Upgrader

@@ -10,6 +10,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -20,6 +21,7 @@ const (
 )
 
 // =============================================================================
+// A mock of a Banker. On reconcile no trasanction or receipt will be provided.
 
 // mockBank represents an in-memory bank for testing.
 type mockBank struct {
@@ -107,7 +109,12 @@ func (mb *mockBank) Reconcile(ctx context.Context, winningAccountID string, losi
 	mb.Balances[winningAccountID] = big.NewInt(0).Add(mb.Balances[winningAccountID], pot)
 	mb.Balances[mb.Owner] = big.NewInt(0).Add(mb.Balances[mb.Owner], gameFeeWei)
 
-	return nil, nil, nil
+	// Create a fake transaction and receipt.
+	const zeroHash string = "0x0000000000000000000000000000000000000000000000000000000000000000"
+	tx := types.NewTransaction(0, common.HexToAddress(zeroHash), big.NewInt(0), 0, big.NewInt(0), nil)
+	receipt := types.NewReceipt(nil, false, 0)
+
+	return tx, receipt, nil
 }
 
 // =============================================================================

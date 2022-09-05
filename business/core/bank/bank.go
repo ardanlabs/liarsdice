@@ -9,7 +9,6 @@ import (
 	"github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
-	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/zap"
@@ -171,11 +170,11 @@ func (b *Bank) WalletBalance(ctx context.Context) (wei *big.Int, err error) {
 // =============================================================================
 
 // log will write to the configured log if a traceid exists in the context.
-func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
-	if b.logger == nil {
-		return
-	}
+// func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
+// 	if b.logger == nil {
+// 		return
+// 	}
 
-	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
-	b.logger.Infow(msg, keysAndvalues...)
-}
+// 	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
+// 	b.logger.Infow(msg, keysAndvalues...)
+// }
