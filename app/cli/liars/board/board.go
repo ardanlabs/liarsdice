@@ -176,6 +176,8 @@ func (b *Board) StartEventLoop() chan struct{} {
 
 // Events handles any events from the websocket.
 func (b *Board) Events(event string, address string) {
+	b.screen.Beep()
+
 	message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
 	b.printMessage(message)
 
