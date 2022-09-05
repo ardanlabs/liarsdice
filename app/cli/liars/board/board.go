@@ -2,6 +2,7 @@
 package board
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,7 +16,7 @@ import (
 // Game positioning values for static content.
 const (
 	boardWidth    = 63
-	boardHeight   = 18
+	boardHeight   = 19
 	messageHeight = 12
 	anteX         = 40
 	anteY         = 8
@@ -48,12 +49,13 @@ var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's
 
 // Board represents the game board and all its state.
 type Board struct {
-	accountID string
-	engine    *engine.Engine
-	screen    tcell.Screen
-	style     tcell.Style
-	bets      []rune
-	messages  []string
+	accountID  string
+	engine     *engine.Engine
+	screen     tcell.Screen
+	style      tcell.Style
+	bets       []rune
+	messages   []string
+	lastStatus engine.Status
 }
 
 // New contructs a game board.
@@ -92,19 +94,7 @@ func (b *Board) Shutdown() {
 func (b *Board) Init() {
 	b.screen.Clear()
 
-	for i := 1; i < boardWidth; i++ {
-		b.screen.SetContent(i, 1, '=', nil, b.style)
-	}
-	for i := 1; i < boardWidth; i++ {
-		b.screen.SetContent(i, boardHeight, '=', nil, b.style)
-	}
-	for i := 2; i < boardHeight; i++ {
-		b.screen.SetContent(1, i, '|', nil, b.style)
-	}
-	for i := 2; i < boardHeight; i++ {
-		b.screen.SetContent(boardWidth-1, i, '|', nil, b.style)
-	}
-
+	b.drawBox(1, 1, boardWidth, boardHeight)
 	for i := 1; i < boardWidth; i++ {
 		b.screen.SetContent(i, messageHeight, '=', nil, b.style)
 	}
@@ -151,6 +141,8 @@ func (b *Board) StartEventLoop() chan struct{} {
 
 	go func() {
 		for {
+			var err error
+
 			ev := b.screen.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
@@ -160,14 +152,18 @@ func (b *Board) StartEventLoop() chan struct{} {
 					return
 
 				case tcell.KeyDEL, tcell.KeyDelete:
-					b.subBet()
+					err = b.subBet()
 
 				case tcell.KeyEnter:
-					b.enterBet()
+					err = b.enterBet()
 
 				case tcell.KeyRune:
-					b.processKeyEvent(ev.Rune())
+					err = b.processKeyEvent(ev.Rune())
 				}
+			}
+
+			if err != nil {
+				b.printMessage(err.Error())
 			}
 		}
 	}()
@@ -180,7 +176,7 @@ func (b *Board) Events(event string, address string) {
 	if !strings.Contains(address, "read tcp") {
 		message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
 		b.printMessage(message)
-		b.beep(3)
+		b.beep(2)
 	}
 
 	switch event {
@@ -190,7 +186,9 @@ func (b *Board) Events(event string, address string) {
 		}
 
 	case "callliar":
-		b.reconcile()
+		if err := b.reconcile(); err != nil {
+			b.printMessage(err.Error())
+		}
 	}
 
 	status, err := b.engine.QueryStatus()
@@ -211,6 +209,9 @@ func (b *Board) PrintSettings(engine string, network string, chainID int, contra
 
 // PrintStatus display the status information.
 func (b *Board) PrintStatus(status engine.Status) {
+
+	// Save this status for modal support.
+	b.lastStatus = status
 
 	// Print the current game status and round.
 	b.print(helpX+11, statusY-6, fmt.Sprintf("%-10s", status.Status))
@@ -284,6 +285,13 @@ func (b *Board) PrintStatus(status engine.Status) {
 	b.print(anteX, anteY, fmt.Sprintf("$%.2f", status.AnteUSD))
 	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
 
+	// Show the cursor only if the active player.
+	if status.CupsOrder[status.CurrentCup] == b.accountID {
+		b.screen.ShowCursor(betRowX+1, betRowY)
+	} else {
+		b.screen.HideCursor()
+	}
+
 	// Hide the cursor to show the game is over.
 	if status.Status == "gameover" {
 		b.screen.HideCursor()
@@ -304,147 +312,144 @@ func (*Board) FmtAddress(address string) string {
 
 // processKeyEvent is the first line of processing for any key that is
 // pressed during the game.
-func (b *Board) processKeyEvent(r rune) {
+func (b *Board) processKeyEvent(r rune) error {
+	var err error
+
 	switch {
 	case (r >= rune('0') && r <= rune('9')) || r == rune('.'):
-		b.value(r)
+		err = b.value(r)
 
 	case r == rune('n'):
-		b.newGame()
+		err = b.newGame()
 
 	case r == rune('j'):
-		b.joinGame()
+		err = b.joinGame()
 
 	case r == rune('s'):
-		b.startGame()
+		err = b.startGame()
 
 	case r == rune('l'):
-		b.callLiar()
+		err = b.callLiar()
+
+	case r == rune('m'):
+		err = b.showModal("bill")
 
 	default:
-		b.screen.Beep()
+		err = errors.New("invalid selection")
 	}
-}
 
-// beep will provide a number of consecutive beeps.
-func (b *Board) beep(number int) {
-	for i := 0; i < number; i++ {
-		b.screen.Beep()
-		time.Sleep(150 * time.Millisecond)
-	}
+	return err
 }
 
 // value processes the keystroke based on the mode.
-func (b *Board) value(r rune) {
+func (b *Board) value(r rune) error {
 	if r >= rune('1') && r <= rune('6') {
-		b.addBet(r)
-		return
+		return b.addBet(r)
 	}
-	b.screen.Beep()
+
+	return errors.New("invalid selection")
 }
 
 // newGame starts a new game.
-func (b *Board) newGame() {
+func (b *Board) newGame() error {
 	if _, err := b.engine.NewGame(); err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
+
+	return nil
 }
 
 // joinGame adds the account to the game.
-func (b *Board) joinGame() {
+func (b *Board) joinGame() error {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	if status.Status != "newgame" {
-		b.printMessage("error: invalid status state: " + status.Status)
-		return
+		return errors.New("invalid status state: " + status.Status)
 	}
 
 	if _, err = b.engine.JoinGame(); err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
+
+	return nil
 }
 
 // startGame start the game so it can be played.
-func (b *Board) startGame() {
+func (b *Board) startGame() error {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	if status.Status != "newgame" {
-		b.printMessage("error: invalid status state: " + status.Status)
-		return
+		return errors.New("invalid status state: " + status.Status)
 	}
 
 	if _, err := b.engine.StartGame(); err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
+
+	return nil
 }
 
 // callLiar calls the last bet a lie.
-func (b *Board) callLiar() {
+func (b *Board) callLiar() error {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	if status.Status != "playing" {
-		b.printMessage("error: invalid status state: " + status.Status)
-		return
+		return errors.New("invalid status state: " + status.Status)
 	}
 
 	if status.CupsOrder[status.CurrentCup] != b.accountID {
-		b.printMessage("error: not your turn")
-		b.screen.Beep()
-		return
+		return errors.New("not your turn")
 	}
 
 	if _, err := b.engine.Liar(); err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
+
+	return nil
 }
 
 // reconcile the game the winner gets paid.
-func (b *Board) reconcile() {
+func (b *Board) reconcile() error {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	if status.Status != "gameover" {
-		return
+		return errors.New("invalid status state: " + status.Status)
 	}
 
 	if status.LastWinAcctID != b.accountID {
-		b.printMessage("gameover: winner will call reconcile")
-		return
+		return errors.New("gameover: winner will call reconcile")
 	}
 
 	if _, err := b.engine.Reconcile(); err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
+
+	return nil
 }
 
 // =============================================================================
 
 // addBet takes the value selected on the keyboard and adds it to the
 // bet slice and screen.
-func (b *Board) addBet(r rune) {
+func (b *Board) addBet(r rune) error {
+	if b.lastStatus.CupsOrder[b.lastStatus.CurrentCup] != b.accountID {
+		return errors.New("not your turn")
+	}
+
 	if len(b.bets) > 0 && b.bets[0] != r {
-		b.screen.Beep()
-		return
+		return errors.New("please use the same value")
 	}
 
 	x := betRowX
@@ -456,19 +461,23 @@ func (b *Board) addBet(r rune) {
 
 	suite, err := strconv.Atoi(string(b.bets[0]))
 	if err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	bet := fmt.Sprintf("%d %-10s", len(b.bets), words[suite])
 	b.print(potX, potY+1, bet)
+
+	return nil
 }
 
 // subBet removes a value from the bet slice and screen.
-func (b *Board) subBet() {
+func (b *Board) subBet() error {
+	if b.lastStatus.CupsOrder[b.lastStatus.CurrentCup] != b.accountID {
+		return errors.New("not your turn")
+	}
+
 	if len(b.bets) == 0 {
-		b.screen.Beep()
-		return
+		return errors.New("nothing to delete")
 	}
 
 	x := betRowX
@@ -482,52 +491,82 @@ func (b *Board) subBet() {
 	if len(b.bets) > 0 {
 		suite, err := strconv.Atoi(string(b.bets[0]))
 		if err != nil {
-			b.printMessage("error: " + err.Error())
-			return
+			return err
 		}
 
 		bet = fmt.Sprintf("%d %-10s", len(b.bets), words[suite])
 	}
 	b.print(potX, potY+1, bet)
+
+	return nil
 }
 
 // enterBet is called to submit a bet.
-func (b *Board) enterBet() {
+func (b *Board) enterBet() error {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	if status.Status != "playing" {
-		b.printMessage("error: invalid status state: " + status.Status)
-		return
+		return errors.New("invalid status state: " + status.Status)
 	}
 
 	if status.CupsOrder[status.CurrentCup] != b.accountID {
-		b.printMessage("error: not your turn")
-		b.screen.Beep()
-		return
+		return errors.New("not your turn")
 	}
 
 	if len(b.bets) == 0 {
-		b.printMessage("error: missing bet information")
-		b.screen.Beep()
-		return
+		return errors.New("missing bet information")
 	}
 
 	if _, err = b.engine.Bet(len(b.bets), b.bets[0]); err != nil {
-		b.printMessage("error: " + err.Error())
-		return
+		return err
 	}
 
 	b.bets = []rune{}
 	b.screen.ShowCursor(betRowX+1, betRowY)
 	b.print(betRowX, betRowY, "                 ")
 	b.print(potX, potY+1, "                 ")
+
+	return nil
 }
 
 // =============================================================================
+
+// beep will provide a number of consecutive beeps.
+func (b *Board) beep(number int) {
+	for i := 0; i < number; i++ {
+		b.screen.Beep()
+		time.Sleep(150 * time.Millisecond)
+	}
+}
+
+// drawBox draws an empty box on the screen
+func (b *Board) drawBox(x int, y int, width int, height int) {
+	for h := y; h < height; h++ {
+		for w := x; w < width; w++ {
+			if h == y || h == height-1 {
+				b.screen.SetContent(w, h, '=', nil, b.style)
+				continue
+			}
+			b.screen.SetContent(w, h, ' ', nil, b.style)
+
+			if w == x || w == width-1 {
+				b.screen.SetContent(w, h, '|', nil, b.style)
+			}
+		}
+	}
+	b.screen.Show()
+}
+
+// showModal displays a modal dialog box.
+func (b *Board) showModal(message string) error {
+	b.screen.HideCursor()
+	b.drawBox(4, 3, 60, 11)
+
+	return nil
+}
 
 // PrintMessage adds a message to the message center.
 func (b *Board) printMessage(message string) {
@@ -545,6 +584,7 @@ func (b *Board) printMessage(message string) {
 	b.print(3, messageHeight+3, b.messages[1])
 	b.print(3, messageHeight+4, b.messages[2])
 
+	b.screen.Beep()
 	b.screen.Show()
 }
 
