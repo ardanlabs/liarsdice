@@ -478,6 +478,7 @@ func (g *Game) NextRound() (int, error) {
 	if leftToPlay == 1 {
 		g.bets = []Bet{}
 		g.status = StatusGameOver
+		g.rollDice(g.lastWinAcctID, 0, 0, 0, 0, 0)
 		return 1, nil
 	}
 

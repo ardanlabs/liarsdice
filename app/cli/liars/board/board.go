@@ -57,6 +57,7 @@ type Board struct {
 	messages   []string
 	lastStatus engine.Status
 	modalUp    bool
+	modalMsg   string
 }
 
 // New contructs a game board.
@@ -80,7 +81,7 @@ func New(engine *engine.Engine, accountID string) (*Board, error) {
 		engine:    engine,
 		screen:    screen,
 		style:     style,
-		messages:  make([]string, 3),
+		messages:  make([]string, 4),
 	}
 
 	return &board, nil
@@ -95,12 +96,8 @@ func (b *Board) Shutdown() {
 func (b *Board) Init() {
 	b.screen.Clear()
 
-	b.drawBox(1, 1, boardWidth, boardHeight)
-	for i := 1; i < boardWidth; i++ {
-		b.screen.SetContent(i, messageHeight, '=', nil, b.style)
-	}
+	b.drawGameBox(false, 1, 1, boardWidth, boardHeight)
 
-	b.print(3, messageHeight, " Message Center ")
 	b.print(playersX, columnHeight, "Players:")
 	b.print(outX, columnHeight, "Outs:")
 	b.print(betX, columnHeight, "Last Bet:")
@@ -168,7 +165,7 @@ func (b *Board) StartEventLoop() chan struct{} {
 			}
 
 			if err != nil {
-				b.printMessage(err.Error())
+				b.printMessage(err.Error(), true)
 			}
 		}
 	}()
@@ -180,20 +177,24 @@ func (b *Board) StartEventLoop() chan struct{} {
 func (b *Board) Events(event string, address string) {
 	if !strings.Contains(address, "read tcp") {
 		message := fmt.Sprintf("addr: %s type: %s", b.FmtAddress(address), event)
-		b.printMessage(message)
-		b.beep(2)
+		b.printMessage(message, true)
 	}
 
 	switch event {
 	case "start":
 		if _, err := b.engine.RollDice(); err != nil {
-			b.printMessage("error rolling dice")
+			b.printMessage("error rolling dice", true)
 		}
 
 	case "callliar":
+		b.showWinnerLoser("*** WON ROUND ***", "*** LOST ROUND ***")
+
 		if err := b.reconcile(); err != nil {
-			b.printMessage(err.Error())
+			b.printMessage(err.Error(), true)
 		}
+
+	case "reconcile":
+		b.showWinnerLoser("*** WON GAME ***", "*** LOST GAME ***")
 	}
 
 	status, err := b.engine.QueryStatus()
@@ -260,6 +261,7 @@ func (b *Board) PrintStatus(status engine.Status) {
 		// Show the active player.
 		if i == status.CurrentCup {
 			b.print(playersX, addrY, "->")
+			b.print(playersX+3, addrY, accountID)
 		} else {
 			b.print(playersX, addrY, "  ")
 		}
@@ -290,21 +292,28 @@ func (b *Board) PrintStatus(status engine.Status) {
 	b.print(anteX, anteY, fmt.Sprintf("$%.2f", status.AnteUSD))
 	b.print(potX, potY, fmt.Sprintf("$%.2f", pot))
 
-	// Show the cursor only if the active player.
+	// Handle active player screen changes.
 	if len(status.CupsOrder) > 0 {
 		if status.CupsOrder[status.CurrentCup] == b.accountID {
 			for x, r := range b.bets {
 				b.print(betRowX+x+1, betRowY, string(r))
 			}
 			b.screen.ShowCursor(betRowX+len(b.bets)+1, betRowY)
+			b.drawGameBox(true, 1, 1, boardWidth, boardHeight)
 		} else {
 			b.screen.HideCursor()
+			b.drawGameBox(false, 1, 1, boardWidth, boardHeight)
 		}
 	}
 
 	// Hide the cursor to show the game is over.
 	if status.Status == "gameover" {
 		b.screen.HideCursor()
+	}
+
+	// If the model was up, show it again.
+	if b.modalUp {
+		b.showModal(b.modalMsg)
 	}
 
 	b.screen.Show()
@@ -552,29 +561,111 @@ func (b *Board) beep(number int) {
 	}
 }
 
-// drawBox draws an empty box on the screen
-func (b *Board) drawBox(x int, y int, width int, height int) {
+// showWinnerLoser shows the user if they won or lost.
+func (b *Board) showWinnerLoser(win string, los string) error {
+	status, err := b.engine.QueryStatus()
+	if err != nil {
+		return err
+	}
+
+	if status.LastWinAcctID == b.accountID {
+		b.showModal(win)
+		return nil
+	}
+
+	b.showModal(los)
+	return nil
+}
+
+// drawGameBox draws the game box.
+func (b *Board) drawGameBox(active bool, x int, y int, width int, height int) {
+	hozTRune := '\u2580'
+	hozBRune := '\u2584'
+	verRune := '\u2588'
+
+	style := b.style
+	if active {
+		style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
+	} else {
+		style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorGrey)
+	}
+
+	for i := 1; i < boardWidth; i++ {
+		b.screen.SetContent(i, messageHeight, hozTRune, nil, style)
+	}
+
 	for h := y; h < height; h++ {
 		for w := x; w < width; w++ {
-			if h == y || h == height-1 {
-				b.screen.SetContent(w, h, '=', nil, b.style)
-				continue
+			if h == y {
+				b.screen.SetContent(w, h, hozTRune, nil, style)
 			}
-			b.screen.SetContent(w, h, ' ', nil, b.style)
-
+			if h == height-1 {
+				b.screen.SetContent(w, h, hozBRune, nil, style)
+			}
 			if w == x || w == width-1 {
-				b.screen.SetContent(w, h, '|', nil, b.style)
+				b.screen.SetContent(w, h, verRune, nil, style)
 			}
 		}
 	}
+
+	b.screen.Show()
+}
+
+// drawModalBox draws an empty box on the screen.
+func (b *Board) drawBox(x int, y int, width int, height int) {
+	hozTRune := '\u2580'
+	hozBRune := '\u2584'
+	verRune := '\u2588'
+
+	style := b.style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
+
+	for h := y; h < height; h++ {
+		for w := x; w < width; w++ {
+			b.screen.SetContent(w, h, ' ', nil, b.style)
+		}
+	}
+
+	for h := y; h < height; h++ {
+		for w := x; w < width; w++ {
+			if h == y {
+				b.screen.SetContent(w, h, hozTRune, nil, style)
+			}
+			if h == height-1 {
+				b.screen.SetContent(w, h, hozBRune, nil, style)
+			}
+			if w == x || w == width-1 {
+				b.screen.SetContent(w, h, verRune, nil, style)
+			}
+		}
+	}
+
 	b.screen.Show()
 }
 
 // showModal displays a modal dialog box.
 func (b *Board) showModal(message string) error {
 	b.modalUp = true
+	b.modalMsg = message
+
 	b.screen.HideCursor()
-	b.drawBox(4, 3, 60, 12)
+	b.drawBox(9, 3, 55, 8)
+
+	words := strings.Split(message, " ")
+	var msg string
+	h := 5
+	for _, word := range words {
+		msg += word + " "
+		if len(msg) >= 40 {
+			l := len(msg)
+			x := 32 - (l / 2)
+			b.print(x, h, msg)
+			h++
+			msg = ""
+		}
+	}
+	l := len(msg)
+	x := 32 - (l / 2)
+	b.print(x, h, msg)
 
 	return nil
 }
@@ -582,41 +673,64 @@ func (b *Board) showModal(message string) error {
 // closeModal closes the modal dialog box.
 func (b *Board) closeModal() {
 	b.modalUp = false
+	b.modalMsg = ""
 
+	b.drawBox(1, 1, boardWidth, boardHeight)
+
+	b.print(playersX, columnHeight, "Players:")
+	b.print(outX, columnHeight, "Outs:")
+	b.print(betX, columnHeight, "Last Bet:")
+	b.print(balX, columnHeight, "  Balances:")
 	b.print(myDiceX-9, myDiceY, "My Dice:")
 	b.print(anteX-6, anteY, "Ante:")
 	b.print(potX-6, potY, "Pot :")
 	b.print(potX-6, potY+1, "Bet :")
 	b.print(betRowX-9, betRowY, "My Bet :>")
 
-	for w := 4; w < 60; w++ {
-		b.screen.SetContent(w, 11, ' ', nil, b.style)
-	}
-	b.screen.SetContent(4, 9, ' ', nil, b.style)
-	b.screen.SetContent(59, 8, ' ', nil, b.style)
-	b.screen.SetContent(59, 9, ' ', nil, b.style)
-	b.screen.SetContent(59, 10, ' ', nil, b.style)
-
 	b.PrintStatus(b.lastStatus)
 }
 
 // PrintMessage adds a message to the message center.
-func (b *Board) printMessage(message string) {
+func (b *Board) printMessage(message string, beep bool) {
 	const width = boardWidth - 4
 	msg := fmt.Sprintf("%-*s", width, message)
 	if len(msg) > 58 {
 		msg = msg[:58]
 	}
 
+	b.messages[3] = b.messages[2]
 	b.messages[2] = b.messages[1]
 	b.messages[1] = b.messages[0]
 	b.messages[0] = msg
 
-	b.print(3, messageHeight+2, b.messages[0])
-	b.print(3, messageHeight+3, b.messages[1])
-	b.print(3, messageHeight+4, b.messages[2])
+	b.print(3, messageHeight+1, b.messages[0])
+	b.print(3, messageHeight+2, b.messages[1])
+	b.print(3, messageHeight+3, b.messages[2])
+	b.print(3, messageHeight+4, b.messages[3])
 
-	b.screen.Beep()
+	if beep {
+		b.screen.Beep()
+	}
+
+	b.screen.Show()
+}
+
+// print knows how to print a string on the screen.
+func (b *Board) printHighlight(x, y int, str string) {
+	style := tcell.StyleDefault
+	style = style.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
+
+	for _, c := range str {
+		var comb []rune
+		w := runewidth.RuneWidth(c)
+		if w == 0 {
+			comb = []rune{c}
+			c = ' '
+			w = 1
+		}
+		b.screen.SetContent(x, y, c, comb, style)
+		x += w
+	}
 	b.screen.Show()
 }
 
