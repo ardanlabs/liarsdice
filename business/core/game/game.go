@@ -260,10 +260,10 @@ func (g *Game) RollDice(accountID string, manualRole ...int) error {
 
 // rollDice will generate 5 new random integers for the players cup. The caller
 // can specific the dice if they choose.
-func (g *Game) rollDice(account string, manualRole ...int) error {
-	cup, exists := g.cups[account]
+func (g *Game) rollDice(accountID string, manualRole ...int) error {
+	cup, exists := g.cups[accountID]
 	if !exists {
-		return fmt.Errorf("account [%s] does not exist in the game", account)
+		return fmt.Errorf("account id [%s] does not exist in the game", accountID)
 	}
 
 	if manualRole == nil || len(manualRole) < 5 {
@@ -459,6 +459,10 @@ func (g *Game) NextRound() (int, error) {
 		cup.Dice = make([]int, 5)
 		g.cups[accountID] = cup
 
+		for i := range cup.Dice {
+			cup.Dice[i] = 0
+		}
+
 		if cup.Outs == 3 {
 			g.cupsOrder[cup.OrderIdx] = ""
 			continue
@@ -470,6 +474,7 @@ func (g *Game) NextRound() (int, error) {
 	}
 
 	// If there is only 1 player left we have a winner.
+	// Reset the bets, the dice, and status.
 	if leftToPlay == 1 {
 		g.bets = []Bet{}
 		g.status = StatusGameOver
