@@ -81,7 +81,7 @@ func New(engine *engine.Engine, accountID string) (*Board, error) {
 		engine:    engine,
 		screen:    screen,
 		style:     style,
-		messages:  make([]string, 4),
+		messages:  make([]string, 5),
 	}
 
 	return &board, nil
@@ -698,6 +698,7 @@ func (b *Board) printMessage(message string, beep bool) {
 		msg = msg[:58]
 	}
 
+	b.messages[4] = b.messages[3]
 	b.messages[3] = b.messages[2]
 	b.messages[2] = b.messages[1]
 	b.messages[1] = b.messages[0]
@@ -707,6 +708,7 @@ func (b *Board) printMessage(message string, beep bool) {
 	b.print(3, messageHeight+2, b.messages[1])
 	b.print(3, messageHeight+3, b.messages[2])
 	b.print(3, messageHeight+4, b.messages[3])
+	b.print(3, messageHeight+5, b.messages[4])
 
 	if beep {
 		b.screen.Beep()
