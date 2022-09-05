@@ -158,7 +158,7 @@ func (b *Board) StartEventLoop() chan struct{} {
 					close(quit)
 					return
 
-				case tcell.KeyDEL:
+				case tcell.KeyDEL, tcell.KeyDelete:
 					b.subBet()
 
 				case tcell.KeyEnter:
