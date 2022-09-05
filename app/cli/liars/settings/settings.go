@@ -15,7 +15,7 @@ Usage:
 
 Options:
 	-e, --engine     The url of the game engine. Default: http://0.0.0.0:3000
-	-a, --account    The players account id. Default: 0x6327a38415c53ffb36c11db55ea74cc9cb4976fd
+	-a, --account    The players account id. Default: 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
 `
 
 // PrintUsage displays the usage information.
@@ -39,7 +39,7 @@ type Args struct {
 func Parse() (Flags, Args, error) {
 	const (
 		engine    = "http://0.0.0.0:3000"
-		accountID = "0x6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+		accountID = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
 	)
 
 	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }

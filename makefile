@@ -35,7 +35,7 @@ game-up:
 	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
 game-tui1:
-	go run app/cli/liars/main.go
+	go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
 
 game-tui2:
 	go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
