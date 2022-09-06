@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// Events handles any events from the websocket.
-func (b *Board) Events(event string, address string) {
+// webEvents handles any events from the websocket.
+func (b *Board) webEvents(event string, address string) {
 	if !strings.Contains(address, "read tcp") {
 		message := fmt.Sprintf("addr: %s type: %s", b.fmtAddress(address), event)
 		b.printMessage(message, true)
@@ -36,8 +36,6 @@ func (b *Board) Events(event string, address string) {
 	}
 	b.printStatus(status)
 }
-
-// =============================================================================
 
 // reconcile the game the winner gets paid.
 func (b *Board) reconcile() error {

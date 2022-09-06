@@ -6,8 +6,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// Run starts a goroutine to handle keyboard input.
-func (b *Board) Run() chan struct{} {
+// pollEvents starts a goroutine to handle terminal events.
+func (b *Board) pollEvents() chan struct{} {
 	quit := make(chan struct{})
 
 	go func() {
@@ -59,8 +59,6 @@ func (b *Board) Run() chan struct{} {
 
 	return quit
 }
-
-// =============================================================================
 
 // processKeyEvent is the first line of processing for any key that is
 // pressed during the game.

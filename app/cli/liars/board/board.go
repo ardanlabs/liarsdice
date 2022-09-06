@@ -103,3 +103,15 @@ func New(engine *engine.Engine, accountID string, network string, chainID int, c
 func (b *Board) Shutdown() {
 	b.screen.Fini()
 }
+
+// Run starts a goroutine to handle terminal events. This is a
+// blocking call.
+func (b *Board) Run() chan struct{} {
+	return b.pollEvents()
+}
+
+// Events handles any events from the websocket. This function should be
+// registered with any code receiving the web socket events.
+func (b *Board) Events(event string, address string) {
+	b.webEvents(event, address)
+}
