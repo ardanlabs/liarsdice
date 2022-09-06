@@ -39,9 +39,6 @@ import (
 	Add subtle animations to some game elements (For Ex. Cups).
 	Change players inditifiers from addresses to names.
 	Change JS tags from _ to camel case.
-
-	-- Terminal UI
-	Finish basic game play.
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.
