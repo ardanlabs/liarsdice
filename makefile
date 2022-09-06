@@ -100,10 +100,13 @@ geth-deposit:
 
 # ==============================================================================
 # Running tests within the local computer
+# go install honnef.co/go/tools/cmd/staticcheck@latest
+# go install golang.org/x/vuln/cmd/govulncheck@latest
 
 test-engine:
 	go test ./... -count=1
 	staticcheck -checks=all ./...
+	govulncheck ./...
 
 test-gui:
 	npm test --prefix app/services/game/
