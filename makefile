@@ -26,8 +26,13 @@
 
 dev.setup:
 	brew update
-	brew list geth || brew install geth
+	brew list ethereum || brew install ethereum
 	brew list solidity || brew install solidity
+
+dev.update:
+	brew update
+	brew list ethereum || brew upgrade ethereum
+	brew list solidity || brew upgrade solidity
 
 # ==============================================================================
 # Game Engine and UI
