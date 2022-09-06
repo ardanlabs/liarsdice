@@ -27,6 +27,7 @@
 dev.setup:
 	brew update
 	brew list geth || brew install geth
+	brew list solidity || brew install solidity
 
 # ==============================================================================
 # Game Engine and UI
