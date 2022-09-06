@@ -66,7 +66,12 @@ type Board struct {
 }
 
 // New contructs a game board and renders the board.
-func New(engine *engine.Engine, accountID string, network string, chainID int, contractID string) (*Board, error) {
+func New(engine *engine.Engine, accountID string) (*Board, error) {
+	config, err := engine.Configuration()
+	if err != nil {
+		return nil, fmt.Errorf("get game configuration: %w", err)
+	}
+
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
 	screen, err := tcell.NewScreen()
@@ -83,9 +88,9 @@ func New(engine *engine.Engine, accountID string, network string, chainID int, c
 
 	board := Board{
 		accountID:  accountID,
-		network:    network,
-		chainID:    chainID,
-		contractID: contractID,
+		network:    config.Network,
+		chainID:    config.ChainID,
+		contractID: config.ContractID,
 		engine:     engine,
 		screen:     screen,
 		style:      style,

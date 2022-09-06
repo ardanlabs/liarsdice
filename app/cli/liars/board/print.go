@@ -20,7 +20,7 @@ func (b *Board) printBoard() error {
 
 	b.drawGameBoard(false)
 	b.printLables()
-	b.printSettings(b.engine.URL(), b.network, b.chainID, b.contractID, b.accountID)
+	b.printSettings()
 
 	b.print(helpX, 1, "<1-6>+   : set bet")
 	b.print(helpX, 2, "<del>    : remove bet number")
@@ -172,12 +172,12 @@ func (b *Board) printLables() {
 }
 
 // printSettings draws the settings on the board.
-func (b *Board) printSettings(engine string, network string, chainID int, contractID string, address string) {
-	b.print(helpX+11, statusY, engine)
-	b.print(helpX+11, statusY+1, network)
-	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", chainID))
-	b.print(helpX+11, statusY+3, b.fmtAddress(contractID))
-	b.print(helpX+11, statusY+4, b.fmtAddress(address))
+func (b *Board) printSettings() {
+	b.print(helpX+11, statusY, b.engine.URL())
+	b.print(helpX+11, statusY+1, b.network)
+	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", b.chainID))
+	b.print(helpX+11, statusY+3, b.fmtAddress(b.contractID))
+	b.print(helpX+11, statusY+4, b.fmtAddress(b.accountID))
 }
 
 // PrintMessage adds a message to the message center.

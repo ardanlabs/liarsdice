@@ -45,15 +45,10 @@ func run() error {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}
 
-	config, err := eng.Configuration()
-	if err != nil {
-		return fmt.Errorf("get game configuration: %w", err)
-	}
-
 	// =========================================================================
 	// Create the board and initialize the display.
 
-	board, err := board.New(eng, token.Address, config.Network, config.ChainID, config.ContractID)
+	board, err := board.New(eng, token.Address)
 	if err != nil {
 		return err
 	}
