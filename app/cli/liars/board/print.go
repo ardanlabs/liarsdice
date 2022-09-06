@@ -206,6 +206,11 @@ func (b *Board) printMessage(message string, beep bool) {
 
 	b.screen.Show()
 
+	if strings.Contains(message, "rolldice") ||
+		strings.Contains(message, "bet") {
+		return
+	}
+
 	b.showModal(message)
 }
 

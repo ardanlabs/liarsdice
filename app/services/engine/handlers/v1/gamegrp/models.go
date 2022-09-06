@@ -3,13 +3,13 @@ package gamegrp
 // Status represents the game status.
 type Status struct {
 	Status        string   `json:"status"`
-	AnteUSD       float64  `json:"ante_usd"`
-	LastOutAcctID string   `json:"last_out"`
-	LastWinAcctID string   `json:"last_win"`
-	CurrentCup    int      `json:"current_cup"`
+	AnteUSD       float64  `json:"anteUSD"`
+	LastOutAcctID string   `json:"lastOut"`
+	LastWinAcctID string   `json:"lastWin"`
+	CurrentCup    int      `json:"currentCup"`
 	Round         int      `json:"round"`
 	Cups          []Cup    `json:"cups"`
-	CupsOrder     []string `json:"player_order"`
+	CupsOrder     []string `json:"playerOrder"`
 	Bets          []Bet    `json:"bets"`
 	Balances      []string `json:"balances"`
 }
@@ -25,6 +25,6 @@ type Bet struct {
 type Cup struct {
 	AccountID string `json:"account"`
 	Dice      []int  `json:"dice"`
-	LastBet   Bet    `json:"last_bet"`
+	LastBet   Bet    `json:"lastBet"`
 	Outs      int    `json:"outs"`
 }

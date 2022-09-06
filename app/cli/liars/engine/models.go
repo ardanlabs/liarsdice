@@ -9,8 +9,8 @@ type ErrorResponse struct {
 // Config represents the configuration of the game engine.
 type Config struct {
 	Network    string `json:"network"`
-	ChainID    int    `json:"chain_id"`
-	ContractID string `json:"contract_id"`
+	ChainID    int    `json:"chainId"`
+	ContractID string `json:"contractId"`
 }
 
 // Token contains the user game token and public address of the player.
@@ -22,13 +22,13 @@ type Token struct {
 // Status represents the game status.
 type Status struct {
 	Status        string   `json:"status"`
-	AnteUSD       float64  `json:"ante_usd"`
-	LastOutAcctID string   `json:"last_out"`
-	LastWinAcctID string   `json:"last_win"`
-	CurrentCup    int      `json:"current_cup"`
+	AnteUSD       float64  `json:"anteUSD"`
+	LastOutAcctID string   `json:"lastOut"`
+	LastWinAcctID string   `json:"lastWin"`
+	CurrentCup    int      `json:"currentCup"`
 	Round         int      `json:"round"`
 	Cups          []Cup    `json:"cups"`
-	CupsOrder     []string `json:"player_order"`
+	CupsOrder     []string `json:"playerOrder"`
 	Bets          []Bet    `json:"bets"`
 	Balances      []string `json:"balances"`
 }
@@ -44,6 +44,6 @@ type Bet struct {
 type Cup struct {
 	AccountID string `json:"account"`
 	Dice      []int  `json:"dice"`
-	LastBet   Bet    `json:"last_bet"`
+	LastBet   Bet    `json:"lastBet"`
 	Outs      int    `json:"outs"`
 }

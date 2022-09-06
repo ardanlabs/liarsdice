@@ -50,7 +50,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}
 
 	dt := struct {
-		DateTime string `json:"date_time"` // YYYYMMDDHHMMSS
+		DateTime string `json:"dateTime"` // YYYYMMDDHHMMSS
 	}{
 		DateTime: time.Now().Format("20060102150405"),
 	}
@@ -61,7 +61,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}
 
 	dts := struct {
-		DateTime  string `json:"date_time"`
+		DateTime  string `json:"dateTime"`
 		Signature string `json:"sig"`
 	}{
 		DateTime:  dt.DateTime,

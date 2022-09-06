@@ -1,7 +1,6 @@
 package board
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -45,11 +44,11 @@ func (b *Board) reconcile() error {
 	}
 
 	if status.Status != "gameover" {
-		return errors.New("invalid status state: " + status.Status)
+		return nil
 	}
 
 	if status.LastWinAcctID != b.accountID {
-		return errors.New("gameover: winner will call reconcile")
+		return nil
 	}
 
 	if _, err := b.engine.Reconcile(); err != nil {

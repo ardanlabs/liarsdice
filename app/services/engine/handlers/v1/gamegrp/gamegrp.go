@@ -90,8 +90,8 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	info := struct {
 		Network    string `json:"network"`
-		ChainID    int    `json:"chain_id"`
-		ContractID string `json:"contract_id"`
+		ChainID    int    `json:"chainId"`
+		ContractID string `json:"contractId"`
 	}{
 		Network:    h.Bank.Client().Network(),
 		ChainID:    h.Bank.Client().ChainID(),
@@ -474,7 +474,7 @@ func (h *Handlers) getGame() (*game.Game, error) {
 
 func validateSignature(r *http.Request) (string, error) {
 	var dt struct {
-		DateTime  string `json:"date_time"` // YYYYMMDDHHMMSS
+		DateTime  string `json:"dateTime"` // YYYYMMDDHHMMSS
 		Signature string `json:"sig"`
 	}
 
@@ -483,7 +483,7 @@ func validateSignature(r *http.Request) (string, error) {
 	}
 
 	data := struct {
-		DateTime string `json:"date_time"`
+		DateTime string `json:"dateTime"`
 	}{
 		DateTime: dt.DateTime,
 	}
