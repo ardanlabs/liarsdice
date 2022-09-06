@@ -51,7 +51,7 @@ func run() error {
 	}
 
 	// =========================================================================
-	// Create the board and initalize the display.
+	// Create the board and initialize the display.
 
 	board, err := board.New(eng, token.Address, config.Network, config.ChainID, config.ContractID)
 	if err != nil {

@@ -145,7 +145,7 @@ func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt
 
 	tx, err := b.contract.Withdraw(tranOpts)
 	if err != nil {
-		return nil, nil, fmt.Errorf("withdrawl: %w", err)
+		return nil, nil, fmt.Errorf("withdraw: %w", err)
 	}
 
 	receipt, err := b.client.WaitMined(ctx, tx)

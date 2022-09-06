@@ -156,7 +156,7 @@ func Test_Withdraw(t *testing.T) {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
 
-	// The player's wallet balance should match the withdrawl minus the fees.
+	// The player's wallet balance should match the withdrawal minus the fees.
 	if expectedBalance.Cmp(currentBalance) != 0 {
 		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, currentBalance)
 	}
