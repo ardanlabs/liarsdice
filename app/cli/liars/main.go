@@ -37,7 +37,7 @@ func run() error {
 	}
 
 	// =========================================================================
-	// Establish a client connection to the game engine and get configuration.
+	// Establish a client connection to the game engine.
 
 	eng := engine.New(args.Engine)
 	token, err := eng.Connect(keyStorePath, args.AccountID, passPhrase)
