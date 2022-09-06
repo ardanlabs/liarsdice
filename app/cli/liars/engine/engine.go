@@ -163,20 +163,6 @@ func (e *Engine) NewGame() (Status, error) {
 	return status, nil
 }
 
-// Balance returns the accounts balance.
-func (e *Engine) Balance() (string, error) {
-	url := fmt.Sprintf("%s/v1/game/balance", e.url)
-
-	var account struct {
-		Balance string `json:"balance"`
-	}
-	if err := e.do(url, &account, nil); err != nil {
-		return "", err
-	}
-
-	return account.Balance, nil
-}
-
 // StartGame generates the five dice for the player.
 func (e *Engine) StartGame() (Status, error) {
 	url := fmt.Sprintf("%s/v1/game/start", e.url)

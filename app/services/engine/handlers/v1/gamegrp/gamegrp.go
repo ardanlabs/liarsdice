@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -103,6 +104,12 @@ func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *
 
 // Status will return information about the game.
 func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	claims, err := auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
+	}
+	address := claims.Subject
+
 	g, err := h.getGame()
 	if err != nil {
 		resp := Status{
@@ -117,7 +124,13 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	var cups []Cup
 	for _, accountID := range status.CupsOrder {
 		cup := status.Cups[accountID]
-		cups = append(cups, Cup{AccountID: cup.AccountID, Dice: cup.Dice, LastBet: Bet(cup.LastBet), Outs: cup.Outs})
+
+		// Don't share the dice information for other players.
+		dice := []int{0, 0, 0, 0, 0}
+		if strings.Compare(strings.ToLower(accountID), strings.ToLower(address)) == 0 {
+			dice = cup.Dice
+		}
+		cups = append(cups, Cup{AccountID: cup.AccountID, Dice: dice, LastBet: Bet(cup.LastBet), Outs: cup.Outs})
 	}
 
 	var bets []Bet

@@ -44,22 +44,19 @@ func Routes(app *web.App, cfg Config) {
 		BankTimeout: cfg.BankTimeout,
 	}
 
-	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
-	app.Handle(http.MethodGet, version, "/game/config", ggh.Configuration)
-	app.Handle(http.MethodGet, version, "/game/status", ggh.Status)
-	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", ggh.USD2Wei)
-
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
 
+	app.Handle(http.MethodGet, version, "/game/events", ggh.Events)
+	app.Handle(http.MethodGet, version, "/game/config", ggh.Configuration)
+	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", ggh.USD2Wei)
+
+	app.Handle(http.MethodGet, version, "/game/status", ggh.Status, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Log, cfg.Auth))
-
 	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Log, cfg.Auth))
-
 	app.Handle(http.MethodGet, version, "/game/bet/:number/:suite", ggh.Bet, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Log, cfg.Auth))
-
 	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Log, cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Log, cfg.Auth))
 
