@@ -11,6 +11,7 @@ let props = {
       number: 3,
       suite: 5 as die,
     },
+    dice: [4, 3, 5, 6, 2] as dice,
   },
   playerDice: [4, 3, 5, 6, 2] as dice,
 }

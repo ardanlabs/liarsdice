@@ -27,11 +27,68 @@ function MainRoom() {
   // Extracts addOut and setPlayerDice from useGame Hook
   const { addOut, setPlayerDice } = useGame()
 
-  // Extracts function to connect to ws (connect)
-  // and websocket current status from useWebSocket Hook
+  // Extracts function to connect to ws (connect) from useWebSocket Hook
   const { connect, wsStatus } = useWebSocket(resetTimer)
 
-  // ------------------Timer-------------------
+  // ===========================================================================
+
+  // initUEFn connects the websocket, clears the round timer and
+  // sets Player dice if needed.
+  const initUEFn = () => {
+    // Connects to websocket depending on status.
+    function connectToWs() {
+      if (
+        wsStatus.current !== 'open' &&
+        wsStatus.current !== 'attemptingConnection'
+      ) {
+        connect()
+        wsStatus.current = 'attemptingConnection'
+      }
+    }
+    connectToWs()
+
+    // Sets the player dice with the localstore value
+    setPlayerDice(
+      JSON.parse(window.localStorage.getItem('playerDice') as string),
+    )
+
+    // Given that this is the first component that access the game,
+    // we set the playerDice item on localStorage with it's zero value.
+    if (!window.localStorage.getItem('playerDice')) {
+      window.localStorage.setItem('playerDice', JSON.stringify([]))
+    }
+
+    // We set the timer with the sessionStorage value.
+    // This is to persit the value on refresh.
+    setTimer(parseInt(window.sessionStorage.getItem('round_timer') as string))
+  }
+
+  // An empty dependecies array triggers useEffect only on the first render of the component
+  // We disable the next line so eslint doens't complain about missing dependencies.
+  // eslint-disable-next-line
+  useEffect(initUEFn, [])
+
+  // ===========================================================================
+
+  const authUEFn = () => {
+    // Handles if the user is logged and has a token.
+    // If not, we redirect it to the login page. (<Login />)
+    function checkAuth() {
+      if (!account || !token() || !(state as appConfig)) {
+        navigate('/')
+      }
+    }
+
+    checkAuth()
+  }
+
+  // eslint-disable-next-line
+  useEffect(authUEFn, [account, state])
+
+  // ===========================================================================
+
+  // Timer related stuff
+
   // Round Interval timer.
   let roundInterval: NodeJS.Timer
 
@@ -53,105 +110,58 @@ function MainRoom() {
     setTimer(timeoutTime)
   }
 
-  // If the timer updates we store it in the sessionStorage in order to persits it when refreshing the page
-  useEffect(() => {
-    window.sessionStorage.setItem('round_timer', `${timer}`)
-  }, [timer])
+  // If the timer updates we store it in the sessionStorage persist it when
+  // refreshing the page.
+  useEffect(
+    () => window.sessionStorage.setItem('round_timer', `${timer}`),
+    [timer],
+  )
 
-  // Effect to handle the timer.
-  useEffect(() => {
+  const timerUEFn = () => {
     if (
-      (game.player_order as string[])[game.current_cup] === account &&
+      (game.playerOrder as string[])[game.currentCup] === account &&
       game.status === 'playing'
     ) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      roundInterval = setInterval(() => {
+      const setIntervalFn = () => {
         if (timer > 0 && game.status === 'playing') {
-          setTimer((prevState) => {
-            return prevState - 1
-          })
-        } else {
-          addOut()
-          resetTimer()
+          setTimer((prevState) => prevState - 1)
+          return
         }
-      }, 1000)
-    } else {
-      clearInterval(roundInterval)
-    }
-    return () => clearInterval(roundInterval)
-  }, [timer, account, game.player_order, game.current_cup, game.status])
-
-  // ---------------Finish timer----------------
-
-  // Connects to websocket depending on status.
-  function connectToWs() {
-    if (
-      wsStatus.current !== 'open' &&
-      wsStatus.current !== 'attemptingConnection'
-    ) {
-      connect()
-      wsStatus.current = 'attemptingConnection'
-    }
-  }
-  // First render effect to connect the websocket, clear the round timer and set Player dice if needed.
-  useEffect(() => {
-    connectToWs()
-
-    // Sets the player dice with the localstore value
-    setPlayerDice(
-      JSON.parse(window.localStorage.getItem('playerDice') as string),
-    )
-
-    // Given that this is the first component that access the game,
-    // we set the playerDice item on localStorage with it's zero value.
-    if (!window.localStorage.getItem('playerDice')) {
-      window.localStorage.setItem('playerDice', JSON.stringify([]))
-    }
-
-    // We set the timer with the sessionStorage value.
-    // This is to persit the value on refresh.
-    setTimer(parseInt(window.sessionStorage.getItem('round_timer') as string))
-
-    // An empty dependecies array triggers useEffect only on the first render of the component
-    // We disable the next line so eslint doens't complain about missing dependencies.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    // Handles if the user is logged and has a token.
-    // If not, we redirect it to the login page. (<Login />)
-    function checkAuth() {
-      if (!account || !token() || !(state as appConfig)) {
-        navigate('/')
+        addOut()
+        resetTimer()
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      roundInterval = setInterval(setIntervalFn, 1000)
+      return
     }
 
-    checkAuth()
+    clearInterval(roundInterval)
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [account, state])
+    // hook cleanup function
+    return () => clearInterval(roundInterval)
+  }
 
-  // Render
+  // Effect to handle the timer.
+  useEffect(timerUEFn, [
+    timer,
+    account,
+    game.playerOrder,
+    game.currentCup,
+    game.status,
+  ])
+
+  // Finish Timer
+
+  // ===========================================================================
+
+  // Renders this final markup
   return (
     <div
       className="container-fluid d-flex align-items-center justify-content-start px-0 flex-column"
       style={{ height: '100%', maxHeight: '100vh' }}
     >
       <AppHeader show={true} />
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'start',
-          alignItems: 'start',
-          maxWidth: '100vw',
-          marginTop: '15px',
-          height: 'calc(100vh - 181px)',
-        }}
-        id="mainRoom"
-      >
-        <GameTable timer={timer} />
-      </div>
+      <GameTable timer={timer} />
       <Footer />
     </div>
   )

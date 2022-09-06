@@ -77,13 +77,13 @@ code {
 
 /******** Main Board ********/
 /* Hide scrollbar but allows scroll for main Content in Chrome, Safari and Opera */
-#mainRoom::-webkit-scrollbar,
+#gameTable::-webkit-scrollbar,
 #cupsContainer::-webkit-scrollbar {
   display: none;
 }
 
 /* Hide scrollbar but allows scroll for main Content in IE, Edge and Firefox */
-#mainRoom,
+#gameTable,
 #cupsContainer {
   -ms-overflow-style: none;
   /* IE and Edge */

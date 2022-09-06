@@ -1,9 +1,13 @@
+require('responses.d')
+require('props.d')
+
 export type dice = readonly die[] | []
 export type die = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export interface user {
   account: string
   outs: number
   bet: bet
+  dice: dice
 }
 
 export interface bet {
@@ -13,16 +17,22 @@ export interface bet {
 }
 
 export interface game {
-  status: string
-  last_out: string
-  last_win: string
-  current_player: string
-  current_cup: number
+  status:
+    | 'newgame'
+    | 'playing'
+    | 'roundover'
+    | 'gameover'
+    | 'reconcile'
+    | 'nogame'
+  lastOut: string
+  lastWin: string
+  currentPlayer: string
+  currentCup: number
   round: number
   cups: user[]
-  player_order: string[]
+  playerOrder: string[]
   bets: bet[]
-  ante_usd: number
+  anteUsd: number
 }
 
 // Props Interfaces
@@ -31,13 +41,9 @@ export interface CupProps {
   playerDice: dice
 }
 
-export interface CupsProps {
-  playerDice: dice
-}
-
 export interface appConfig {
-  chain_id: number
-  contract_id: string
+  chainId: number
+  contractId: string
   network: string
 }
 

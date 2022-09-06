@@ -3,21 +3,22 @@ import Button from './button'
 import LogOutIcon from './icons/logout'
 import useEthersConnection from './hooks/useEthersConnection'
 import { useNavigate } from 'react-router-dom'
-
-interface SignOutProps {
-  disabled: boolean
-}
+import { SignOutProps } from '../types/props.d'
 
 const SignOut = (props: SignOutProps) => {
   const { disabled } = props
   const { account, setAccount } = useEthersConnection()
   const navigate = useNavigate()
+  // ===========================================================================
 
+  // handleDisconnectAccount disconnects the user and deletes the token.
   function handleDisconnectAccount() {
     setAccount(undefined)
     window.sessionStorage.removeItem('token')
     navigate('/')
   }
+
+  // Renders if the user is logged.
   return account ? (
     <Button
       {...{

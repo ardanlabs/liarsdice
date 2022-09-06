@@ -6,7 +6,7 @@ interface LiarsCallProps {}
 
 const LiarsCall: FC<LiarsCallProps> = (LiarsCallProps) => {
   const { game } = useContext(GameContext)
-  return game.last_win && game.last_out ? (
+  return game.lastWin && game.lastOut ? (
     <div
       style={{
         display: 'flex',
@@ -24,8 +24,8 @@ const LiarsCall: FC<LiarsCallProps> = (LiarsCallProps) => {
       }}
     >
       <span>
-        Player {shortenIfAddress(game.last_win)} called Player{' '}
-        {shortenIfAddress(game.last_out)} a liar and got striked
+        Player {shortenIfAddress(game.lastWin)} called Player{' '}
+        {shortenIfAddress(game.lastOut)} a liar and got striked
       </span>
     </div>
   ) : null

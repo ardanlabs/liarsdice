@@ -1,28 +1,23 @@
-import React, { FC } from 'react'
+import React from 'react'
+import { CounterProps } from '../types/props.d'
 
-interface CounterProps {
-  timer: number
-  show: boolean
-}
-
-const Counter: FC<CounterProps> = (CounterProps) => {
+// Counter Function
+function Counter(CounterProps: CounterProps) {
+  // Extracts props
   const { timer, show } = CounterProps
 
-  if (show) {
-    return (
-      <span
-        data-testid="counter-test"
-        style={{
-          fontSize: '32px',
-          fontWeight: '500',
-          color: '#FFFF',
-        }}
-      >
-        {timer}
-      </span>
-    )
-  }
-
-  return null
+  // Renders if show is true
+  return show ? (
+    <span
+      data-testid="counter-test"
+      style={{
+        fontSize: '32px',
+        fontWeight: '500',
+        color: '#FFFF',
+      }}
+    >
+      {timer}
+    </span>
+  ) : null
 }
 export default Counter

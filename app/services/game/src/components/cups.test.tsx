@@ -1,24 +1,17 @@
 import { render } from '@testing-library/react'
 import Cups from './cups'
-import { game, dice, CupsProps, bet, die } from '../types/index.d'
+import { game, bet, die } from '../types/index.d'
 import { GameContext } from '../contexts/gameContext'
-
-let props = {
-  playerDice: [4, 3, 5, 6, 2] as dice,
-}
 
 interface providerValueInterface {
   game: game
   setGame: React.Dispatch<React.SetStateAction<game>>
 }
 
-const renderComponent = (
-  props: CupsProps,
-  providerValue: providerValueInterface,
-) => {
+const renderComponent = (providerValue: providerValueInterface) => {
   return render(
     <GameContext.Provider value={providerValue}>
-      <Cups {...props} />
+      <Cups />
     </GameContext.Provider>,
   )
 }
@@ -27,10 +20,10 @@ test('renders all cups', () => {
   const providerValueWithCups = {
     game: {
       status: 'playing',
-      last_out: '',
-      last_win: '',
-      current_player: '',
-      current_cup: 0,
+      lastOut: '',
+      lastWin: '',
+      currentPlayer: '',
+      currentCup: 0,
       round: 1,
       cups: [
         {
@@ -41,6 +34,7 @@ test('renders all cups', () => {
             number: 3,
             suite: 5 as die,
           },
+          dice: [1, 2, 3, 4, 5],
         },
         {
           account: '0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7',
@@ -50,16 +44,17 @@ test('renders all cups', () => {
             number: 5,
             suite: 6 as die,
           },
+          dice: [1, 2, 3, 4, 5],
         },
       ],
-      player_order: [],
+      playerOrder: [],
       bets: [] as bet[],
-      ante_usd: 0,
+      anteUsd: 0,
     } as game,
     setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
   }
 
-  const { queryAllByTestId } = renderComponent(props, providerValueWithCups)
+  const { queryAllByTestId } = renderComponent(providerValueWithCups)
   const playerCup = queryAllByTestId('player__ui')
   expect(playerCup).not.toBeNull()
 })
@@ -68,20 +63,20 @@ test('renders all cups', () => {
   const providerValueWithCups = {
     game: {
       status: 'gameover',
-      last_out: '',
-      last_win: '',
-      current_player: '',
-      current_cup: 0,
+      lastOut: '',
+      lastWin: '',
+      currentPlayer: '',
+      currentCup: 0,
       round: 1,
       cups: [],
-      player_order: [],
+      playerOrder: [],
       bets: [] as bet[],
-      ante_usd: 0,
+      anteUsd: 0,
     } as game,
     setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
   }
 
-  const { queryAllByTestId } = renderComponent(props, providerValueWithCups)
+  const { queryAllByTestId } = renderComponent(providerValueWithCups)
   const playerCup = queryAllByTestId('player__ui')
   expect(playerCup.length).toBe(0)
 })

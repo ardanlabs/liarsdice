@@ -6,13 +6,13 @@ import Dice from './dice'
 const Cup: FC<CupProps> = (CupProps) => {
   const { player, playerDice } = CupProps
   const { game } = useContext(GameContext)
-  const { current_cup, player_order, status } = game
+  const { currentCup, playerOrder, status } = game
 
   return player.outs < 3 ? (
     <div data-testid="player__cup" className="player__cup active">
       <Dice
         isPlayerTurn={
-          (player_order as string[])[current_cup] === player.account &&
+          (playerOrder as string[])[currentCup] === player.account &&
           status === 'playing'
         }
         diceNumber={

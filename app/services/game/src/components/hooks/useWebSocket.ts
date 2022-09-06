@@ -17,7 +17,7 @@ import useGame from './useGame'
 const useWebSocket = (resetTimer: Function) => {
   let wsStatus = useRef('closed')
   let { setGame } = useContext(GameContext)
-  const { rolldice, updateStatus } = useGame()
+  const { updateStatus } = useGame()
 
   const connect = () => {
     const ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -40,8 +40,6 @@ const useWebSocket = (resetTimer: Function) => {
             // Message received when the game starts
             case 'start':
               toast(`Game has been started by ${account}!`)
-              // We roll the dices
-              rolldice()
               break
             // Message received when dices are rolled
             case 'rolldice':
@@ -60,7 +58,6 @@ const useWebSocket = (resetTimer: Function) => {
             // Message received when new round starts
             case 'newround':
               toast('Next Round!')
-              rolldice()
               break
             // Message received when next turn is started
             case 'nextturn':
@@ -89,15 +86,15 @@ const useWebSocket = (resetTimer: Function) => {
         setTimeout(function () {
           setGame({
             status: 'gameover',
-            last_out: '',
-            last_win: '',
-            current_player: '',
-            current_cup: 0,
+            lastOut: '',
+            lastWin: '',
+            currentPlayer: '',
+            currentCup: 0,
             round: 1,
             cups: [],
-            player_order: [],
+            playerOrder: [],
             bets: [],
-            ante_usd: 0,
+            anteUsd: 0,
           })
           connect()
         }, 1000)

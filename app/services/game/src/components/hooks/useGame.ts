@@ -10,29 +10,37 @@
 import { useEffect, useContext, useState, useMemo } from 'react'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { GameContext } from '../../contexts/gameContext'
-
-import { dice, game, user } from '../../types/index.d'
+import { appConfig, dice, die, game, user } from '../../types/index.d'
 import assureGameType from '../../utils/assureGameType'
 import { axiosConfig, apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
 import useEthersConnection from './useEthersConnection'
+import { toast } from 'react-toastify'
+import { shortenIfAddress } from '../../utils/address'
+import { connectResponse } from '../../types/responses.d'
+import { useNavigate } from 'react-router-dom'
+import { getAppConfig } from '../..'
 
 const useGame = () => {
   const { account } = useEthersConnection()
   let { game, setGame } = useContext(GameContext)
   const [playerDice, setPlayerDice] = useState([] as dice)
   const gamePot = useMemo(
-    () => game.ante_usd * game.cups.length,
-    [game.cups.length, game.ante_usd],
+    () => game.anteUsd * game.cups.length,
+    [game.cups.length, game.anteUsd],
   )
+  const navigate = useNavigate()
   const setNewGame = (data: game) => {
     const newGame = assureGameType(data)
+    if (newGame.cups.length) {
+      setPlayerDice(newGame.cups[0].dice)
+    }
     setGame(newGame)
   }
 
   const updateStatus = () => {
     axios
-      .get(`http://${apiUrl}/status`)
+      .get(`http://${apiUrl}/status`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
           setNewGame(response.data)
@@ -42,13 +50,13 @@ const useGame = () => {
             //   newRound()
             //   break
             case 'newgame':
-              if (getActivePlayersLength(response.data.player_order) >= 2) {
+              if (getActivePlayersLength(response.data.playerOrder) >= 2) {
                 startGame()
               }
               break
             case 'gameover':
               if (
-                getActivePlayersLength(response.data.player_order) === 1 &&
+                getActivePlayersLength(response.data.playerOrder) === 1 &&
                 response.data.last_win === account
               ) {
                 axios
@@ -65,7 +73,7 @@ const useGame = () => {
         }
       })
       .catch(function (error: AxiosError) {
-        console.error((error as any).response.data.error)
+        console.error(error as any)
       })
   }
 
@@ -88,17 +96,37 @@ const useGame = () => {
       window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
   }, [playerDice])
 
-  const rolldice = () => {
+  // connectToGameEngine connects to the game engine, and stores the token
+  // in the sessionStorage. Takes an object with the following type:
+  // { dateTime: string; sig: string }
+  function connectToGameEngine(data: { dateTime: string; sig: string }) {
+    const axiosFn = (connectResponse: connectResponse) => {
+      window.sessionStorage.setItem(
+        'token',
+        `bearer ${connectResponse.data.token}`,
+      )
+
+      const getAppConfigFn = (getConfigResponse: appConfig) => {
+        navigate('/mainRoom', { state: { ...getConfigResponse } })
+      }
+      getAppConfig.then(getAppConfigFn)
+    }
+
+    const axiosErrorFn = (error: AxiosError) => {
+      const errorMessage = (error as any).response.data.error.replace(
+        / \[.+\]/gm,
+        '',
+      )
+
+      console.group()
+      console.error('Error:', errorMessage)
+      console.groupEnd()
+    }
+
     axios
-      .get(`http://${apiUrl}/rolldice`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          setPlayerDice(response.data.dice)
-        }
-      })
-      .catch(function (error: AxiosError) {
-        console.error(error)
-      })
+      .post('http://localhost:3000/v1/game/connect', data)
+      .then(axiosFn)
+      .catch(axiosErrorFn)
   }
 
   const nextTurn = () => {
@@ -113,7 +141,7 @@ const useGame = () => {
   }
   // Takes an account address and adds an out to that account
   const addOut = (
-    accountToOut = (game.player_order as string[])[game.current_cup],
+    accountToOut = (game.playerOrder as string[])[game.currentCup],
   ) => {
     const player = game.cups.filter((player: user) => {
       return player.account === accountToOut
@@ -134,13 +162,44 @@ const useGame = () => {
       })
   }
 
+  function sendBet(number: number, suite: die) {
+    axios
+      .get(`http://${apiUrl}/bet/${number}/${suite}`, axiosConfig)
+      .then(function (response: AxiosResponse) {
+        if (response.data) {
+          setNewGame(response.data)
+        }
+      })
+      .catch(function (error: AxiosError) {
+        console.error(error)
+      })
+  }
+  function callLiar() {
+    axios
+      .get(`http://${apiUrl}/liar`, axiosConfig)
+      .then(function (response: AxiosResponse) {
+        if (getActivePlayersLength(game.playerOrder) === 1) {
+          toast(
+            `Game finished! Winner is ${shortenIfAddress(
+              response.data.cups[0].account,
+            )}`,
+          )
+        }
+      })
+      .catch(function (error: AxiosError) {
+        console.error(error)
+      })
+  }
+
   return {
     addOut,
-    rolldice,
     gamePot,
     playerDice,
     setPlayerDice,
     updateStatus,
+    sendBet,
+    callLiar,
+    connectToGameEngine,
   }
 }
 

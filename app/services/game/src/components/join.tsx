@@ -24,7 +24,7 @@ const Join = (props: JoinProps) => {
     let newGame = data
     newGame = newGame.bets ? newGame : { ...newGame, bets: [] }
     newGame = newGame.cups ? newGame : { ...newGame, cups: [] }
-    newGame = newGame.player_order ? newGame : { ...newGame, player_order: [] }
+    newGame = newGame.playerOrder ? newGame : { ...newGame, playerOrder: [] }
     setGame(newGame)
   }
 
@@ -81,7 +81,8 @@ const Join = (props: JoinProps) => {
       .get(`http://${apiUrl}/status`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
-          if (game.status === 'newGame' || game.status === 'gameover') {
+          console.log(response.data)
+          if (game.status === 'nogame') {
             createNewGame()
           } else {
             joinGame()
@@ -94,9 +95,7 @@ const Join = (props: JoinProps) => {
       })
   }
   const getButtonText = () => {
-    return game.status === 'gameover' || game.status === 'reconcile'
-      ? 'New Game'
-      : 'Join Game'
+    return game.status === 'nogame' ? 'New Game' : 'Join Game'
   }
 
   const isPlayerInGame = () => {

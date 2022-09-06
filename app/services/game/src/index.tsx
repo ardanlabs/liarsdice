@@ -7,14 +7,21 @@ import reportWebVitals from './reportWebVitals'
 import axios, { AxiosResponse } from 'axios'
 import { apiUrl } from './utils/axiosConfig'
 
+// Entry point of the FE app.
+// We get the root element to allow React to render the app inside that.
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
+
+// This constant handles the config fetching accross the app.
+const getAppConfigFn = (response: AxiosResponse) => {
+  const data = response.data
+  return data
+}
+
 export const getAppConfig = axios
   .get(`http://${apiUrl}/config`)
-  .then((response: AxiosResponse) => {
-    const data = response.data
-    return data
-  })
+  .then(getAppConfigFn)
 
+// We render on root.
 root.render(
   <React.StrictMode>
     <BrowserRouter>
