@@ -52,10 +52,8 @@ var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's
 // Board represents the game board and all its state.
 type Board struct {
 	accountID  string
-	network    string
-	chainID    int
-	contractID string
 	engine     *engine.Engine
+	config     engine.Config
 	screen     tcell.Screen
 	style      tcell.Style
 	bets       []rune
@@ -87,14 +85,12 @@ func New(engine *engine.Engine, accountID string) (*Board, error) {
 	style = style.Background(tcell.ColorBlack).Foreground(tcell.ColorWhite)
 
 	board := Board{
-		accountID:  accountID,
-		network:    config.Network,
-		chainID:    config.ChainID,
-		contractID: config.ContractID,
-		engine:     engine,
-		screen:     screen,
-		style:      style,
-		messages:   make([]string, 5),
+		accountID: accountID,
+		config:    config,
+		engine:    engine,
+		screen:    screen,
+		style:     style,
+		messages:  make([]string, 5),
 	}
 
 	if err := board.printBoard(); err != nil {

@@ -174,9 +174,9 @@ func (b *Board) printLables() {
 // printSettings draws the settings on the board.
 func (b *Board) printSettings() {
 	b.print(helpX+11, statusY, b.engine.URL())
-	b.print(helpX+11, statusY+1, b.network)
-	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", b.chainID))
-	b.print(helpX+11, statusY+3, b.fmtAddress(b.contractID))
+	b.print(helpX+11, statusY+1, b.config.Network)
+	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", b.config.ChainID))
+	b.print(helpX+11, statusY+3, b.fmtAddress(b.config.ContractID))
 	b.print(helpX+11, statusY+4, b.fmtAddress(b.accountID))
 }
 
