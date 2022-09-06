@@ -41,6 +41,29 @@ type Handlers struct {
 	mu   sync.RWMutex
 }
 
+// Connect is used to return a game token for API usage.
+func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	address, err := validateSignature(r)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	token, err := generateToken(h.Auth, address)
+	if err != nil {
+		return v1Web.NewRequestError(err, http.StatusBadRequest)
+	}
+
+	data := struct {
+		Token   string `json:"token"`
+		Address string `json:"address"`
+	}{
+		Token:   token,
+		Address: address,
+	}
+
+	return web.Respond(ctx, w, data, http.StatusOK)
+}
+
 // Events handles a web socket to provide events to a client.
 func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	v, err := web.GetValues(ctx)
@@ -102,6 +125,27 @@ func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *
 	return web.Respond(ctx, w, info, http.StatusOK)
 }
 
+// USD2Wei converts the us dollar amount to wei based on the game engine's
+// conversion rate.
+func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	usd, err := strconv.ParseFloat(web.Param(r, "usd"), 64)
+	if err != nil {
+		return v1Web.NewRequestError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
+	}
+
+	wei := h.Converter.USD2Wei(big.NewFloat(usd))
+
+	data := struct {
+		USD float64  `json:"usd"`
+		WEI *big.Int `json:"wei"`
+	}{
+		USD: usd,
+		WEI: wei,
+	}
+
+	return web.Respond(ctx, w, data, http.StatusOK)
+}
+
 // Status will return information about the game.
 func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims, err := auth.GetClaims(ctx)
@@ -152,50 +196,6 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
-}
-
-// Connect is used to return a game token for API usage.
-func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	address, err := validateSignature(r)
-	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	token, err := generateToken(h.Auth, address)
-	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
-	}
-
-	data := struct {
-		Token   string `json:"token"`
-		Address string `json:"address"`
-	}{
-		Token:   token,
-		Address: address,
-	}
-
-	return web.Respond(ctx, w, data, http.StatusOK)
-}
-
-// USD2Wei converts the us dollar amount to wei based on the game engine's
-// conversion rate.
-func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	usd, err := strconv.ParseFloat(web.Param(r, "usd"), 64)
-	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
-	}
-
-	wei := h.Converter.USD2Wei(big.NewFloat(usd))
-
-	data := struct {
-		USD float64  `json:"usd"`
-		WEI *big.Int `json:"wei"`
-	}{
-		USD: usd,
-		WEI: wei,
-	}
-
-	return web.Respond(ctx, w, data, http.StatusOK)
 }
 
 // NewGame creates a new game if there is no game or the status of the current game
