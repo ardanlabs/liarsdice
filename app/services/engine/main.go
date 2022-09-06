@@ -32,7 +32,6 @@ import (
 	Add a account fix function to adjust balances.
 	Can I check contract balance against the account distribution?
 	Can I send money to a contract address after contract is in place?
-	Change JS tags from _ to camel case.
 
 	-- Browser UI
 	Convert everything into functions.
