@@ -97,11 +97,14 @@ func (b *Board) drawBoard(status engine.Status) {
 		// Outs.
 		b.print(outX, addrY, fmt.Sprintf("%d", cup.Outs))
 
-		// Show the active player.
-		if cup.AccountID == status.CurrentAcctID {
+		// Show the active player and status.
+		switch {
+		case cup.AccountID == status.CurrentAcctID:
 			b.print(playersX, addrY, "->")
 			b.print(playersX+3, addrY, accountID)
-		} else {
+		case cup.Outs == 3:
+			b.print(playersX, addrY, " X")
+		default:
 			b.print(playersX, addrY, "  ")
 		}
 
