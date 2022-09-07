@@ -100,11 +100,11 @@ func Deploy(ctx context.Context, converter *currency.Converter, bank *bank.Bank,
 	fmt.Println("\nWaiting Logs")
 	fmt.Println("----------------------------------------------------")
 	log.Root().SetHandler(log.StdoutHandler)
+
 	receipt, err := clientWait.WaitMined(ctx, tx)
 	if err != nil {
 		return err
 	}
-
 	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
 
 	return nil
