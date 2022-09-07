@@ -176,18 +176,15 @@ func (e *Engine) StartGame() (Status, error) {
 }
 
 // RollDice generates the five dice for the player.
-func (e *Engine) RollDice() ([]int, error) {
+func (e *Engine) RollDice() (Status, error) {
 	url := fmt.Sprintf("%s/v1/game/rolldice", e.url)
 
-	var dice struct {
-		Dice []int `json:"dice"`
+	var status Status
+	if err := e.do(url, &status, nil); err != nil {
+		return Status{}, err
 	}
 
-	if err := e.do(url, &dice, nil); err != nil {
-		return nil, err
-	}
-
-	return dice.Dice, nil
+	return status, nil
 }
 
 // JoinGame adds a player to the current game.

@@ -277,21 +277,9 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	status := g.Info()
-	cup, exists := status.Cups[address]
-	if !exists {
-		return v1Web.NewRequestError(errors.New("address not found"), http.StatusBadRequest)
-	}
-
 	h.Evts.Send(fmt.Sprintf(`{"type":"rolldice","address":%q}`, address))
 
-	resp := struct {
-		Dice []int `json:"dice"`
-	}{
-		Dice: cup.Dice,
-	}
-
-	return web.Respond(ctx, w, resp, http.StatusOK)
+	return h.Status(ctx, w, r)
 }
 
 // Bet processes a bet made by a player in a game.
