@@ -20,7 +20,6 @@ func (b *Board) webEvents(event string, address string) {
 		if err != nil {
 			b.printMessage("error rolling dice", true)
 		}
-
 		b.printStatus(status)
 		return
 
