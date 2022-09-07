@@ -51,83 +51,6 @@ func Withdraw(ctx context.Context, converter *currency.Converter, bank *bank.Ban
 	return nil
 }
 
-// Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter *currency.Converter, bank *bank.Bank, args Args, keyFile string) (err error) {
-	client := bank.Client()
-
-	startingBalance, err := client.CurrentBalance(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		endingBalance, dErr := client.CurrentBalance(ctx)
-		if dErr != nil {
-			err = dErr
-			return
-		}
-		fmt.Print(converter.FmtBalanceSheet(startingBalance, endingBalance))
-	}()
-
-	// =========================================================================
-
-	const gasLimit = 1600000
-	const valueGwei = 0.0
-	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
-	if err != nil {
-		return err
-	}
-
-	// =========================================================================
-
-	address, tx, _, err := scbank.DeployBank(tranOpts, client.ContractBackend())
-	if err != nil {
-		return err
-	}
-	fmt.Print(converter.FmtTransaction(tx))
-
-	fmt.Println("\nContract Details")
-	fmt.Println("----------------------------------------------------")
-	fmt.Println("contract id     :", address.Hex())
-	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
-
-	// =========================================================================
-
-	clientWait, err := contract.NewClient(ctx, args.Network, keyFile, args.PassPhrase)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("\nWaiting Logs")
-	fmt.Println("----------------------------------------------------")
-	log.Root().SetHandler(log.StdoutHandler)
-
-	receipt, err := clientWait.WaitMined(ctx, tx)
-	if err != nil {
-		return err
-	}
-	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
-
-	return nil
-}
-
-// Wallet returns the current wallet balance for the specified address.
-func Wallet(ctx context.Context, converter *currency.Converter, bank *bank.Bank, address string) error {
-	fmt.Println("\nWallet Balance")
-	fmt.Println("----------------------------------------------------")
-	fmt.Println("account         :", address)
-
-	wei, err := bank.Client().EthClient().BalanceAt(ctx, common.HexToAddress(address), nil)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("wei             :", wei)
-	fmt.Println("gwei            :", currency.Wei2GWei(wei))
-	fmt.Println("usd             :", converter.Wei2USD(wei))
-
-	return nil
-}
-
 // Balance returns the current balance of the specified address.
 func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank, address string) error {
 	fmt.Println("\nGame Balance")
@@ -146,15 +69,92 @@ func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank
 	return nil
 }
 
+// =============================================================================
+
+// Deploy will deploy the smart contract to the configured network.
+func Deploy(ctx context.Context, converter *currency.Converter, client *contract.Client) (err error) {
+	startingBalance, err := client.Balance(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		endingBalance, dErr := client.Balance(ctx)
+		if dErr != nil {
+			err = dErr
+			return
+		}
+		fmt.Print(converter.FmtBalanceSheet(startingBalance, endingBalance))
+	}()
+
+	// =========================================================================
+
+	const gasLimit = 1600000
+	const valueGwei = 0.0
+	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
+	if err != nil {
+		return err
+	}
+
+	// =========================================================================
+
+	address, tx, _, err := scbank.DeployBank(tranOpts, client.EthClient())
+	if err != nil {
+		return err
+	}
+	fmt.Print(converter.FmtTransaction(tx))
+
+	fmt.Println("\nContract Details")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("contract id     :", address.Hex())
+	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
+
+	// =========================================================================
+
+	clientWait, err := client.Copy(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("\nWaiting Logs")
+	fmt.Println("----------------------------------------------------")
+	log.Root().SetHandler(log.StdoutHandler)
+
+	receipt, err := clientWait.WaitMined(ctx, tx)
+	if err != nil {
+		return err
+	}
+	fmt.Print(converter.FmtTransactionReceipt(receipt, tx.GasPrice()))
+
+	return nil
+}
+
+// Wallet returns the current wallet balance for the specified address.
+func Wallet(ctx context.Context, converter *currency.Converter, client *contract.Client, address string) error {
+	fmt.Println("\nWallet Balance")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("account         :", address)
+
+	wei, err := client.BalanceAt(ctx, address)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("wei             :", wei)
+	fmt.Println("gwei            :", currency.Wei2GWei(wei))
+	fmt.Println("usd             :", converter.Wei2USD(wei))
+
+	return nil
+}
+
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter *currency.Converter, bank *bank.Bank, tranID string) error {
+func Transaction(ctx context.Context, converter *currency.Converter, client *contract.Client, tranID string) error {
 	fmt.Println("\nTransaction ID")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("tran id         :", tranID)
 
 	txHash := common.HexToHash(tranID)
-	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
+	tx, pending, err := client.TransactionByHash(ctx, txHash)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func Transaction(ctx context.Context, converter *currency.Converter, bank *bank.
 
 	fmt.Print(converter.FmtTransaction(tx))
 
-	receipt, err := bank.Client().TransactionReceipt(ctx, txHash)
+	receipt, err := client.TransactionReceipt(ctx, txHash)
 	if err != nil {
 		return err
 	}

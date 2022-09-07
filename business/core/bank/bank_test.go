@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -26,6 +27,38 @@ const (
 	Player2KeyPath    = "../../../zarf/ethereum/keystore/UTC--2022-05-13T16-57-20.203544000Z--8e113078adf6888b7ba84967f299f29aece24c55"
 	Player2PassPhrase = "123"
 )
+
+func TestMain(m *testing.M) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	converter := currency.NewDefaultConverter()
+	deposit := converter.USD2Wei(big.NewFloat(1000))
+
+	client, err := contract.NewClient(ctx, contract.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Adding money to player 1 account")
+
+	// Add money to this account.
+	if err := client.SendTransaction(ctx, Player1Address, deposit, 21000); err != nil {
+		fmt.Println("Player1Address:", err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Adding money to player 2 account")
+
+	// Add money to this account.
+	if err := client.SendTransaction(ctx, Player2Address, deposit, 21000); err != nil {
+		fmt.Println("Player2Address:", err)
+		os.Exit(1)
+	}
+
+	m.Run()
+}
 
 func Test_PlayerBalance(t *testing.T) {
 	contractID, err := deployContract()
@@ -105,7 +138,7 @@ func Test_Withdraw(t *testing.T) {
 	// Deposit process
 
 	// Get the starting balance.
-	startingBalance, err := playerClient.WalletBalance(ctx)
+	startingBalance, err := playerClient.OwnerBalance(ctx)
 	if err != nil {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
@@ -125,7 +158,7 @@ func Test_Withdraw(t *testing.T) {
 	expectedBalance.Sub(expectedBalance, gasCost)
 
 	// Get the updated wallet balance.
-	currentBalance, err := playerClient.WalletBalance(ctx)
+	currentBalance, err := playerClient.OwnerBalance(ctx)
 	if err != nil {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
@@ -151,7 +184,7 @@ func Test_Withdraw(t *testing.T) {
 	expectedBalance.Sub(expectedBalance, gasCost)
 
 	// Get the updated wallet balance.
-	currentBalance, err = playerClient.WalletBalance(ctx)
+	currentBalance, err = playerClient.OwnerBalance(ctx)
 	if err != nil {
 		t.Fatalf("error getting player's wallet balance: %s", err)
 	}
@@ -307,7 +340,7 @@ func smartContract(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	address, tx, _, err := scbank.DeployBank(tranOpts, client.ContractBackend())
+	address, tx, _, err := scbank.DeployBank(tranOpts, client.EthClient())
 	if err != nil {
 		return "", err
 	}

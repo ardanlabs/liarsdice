@@ -9,6 +9,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
 	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/zap"
@@ -24,25 +25,27 @@ type Bank struct {
 }
 
 // New returns a new bank with the ability to manage the game money.
-func New(ctx context.Context, log *zap.SugaredLogger, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
+func New(ctx context.Context, logger *zap.SugaredLogger, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
 	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return nil, fmt.Errorf("network connect: %w", err)
 	}
 
-	contract, err := bank.NewBank(common.HexToAddress(contractID), client.ContractBackend())
+	contract, err := bank.NewBank(common.HexToAddress(contractID), client.EthClient())
 	if err != nil {
 		return nil, fmt.Errorf("new contract: %w", err)
 	}
 
-	bank := Bank{
-		logger:     log,
+	b := Bank{
+		logger:     logger,
 		contractID: contractID,
 		client:     client,
 		contract:   contract,
 	}
 
-	return &bank, nil
+	b.log(ctx, "new bank", "network", network, "contractid", contractID)
+
+	return &b, nil
 }
 
 // ContractID returns contract id in use.
@@ -68,6 +71,8 @@ func (b *Bank) AccountBalance(ctx context.Context, accountID string) (GWei *big.
 		return nil, fmt.Errorf("account balance: %w", err)
 	}
 
+	b.log(ctx, "account balance", "accountid", accountID, "wei", wei)
+
 	return currency.Wei2GWei(wei), nil
 }
 
@@ -82,6 +87,8 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("account balance: %w", err)
 	}
+
+	b.log(ctx, "balance", "accountid", b.client.Address().String(), "wei", wei)
 
 	return currency.Wei2GWei(wei), nil
 }
@@ -108,10 +115,14 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccountID string, losingAcc
 		return nil, nil, fmt.Errorf("reconcile: %w", err)
 	}
 
+	b.log(ctx, "reconcile started", "anteWei", anteWei, "gameFeeWei", gameFeeWei)
+
 	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
+
+	b.log(ctx, "reconcile completed")
 
 	return tx, receipt, nil
 }
@@ -128,10 +139,14 @@ func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Trans
 		return nil, nil, fmt.Errorf("deposit: %w", err)
 	}
 
+	b.log(ctx, "deposit started", "accountid", b.client.Address().String(), "amountGWei", amountGWei)
+
 	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
+
+	b.log(ctx, "deposit completed")
 
 	return tx, receipt, nil
 }
@@ -148,18 +163,22 @@ func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt
 		return nil, nil, fmt.Errorf("withdraw: %w", err)
 	}
 
+	b.log(ctx, "withdraw started", "accountid", b.client.Address().String())
+
 	receipt, err := b.client.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
+	b.log(ctx, "withdraw completed")
+
 	return tx, receipt, nil
 }
 
-// WalletBalance returns the current balance for the account used to
+// OwnerBalance returns the current balance for the account used to
 // create this bank.
-func (b *Bank) WalletBalance(ctx context.Context) (wei *big.Int, err error) {
-	balance, err := b.client.CurrentBalance(ctx)
+func (b *Bank) OwnerBalance(ctx context.Context) (wei *big.Int, err error) {
+	balance, err := b.client.Balance(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("current balance: %w", err)
 	}
@@ -170,11 +189,11 @@ func (b *Bank) WalletBalance(ctx context.Context) (wei *big.Int, err error) {
 // =============================================================================
 
 // log will write to the configured log if a traceid exists in the context.
-// func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
-// 	if b.logger == nil {
-// 		return
-// 	}
+func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
+	if b.logger == nil {
+		return
+	}
 
-// 	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
-// 	b.logger.Infow(msg, keysAndvalues...)
-// }
+	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
+	b.logger.Infow(msg, keysAndvalues...)
+}

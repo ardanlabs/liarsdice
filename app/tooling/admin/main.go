@@ -88,23 +88,24 @@ func run() error {
 	fmt.Println("key address     :", bank.Client().Address())
 	fmt.Println("contract id     :", args.ContractID)
 
-	if _, exists := flags["t"]; exists {
-		return commands.Transaction(ctx, converter, bank, args.TranID)
-	}
-	if _, exists := flags["b"]; exists {
-		return commands.Balance(ctx, converter, bank, args.Address)
-	}
-	if _, exists := flags["w"]; exists {
-		return commands.Wallet(ctx, converter, bank, args.Address)
-	}
-	if _, exists := flags["d"]; exists {
-		return commands.Deploy(ctx, converter, bank, args, keyFile)
-	}
 	if _, exists := flags["a"]; exists {
 		return commands.Deposit(ctx, converter, bank, args.Money)
 	}
 	if _, exists := flags["r"]; exists {
 		return commands.Withdraw(ctx, converter, bank)
+	}
+	if _, exists := flags["b"]; exists {
+		return commands.Balance(ctx, converter, bank, args.Address)
+	}
+
+	if _, exists := flags["w"]; exists {
+		return commands.Wallet(ctx, converter, bank.Client(), args.Address)
+	}
+	if _, exists := flags["d"]; exists {
+		return commands.Deploy(ctx, converter, bank.Client())
+	}
+	if _, exists := flags["t"]; exists {
+		return commands.Transaction(ctx, converter, bank.Client(), args.TranID)
 	}
 
 	return errors.New("no functional command provided")
