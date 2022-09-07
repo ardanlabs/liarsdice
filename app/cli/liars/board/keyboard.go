@@ -153,7 +153,7 @@ func (b *Board) callLiar() error {
 		return errors.New("invalid status state: " + status.Status)
 	}
 
-	if status.CupsOrder[status.CurrentCup] != b.accountID {
+	if status.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 

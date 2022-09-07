@@ -46,7 +46,7 @@ type Status struct {
 	Status        string
 	LastOutAcctID string
 	LastWinAcctID string
-	CurrentCup    int
+	CurrentAcctID string
 	Round         int
 	Cups          map[string]Cup
 	CupsOrder     []string
@@ -576,7 +576,7 @@ func (g *Game) Info() Status {
 		Status:        g.status,
 		LastOutAcctID: g.lastOutAcctID,
 		LastWinAcctID: g.lastWinAcctID,
-		CurrentCup:    g.currentCup,
+		CurrentAcctID: g.cupsOrder[g.currentCup],
 		Round:         g.round,
 		Cups:          cups,
 		CupsOrder:     cupsOrder,

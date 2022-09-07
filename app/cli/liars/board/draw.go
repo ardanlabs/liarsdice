@@ -9,8 +9,8 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// printBoard generates the initial game board and starts the event loop.
-func (b *Board) printBoard() error {
+// drawInit generates the initial game board and starts the event loop.
+func (b *Board) drawInit() error {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
 		return err
@@ -18,9 +18,9 @@ func (b *Board) printBoard() error {
 
 	b.screen.Clear()
 
-	b.drawGameBoard(false)
-	b.printLables()
-	b.printSettings()
+	b.drawGameBox(false)
+	b.drawLables()
+	b.drawSettings()
 
 	b.print(helpX, 1, "<1-6>+   : set bet")
 	b.print(helpX, 2, "<del>    : remove bet number")
@@ -46,13 +46,13 @@ func (b *Board) printBoard() error {
 	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
 	b.print(betRowX, betRowY, "                 ")
 
-	b.printStatus(status)
+	b.drawBoard(status)
 
 	return nil
 }
 
-// printStatus display the status information.
-func (b *Board) printStatus(status engine.Status) {
+// drawBoard display the status information.
+func (b *Board) drawBoard(status engine.Status) {
 
 	// Save this status for modal support.
 	b.lastStatus = status
@@ -98,7 +98,7 @@ func (b *Board) printStatus(status engine.Status) {
 		b.print(outX, addrY, fmt.Sprintf("%d", cup.Outs))
 
 		// Show the active player.
-		if i == status.CurrentCup {
+		if cup.AccountID == status.CurrentAcctID {
 			b.print(playersX, addrY, "->")
 			b.print(playersX+3, addrY, accountID)
 		} else {
@@ -133,15 +133,15 @@ func (b *Board) printStatus(status engine.Status) {
 
 	// Handle active player screen changes.
 	if len(status.CupsOrder) > 0 {
-		if status.CupsOrder[status.CurrentCup] == b.accountID {
+		if status.CurrentAcctID == b.accountID {
 			for x, r := range b.bets {
 				b.print(betRowX+x+1, betRowY, string(r))
 			}
 			b.screen.ShowCursor(betRowX+len(b.bets)+1, betRowY)
-			b.drawGameBoard(true)
+			b.drawGameBox(true)
 		} else {
 			b.screen.HideCursor()
-			b.drawGameBoard(false)
+			b.drawGameBox(false)
 		}
 	}
 
@@ -158,8 +158,8 @@ func (b *Board) printStatus(status engine.Status) {
 	b.screen.Show()
 }
 
-// printLables places the labels on the board.
-func (b *Board) printLables() {
+// drawLables places the labels on the board.
+func (b *Board) drawLables() {
 	b.print(playersX, columnHeight, "Players:")
 	b.print(outX, columnHeight, "Outs:")
 	b.print(betX, columnHeight, "Last Bet:")
@@ -171,8 +171,8 @@ func (b *Board) printLables() {
 	b.print(betRowX-9, betRowY, "My Bet :>")
 }
 
-// printSettings draws the settings on the board.
-func (b *Board) printSettings() {
+// drawSettings draws the settings on the board.
+func (b *Board) drawSettings() {
 	b.print(helpX+11, statusY, b.engine.URL())
 	b.print(helpX+11, statusY+1, b.config.Network)
 	b.print(helpX+11, statusY+2, fmt.Sprintf("%d", b.config.ChainID))
@@ -240,8 +240,8 @@ func (*Board) fmtAddress(address string) string {
 
 // =============================================================================
 
-// drawGameBoard draws the game box.
-func (b *Board) drawGameBoard(white bool) {
+// drawGameBox draws the game box.
+func (b *Board) drawGameBox(white bool) {
 	x := 1
 	y := 1
 	width := boardWidth

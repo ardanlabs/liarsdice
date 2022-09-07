@@ -9,7 +9,7 @@ import (
 // addBet takes the value selected on the keyboard and adds it to the
 // bet slice and screen.
 func (b *Board) addBet(r rune) error {
-	if b.lastStatus.CupsOrder[b.lastStatus.CurrentCup] != b.accountID {
+	if b.lastStatus.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 
@@ -37,7 +37,7 @@ func (b *Board) addBet(r rune) error {
 
 // subBet removes a value from the bet slice and screen.
 func (b *Board) subBet() error {
-	if b.lastStatus.CupsOrder[b.lastStatus.CurrentCup] != b.accountID {
+	if b.lastStatus.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 
@@ -77,7 +77,7 @@ func (b *Board) enterBet() error {
 		return errors.New("invalid status state: " + status.Status)
 	}
 
-	if status.CupsOrder[status.CurrentCup] != b.accountID {
+	if status.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 

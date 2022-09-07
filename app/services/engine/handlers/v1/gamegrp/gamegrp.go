@@ -187,7 +187,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		AnteUSD:       h.AnteUSD,
 		LastOutAcctID: status.LastOutAcctID,
 		LastWinAcctID: status.LastWinAcctID,
-		CurrentCup:    status.CurrentCup,
+		CurrentAcctID: status.CurrentAcctID,
 		Round:         status.Round,
 		Cups:          cups,
 		CupsOrder:     status.CupsOrder,

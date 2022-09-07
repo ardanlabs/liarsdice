@@ -33,9 +33,12 @@ func (b *Board) webEvents(event string, address string) {
 		}
 
 	case "callliar":
-		b.modalWinnerLoser("*** WON ROUND ***", "*** LOST ROUND ***")
+		status, err = b.modalWinnerLoser("*** WON ROUND ***", "*** LOST ROUND ***")
+		if err != nil {
+			b.printMessage("winner/loser", true)
+		}
 
-		status, err = b.reconcile()
+		status, err = b.reconcile(status)
 		if err != nil {
 			b.printMessage(err.Error(), true)
 		}
@@ -53,16 +56,11 @@ func (b *Board) webEvents(event string, address string) {
 	}
 
 	// Redraw the screen on any event to keep it up to date.
-	b.printStatus(status)
+	b.drawBoard(status)
 }
 
 // reconcile the game the winner gets paid.
-func (b *Board) reconcile() (engine.Status, error) {
-	status, err := b.engine.QueryStatus()
-	if err != nil {
-		return status, err
-	}
-
+func (b *Board) reconcile(status engine.Status) (engine.Status, error) {
 	if status.Status != "gameover" {
 		return status, nil
 	}
@@ -71,9 +69,10 @@ func (b *Board) reconcile() (engine.Status, error) {
 		return status, nil
 	}
 
-	if _, err := b.engine.Reconcile(); err != nil {
+	newStatus, err := b.engine.Reconcile()
+	if err != nil {
 		return engine.Status{}, err
 	}
 
-	return status, nil
+	return newStatus, nil
 }

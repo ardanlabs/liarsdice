@@ -25,7 +25,7 @@ type Status struct {
 	AnteUSD       float64  `json:"anteUSD"`
 	LastOutAcctID string   `json:"lastOut"`
 	LastWinAcctID string   `json:"lastWin"`
-	CurrentCup    int      `json:"currentCup"`
+	CurrentAcctID string   `json:"currentID"`
 	Round         int      `json:"round"`
 	Cups          []Cup    `json:"cups"`
 	CupsOrder     []string `json:"playerOrder"`

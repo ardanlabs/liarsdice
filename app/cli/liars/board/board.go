@@ -93,7 +93,7 @@ func New(engine *engine.Engine, accountID string) (*Board, error) {
 		messages:  make([]string, 5),
 	}
 
-	if err := board.printBoard(); err != nil {
+	if err := board.drawInit(); err != nil {
 		return nil, fmt.Errorf("init: %w", err)
 	}
 

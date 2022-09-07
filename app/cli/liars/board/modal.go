@@ -2,22 +2,24 @@ package board
 
 import (
 	"strings"
+
+	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 )
 
 // modalWinnerLoser shows the user if they won or lost.
-func (b *Board) modalWinnerLoser(win string, los string) error {
+func (b *Board) modalWinnerLoser(win string, los string) (engine.Status, error) {
 	status, err := b.engine.QueryStatus()
 	if err != nil {
-		return err
+		return engine.Status{}, err
 	}
 
 	if status.LastWinAcctID == b.accountID {
 		b.showModal(win)
-		return nil
+		return status, nil
 	}
 	b.showModal(los)
 
-	return nil
+	return status, nil
 }
 
 // showModal displays a modal dialog box.
@@ -54,11 +56,11 @@ func (b *Board) closeModal() {
 	b.modalMsg = ""
 
 	active := false
-	if b.lastStatus.CupsOrder[b.lastStatus.CurrentCup] == b.accountID {
+	if b.lastStatus.CurrentAcctID == b.accountID {
 		active = true
 	}
 
-	b.drawGameBoard(active)
-	b.printLables()
-	b.printStatus(b.lastStatus)
+	b.drawGameBox(active)
+	b.drawLables()
+	b.drawBoard(b.lastStatus)
 }
