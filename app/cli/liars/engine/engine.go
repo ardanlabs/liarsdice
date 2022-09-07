@@ -266,7 +266,7 @@ func (e Engine) do(url string, result interface{}, input []byte) error {
 		if err := json.NewDecoder(resp.Body).Decode(&er); err != nil {
 			return fmt.Errorf("status: %s, decode error: %w", resp.Status, err)
 		}
-		return fmt.Errorf("status: %s, error: %s", resp.Status, er.Error)
+		return fmt.Errorf("%s", er.Error)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
