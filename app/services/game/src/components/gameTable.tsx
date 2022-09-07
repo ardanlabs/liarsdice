@@ -30,8 +30,7 @@ function GameTable(GameTableProps: GameTableProps) {
 
   const isGamePlaying = game.status === 'playing'
 
-  const isPlayerTurn =
-    (game.playerOrder as string[])[game.currentCup] === account
+  const isPlayerTurn = game.currentID === account
 
   const currentBet = game.bets[game.bets.length - 1]
     ? game.bets[game.bets.length - 1]
@@ -89,7 +88,7 @@ function GameTable(GameTableProps: GameTableProps) {
           )}
         </div>
         <SideBar
-          ante={game.anteUsd}
+          ante={game.anteUSD}
           gamePot={gamePot}
           notificationCenterWidth={notificationCenterWidth}
         />

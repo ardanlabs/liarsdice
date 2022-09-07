@@ -23,8 +23,7 @@ function GameActions() {
 
   // ===========================================================================
 
-  const isPlayersTurn =
-    (game.playerOrder as string[])[game.currentCup] === account
+  const isPlayersTurn = game.currentID === account
   const isGamePlaying = game.status === 'playing'
 
   // A handler to add parameters to the sendBet function

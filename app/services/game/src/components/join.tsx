@@ -81,7 +81,6 @@ const Join = (props: JoinProps) => {
       .get(`http://${apiUrl}/status`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
-          console.log(response.data)
           if (game.status === 'nogame') {
             createNewGame()
           } else {

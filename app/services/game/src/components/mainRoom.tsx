@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState } from 'react'
+import React, { useEffect, useContext } from 'react'
 import GameTable from './gameTable'
 import { GameContext } from '../contexts/gameContext'
 import useGame from './hooks/useGame'
@@ -9,6 +9,7 @@ import AppHeader from './appHeader'
 import Footer from './footer'
 import { appConfig } from '../types/index.d'
 import useEthersConnection from './hooks/useEthersConnection'
+import { useTimer } from 'react-timer-hook'
 
 // MainRoom component
 function MainRoom() {
@@ -28,7 +29,7 @@ function MainRoom() {
   const { addOut, setPlayerDice } = useGame()
 
   // Extracts function to connect to ws (connect) from useWebSocket Hook
-  const { connect, wsStatus } = useWebSocket(resetTimer)
+  const { connect, wsStatus, setWsStatus } = useWebSocket(restartTimer)
 
   // ===========================================================================
 
@@ -37,12 +38,9 @@ function MainRoom() {
   const initUEFn = () => {
     // Connects to websocket depending on status.
     function connectToWs() {
-      if (
-        wsStatus.current !== 'open' &&
-        wsStatus.current !== 'attemptingConnection'
-      ) {
+      if (wsStatus !== 'open' && wsStatus !== 'attemptingConnection') {
         connect()
-        wsStatus.current = 'attemptingConnection'
+        setWsStatus('attemptingConnection')
       }
     }
     connectToWs()
@@ -57,10 +55,6 @@ function MainRoom() {
     if (!window.localStorage.getItem('playerDice')) {
       window.localStorage.setItem('playerDice', JSON.stringify([]))
     }
-
-    // We set the timer with the sessionStorage value.
-    // This is to persit the value on refresh.
-    setTimer(parseInt(window.sessionStorage.getItem('round_timer') as string))
   }
 
   // An empty dependecies array triggers useEffect only on the first render of the component
@@ -85,74 +79,68 @@ function MainRoom() {
   // eslint-disable-next-line
   useEffect(authUEFn, [account, state])
 
-  // ===========================================================================
+  // ===============================Timer=======================================
 
-  // Timer related stuff
+  // Timer duration in seconds
+  const timerDuration = 30
 
-  // Round Interval timer.
-  let roundInterval: NodeJS.Timer
-
-  // Timer time in seconds
-  const timeoutTime = 30
-
-  // Get the timer that's set inside the sessionStorage
-  const sessionTimer = window.sessionStorage.getItem('round_timer')
-    ? parseInt(window.sessionStorage.getItem('round_timer') as string) - 1
-    : timeoutTime
-
-  // Creates a state to handle the timer
-  const [timer, setTimer] = useState(sessionTimer)
-
-  // Sets timer to 0 and removes it from every place is stored at.
-  function resetTimer(): void {
-    window.sessionStorage.removeItem('round_timer')
-    clearInterval(roundInterval)
-    setTimer(timeoutTime)
+  // getTimeoutTime returns a Date object with with seconds appart from now
+  function getTimeoutTime(seconds: number) {
+    const now = new Date()
+    now.setSeconds(now.getSeconds() + seconds)
+    return now
   }
+
+  // Gets the timer that's set inside the sessionStorage
+  // If not timer is set it returns the default time.
+  const sessionTimer =
+    window.sessionStorage.getItem('round_timer') !== '0'
+      ? parseInt(window.sessionStorage.getItem('round_timer') as string)
+      : timerDuration
+
+  // restartTimer restarts the timer to 30 seconds.
+  function restartTimer() {
+    restart(getTimeoutTime(timerDuration), false)
+  }
+
+  // ===========================================================================
+  const timerExpiredFn = () => {
+    setTimeout(() => {
+      pause()
+      restartTimer()
+      addOut()
+    }, 500)
+  }
+
+  const { seconds, start, restart, pause, isRunning } = useTimer({
+    expiryTimestamp: getTimeoutTime(sessionTimer),
+    autoStart: false,
+    onExpire: timerExpiredFn,
+  })
+
+  // ===========================================================================
 
   // If the timer updates we store it in the sessionStorage persist it when
   // refreshing the page.
-  useEffect(
-    () => window.sessionStorage.setItem('round_timer', `${timer}`),
-    [timer],
-  )
+  useEffect(() => {
+    window.sessionStorage.setItem('round_timer', `${seconds}`)
+  }, [seconds])
 
+  // timerUEFn starts the timer if the conditions are met.
   const timerUEFn = () => {
-    if (
-      (game.playerOrder as string[])[game.currentCup] === account &&
-      game.status === 'playing'
-    ) {
-      const setIntervalFn = () => {
-        if (timer > 0 && game.status === 'playing') {
-          setTimer((prevState) => prevState - 1)
-          return
-        }
-        addOut()
-        resetTimer()
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      roundInterval = setInterval(setIntervalFn, 1000)
+    const isGamePlaying = game.status === 'playing'
+    const isPlayerTurn = game.currentID === account
+
+    if (isPlayerTurn && isGamePlaying && !isRunning) {
+      start()
       return
     }
-
-    clearInterval(roundInterval)
-
-    // hook cleanup function
-    return () => clearInterval(roundInterval)
   }
 
-  // Effect to handle the timer.
-  useEffect(timerUEFn, [
-    timer,
-    account,
-    game.playerOrder,
-    game.currentCup,
-    game.status,
-  ])
+  useEffect(timerUEFn, [game, account, isRunning, start])
 
-  // Finish Timer
-
-  // ===========================================================================
+  //
+  // ===============================Finish Timer================================
 
   // Renders this final markup
   return (
@@ -161,7 +149,7 @@ function MainRoom() {
       style={{ height: '100%', maxHeight: '100vh' }}
     >
       <AppHeader show={true} />
-      <GameTable timer={timer} />
+      <GameTable timer={seconds} />
       <Footer />
     </div>
   )

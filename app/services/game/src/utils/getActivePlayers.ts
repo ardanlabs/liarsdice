@@ -1,5 +1,8 @@
-// Filters player_order array
+// Filters cups array
+
+import { user } from '../types/index.d'
+
 // Condition: item has length
-export default function getActivePlayersLength(player_order: string[]) {
-  return player_order.filter((player: string) => player.length).length
+export default function getActivePlayersLength(users: user[]) {
+  return users.filter((player: user) => player.outs < 3).length
 }

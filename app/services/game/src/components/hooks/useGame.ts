@@ -15,8 +15,6 @@ import assureGameType from '../../utils/assureGameType'
 import { axiosConfig, apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
 import useEthersConnection from './useEthersConnection'
-import { toast } from 'react-toastify'
-import { shortenIfAddress } from '../../utils/address'
 import { connectResponse } from '../../types/responses.d'
 import { useNavigate } from 'react-router-dom'
 import { getAppConfig } from '../..'
@@ -26,8 +24,8 @@ const useGame = () => {
   let { game, setGame } = useContext(GameContext)
   const [playerDice, setPlayerDice] = useState([] as dice)
   const gamePot = useMemo(
-    () => game.anteUsd * game.cups.length,
-    [game.cups.length, game.anteUsd],
+    () => game.anteUSD * game.cups.length,
+    [game.cups.length, game.anteUSD],
   )
   const navigate = useNavigate()
   const setNewGame = (data: game) => {
@@ -36,6 +34,7 @@ const useGame = () => {
       setPlayerDice(newGame.cups[0].dice)
     }
     setGame(newGame)
+    return newGame
   }
 
   const updateStatus = () => {
@@ -43,21 +42,17 @@ const useGame = () => {
       .get(`http://${apiUrl}/status`, axiosConfig)
       .then(function (response: AxiosResponse) {
         if (response.data) {
-          setNewGame(response.data)
-          switch (response.data.status) {
-            // Keeping in case of edge cases
-            // case 'roundover':
-            //   newRound()
-            //   break
+          const parsedGame = setNewGame(response.data)
+          switch (parsedGame.status) {
             case 'newgame':
-              if (getActivePlayersLength(response.data.playerOrder) >= 2) {
+              if (getActivePlayersLength(parsedGame.cups) >= 2) {
                 startGame()
               }
               break
             case 'gameover':
               if (
-                getActivePlayersLength(response.data.playerOrder) === 1 &&
-                response.data.last_win === account
+                getActivePlayersLength(parsedGame.cups) >= 1 &&
+                parsedGame.lastWin === account
               ) {
                 axios
                   .get(`http://${apiUrl}/reconcile`, axiosConfig)
@@ -79,15 +74,13 @@ const useGame = () => {
 
   // Game flow methods
 
-  const startGame = () => {
-    if (game.status === 'gameover') {
-      axios
-        .get(`http://${apiUrl}/start`, axiosConfig)
-        .then(function () {})
-        .catch(function (error: AxiosError) {
-          console.error(error)
-        })
-    }
+  function startGame() {
+    axios
+      .get(`http://${apiUrl}/start`, axiosConfig)
+      .then(function () {})
+      .catch(function (error: AxiosError) {
+        console.error(error)
+      })
   }
 
   // Effect to persits players dice
@@ -140,9 +133,7 @@ const useGame = () => {
       })
   }
   // Takes an account address and adds an out to that account
-  const addOut = (
-    accountToOut = (game.playerOrder as string[])[game.currentCup],
-  ) => {
+  const addOut = (accountToOut = game.currentID) => {
     const player = game.cups.filter((player: user) => {
       return player.account === accountToOut
     })
@@ -177,15 +168,7 @@ const useGame = () => {
   function callLiar() {
     axios
       .get(`http://${apiUrl}/liar`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (getActivePlayersLength(game.playerOrder) === 1) {
-          toast(
-            `Game finished! Winner is ${shortenIfAddress(
-              response.data.cups[0].account,
-            )}`,
-          )
-        }
-      })
+      .then(function (response: AxiosResponse) {})
       .catch(function (error: AxiosError) {
         console.error(error)
       })

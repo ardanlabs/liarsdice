@@ -31,7 +31,9 @@ function App() {
     cups: [],
     playerOrder: [],
     bets: [],
-    anteUsd: 0,
+    anteUSD: 0,
+    currentID: '',
+    balances: [],
   } as game)
 
   const { provider } = useEthersConnection()

@@ -21,13 +21,22 @@ export const getAppConfig = axios
   .get(`http://${apiUrl}/config`)
   .then(getAppConfigFn)
 
+const strictMode = process.env.NODE_ENV === 'production'
+
 // We render on root.
 root.render(
-  <React.StrictMode>
+  strictMode ? (
+    <React.StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+      ,
+    </React.StrictMode>
+  ) : (
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </React.StrictMode>,
+  ),
 )
 
 // If you want to start measuring performance in your app, pass a function

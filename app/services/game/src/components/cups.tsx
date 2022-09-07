@@ -12,7 +12,7 @@ function Cups() {
   const { game } = useContext(GameContext)
 
   // Extracts properties from the game
-  const { cups, playerOrder, currentCup, status } = game
+  const { cups, currentID, currentCup, status } = game
 
   // Initialize the cups array.
   const cupsElements: JSX.Element[] = []
@@ -23,9 +23,7 @@ function Cups() {
       ? game.bets.filter((bet: bet) => bet.account === player.account)
       : []
 
-    const isPlayerTurn =
-      (playerOrder as string[])[currentCup] === player.account &&
-      status === 'playing'
+    const isPlayerTurn = currentID === player.account && status === 'playing'
 
     const isPlayerActive = player.outs < 3
 

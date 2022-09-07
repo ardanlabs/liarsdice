@@ -76,7 +76,7 @@ function Login() {
   const loggedUEFn = () => {
     if (token() && account) {
       getAppConfig.then((response) => {
-        navigate('/mainRoom', { state: { ...response } })
+        navigate('/mainRoom', { state: { ...response }, replace: true })
       })
     }
   }

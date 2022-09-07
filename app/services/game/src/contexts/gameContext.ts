@@ -8,16 +8,18 @@ export interface gameContextInterface {
 
 export const GameContext = React.createContext({
   game: {
-    status: 'gameover',
+    status: 'nogame',
     lastOut: '',
     lastWin: '',
     currentPlayer: '',
     currentCup: 0,
     round: 1,
     cups: [],
+    balances: [],
     playerOrder: [],
     bets: [] as bet[],
-    anteUsd: 0,
+    currentID: '',
+    anteUSD: 0,
   } as game,
   setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
 })

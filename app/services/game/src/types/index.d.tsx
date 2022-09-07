@@ -6,7 +6,7 @@ export type die = 0 | 1 | 2 | 3 | 4 | 5 | 6
 export interface user {
   account: string
   outs: number
-  bet: bet
+  lastBet: bet
   dice: dice
 }
 
@@ -31,8 +31,10 @@ export interface game {
   round: number
   cups: user[]
   playerOrder: string[]
+  currentID: string
   bets: bet[]
-  anteUsd: number
+  anteUSD: number
+  balances: string[]
 }
 
 // Props Interfaces

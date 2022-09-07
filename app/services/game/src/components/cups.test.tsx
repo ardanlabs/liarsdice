@@ -25,11 +25,13 @@ test('renders all cups', () => {
       currentPlayer: '',
       currentCup: 0,
       round: 1,
+      balances: [],
+      currentID: '',
       cups: [
         {
           account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',
           outs: 0,
-          bet: {
+          lastBet: {
             account: '0x8E113078ADF6888B7ba84967F299F29AeCe24c55',
             number: 3,
             suite: 5 as die,
@@ -49,7 +51,7 @@ test('renders all cups', () => {
       ],
       playerOrder: [],
       bets: [] as bet[],
-      anteUsd: 0,
+      anteUSD: 0,
     } as game,
     setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
   }
@@ -66,12 +68,14 @@ test('renders all cups', () => {
       lastOut: '',
       lastWin: '',
       currentPlayer: '',
+      balances: [],
       currentCup: 0,
       round: 1,
       cups: [],
       playerOrder: [],
+      currentID: '',
       bets: [] as bet[],
-      anteUsd: 0,
+      anteUSD: 0,
     } as game,
     setGame: (() => {}) as React.Dispatch<React.SetStateAction<game>>,
   }
