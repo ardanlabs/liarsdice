@@ -17,6 +17,11 @@ import (
 
 // Deposit will move money from the wallet into the game contract.
 func Deposit(ctx context.Context, converter *currency.Converter, bank *bank.Bank, amountUSD float64) error {
+	fmt.Println("\nDeposit Details")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("address         :", bank.Client().Address())
+	fmt.Println("amount          :", amountUSD)
+
 	amountGWei := converter.USD2GWei(big.NewFloat(amountUSD))
 	tx, receipt, err := bank.Deposit(ctx, amountGWei)
 	if err != nil {
@@ -31,6 +36,10 @@ func Deposit(ctx context.Context, converter *currency.Converter, bank *bank.Bank
 
 // Withdraw will remove money from the game contract back into the wallet.
 func Withdraw(ctx context.Context, converter *currency.Converter, bank *bank.Bank) error {
+	fmt.Println("\nWithdraw Details")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("address         :", bank.Client().Address())
+
 	tx, receipt, err := bank.Withdraw(ctx)
 	if err != nil {
 		return err
@@ -101,15 +110,17 @@ func Deploy(ctx context.Context, converter *currency.Converter, bank *bank.Bank,
 	return nil
 }
 
-// Wallet returns the current wallet balance
-func Wallet(ctx context.Context, converter *currency.Converter, bank *bank.Bank) error {
-	wei, err := bank.WalletBalance(ctx)
+// Wallet returns the current wallet balance for the specified address.
+func Wallet(ctx context.Context, converter *currency.Converter, bank *bank.Bank, address string) error {
+	fmt.Println("\nWallet Balance")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("account         :", address)
+
+	wei, err := bank.Client().EthClient().BalanceAt(ctx, common.HexToAddress(address), nil)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("\nWallet Balance")
-	fmt.Println("----------------------------------------------------")
 	fmt.Println("wei             :", wei)
 	fmt.Println("gwei            :", currency.Wei2GWei(wei))
 	fmt.Println("usd             :", converter.Wei2USD(wei))
@@ -119,14 +130,15 @@ func Wallet(ctx context.Context, converter *currency.Converter, bank *bank.Bank)
 
 // Balance returns the current balance of the specified address.
 func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank, address string) error {
+	fmt.Println("\nGame Balance")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("account         :", address)
+
 	gwei, err := bank.AccountBalance(ctx, address)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("\nGame Balance")
-	fmt.Println("----------------------------------------------------")
-	fmt.Println("account         :", address)
 	fmt.Println("wei             :", currency.GWei2Wei(gwei))
 	fmt.Println("gwei            :", gwei)
 	fmt.Println("usd             :", converter.GWei2USD(gwei))
@@ -137,6 +149,10 @@ func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
 func Transaction(ctx context.Context, converter *currency.Converter, bank *bank.Bank, tranID string) error {
+	fmt.Println("\nTransaction ID")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("tran id         :", tranID)
+
 	txHash := common.HexToHash(tranID)
 	tx, pending, err := bank.Client().TransactionByHash(ctx, txHash)
 	if err != nil {

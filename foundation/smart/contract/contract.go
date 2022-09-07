@@ -63,6 +63,11 @@ func NewClient(ctx context.Context, network string, keyPath string, passPhrase s
 	return &c, nil
 }
 
+// EthClient returns the raw ethereum client API.
+func (c *Client) EthClient() *ethclient.Client {
+	return c.ethClient
+}
+
 // Address returns the current address calculated from the private key.
 func (c *Client) Address() common.Address {
 	return c.address

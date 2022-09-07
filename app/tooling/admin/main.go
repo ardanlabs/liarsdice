@@ -53,7 +53,7 @@ func run() error {
 	// =========================================================================
 	// Find the key file for the specified address.
 
-	keyFile, err := findKeyFile(keyStorePath, args.Address)
+	keyFile, err := findKeyFile(keyStorePath, args.FileKey)
 	if err != nil {
 		return err
 	}
@@ -89,22 +89,19 @@ func run() error {
 	fmt.Println("contract id     :", args.ContractID)
 
 	if _, exists := flags["t"]; exists {
-		fmt.Println("tran id         :", args.TranID)
 		return commands.Transaction(ctx, converter, bank, args.TranID)
 	}
 	if _, exists := flags["b"]; exists {
-		fmt.Println("address         :", args.Address)
 		return commands.Balance(ctx, converter, bank, args.Address)
 	}
 	if _, exists := flags["w"]; exists {
-		return commands.Wallet(ctx, converter, bank)
+		return commands.Wallet(ctx, converter, bank, args.Address)
 	}
 	if _, exists := flags["d"]; exists {
 		return commands.Deploy(ctx, converter, bank, args, keyFile)
 	}
 	if _, exists := flags["a"]; exists {
-		fmt.Println("amount          :", args.Amount)
-		return commands.Deposit(ctx, converter, bank, args.Amount)
+		return commands.Deposit(ctx, converter, bank, args.Money)
 	}
 	if _, exists := flags["r"]; exists {
 		return commands.Withdraw(ctx, converter, bank)

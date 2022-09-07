@@ -56,10 +56,10 @@ func Parse() (Flags, Args, error) {
 // parseCmdline will parse all the command line flags.
 // The default value is set to the values parsed by the environment variables.
 func parseCmdline(args *Args) Flags {
-	flag.StringVar(&args.Engine, "e", args.Engine, "url of the game engine")
-	flag.StringVar(&args.Engine, "engine", args.Engine, "url of the game engine")
-	flag.StringVar(&args.AccountID, "a", args.AccountID, "players account id")
-	flag.StringVar(&args.AccountID, "account", args.AccountID, "players account id")
+	flag.StringVar(&args.Engine, "e", args.Engine, "")
+	flag.StringVar(&args.Engine, "engine", args.Engine, "")
+	flag.StringVar(&args.AccountID, "a", args.AccountID, "")
+	flag.StringVar(&args.AccountID, "account", args.AccountID, "")
 
 	flag.Bool("h", false, "show help usage")
 	flag.Bool("help", false, "show help usage")
