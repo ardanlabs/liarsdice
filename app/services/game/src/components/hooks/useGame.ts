@@ -31,7 +31,12 @@ const useGame = () => {
   const setNewGame = (data: game) => {
     const newGame = assureGameType(data)
     if (newGame.cups.length) {
-      setPlayerDice(newGame.cups[0].dice)
+      const player = newGame.cups.filter((cup) => {
+        return cup.account === account
+      })
+      if (player.length) {
+        setPlayerDice(player[0].dice)
+      }
     }
     setGame(newGame)
     return newGame
@@ -69,6 +74,15 @@ const useGame = () => {
       })
       .catch(function (error: AxiosError) {
         console.error(error as any)
+      })
+  }
+
+  function rolldice(): void {
+    axios
+      .get(`http://${apiUrl}/rolldice`, axiosConfig)
+      .then(function (response: AxiosResponse) {})
+      .catch(function (error: AxiosError) {
+        console.error(error)
       })
   }
 
@@ -182,6 +196,7 @@ const useGame = () => {
     updateStatus,
     sendBet,
     callLiar,
+    rolldice,
     connectToGameEngine,
   }
 }

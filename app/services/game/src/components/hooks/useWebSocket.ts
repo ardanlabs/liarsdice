@@ -17,7 +17,7 @@ import useGame from './useGame'
 function useWebSocket(restart: () => void) {
   let [wsStatus, setWsStatus] = useState('closed')
   let { setGame } = useContext(GameContext)
-  const { updateStatus } = useGame()
+  const { updateStatus, rolldice } = useGame()
 
   const connect = () => {
     const ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -43,6 +43,7 @@ function useWebSocket(restart: () => void) {
             // Message received when the game starts
             case 'start':
               toast(`Game has been started by ${messageAccount}!`)
+              rolldice()
               break
             // Message received when dices are rolled
             case 'rolldice':
