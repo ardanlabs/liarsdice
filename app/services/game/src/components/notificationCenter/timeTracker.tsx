@@ -10,7 +10,8 @@ interface Props {
   createdAt: number
 }
 
-export function TimeTracker({ createdAt }: Props) {
+// TimeTracker component
+function TimeTracker({ createdAt }: Props) {
   const [, forceUpdate] = useReducer((x) => x + 1, 0)
   const intervalRef = useRef<NodeJS.Timer>()
 
@@ -31,3 +32,5 @@ export function TimeTracker({ createdAt }: Props) {
     </div>
   )
 }
+
+export default TimeTracker

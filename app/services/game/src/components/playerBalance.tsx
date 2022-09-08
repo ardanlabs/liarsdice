@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import { apiUrl, axiosConfig } from '../utils/axiosConfig'
+import { apiUrl } from '../utils/axiosConfig'
 import Transaction from './transaction'
 import useEthersConnection from './hooks/useEthersConnection'
 
@@ -15,7 +15,11 @@ function PlayerBalance() {
   const updateBalanceUCFn = (balance: number = -1) => {
     if (balance !== -2 && account) {
       axios
-        .get(`http://${apiUrl}/balance`, axiosConfig)
+        .get(`http://${apiUrl}/balance`, {
+          headers: {
+            authorization: window.sessionStorage.getItem('token') as string,
+          },
+        })
         .then((balanceResponse: AxiosResponse) => {
           setBalance(parseFloat(balanceResponse.data.balance))
         })

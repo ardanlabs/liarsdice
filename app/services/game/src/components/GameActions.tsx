@@ -34,10 +34,9 @@ function GameActions() {
   // handleForm recieves an event from the form input and sets the state.
   function handleForm(event: BaseSyntheticEvent) {
     switch (event.target.id) {
-      case 'bet_number':
+      case 'bet__number':
         setNumber(event.target.value)
         break
-
       case 'bet__suite':
         setSuite(event.target.value)
         break

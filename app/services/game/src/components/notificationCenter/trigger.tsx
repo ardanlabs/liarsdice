@@ -3,7 +3,9 @@ interface Props {
   count: number
 }
 
-export function Trigger({ count, onClick }: Props) {
+// Trigger component
+function Trigger({ count, onClick }: Props) {
+  // Renders this markup.
   return (
     <div
       onClick={onClick}
@@ -41,3 +43,5 @@ export function Trigger({ count, onClick }: Props) {
     </div>
   )
 }
+
+export default Trigger

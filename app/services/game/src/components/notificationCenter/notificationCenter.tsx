@@ -4,9 +4,9 @@ import { Icons, toast } from 'react-toastify'
 import { motion, AnimatePresence, MotionStyle } from 'framer-motion'
 
 import { useNotificationCenter } from 'react-toastify/addons/use-notification-center'
-import { Trigger } from './trigger'
+import Trigger from './trigger'
 import Button from '../button'
-import { TimeTracker } from './timeTracker'
+import TimeTracker from './timeTracker'
 
 // contains framer-motion variants to animate different parts of the UI
 // when the notification center is visible or not

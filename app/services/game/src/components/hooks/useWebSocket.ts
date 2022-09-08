@@ -15,20 +15,31 @@ import { apiUrl } from '../../utils/axiosConfig'
 import useGame from './useGame'
 
 function useWebSocket(restart: () => void) {
+  // Creates a state that keeps track of the websocket status.
   let [wsStatus, setWsStatus] = useState('closed')
+
+  // Extracts setGame from useContext hook.
   let { setGame } = useContext(GameContext)
+
+  // Extracts updateStatus and rolldice from useGame hook.
   const { updateStatus, rolldice } = useGame()
 
-  const connect = () => {
+  // Connects to the webscoket.
+  function connect() {
     const ws = new WebSocket(`ws://${apiUrl}/events`)
 
+    // If the status isn't open or attemptingConnection we trigger the ws bindings.
     if (wsStatus !== 'open' && wsStatus !== 'attemptingConnection') {
       setWsStatus('attemptingConnection')
+
+      // ws.onopen binds an event listener that triggers with the "open" event.
       ws.onopen = () => {
         toast('Connection established')
         updateStatus()
         setWsStatus('open')
       }
+
+      // ws.onmessage binds an event listener that triggers with "message" event.
       ws.onmessage = (evt: MessageEvent) => {
         updateStatus()
         if (evt.data) {
@@ -80,8 +91,11 @@ function useWebSocket(restart: () => void) {
         }
         return
       }
+
+      // ws.onclose binds an event listener that triggers with "close" event.
+      // If the socket closes we show the user an error and set the game to
+      // it's initial state.
       ws.onclose = (evt: CloseEvent) => {
-        // If the socket closes we show the user an error and set the game to it's initial state.
         toast(`Connection is closed. Reconnect will be attempted in 1 second.`)
         setWsStatus('closed')
         setTimeout(function () {
@@ -101,6 +115,8 @@ function useWebSocket(restart: () => void) {
           })
         }, 1000)
       }
+
+      // ws.onerror binds an event listener that triggers with "error" event.
       ws.onerror = function (err) {
         toast(`Socket encountered error. Closing socket.`)
         console.error('Socket encountered error: ', err, 'Closing socket')

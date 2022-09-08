@@ -1,47 +1,50 @@
+/* ************useGameHook************
+
+  This hook provides all functions needed to connect to the web3 provider.
+
+**************************************** */
+
 import { ethers, Signer } from 'ethers'
 import { useContext } from 'react'
 import { EthersContext } from '../../contexts/ethersContext'
 
-const useEthersConnection = () => {
+function useEthersConnection() {
   const { ethersConnection, setEthersConnection } = useContext(EthersContext)
   const provider = new ethers.providers.Web3Provider(window.ethereum, 'any')
 
-  /**
-   * Signer setter.
-   **/
-  const setSigner = (signer: Signer) => {
+  // Signer setter.
+  function setSigner(signer: Signer) {
     const newContext = ethersConnection
     newContext.signer = signer
 
     setEthersConnection(newContext)
   }
-  /**
-   * Signer getter.
-   **/
+
+  // Signer getter.
   const signer = ethersConnection.signer
-  /**
-   * Signer account.
-   **/
-  const setAccount = (account: string | undefined) => {
+
+  // Signer account
+  function setAccount(account: string | undefined) {
     const newContext = ethersConnection
     newContext.account = account
 
     setEthersConnection(newContext)
   }
-  /**
-   * Account getter.
-   **/
+  // Account getter.
   const account = ethersConnection.account
     ? ethersConnection.account
     : undefined
 
-  const setNetwork = (network: object) => {
+  // Network setter
+  function setNetwork(network: object) {
     const newContext = ethersConnection
     newContext.network = network
 
     setEthersConnection(newContext)
   }
-  const switchNetwork = (network: Partial<{ chainId: string }>) => {
+
+  // Switches the current network that metamask is connected to
+  function switchNetwork(network: Partial<{ chainId: string }>) {
     window.ethereum.request({
       method: 'wallet_switchEthereumChain',
       params: [network],
@@ -58,4 +61,5 @@ const useEthersConnection = () => {
     provider,
   }
 }
+
 export default useEthersConnection

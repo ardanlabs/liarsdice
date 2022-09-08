@@ -32,21 +32,21 @@ function Login() {
   // Sets local state to trigger re-render when load is complete.
   const [loading, setLoading] = useState(true)
 
+  // Prompts user to connect to metamask usign the provider
+  // and registers it to useEthersConnection hook
+  async function init() {
+    const signer = provider.getSigner()
+
+    const signerAddress = await signer.getAddress()
+
+    setAccount(signerAddress)
+
+    setSigner(signer)
+  }
+
   // ===========================================================================
 
-  const accountsChangeUEFn = () => {
-    // Prompts user to connect to metamask usign the provider
-    // and registers it to useEthersConnection hook
-    async function init() {
-      const signer = provider.getSigner()
-      if (signer._address) {
-        const signerAddress = await signer.getAddress()
-        setAccount(signerAddress)
-      }
-
-      setSigner(signer)
-    }
-
+  function accountsChangeUEFn() {
     // handleAccountsChanged handles what happen when metamask account changes
     // If the array of accounts is non-empty, you're already connected.
     function handleAccountsChanged(accounts: string[]) {
@@ -57,7 +57,7 @@ function Login() {
       }
     }
 
-    function connectFn(connectInfo: string) {
+    function connectFn() {
       init().then(() => setLoading(false))
     }
     // Note that this event is emitted on page load.
@@ -101,11 +101,7 @@ function Login() {
   // handleConnectAccount takes care of the connection to the browser wallet.
   async function handleConnectAccount() {
     await provider.send('eth_requestAccounts', []).then((accounts: string) => {
-      const signer = provider.getSigner()
-      setAccount(accounts[0])
-
-      setSigner(signer)
-      setLoading(false)
+      init().then(() => setLoading(false))
     })
   }
 

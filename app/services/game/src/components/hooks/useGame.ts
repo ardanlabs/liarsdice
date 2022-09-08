@@ -12,25 +12,53 @@ import axios, { AxiosError, AxiosResponse } from 'axios'
 import { GameContext } from '../../contexts/gameContext'
 import { appConfig, dice, die, game, user } from '../../types/index.d'
 import assureGameType from '../../utils/assureGameType'
-import { axiosConfig, apiUrl } from '../../utils/axiosConfig'
+import { apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
 import useEthersConnection from './useEthersConnection'
 import { connectResponse } from '../../types/responses.d'
 import { useNavigate } from 'react-router-dom'
 import { getAppConfig } from '../..'
 
-const useGame = () => {
+// Create an axios instance to keep the token updated
+const axiosInstance = axios.create({
+  headers: {
+    authorization: window.sessionStorage.getItem('token') as string,
+  },
+})
+
+function useGame() {
+  // Extracts account from useEthersConnection hook
   const { account } = useEthersConnection()
+
+  // Extracts game, setGame from useContext hook
   let { game, setGame } = useContext(GameContext)
+
+  // Sets playerDice local state.
   const [playerDice, setPlayerDice] = useState([] as dice)
+
+  // Stores a memoized value of the gamePot that only updates when dependencies change.
   const gamePot = useMemo(
     () => game.anteUSD * game.cups.length,
     [game.cups.length, game.anteUSD],
   )
+
+  // Effect to persits players dice
+  useEffect(() => {
+    if (playerDice?.length)
+      window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
+  }, [playerDice])
+
+  // Extracts navigation functionality from useNavigate hook.
   const navigate = useNavigate()
-  const setNewGame = (data: game) => {
+
+  // ===========================================================================
+
+  // SetNewGame updates the instance of the game in the local state.
+  // Also sets the player dice.
+  function setNewGame(data: game) {
     const newGame = assureGameType(data)
     if (newGame.cups.length) {
+      // We filter the connected player
       const player = newGame.cups.filter((cup) => {
         return cup.account === account
       })
@@ -42,66 +70,44 @@ const useGame = () => {
     return newGame
   }
 
-  const updateStatus = () => {
-    axios
-      .get(`http://${apiUrl}/status`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          const parsedGame = setNewGame(response.data)
-          switch (parsedGame.status) {
-            case 'newgame':
-              if (getActivePlayersLength(parsedGame.cups) >= 2) {
-                startGame()
-              }
-              break
-            case 'gameover':
-              if (
-                getActivePlayersLength(parsedGame.cups) >= 1 &&
-                parsedGame.lastWin === account
-              ) {
-                axios
-                  .get(`http://${apiUrl}/reconcile`, axiosConfig)
-                  .then((response: AxiosResponse) => {
-                    updateStatus()
-                  })
-                  .catch((error: AxiosError) => {
-                    console.error(error)
-                  })
-              }
-              break
-          }
+  // updateStatus calls to the status endpoint and updates the local state.
+  function updateStatus() {
+    // updatesStatusAxiosFn handles the backend answer.
+    const updateStatusAxiosFn = (response: AxiosResponse) => {
+      if (response.data) {
+        const parsedGame = setNewGame(response.data)
+        switch (parsedGame.status) {
+          case 'newgame':
+            if (getActivePlayersLength(parsedGame.cups) >= 2) {
+              startGame()
+            }
+            break
+          case 'gameover':
+            if (
+              getActivePlayersLength(parsedGame.cups) >= 1 &&
+              parsedGame.lastWin === account
+            ) {
+              axiosInstance
+                .get(`http://${apiUrl}/reconcile`)
+                .then((response: AxiosResponse) => {
+                  updateStatus()
+                })
+                .catch((error: AxiosError) => {
+                  console.error(error)
+                })
+            }
+            break
         }
-      })
+      }
+    }
+
+    axiosInstance
+      .get(`http://${apiUrl}/status`)
+      .then(updateStatusAxiosFn)
       .catch(function (error: AxiosError) {
         console.error(error as any)
       })
   }
-
-  function rolldice(): void {
-    axios
-      .get(`http://${apiUrl}/rolldice`, axiosConfig)
-      .then(function (response: AxiosResponse) {})
-      .catch(function (error: AxiosError) {
-        console.error(error)
-      })
-  }
-
-  // Game flow methods
-
-  function startGame() {
-    axios
-      .get(`http://${apiUrl}/start`, axiosConfig)
-      .then(function () {})
-      .catch(function (error: AxiosError) {
-        console.error(error)
-      })
-  }
-
-  // Effect to persits players dice
-  useEffect(() => {
-    if (playerDice?.length)
-      window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
-  }, [playerDice])
 
   // connectToGameEngine connects to the game engine, and stores the token
   // in the sessionStorage. Takes an object with the following type:
@@ -130,15 +136,40 @@ const useGame = () => {
       console.groupEnd()
     }
 
-    axios
-      .post('http://localhost:3000/v1/game/connect', data)
+    axiosInstance
+      .post(`http://${apiUrl}/v1/game/connect`, data)
       .then(axiosFn)
       .catch(axiosErrorFn)
   }
 
-  const nextTurn = () => {
-    axios
-      .get(`http://${apiUrl}/next`, axiosConfig)
+  // ===========================================================================
+
+  // Game flow methods
+
+  // rolldice rolls the player dice.
+  function rolldice(): void {
+    axiosInstance
+      .get(`http://${apiUrl}/rolldice`)
+      .then(function (response: AxiosResponse) {})
+      .catch(function (error: AxiosError) {
+        console.error(error)
+      })
+  }
+
+  // startGame starts the game
+  function startGame() {
+    axiosInstance
+      .get(`http://${apiUrl}/start`)
+      .then(function () {})
+      .catch(function (error: AxiosError) {
+        console.error(error)
+      })
+  }
+
+  // nextTurn calls to nextTurn and then updates the status.
+  function nextTurn() {
+    axiosInstance
+      .get(`http://${apiUrl}/next`)
       .then(function (response: AxiosResponse) {
         updateStatus()
       })
@@ -146,20 +177,24 @@ const useGame = () => {
         console.error(error)
       })
   }
+
   // Takes an account address and adds an out to that account
-  const addOut = (accountToOut = game.currentID) => {
+  function addOut(accountToOut = game.currentID) {
     const player = game.cups.filter((player: user) => {
       return player.account === accountToOut
     })
-    axios
-      .get(`http://${apiUrl}/out/${player[0].outs + 1}`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        setNewGame(response.data)
-        // If the game didn't stop we call next-turn
-        if (response.data.status === 'playing') {
-          nextTurn()
-        }
-      })
+
+    const addOutAxiosFn = (response: AxiosResponse) => {
+      setNewGame(response.data)
+      // If the game didn't stop we call next-turn
+      if (response.data.status === 'playing') {
+        nextTurn()
+      }
+    }
+
+    axiosInstance
+      .get(`http://${apiUrl}/out/${player[0].outs + 1}`)
+      .then(addOutAxiosFn)
       .catch(function (error: AxiosError) {
         console.group('Something went wrong, try again.')
         console.error(error)
@@ -167,21 +202,20 @@ const useGame = () => {
       })
   }
 
+  // sendBet sends the player bet to the backend.
   function sendBet(number: number, suite: die) {
-    axios
-      .get(`http://${apiUrl}/bet/${number}/${suite}`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          setNewGame(response.data)
-        }
-      })
+    axiosInstance
+      .get(`http://${apiUrl}/bet/${number}/${suite}`)
+      .then()
       .catch(function (error: AxiosError) {
         console.error(error)
       })
   }
+
+  // callLiar triggers the callLiar endpoint
   function callLiar() {
-    axios
-      .get(`http://${apiUrl}/liar`, axiosConfig)
+    axiosInstance
+      .get(`http://${apiUrl}/liar`)
       .then(function (response: AxiosResponse) {})
       .catch(function (error: AxiosError) {
         console.error(error)
