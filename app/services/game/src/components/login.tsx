@@ -39,9 +39,11 @@ function Login() {
     // and registers it to UseEthersConnection hook
     async function init() {
       const signer = provider.getSigner()
-      const signerAddress = await signer.getAddress()
+      if (signer._address) {
+        const signerAddress = await signer.getAddress()
+        setAccount(signerAddress)
+      }
 
-      setAccount(signerAddress)
       setSigner(signer)
     }
 
@@ -55,10 +57,14 @@ function Login() {
       }
     }
 
+    function connectFn(connectInfo: string) {
+      init().then(() => setLoading(false))
+    }
     // Note that this event is emitted on page load.
     window.ethereum.on('accountsChanged', handleAccountsChanged)
-
-    init().then(() => setLoading(false))
+    // This event checks when the provider becomes able to submit
+    // RPC requests to a chain.
+    window.ethereum.on('connect', connectFn)
   }
 
   // The Effect Hook lets you perform side effects in function components
@@ -94,15 +100,13 @@ function Login() {
 
   // handleConnectAccount takes care of the connection to the browser wallet.
   async function handleConnectAccount() {
-    await provider.send('eth_requestAccounts', [])
+    await provider.send('eth_requestAccounts', []).then((accounts: string) => {
+      const signer = provider.getSigner()
+      setAccount(accounts[0])
 
-    const signer = provider.getSigner()
-
-    const signerAddress = await signer.getAddress()
-
-    setAccount(signerAddress)
-
-    setSigner(signer)
+      setSigner(signer)
+      setLoading(false)
+    })
   }
 
   // signTransaction handles click on sign transaction
