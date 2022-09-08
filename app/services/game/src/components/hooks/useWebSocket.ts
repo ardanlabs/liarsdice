@@ -8,7 +8,7 @@
   **************************************** */
 
 import { shortenIfAddress } from '../../utils/address'
-import { useContext, useState } from 'react'
+import { useContext } from 'react'
 import { toast } from 'react-toastify'
 import { GameContext } from '../../contexts/gameContext'
 import { apiUrl } from '../../utils/axiosConfig'
@@ -23,7 +23,6 @@ function useWebSocket(restart: () => void) {
 
   // Connects to the webscoket.
   async function connect() {
-    console.log('hi')
     const ws = new WebSocket(`ws://${apiUrl}/events`)
 
     // ws.onopen binds an event listener that triggers with the "open" event.
@@ -38,47 +37,47 @@ function useWebSocket(restart: () => void) {
       if (evt.data) {
         let message = JSON.parse(evt.data)
         const messageAccount = shortenIfAddress(message.address)
-        // We force a switch in order to check for every type of message
+        // We force a switch in order to check for every type of message.
         switch (message.type) {
-          // Message received when a new game has been created
+          // Message received when a new game has been created.
           case 'newgame':
             toast(`New game created ${messageAccount}!`)
             break
-          // Message received when the game starts
+          // Message received when the game starts.
           case 'start':
             toast(`Game has been started by ${messageAccount}!`)
             rolldice()
             break
-          // Message received when dices are rolled
-          case 'rolldice':
-            toast(`Rolling dice's`)
-            break
-          // Message received when a player joins the game
+          // Message received when a player joins the game.
           case 'join':
             toast(`Account ${messageAccount} just joined`)
             break
-          // Message received when bet is maded
+          // Message received when bet is maded.
           case 'bet':
             toast(`${messageAccount} made a bet`)
             restart()
             break
-          // Message received when new round starts
+          // Message received when new round starts.
           case 'newround':
             toast('Next Round!')
             break
-          // Message received when next turn is started
+          // Message received when next turn is started.
           case 'nextturn':
             toast('Next Turn!')
             restart()
             break
-          // Message received when player gets an out
+          // Message received when player gets an out.
           case 'outs':
             toast(`Player ${messageAccount} timed out and got striked`)
             break
-          // Message received when a player gets called a liar
+          // Message received when a player gets called a liar.
           case 'callliar':
             toast(`${messageAccount} was called a liar and lost!`)
             restart()
+            break
+          // Message received when game has finished and money has been distributed.
+          case 'reconcile':
+            toast(`Game has finished and the pot distributed`)
             break
         }
       }

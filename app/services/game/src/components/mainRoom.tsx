@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState, useRef } from 'react'
+import React, { useEffect, useContext } from 'react'
 import GameTable from './gameTable'
 import { GameContext } from '../contexts/gameContext'
 import useGame from './hooks/useGame'
@@ -48,9 +48,7 @@ function MainRoom() {
         window.sessionStorage.setItem('wsStatus', 'open')
       })
     }
-    console.log(wsStatus, 'out')
     if (wsStatus !== 'open' && wsStatus !== 'attemptingConnection') {
-      console.log(wsStatus, 'if')
       window.sessionStorage.setItem('wsStatus', 'attemptingConnection')
       connectToWs()
     }
@@ -167,10 +165,7 @@ function MainRoom() {
           }}
           className="d-flex flex-column align-items-center justify-content-start"
         >
-          <GameTable
-            timer={seconds}
-            notificationCenterWidth={notificationCenterWidth}
-          />
+          <GameTable timer={seconds} />
           <Footer />
         </section>
         <SideBar notificationCenterWidth={notificationCenterWidth} />

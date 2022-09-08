@@ -7,14 +7,11 @@ import Cups from './cups'
 import CurrentBet from './currentBet'
 import Dice from './dice'
 import useEthersConnection from './hooks/useEthersConnection'
-import useGame from './hooks/useGame'
-import LiarsCall from './liarsCall'
-import SideBar from './sidebar'
 
 // GameTable Component.
 function GameTable(GameTableProps: GameTableProps) {
   // Deconstructs the props.
-  const { timer, notificationCenterWidth } = GameTableProps
+  const { timer } = GameTableProps
 
   // Extracts the game using the useContext Hook.
   const { game } = useContext(GameContext)
@@ -52,21 +49,6 @@ function GameTable(GameTableProps: GameTableProps) {
       }}
       id="gameTable"
     >
-      {/* <div
-        style={{
-          display: 'flex',
-          flexGrow: '1',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'start',
-            alignItems: 'center',
-            flexDirection: 'column',
-            width: `calc(100% - ${notificationCenterWidth})`,
-          }}
-        > */}
       <Counter show={isPlayerTurn && isGamePlaying} timer={timer} />
       <Cups />
       {isGamePlaying ? (
@@ -76,13 +58,10 @@ function GameTable(GameTableProps: GameTableProps) {
             diceNumber={playerDice}
           />
           <CurrentBet currentBet={currentBet} />
-          <LiarsCall />
         </>
       ) : (
         ''
       )}
-      {/* </div> */}
-      {/* </div> */}
     </div>
   )
 }

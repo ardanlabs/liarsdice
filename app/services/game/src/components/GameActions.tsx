@@ -55,7 +55,7 @@ function GameActions() {
     >
       <strong
         style={{
-          fontSize: '24px',
+          fontSize: '18px',
           color: 'var(--secondary-color)',
         }}
       >

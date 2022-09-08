@@ -22,7 +22,6 @@ function CurrentBet(props: CurrentBetProps) {
         borderRadius: '8px',
         fontSize: '28px',
         fontWeight: '500',
-        height: '100%',
       }}
     >
       {/* Checks if there's a bet and display who maded it */}

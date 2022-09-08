@@ -2,7 +2,6 @@ import { bet, dice } from './index.d'
 
 export interface GameTableProps {
   timer: number
-  notificationCenterWidth: string
 }
 
 export interface AppHeaderProps {

@@ -18,6 +18,7 @@ import useEthersConnection from './useEthersConnection'
 import { connectResponse } from '../../types/responses.d'
 import { useNavigate } from 'react-router-dom'
 import { getAppConfig } from '../..'
+import { toast } from 'react-toastify'
 
 // Create an axios instance to keep the token updated
 const axiosInstance = axios.create({
@@ -150,7 +151,9 @@ function useGame() {
   function rolldice(): void {
     axiosInstance
       .get(`http://${apiUrl}/rolldice`)
-      .then(function (response: AxiosResponse) {})
+      .then(function (response: AxiosResponse) {
+        toast(`Rolling dice's`)
+      })
       .catch(function (error: AxiosError) {
         console.error(error)
       })
