@@ -1,4 +1,4 @@
-# Ultimate Go: Smart Contract
+# Ultimate Go: Liar's Dice
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/ardanlabs/liarsdice)](https://goreportcard.com/report/github.com/ardanlabs/liarsdice)
 [![go.mod Go version](https://img.shields.io/github/go-mod/go-version/ardanlabs/liarsdice)](https://github.com/ardanlabs/liarsdice)
