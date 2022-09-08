@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
+	"github.com/ardanlabs/ethereum"
 	"github.com/gorilla/websocket"
 )
 

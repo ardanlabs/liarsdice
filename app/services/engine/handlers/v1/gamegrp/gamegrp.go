@@ -18,10 +18,10 @@ import (
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 
+	"github.com/ardanlabs/ethereum"
+	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
-	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
-	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
