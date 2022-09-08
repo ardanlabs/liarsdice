@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
+	"github.com/ardanlabs/ethereum"
 )
 
 const usage = `

@@ -3,8 +3,8 @@ module github.com/ardanlabs/liarsdice
 go 1.18
 
 require (
-	github.com/DeOne4eg/eth-unit-converter v0.2.0
 	github.com/ardanlabs/conf/v3 v3.1.2
+	github.com/ardanlabs/ethereum v0.1.0
 	github.com/dimfeld/httptreemux/v5 v5.4.0
 	github.com/ethereum/go-ethereum v1.10.23
 	github.com/gdamore/tcell/v2 v2.5.3
@@ -20,6 +20,7 @@ require (
 )
 
 require (
+	github.com/DeOne4eg/eth-unit-converter v0.2.0 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.2.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.1.0 // indirect

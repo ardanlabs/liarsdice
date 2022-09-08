@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ardanlabs/ethereum"
+	"github.com/ardanlabs/ethereum/currency"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
-	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 )
