@@ -34,9 +34,9 @@ import (
 	Can I send money to a contract address after contract is in place?
 
 	-- Browser UI
-	Convert everything into functions.
 	Make the network change work.
 	Add subtle animations to some game elements (For Ex. Cups).
+	Look into the double websocket connection and then handle the reconnection.
 	Change players inditifiers from addresses to names.
 */
 
