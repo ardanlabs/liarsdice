@@ -16,10 +16,10 @@ import (
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )

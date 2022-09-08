@@ -1,5 +1,5 @@
-// Package contract provides support for executing smart contract APIs.
-package contract
+// Package ethereum provides support for executing smart contract APIs.
+package ethereum
 
 import (
 	"context"

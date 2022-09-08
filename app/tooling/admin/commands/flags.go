@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 )
 
 const usage = `
@@ -70,7 +70,7 @@ func Parse() (Flags, Args, error) {
 	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }
 
 	args := Args{
-		Network:          contract.NetworkLocalhost,
+		Network:          ethereum.NetworkLocalhost,
 		FileKey:          fileKey,
 		PassPhrase:       passPhrase,
 		ContractID:       os.Getenv("GAME_CONTRACT_ID"),

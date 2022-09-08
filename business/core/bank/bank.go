@@ -7,8 +7,8 @@ import (
 	"math/big"
 
 	"github.com/ardanlabs/liarsdice/business/contract/go/bank"
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,13 +20,13 @@ import (
 type Bank struct {
 	logger     *zap.SugaredLogger
 	contractID string
-	client     *contract.Client
+	client     *ethereum.Client
 	contract   *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
 func New(ctx context.Context, logger *zap.SugaredLogger, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
-	client, err := contract.NewClient(ctx, network, keyPath, passPhrase)
+	client, err := ethereum.NewClient(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return nil, fmt.Errorf("network connect: %w", err)
 	}
@@ -54,7 +54,7 @@ func (b *Bank) ContractID() string {
 }
 
 // Client returns the underlying contract client.
-func (b *Bank) Client() *contract.Client {
+func (b *Bank) Client() *ethereum.Client {
 	return b.client
 }
 

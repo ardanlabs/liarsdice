@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/business/core/game"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )

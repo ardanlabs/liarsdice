@@ -11,7 +11,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/app/tooling/admin/commands"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
 )
 
 const (

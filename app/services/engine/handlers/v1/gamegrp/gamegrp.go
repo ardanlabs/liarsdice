@@ -20,9 +20,9 @@ import (
 
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 	"github.com/ardanlabs/liarsdice/foundation/events"
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
@@ -489,7 +489,7 @@ func validateSignature(r *http.Request) (string, error) {
 		DateTime: dt.DateTime,
 	}
 
-	address, err := contract.FromAddress(data, dt.Signature)
+	address, err := ethereum.FromAddress(data, dt.Signature)
 	if err != nil {
 		return "", fmt.Errorf("unable to extract address: %w", err)
 	}

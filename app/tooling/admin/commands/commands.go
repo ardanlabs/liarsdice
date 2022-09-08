@@ -9,8 +9,8 @@ import (
 
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 )
@@ -72,7 +72,7 @@ func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank
 // =============================================================================
 
 // Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter *currency.Converter, client *contract.Client) (err error) {
+func Deploy(ctx context.Context, converter *currency.Converter, client *ethereum.Client) (err error) {
 	startingBalance, err := client.Balance(ctx)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func Deploy(ctx context.Context, converter *currency.Converter, client *contract
 }
 
 // Wallet returns the current wallet balance for the specified address.
-func Wallet(ctx context.Context, converter *currency.Converter, client *contract.Client, address string) error {
+func Wallet(ctx context.Context, converter *currency.Converter, client *ethereum.Client, address string) error {
 	fmt.Println("\nWallet Balance")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("account         :", address)
@@ -148,7 +148,7 @@ func Wallet(ctx context.Context, converter *currency.Converter, client *contract
 
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter *currency.Converter, client *contract.Client, tranID string) error {
+func Transaction(ctx context.Context, converter *currency.Converter, client *ethereum.Client, tranID string) error {
 	fmt.Println("\nTransaction ID")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("tran id         :", tranID)
