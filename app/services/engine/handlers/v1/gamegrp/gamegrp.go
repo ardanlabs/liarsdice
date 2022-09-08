@@ -92,7 +92,6 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 	// Setup the pong handler to log the receiving of a pong.
 	f := func(appData string) error {
 		c.SetReadDeadline(time.Now().Add(pongWait))
-		h.Log.Infow("websocket recv pong", "path", "/v1/game/events", "traceid", v.TraceID)
 		return nil
 	}
 	c.SetPongHandler(f)
@@ -141,7 +140,6 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 			}
 
 		case <-pingSend.C:
-			h.Log.Infow("websocket send ping", "path", "/v1/game/events", "traceid", v.TraceID)
 			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
 				return nil
 			}
