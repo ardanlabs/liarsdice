@@ -1,13 +1,20 @@
-import React, { FC, useContext } from 'react'
+import React, { useContext } from 'react'
 import { GameContext } from '../contexts/gameContext'
 import { CupProps } from '../types/index.d'
 import Dice from './dice'
 
-const Cup: FC<CupProps> = (CupProps) => {
-  const { player, playerDice } = CupProps
+// Cup component
+function Cup(props: CupProps) {
+  // Extracts props.
+  const { player, playerDice } = props
+
+  // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
+
+  // Extracts properties from game.
   const { currentID, status } = game
 
+  // Renders the cup depending on player status.
   return player.outs < 3 ? (
     <div data-testid="player__cup" className="player__cup active">
       <Dice

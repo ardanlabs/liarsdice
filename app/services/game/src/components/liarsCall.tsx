@@ -1,11 +1,13 @@
+import React, { useContext } from 'react'
 import { shortenIfAddress } from '../utils/address'
-import React, { FC, useContext } from 'react'
 import { GameContext } from '../contexts/gameContext'
 
-interface LiarsCallProps {}
-
-const LiarsCall: FC<LiarsCallProps> = (LiarsCallProps) => {
+// LiarsCall component
+function LiarsCall() {
+  // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
+
+  // If there's a lastWin and lastOut it renders the last liar call.
   return game.lastWin && game.lastOut ? (
     <div
       style={{

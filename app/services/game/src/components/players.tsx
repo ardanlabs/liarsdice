@@ -6,14 +6,20 @@ import { GameContext } from '../contexts/gameContext'
 import Join from './join'
 import useEthersConnection from './hooks/useEthersConnection'
 
-interface PlayersProps {}
-const Players = (props: PlayersProps) => {
+// Players
+function Players() {
+  // Extracts account from useEthersConnection hook.
   const { account } = useEthersConnection()
+
+  // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
+
+  // Determines if user is playing.
   const isUserPlaying = (game.cups as user[]).filter((user) => {
     return user.account === account
   })
 
+  // Renders this markup
   return (
     <div
       className="players"

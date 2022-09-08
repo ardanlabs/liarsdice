@@ -57,11 +57,21 @@ interface NotificationCenterProps {
   asideContainerStyle?: MotionStyle
 }
 
-const NotificationCenter = (props: NotificationCenterProps) => {
+// NotificationCenter component
+function NotificationCenter(props: NotificationCenterProps) {
+  // Extracts constant props.
   const { trigger, asideContainerStyle } = props
+
+  // Extracts variable props.
   let { mainContainerStyle } = props
+
+  // Extracts functions and constants from the useNotificationCenter hook.
   const { notifications, clear, remove, unreadCount } = useNotificationCenter()
+
+  // Sets state to handle if the component is open.
   const [isOpen, setIsOpen] = useState(false)
+
+  // If the component has a trigger sets the style object properly.
   mainContainerStyle =
     trigger && !mainContainerStyle
       ? {
@@ -72,6 +82,7 @@ const NotificationCenter = (props: NotificationCenterProps) => {
         }
       : mainContainerStyle
 
+  // Renders this markup.
   return (
     <div style={mainContainerStyle}>
       {trigger ? (

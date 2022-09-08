@@ -5,12 +5,18 @@ import useEthersConnection from './hooks/useEthersConnection'
 import { useNavigate } from 'react-router-dom'
 import { SignOutProps } from '../types/props.d'
 
-const SignOut = (props: SignOutProps) => {
+// SignOut component
+function SignOut(props: SignOutProps) {
+  // Extracts props.
   const { disabled } = props
-  const { account, setAccount } = useEthersConnection()
-  const navigate = useNavigate()
-  // ===========================================================================
 
+  // Extracts account and setAccount from useEthersConnection hook.
+  const { account, setAccount } = useEthersConnection()
+
+  // Extracts router navigation functionality from useNavigate hook.
+  const navigate = useNavigate()
+
+  // ===========================================================================
   // handleDisconnectAccount disconnects the user and deletes the token.
   function handleDisconnectAccount() {
     setAccount(undefined)

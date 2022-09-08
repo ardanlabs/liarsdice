@@ -1,7 +1,7 @@
 import React from 'react'
 import { CounterProps } from '../types/props.d'
 
-// Counter Function
+// Counter Component
 function Counter(CounterProps: CounterProps) {
   // Extracts props
   const { timer, show } = CounterProps

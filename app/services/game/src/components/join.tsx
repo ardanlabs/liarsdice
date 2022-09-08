@@ -1,103 +1,28 @@
 import React, { useContext } from 'react'
-
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import Button from './button'
 import { toast } from 'react-toastify'
 import { capitalize } from '../utils/capitalize'
-import { axiosConfig } from '../utils/axiosConfig'
+import { apiUrl, axiosConfig } from '../utils/axiosConfig'
 import { GameContext } from '../contexts/gameContext'
-import { game, user } from '../types/index.d'
+import { user } from '../types/index.d'
 import useEthersConnection from './hooks/useEthersConnection'
+import assureGameType from '../utils/assureGameType'
+import { JoinProps } from '../types/props.d'
 
-interface JoinProps {
-  disabled: boolean
-}
+// Join component
+function Join(props: JoinProps) {
+  // Extracts props.
+  const { disabled } = props
 
-const Join = (props: JoinProps) => {
+  // Extracts game and setGame from useContext hook.
   const { game, setGame } = useContext(GameContext)
+
+  // Extracts connected account from useEthersConnection hook.
   const { account } = useEthersConnection()
-  const apiUrl = process.env.REACT_APP_GO_HOST
-    ? process.env.REACT_APP_GO_HOST
-    : 'localhost:3000/v1/game'
 
-  const setNewGame = (data: game) => {
-    let newGame = data
-    newGame = newGame.bets ? newGame : { ...newGame, bets: [] }
-    newGame = newGame.cups ? newGame : { ...newGame, cups: [] }
-    newGame = newGame.playerOrder ? newGame : { ...newGame, playerOrder: [] }
-    setGame(newGame)
-  }
-
-  // Saving for the future when we have multiple rooms
-  const createNewGame = () => {
-    axios
-      .get(`http://${apiUrl}/new`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          setNewGame(response.data)
-        }
-      })
-      .catch(function (error: AxiosError) {
-        let errorMessage = (error as any).response.data.error.replace(
-          / \[.+\]/gm,
-          '',
-        )
-        toast.error(
-          <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
-        )
-        console.group()
-        console.error('Error:', (error as any).response.data.error)
-        console.groupEnd()
-      })
-  }
-
-  const joinGame = () => {
-    toast.info('Joining game...')
-    axios
-      .get('http://localhost:3000/v1/game/join', {
-        headers: {
-          authorization: window.sessionStorage.getItem('token') as string,
-        },
-      })
-      .then((response) => {
-        toast.info('Welcome to the game')
-      })
-      .catch((error: AxiosError) => {
-        let errorMessage = (error as any).response.data.error.replace(
-          / \[.+\]/gm,
-          '',
-        )
-        toast.error(
-          <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
-        )
-        console.group()
-        console.error('Error:', (error as any).response.data.error)
-        console.groupEnd()
-      })
-  }
-
-  const handleClick = () => {
-    axios
-      .get(`http://${apiUrl}/status`, axiosConfig)
-      .then(function (response: AxiosResponse) {
-        if (response.data) {
-          if (game.status === 'nogame') {
-            createNewGame()
-          } else {
-            joinGame()
-          }
-        }
-      })
-      .catch(function (error: AxiosError) {
-        createNewGame()
-        console.error((error as any).response.data.error)
-      })
-  }
-  const getButtonText = () => {
-    return game.status === 'nogame' ? 'New Game' : 'Join Game'
-  }
-
-  const isPlayerInGame = () => {
+  // Checks if player is in game.
+  function isPlayerInGame() {
     return Boolean(
       game.cups.filter((cup: user) => {
         return cup.account === account
@@ -105,13 +30,100 @@ const Join = (props: JoinProps) => {
     )
   }
 
+  // Checks if button is disabled
+  const isButtonDisabled =
+    game.status === 'playing' || isPlayerInGame() || disabled
+
+  // ===========================================================================
+
+  function createNewGame() {
+    // Sets a new game in the gameContext.
+    const createGameFn = (response: AxiosResponse) => {
+      if (response.data) {
+        const newGame = assureGameType(response.data)
+        setGame(newGame)
+      }
+    }
+
+    // Catches the error from the axios call.
+    const createGameCatchFn = (error: AxiosError) => {
+      let errorMessage = (error as any).response.data.error.replace(
+        / \[.+\]/gm,
+        '',
+      )
+      toast(
+        <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
+      )
+      console.group()
+      console.error('Error:', (error as any).response.data.error)
+      console.groupEnd()
+    }
+
+    axios
+      .get(`http://${apiUrl}/new`, axiosConfig)
+      .then(createGameFn)
+      .catch(createGameCatchFn)
+  }
+
+  // joinGame calls to backend join endpoint.
+  function joinGame() {
+    toast.info('Joining game...')
+
+    // catchFn catches the error
+    const catchFn = (error: AxiosError) => {
+      let errorMessage = (error as any).response.data.error.replace(
+        / \[.+\]/gm,
+        '',
+      )
+      toast.error(
+        <div style={{ textAlign: 'start' }}>{capitalize(errorMessage)}</div>,
+      )
+      console.group()
+      console.error('Error:', (error as any).response.data.error)
+      console.groupEnd()
+    }
+
+    axios
+      .get(`http://${apiUrl}/join`, {
+        headers: {
+          authorization: window.sessionStorage.getItem('token') as string,
+        },
+      })
+      .then(() => {
+        toast.info('Welcome to the game')
+      })
+      .catch(catchFn)
+  }
+
+  // ===========================================================================
+  function handleClick() {
+    const handleClickAxiosFn = (response: AxiosResponse) => {
+      if (response.data && game.status === 'nogame') {
+        createNewGame()
+        return
+      }
+      joinGame()
+    }
+
+    const handleClickAxiosErrorFn = (error: AxiosError) => {
+      createNewGame()
+      console.error((error as any).response.data.error)
+    }
+
+    axios
+      .get(`http://${apiUrl}/status`, axiosConfig)
+      .then(handleClickAxiosFn)
+      .catch(handleClickAxiosErrorFn)
+  }
+
+  // Renders this markup
   return (
     <Button
-      disabled={game.status === 'playing' || isPlayerInGame()}
+      disabled={isButtonDisabled}
       classes="join__buton"
       clickHandler={() => handleClick()}
     >
-      <span>{getButtonText()}</span>
+      <span>{game.status === 'nogame' ? 'New Game' : 'Join Game'}</span>
     </Button>
   )
 }

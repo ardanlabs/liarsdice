@@ -36,7 +36,7 @@ function Login() {
 
   const accountsChangeUEFn = () => {
     // Prompts user to connect to metamask usign the provider
-    // and registers it to UseEthersConnection hook
+    // and registers it to useEthersConnection hook
     async function init() {
       const signer = provider.getSigner()
       if (signer._address) {

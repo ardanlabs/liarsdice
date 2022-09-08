@@ -1,15 +1,14 @@
-import React, { FC } from 'react'
+import React from 'react'
 import Bet from './bet'
-import { bet } from '../types/index.d'
 import { shortenIfAddress } from '../utils/address'
+import { CurrentBetProps } from '../types/props.d'
 
-interface CurrentBetProps {
-  currentBet: bet
-}
+// CurrentBet component
+function CurrentBet(props: CurrentBetProps) {
+  // Extracts props.
+  const { currentBet } = props
 
-const CurrentBet: FC<CurrentBetProps> = (CurrentBetProps) => {
-  const { currentBet } = CurrentBetProps
-
+  // Renders this markup.
   return (
     <div
       data-testid="current_bet_text_container"

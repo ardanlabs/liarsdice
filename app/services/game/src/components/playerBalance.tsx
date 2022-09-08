@@ -1,43 +1,46 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
-import axios, { AxiosResponse } from 'axios'
-import { axiosConfig } from '../utils/axiosConfig'
+import axios, { AxiosError, AxiosResponse } from 'axios'
+import { apiUrl, axiosConfig } from '../utils/axiosConfig'
 import Transaction from './transaction'
 import useEthersConnection from './hooks/useEthersConnection'
 
-const PlayerBalance = () => {
+function PlayerBalance() {
+  // Extracts account from useEthersConnection.
   const { account } = useEthersConnection()
+
+  // Sets balance state.
   const [balance, setBalance] = useState(0)
-  const apiUrl = process.env.REACT_APP_GO_HOST
-    ? process.env.REACT_APP_GO_HOST
-    : 'localhost:3000/v1/game'
 
-  const updateBalance = useCallback(
-    (balance: number = -1) => {
-      if (balance !== -2 && account) {
-        axios
-          .get(`http://${apiUrl}/balance`, axiosConfig)
-          .then((balanceResponse: AxiosResponse) => {
-            setBalance(parseFloat(balanceResponse.data.balance))
-          })
-      }
-    },
-    [account, apiUrl],
-  )
-
-  const toggle = () => {
-    const dropdown = document.querySelector('.dropdown-menu') as HTMLElement
-    if (dropdown.style.display === 'none') {
-      dropdown.style.display = 'block'
-    } else {
-      dropdown.style.display = 'none'
+  const updateBalanceUCFn = (balance: number = -1) => {
+    if (balance !== -2 && account) {
+      axios
+        .get(`http://${apiUrl}/balance`, axiosConfig)
+        .then((balanceResponse: AxiosResponse) => {
+          setBalance(parseFloat(balanceResponse.data.balance))
+        })
+        .catch((error: AxiosError) => {
+          console.error(error)
+        })
     }
   }
 
+  // updateBalance creates a callback that fetches the player's balance.
+  const updateBalance = useCallback(updateBalanceUCFn, [account])
+
+  // toggle opens and closes the modal.
+  function toggle() {
+    const dropdown = document.querySelector('.dropdown-menu') as HTMLElement
+    dropdown.style.display =
+      dropdown.style.display === 'none' ? 'block' : 'none'
+  }
+
+  // We use an effect to trigger balance updates.
   useEffect(() => {
     updateBalance()
   }, [updateBalance])
 
+  // renders the final markup if there's an account.
   return account ? (
     <div
       className="dropdown dropleft dropdown-content"

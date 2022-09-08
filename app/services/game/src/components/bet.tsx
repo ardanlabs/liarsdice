@@ -1,17 +1,13 @@
-import React, { FC } from 'react'
-import { bet } from '../types/index.d'
+import React from 'react'
+import { BetProps } from '../types/props.d'
 import Die from './icons/die'
 
-interface BetProps {
-  bet: bet
-  dieWidth?: string
-  dieHeight?: string
-  fill: string
-}
+// Bet component
+function Bet(props: BetProps) {
+  // Extracts props
+  const { bet, dieWidth, dieHeight, fill } = props
 
-const Bet: FC<BetProps> = (BetProps) => {
-  const { bet, dieWidth, dieHeight, fill } = BetProps
-
+  // If there's a bet renders this markup
   return bet ? (
     <>
       {`${bet.number} X `}

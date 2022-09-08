@@ -4,3 +4,10 @@ export interface connectResponse {
     token: string
   }
 }
+
+export interface usd2weiResponse {
+  data: {
+    usd: number
+    wei: number
+  }
+}

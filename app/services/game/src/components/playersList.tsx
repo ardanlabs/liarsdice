@@ -2,24 +2,32 @@ import { shortenIfAddress } from '../utils/address'
 import { useContext } from 'react'
 import { GameContext } from '../contexts/gameContext'
 import { user } from '../types/index.d'
+import { PlayersListProps } from '../types/props.d'
 
-interface PlayersListProps {
-  title: string
-}
-
-const PlayersList = (props: PlayersListProps) => {
+// PlayersList component
+function PlayersList(props: PlayersListProps) {
+  // Extracts props.
   const { title } = props
+
+  // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
+
+  // Extracts game properties.
   const { cups, currentID, status } = game
+
+  // Creates an empty array of players ui elements.
   const playersElements: JSX.Element[] = []
+
+  // If there's any cups it iterates them.
   if ((cups as user[]).length) {
     Array.from(cups as user[]).forEach((player) => {
+      const className =
+        currentID === player.account && status === 'playing' ? 'active' : ''
+
       playersElements.push(
         <li
           style={{ textAlign: 'start' }}
-          className={
-            currentID === player.account && status === 'playing' ? 'active' : ''
-          }
+          className={className}
           key={player.account}
         >
           {shortenIfAddress(player.account)}
@@ -27,6 +35,8 @@ const PlayersList = (props: PlayersListProps) => {
       )
     })
   }
+
+  // Renders this markup
   return (
     <div
       className="list_of__players"

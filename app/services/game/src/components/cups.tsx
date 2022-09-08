@@ -12,7 +12,7 @@ function Cups() {
   const { game } = useContext(GameContext)
 
   // Extracts properties from the game
-  const { cups, currentID, currentCup, status } = game
+  const { cups, currentID, status } = game
 
   // Initialize the cups array.
   const cupsElements: JSX.Element[] = []
@@ -38,7 +38,7 @@ function Cups() {
       )
     }
 
-    // getCup returns the player cup
+    // getCup returns the player cup ui
     function getCup() {
       return (
         <div

@@ -36,9 +36,13 @@ function App() {
     balances: [],
   } as game)
 
+  // Extracts provider from useEthersConnection hook
   const { provider } = useEthersConnection()
+
+  // Extracts router navigation functionality
   const navigate = useNavigate()
 
+  // Sets state for the ethersConnection context
   const [ethersConnection, setEthersConnection] =
     useState<ethersConnectionInterface>({} as ethersConnectionInterface)
 
@@ -74,7 +78,7 @@ function App() {
   // connection,it emits a "network" event with a null oldNetwork along with the
   // newNetwork. So, if the oldNetwork exists, it represents a changing network.
   function handleNetworkChange(newNetwork: Network): void {
-    const fn = (getConfigResponse: appConfig) => {
+    const fn = async (getConfigResponse: appConfig) => {
       if (newNetwork.chainId !== getConfigResponse.chainId) {
         window.sessionStorage.removeItem('token')
         navigate('/wrongNetwork', { state: { ...getConfigResponse } })
@@ -83,14 +87,16 @@ function App() {
       navigate('/')
     }
 
-    getAppConfig.then(async (getConfigResponse) => fn(getConfigResponse))
+    getAppConfig.then(fn)
   }
 
   // ===========================================================================
 
   // effectFn handles network changes.
   const effectFn = () => {
-    provider.on('network', (newNetwork, _) => handleNetworkChange(newNetwork))
+    provider.on('chainChanged', (newNetwork, _) =>
+      handleNetworkChange(newNetwork),
+    )
   }
   // We disable the next line so eslint doens't complain about missing dependencies.
   // eslint-disable-next-line

@@ -2,17 +2,20 @@ import React, { useContext } from 'react'
 import SidebarDetails from './sidebarDetails'
 import { GameContext } from '../contexts/gameContext'
 import NotificationCenter from './notificationCenter/notificationCenter'
+import { SideBarProps } from '../types/props.d'
 
-interface SideBarProps {
-  ante: number
-  gamePot: number
-  notificationCenterWidth: string
-}
-const SideBar = (props: SideBarProps) => {
+// SideBar component
+function SideBar(props: SideBarProps) {
+  // Extracts props.
   const { ante, gamePot, notificationCenterWidth } = props
+
+  // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
+
+  // Extracts round from game.
   const { round } = game
 
+  // Renders this markup.
   return (
     <aside
       id="side-bar"

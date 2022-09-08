@@ -13,19 +13,19 @@ import SideBar from './sidebar'
 
 // GameTable Component.
 function GameTable(GameTableProps: GameTableProps) {
-  // Deconstructs the props
+  // Deconstructs the props.
   const { timer } = GameTableProps
 
-  // Extracts the game using the useContext Hook
+  // Extracts the game using the useContext Hook.
   const { game } = useContext(GameContext)
 
-  // Extracts the account from the useEthersConnection Hook
+  // Extracts the account from the useEthersConnection Hook.
   const { account } = useEthersConnection()
 
-  // Extracts the gamePot from the useGame hook
+  // Extracts the gamePot from the useGame hook.
   const { gamePot } = useGame()
 
-  // Variable to set the notification center width
+  // Variable to set the notification center width.
   const notificationCenterWidth = '340px'
 
   const isGamePlaying = game.status === 'playing'

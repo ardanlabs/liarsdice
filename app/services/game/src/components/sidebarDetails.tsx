@@ -1,13 +1,13 @@
 import React from 'react'
+import { SidebarDetailsProps } from '../types/props.d'
 import Players from './players'
 
-interface SidebarDetailsProps {
-  round: number
-  ante?: number
-  pot?: number
-}
-const SidebarDetails = (props: SidebarDetailsProps) => {
+// SideBarDetails component
+function SidebarDetails(props: SidebarDetailsProps) {
+  // Extracts props.
   const { round, ante, pot } = props
+
+  // Renders this markup
   return (
     <div
       style={{
