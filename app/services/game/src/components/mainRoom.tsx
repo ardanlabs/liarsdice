@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect, useContext, useState, useRef } from 'react'
 import GameTable from './gameTable'
 import { GameContext } from '../contexts/gameContext'
 import useGame from './hooks/useGame'
@@ -10,26 +10,32 @@ import Footer from './footer'
 import { appConfig } from '../types/index.d'
 import useEthersConnection from './hooks/useEthersConnection'
 import { useTimer } from 'react-timer-hook'
+import SideBar from './sidebar'
 
 // MainRoom component
 function MainRoom() {
-  // Extracts navigate from useNavigate Hook
+  // Extracts navigate from useNavigate Hook.
   const navigate = useNavigate()
 
-  // Extracts state (a prop send by the router) from useLocation Hook
+  // Extracts state (a prop send by the router) from useLocation Hook.
   const { state } = useLocation()
 
-  // Extracts game from the gameContext using useContext Hook
+  // Extracts game from the gameContext using useContext Hook.
   let { game } = useContext(GameContext)
 
-  // Extracts account from ethersConnection Hook
+  // Extracts account from ethersConnection Hook.
   const { account } = useEthersConnection()
 
-  // Extracts addOut and setPlayerDice from useGame Hook
+  // Extracts addOut and setPlayerDice from useGame Hook.
   const { addOut, setPlayerDice } = useGame()
 
-  // Extracts function to connect to ws (connect) from useWebSocket Hook
-  const { connect, wsStatus, setWsStatus } = useWebSocket(restartTimer)
+  // Extracts function to connect to ws (connect) from useWebSocket Hook.
+  const { connect } = useWebSocket(restartTimer)
+
+  // Variable to set the notification center width.
+  const notificationCenterWidth = '340px'
+
+  const wsStatus = window.sessionStorage.getItem('wsStatus')
 
   // ===========================================================================
 
@@ -38,13 +44,17 @@ function MainRoom() {
   const initUEFn = () => {
     // Connects to websocket depending on status.
     function connectToWs() {
-      if (wsStatus !== 'open' && wsStatus !== 'attemptingConnection') {
-        connect()
-        setWsStatus('attemptingConnection')
-      }
+      connect().then(() => {
+        window.sessionStorage.setItem('wsStatus', 'open')
+      })
     }
-    connectToWs()
-
+    console.log(wsStatus, 'out')
+    if (wsStatus !== 'open' && wsStatus !== 'attemptingConnection') {
+      console.log(wsStatus, 'if')
+      window.sessionStorage.setItem('wsStatus', 'attemptingConnection')
+      connectToWs()
+    }
+    window.sessionStorage.setItem('wsStatus', 'close')
     // Sets the player dice with the localstore value
     setPlayerDice(
       JSON.parse(window.localStorage.getItem('playerDice') as string),
@@ -145,12 +155,26 @@ function MainRoom() {
   // Renders this final markup
   return (
     <div
-      className="container-fluid d-flex align-items-center justify-content-start px-0 flex-column"
+      className="d-flex align-items-center justify-content-start px-0 flex-column"
       style={{ height: '100%', maxHeight: '100vh' }}
     >
       <AppHeader show={true} />
-      <GameTable timer={seconds} />
-      <Footer />
+      <div className="d-flex" style={{ width: '100vw' }}>
+        <section
+          style={{
+            width: `calc(100% - ${notificationCenterWidth})`,
+            zIndex: '1',
+          }}
+          className="d-flex flex-column align-items-center justify-content-start"
+        >
+          <GameTable
+            timer={seconds}
+            notificationCenterWidth={notificationCenterWidth}
+          />
+          <Footer />
+        </section>
+        <SideBar notificationCenterWidth={notificationCenterWidth} />
+      </div>
     </div>
   )
 }

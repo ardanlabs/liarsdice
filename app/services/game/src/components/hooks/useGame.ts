@@ -137,7 +137,7 @@ function useGame() {
     }
 
     axiosInstance
-      .post(`http://${apiUrl}/v1/game/connect`, data)
+      .post(`http://${apiUrl}/connect`, data)
       .then(axiosFn)
       .catch(axiosErrorFn)
   }

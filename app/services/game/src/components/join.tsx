@@ -31,8 +31,7 @@ function Join(props: JoinProps) {
   }
 
   // Checks if button is disabled
-  const isButtonDisabled =
-    game.status === 'playing' || isPlayerInGame() || disabled
+  const isButtonDisabled = game.status === 'playing' || disabled
 
   // ===========================================================================
 
@@ -98,7 +97,10 @@ function Join(props: JoinProps) {
   // ===========================================================================
   function handleClick() {
     const handleClickAxiosFn = (response: AxiosResponse) => {
-      if (response.data && game.status === 'nogame') {
+      if (
+        response.data &&
+        (game.status === 'nogame' || game.status === 'reconciled')
+      ) {
         createNewGame()
         return
       }
@@ -123,7 +125,11 @@ function Join(props: JoinProps) {
       classes="join__buton"
       clickHandler={() => handleClick()}
     >
-      <span>{game.status === 'nogame' ? 'New Game' : 'Join Game'}</span>
+      <span>
+        {game.status === 'nogame' || game.status === 'reconciled'
+          ? 'New Game'
+          : 'Join Game'}
+      </span>
     </Button>
   )
 }

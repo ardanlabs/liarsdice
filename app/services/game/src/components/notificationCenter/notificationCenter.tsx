@@ -55,12 +55,13 @@ interface NotificationCenterProps {
   trigger?: boolean
   mainContainerStyle?: React.CSSProperties
   asideContainerStyle?: MotionStyle
+  notificationCenterWidth: string
 }
 
 // NotificationCenter component
 function NotificationCenter(props: NotificationCenterProps) {
   // Extracts constant props.
-  const { trigger, asideContainerStyle } = props
+  const { trigger, asideContainerStyle, notificationCenterWidth } = props
 
   // Extracts variable props.
   let { mainContainerStyle } = props
@@ -151,47 +152,14 @@ function NotificationCenter(props: NotificationCenterProps) {
                       transition: { duration: 0.2 },
                     }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    style={{ padding: '0.8rem' }}
+                    style={{
+                      padding: '0.3rem',
+                      textAlign: 'left',
+                      fontWeight: '600',
+                      borderBottom: '1px solid #9f9f9f',
+                    }}
                   >
-                    <motion.article
-                      key={notification.id}
-                      variants={variants.item}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '40px 1fr 40px',
-                        gap: '8px',
-                        padding: '0.8rem',
-                        background: 'rgba(0, 0, 0, 0.1)',
-                        borderRadius: '8px',
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
-                      <div style={{ width: '32px' }}>
-                        {notification.icon ||
-                          Icons.info({
-                            theme: notification.theme || 'light',
-                            type: toast.TYPE.INFO,
-                          })}
-                      </div>
-                      <div>
-                        <div>{notification.content}</div>
-                        <TimeTracker createdAt={notification.createdAt} />
-                      </div>
-                      <Button
-                        clickHandler={() => remove(notification.id)}
-                        tooltip="Archive"
-                      >
-                        <svg
-                          style={{ width: '24px', height: '24px' }}
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            fill="currentColor"
-                            d="M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M8,9H16V19H8V9M15.5,4L14.5,3H9.5L8.5,4H5V6H19V4H15.5Z"
-                          />
-                        </svg>
-                      </Button>
-                    </motion.article>
+                    {notification.content}
                   </motion.div>
                 )
               })}
@@ -205,6 +173,9 @@ function NotificationCenter(props: NotificationCenterProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            position: 'absolute',
+            bottom: '0',
+            width: `${notificationCenterWidth}`,
           }}
         >
           <Button

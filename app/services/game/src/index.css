@@ -161,14 +161,10 @@ code {
   margin: 6px;
 }
 
-.dice {
-  margin: 2rem 0;
-}
 
 /*** Players UI ***/
 /* Players Cup */
 .player__ui {
-  margin: 0 20px;
   color: var(--modals);
   display: flex;
   flex-direction: column;
@@ -176,7 +172,7 @@ code {
   justify-content: flex-start;
   align-items: center;
   padding: 10px;
-  margin: 0 20px;
+  margin: 20px;
   background-repeat: no-repeat;
   background-position: center center;
   background-image: url(./assets/cupInactive.svg);

@@ -22,7 +22,7 @@ export interface game {
     | 'playing'
     | 'roundover'
     | 'gameover'
-    | 'reconcile'
+    | 'reconciled'
     | 'nogame'
   lastOut: string
   lastWin: string

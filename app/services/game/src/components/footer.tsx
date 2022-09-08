@@ -16,10 +16,8 @@ function Footer() {
       id="footer"
       style={{
         backgroundColor: 'var(--modals)',
-        position: 'fixed',
-        bottom: '0',
         height: '70px',
-        width: '100%',
+        width: `100%`,
         display: 'flex',
         justifyContent: 'start',
         alignItems: 'center',

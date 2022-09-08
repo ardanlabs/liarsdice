@@ -77,7 +77,6 @@ function Cups() {
         width: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '414px',
         flexWrap: 'wrap',
       }}
       id="cupsContainer"

@@ -14,19 +14,13 @@ import SideBar from './sidebar'
 // GameTable Component.
 function GameTable(GameTableProps: GameTableProps) {
   // Deconstructs the props.
-  const { timer } = GameTableProps
+  const { timer, notificationCenterWidth } = GameTableProps
 
   // Extracts the game using the useContext Hook.
   const { game } = useContext(GameContext)
 
   // Extracts the account from the useEthersConnection Hook.
   const { account } = useEthersConnection()
-
-  // Extracts the gamePot from the useGame hook.
-  const { gamePot } = useGame()
-
-  // Variable to set the notification center width.
-  const notificationCenterWidth = '340px'
 
   const isGamePlaying = game.status === 'playing'
 
@@ -50,14 +44,15 @@ function GameTable(GameTableProps: GameTableProps) {
         width: '100%',
         display: 'flex',
         justifyContent: 'start',
-        alignItems: 'start',
+        alignItems: 'center',
+        flexDirection: 'column',
         maxWidth: '100vw',
-        marginTop: '15px',
-        height: 'calc(100vh - 181px)',
+        paddingTop: '20px',
+        height: 'calc(100vh - 165px)',
       }}
       id="gameTable"
     >
-      <div
+      {/* <div
         style={{
           display: 'flex',
           flexGrow: '1',
@@ -71,28 +66,23 @@ function GameTable(GameTableProps: GameTableProps) {
             flexDirection: 'column',
             width: `calc(100% - ${notificationCenterWidth})`,
           }}
-        >
-          <Counter show={isPlayerTurn && isGamePlaying} timer={timer} />
-          <Cups />
-          {isGamePlaying ? (
-            <>
-              <Dice
-                isPlayerTurn={isPlayerTurn && isGamePlaying}
-                diceNumber={playerDice}
-              />
-              <CurrentBet currentBet={currentBet} />
-              <LiarsCall />
-            </>
-          ) : (
-            ''
-          )}
-        </div>
-        <SideBar
-          ante={game.anteUSD}
-          gamePot={gamePot}
-          notificationCenterWidth={notificationCenterWidth}
-        />
-      </div>
+        > */}
+      <Counter show={isPlayerTurn && isGamePlaying} timer={timer} />
+      <Cups />
+      {isGamePlaying ? (
+        <>
+          <Dice
+            isPlayerTurn={isPlayerTurn && isGamePlaying}
+            diceNumber={playerDice}
+          />
+          <CurrentBet currentBet={currentBet} />
+          <LiarsCall />
+        </>
+      ) : (
+        ''
+      )}
+      {/* </div> */}
+      {/* </div> */}
     </div>
   )
 }

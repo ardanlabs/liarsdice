@@ -14,11 +14,6 @@ function Players() {
   // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
 
-  // Determines if user is playing.
-  const isUserPlaying = (game.cups as user[]).filter((user) => {
-    return user.account === account
-  })
-
   // Renders this markup
   return (
     <div
@@ -49,7 +44,7 @@ function Players() {
         <PlayersList title="Active players" />
         {/* <PlayersList players={waitingPlayers} title="Waiting players" /> */}
       </div>
-      <Join disabled={Boolean(isUserPlaying.length)} />
+      <Join />
     </div>
   )
 }

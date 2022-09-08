@@ -2,6 +2,7 @@ import { bet, dice } from './index.d'
 
 export interface GameTableProps {
   timer: number
+  notificationCenterWidth: string
 }
 
 export interface AppHeaderProps {
@@ -55,7 +56,7 @@ export interface CurrentBetProps {
 }
 
 export interface JoinProps {
-  disabled: boolean
+  disabled?: boolean
 }
 
 export interface PlayersListProps {
@@ -63,13 +64,5 @@ export interface PlayersListProps {
 }
 
 export interface SideBarProps {
-  ante: number
-  gamePot: number
   notificationCenterWidth: string
-}
-
-export interface SidebarDetailsProps {
-  round: number
-  ante?: number
-  pot?: number
 }

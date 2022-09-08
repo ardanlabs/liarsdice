@@ -7,13 +7,7 @@ import { SideBarProps } from '../types/props.d'
 // SideBar component
 function SideBar(props: SideBarProps) {
   // Extracts props.
-  const { ante, gamePot, notificationCenterWidth } = props
-
-  // Extracts game from useContext hook.
-  const { game } = useContext(GameContext)
-
-  // Extracts round from game.
-  const { round } = game
+  const { notificationCenterWidth } = props
 
   // Renders this markup.
   return (
@@ -24,21 +18,20 @@ function SideBar(props: SideBarProps) {
         alignItems: 'flex-start',
         flexDirection: 'column',
         border: '1px inset var(--secondary-color)',
-        height: 'calc(100% - 165px)',
         right: '0px',
-        position: 'fixed',
+        flexGrow: '1',
         top: '95px',
         width: `${notificationCenterWidth}`,
-        zIndex: '3',
       }}
     >
-      <SidebarDetails ante={ante} round={round} pot={gamePot} />
+      <SidebarDetails />
       <NotificationCenter
+        notificationCenterWidth={notificationCenterWidth}
         trigger={false}
         asideContainerStyle={{
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
+          height: 'calc(100% - 43px)',
         }}
         mainContainerStyle={{
           height: '100%',

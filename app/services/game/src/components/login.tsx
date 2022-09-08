@@ -65,6 +65,7 @@ function Login() {
     // This event checks when the provider becomes able to submit
     // RPC requests to a chain.
     window.ethereum.on('connect', connectFn)
+    init().then(() => setLoading(false))
   }
 
   // The Effect Hook lets you perform side effects in function components
