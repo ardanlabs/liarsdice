@@ -79,16 +79,54 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return err
 	}
-	defer c.Close()
+
+	h.Log.Infow("websocket open", "path", "/v1/game/events", "traceid", v.TraceID)
+
+	// Set the timeouts for the ping to identify if a web socket
+	// connection is broken.
+	pongWait := 60 * time.Second
+	pingPeriod := (pongWait * 9) / 10
+
+	c.SetReadDeadline(time.Now().Add(pongWait))
+
+	// Setup the pong handler to log the receiving of a pong.
+	f := func(appData string) error {
+		c.SetReadDeadline(time.Now().Add(pongWait))
+		h.Log.Infow("websocket recv pong", "path", "/v1/game/events", "traceid", v.TraceID)
+		return nil
+	}
+	c.SetPongHandler(f)
 
 	// This provides a channel for receiving events from the blockchain.
 	ch := h.Evts.Acquire(v.TraceID)
 	defer h.Evts.Release(v.TraceID)
 
 	// Starting a ticker to send a ping message over the websocket.
-	ticker := time.NewTicker(time.Second)
+	pingSend := time.NewTicker(pingPeriod)
 
-	// Block waiting for events from the blockchain or ticker.
+	// Set up the ability to receive chat messages.
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go func() {
+		defer wg.Done()
+
+		for {
+			message, p, err := c.ReadMessage()
+			if err != nil {
+				return
+			}
+			h.Log.Infow("*********> socket read", "path", "/v1/game/events", "message", message, "p", string(p))
+		}
+	}()
+
+	defer func() {
+		wg.Wait()
+		h.Log.Infow("websocket closed", "path", "/v1/game/events", "traceid", v.TraceID)
+	}()
+	defer c.Close()
+
+	// Send game engine events back to the connected client.
 	for {
 		select {
 		case msg, wd := <-ch:
@@ -102,7 +140,8 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 				return err
 			}
 
-		case <-ticker.C:
+		case <-pingSend.C:
+			h.Log.Infow("websocket send ping", "path", "/v1/game/events", "traceid", v.TraceID)
 			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
 				return nil
 			}
