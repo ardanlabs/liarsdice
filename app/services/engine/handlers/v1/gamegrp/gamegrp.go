@@ -84,7 +84,7 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	// Set the timeouts for the ping to identify if a web socket
 	// connection is broken.
-	pongWait := 60 * time.Second
+	pongWait := 15 * time.Second
 	pingPeriod := (pongWait * 9) / 10
 
 	c.SetReadDeadline(time.Now().Add(pongWait))
