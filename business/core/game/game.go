@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/foundation/smart/currency"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/uuid"

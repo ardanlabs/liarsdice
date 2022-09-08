@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/foundation/smart/contract"
+	"github.com/ardanlabs/liarsdice/foundation/blockchain/ethereum"
 	"github.com/gorilla/websocket"
 )
 
@@ -44,7 +44,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 		return Token{}, fmt.Errorf("find key file: %w", err)
 	}
 
-	privateKey, err := contract.PrivateKeyByKeyFile(keyFile, passPhrase)
+	privateKey, err := ethereum.PrivateKeyByKeyFile(keyFile, passPhrase)
 	if err != nil {
 		return Token{}, fmt.Errorf("get private key: %w", err)
 	}
@@ -55,7 +55,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 		DateTime: time.Now().Format("20060102150405"),
 	}
 
-	sig, err := contract.Sign(dt, privateKey)
+	sig, err := ethereum.Sign(dt, privateKey)
 	if err != nil {
 		return Token{}, fmt.Errorf("sign: %w", err)
 	}
