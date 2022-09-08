@@ -20,18 +20,18 @@ import (
 type Bank struct {
 	logger     *zap.SugaredLogger
 	contractID string
-	client     *ethereum.Client
+	ethereum   *ethereum.Ethereum
 	contract   *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
 func New(ctx context.Context, logger *zap.SugaredLogger, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
-	client, err := ethereum.NewClient(ctx, network, keyPath, passPhrase)
+	ethereum, err := ethereum.New(ctx, network, keyPath, passPhrase)
 	if err != nil {
 		return nil, fmt.Errorf("network connect: %w", err)
 	}
 
-	contract, err := bank.NewBank(common.HexToAddress(contractID), client.EthClient())
+	contract, err := bank.NewBank(common.HexToAddress(contractID), ethereum.RawClient())
 	if err != nil {
 		return nil, fmt.Errorf("new contract: %w", err)
 	}
@@ -39,7 +39,7 @@ func New(ctx context.Context, logger *zap.SugaredLogger, network string, keyPath
 	b := Bank{
 		logger:     logger,
 		contractID: contractID,
-		client:     client,
+		ethereum:   ethereum,
 		contract:   contract,
 	}
 
@@ -54,14 +54,14 @@ func (b *Bank) ContractID() string {
 }
 
 // Client returns the underlying contract client.
-func (b *Bank) Client() *ethereum.Client {
-	return b.client
+func (b *Bank) Client() *ethereum.Ethereum {
+	return b.ethereum
 }
 
 // AccountBalance will return the balance for the specified account. Only the
 // owner of the smart contract can make this call.
 func (b *Bank) AccountBalance(ctx context.Context, accountID string) (GWei *big.Float, err error) {
-	tranOpts, err := b.client.NewCallOpts(ctx)
+	tranOpts, err := b.ethereum.NewCallOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("new call opts: %w", err)
 	}
@@ -78,7 +78,7 @@ func (b *Bank) AccountBalance(ctx context.Context, accountID string) (GWei *big.
 
 // Balance will return the balance for the connected account.
 func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
-	tranOpts, err := b.client.NewCallOpts(ctx)
+	tranOpts, err := b.ethereum.NewCallOpts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("new call opts: %w", err)
 	}
@@ -88,7 +88,7 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 		return nil, fmt.Errorf("account balance: %w", err)
 	}
 
-	b.log(ctx, "balance", "accountid", b.client.Address().String(), "wei", wei)
+	b.log(ctx, "balance", "accountid", b.ethereum.Address().String(), "wei", wei)
 
 	return currency.Wei2GWei(wei), nil
 }
@@ -96,7 +96,7 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
 func (b *Bank) Reconcile(ctx context.Context, winningAccountID string, losingAccountIDs []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
+	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
@@ -117,7 +117,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccountID string, losingAcc
 
 	b.log(ctx, "reconcile started", "anteWei", anteWei, "gameFeeWei", gameFeeWei)
 
-	receipt, err := b.client.WaitMined(ctx, tx)
+	receipt, err := b.ethereum.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
@@ -129,7 +129,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccountID string, losingAcc
 
 // Deposit will add the given amount to the account's contract balance.
 func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, amountGWei)
+	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, amountGWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
@@ -139,9 +139,9 @@ func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Trans
 		return nil, nil, fmt.Errorf("deposit: %w", err)
 	}
 
-	b.log(ctx, "deposit started", "accountid", b.client.Address().String(), "amountGWei", amountGWei)
+	b.log(ctx, "deposit started", "accountid", b.ethereum.Address().String(), "amountGWei", amountGWei)
 
-	receipt, err := b.client.WaitMined(ctx, tx)
+	receipt, err := b.ethereum.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
@@ -153,7 +153,7 @@ func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Trans
 
 // Withdraw will move all the account's balance in the contract, to the account's wallet.
 func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.client.NewTransactOpts(ctx, 0, big.NewFloat(0))
+	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
@@ -163,9 +163,9 @@ func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt
 		return nil, nil, fmt.Errorf("withdraw: %w", err)
 	}
 
-	b.log(ctx, "withdraw started", "accountid", b.client.Address().String())
+	b.log(ctx, "withdraw started", "accountid", b.ethereum.Address().String())
 
-	receipt, err := b.client.WaitMined(ctx, tx)
+	receipt, err := b.ethereum.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
@@ -178,7 +178,7 @@ func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt
 // OwnerBalance returns the current balance for the account used to
 // create this bank.
 func (b *Bank) OwnerBalance(ctx context.Context) (wei *big.Int, err error) {
-	balance, err := b.client.Balance(ctx)
+	balance, err := b.ethereum.Balance(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("current balance: %w", err)
 	}

@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	converter := currency.NewDefaultConverter()
 	deposit := converter.USD2Wei(big.NewFloat(1000))
 
-	client, err := ethereum.NewClient(ctx, ethereum.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
+	ethereum, err := ethereum.New(ctx, ethereum.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 	fmt.Println("Adding money to player 1 account")
 
 	// Add money to this account.
-	if err := client.SendTransaction(ctx, Player1Address, deposit, 21000); err != nil {
+	if err := ethereum.SendTransaction(ctx, Player1Address, deposit, 21000); err != nil {
 		fmt.Println("Player1Address:", err)
 		os.Exit(1)
 	}
@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	fmt.Println("Adding money to player 2 account")
 
 	// Add money to this account.
-	if err := client.SendTransaction(ctx, Player2Address, deposit, 21000); err != nil {
+	if err := ethereum.SendTransaction(ctx, Player2Address, deposit, 21000); err != nil {
 		fmt.Println("Player2Address:", err)
 		os.Exit(1)
 	}
@@ -330,22 +330,22 @@ func deployContract() (string, error) {
 }
 
 func smartContract(ctx context.Context) (string, error) {
-	client, err := ethereum.NewClient(ctx, ethereum.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
+	ethereum, err := ethereum.New(ctx, ethereum.NetworkHTTPLocalhost, OwnerKeyPath, OwnerPassPhrase)
 	if err != nil {
 		return "", err
 	}
 
-	tranOpts, err := client.NewTransactOpts(ctx, 3_000_000, big.NewFloat(0))
+	tranOpts, err := ethereum.NewTransactOpts(ctx, 3_000_000, big.NewFloat(0))
 	if err != nil {
 		return "", err
 	}
 
-	address, tx, _, err := scbank.DeployBank(tranOpts, client.EthClient())
+	address, tx, _, err := scbank.DeployBank(tranOpts, ethereum.RawClient())
 	if err != nil {
 		return "", err
 	}
 
-	if _, err := client.WaitMined(ctx, tx); err != nil {
+	if _, err := ethereum.WaitMined(ctx, tx); err != nil {
 		return "", err
 	}
 

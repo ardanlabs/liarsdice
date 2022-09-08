@@ -72,13 +72,13 @@ func Balance(ctx context.Context, converter *currency.Converter, bank *bank.Bank
 // =============================================================================
 
 // Deploy will deploy the smart contract to the configured network.
-func Deploy(ctx context.Context, converter *currency.Converter, client *ethereum.Client) (err error) {
-	startingBalance, err := client.Balance(ctx)
+func Deploy(ctx context.Context, converter *currency.Converter, ethereum *ethereum.Ethereum) (err error) {
+	startingBalance, err := ethereum.Balance(ctx)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		endingBalance, dErr := client.Balance(ctx)
+		endingBalance, dErr := ethereum.Balance(ctx)
 		if dErr != nil {
 			err = dErr
 			return
@@ -90,14 +90,14 @@ func Deploy(ctx context.Context, converter *currency.Converter, client *ethereum
 
 	const gasLimit = 1600000
 	const valueGwei = 0.0
-	tranOpts, err := client.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
+	tranOpts, err := ethereum.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
 	if err != nil {
 		return err
 	}
 
 	// =========================================================================
 
-	address, tx, _, err := scbank.DeployBank(tranOpts, client.EthClient())
+	address, tx, _, err := scbank.DeployBank(tranOpts, ethereum.RawClient())
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func Deploy(ctx context.Context, converter *currency.Converter, client *ethereum
 
 	// =========================================================================
 
-	clientWait, err := client.Copy(ctx)
+	clientWait, err := ethereum.Copy(ctx)
 	if err != nil {
 		return err
 	}
@@ -129,12 +129,12 @@ func Deploy(ctx context.Context, converter *currency.Converter, client *ethereum
 }
 
 // Wallet returns the current wallet balance for the specified address.
-func Wallet(ctx context.Context, converter *currency.Converter, client *ethereum.Client, address string) error {
+func Wallet(ctx context.Context, converter *currency.Converter, ethereum *ethereum.Ethereum, address string) error {
 	fmt.Println("\nWallet Balance")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("account         :", address)
 
-	wei, err := client.BalanceAt(ctx, address)
+	wei, err := ethereum.BalanceAt(ctx, address)
 	if err != nil {
 		return err
 	}
@@ -148,13 +148,13 @@ func Wallet(ctx context.Context, converter *currency.Converter, client *ethereum
 
 // Transaction returns the transaction and receipt information for the specified
 // transaction. The txHex is expected to be in a 0x format.
-func Transaction(ctx context.Context, converter *currency.Converter, client *ethereum.Client, tranID string) error {
+func Transaction(ctx context.Context, converter *currency.Converter, ethereum *ethereum.Ethereum, tranID string) error {
 	fmt.Println("\nTransaction ID")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("tran id         :", tranID)
 
 	txHash := common.HexToHash(tranID)
-	tx, pending, err := client.TransactionByHash(ctx, txHash)
+	tx, pending, err := ethereum.TransactionByHash(ctx, txHash)
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func Transaction(ctx context.Context, converter *currency.Converter, client *eth
 
 	fmt.Print(converter.FmtTransaction(tx))
 
-	receipt, err := client.TransactionReceipt(ctx, txHash)
+	receipt, err := ethereum.TransactionReceipt(ctx, txHash)
 	if err != nil {
 		return err
 	}
