@@ -4,7 +4,7 @@
 [![go.mod Go version](https://img.shields.io/github/go-mod/go-version/ardanlabs/liarsdice)](https://github.com/ardanlabs/liarsdice)
 
 Copyright 2021, 2022, Ardan Labs  
-info@ardanlabs.com
+hello@ardanlabs.com
 
 ## Description
 
