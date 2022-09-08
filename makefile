@@ -19,7 +19,7 @@
 # ./admin -a 1000.00 -f 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -c 0x531130464929826c57BBBF989e44085a02eeB120
 #
 # Web3 API
-# https://docs.ethers.io/v5/
+# https://web3js.readthedocs.io/en/v1.7.4/
 
 # ==============================================================================
 # Install dependencies
