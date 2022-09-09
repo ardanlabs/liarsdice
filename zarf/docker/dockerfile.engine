@@ -4,10 +4,10 @@ ENV CGO_ENABLED 0
 ARG BUILD_REF
 
 # Copy the source code into the container.
-COPY . /engine
+COPY . /code
 
 # Build the service binary.
-WORKDIR /service/app/services/engine
+WORKDIR /code/app/services/engine
 RUN go build -ldflags "-X main.build=${BUILD_REF}"
 
 
@@ -17,9 +17,9 @@ ARG BUILD_DATE
 ARG BUILD_REF
 RUN addgroup -g 1000 -S engine && \
     adduser -u 1000 -h /engine -G engine -S engine
-COPY --from=build_engine --chown=engine:engine /service/zarf/keys/. /service/zarf/keys/.
-COPY --from=build_engine --chown=engine:engine /service/app/services/engine/engine /engine/engine
-WORKDIR /engine
+COPY --from=build_engine --chown=engine:engine /code/zarf/keys/. /code/zarf/keys/.
+COPY --from=build_engine --chown=engine:engine /code/app/services/engine/engine /code/engine
+WORKDIR /code
 USER engine
 CMD ["./engine"]
 

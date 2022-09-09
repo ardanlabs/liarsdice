@@ -134,3 +134,27 @@ deps-upgrade:
 
 list:
 	go list -mod=mod all
+
+# ==============================================================================
+# Building containers
+
+# $(shell git rev-parse --short HEAD)
+VERSION := 1.0
+
+all: game-engine game-ui
+
+game-engine:
+	docker build \
+		-f zarf/docker/dockerfile.engine \
+		-t liarsdice-game-engine:$(VERSION) \
+		--build-arg BUILD_REF=$(VERSION) \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		.
+
+game-ui:
+	docker build \
+		-f zarf/docker/dockerfile.engine \
+		-t liarsdice-game-ui:$(VERSION) \
+		--build-arg BUILD_REF=$(VERSION) \
+		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		.
