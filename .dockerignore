@@ -6,7 +6,7 @@ zarf/ethereum/geth/
 zarf/ethereum/history
 .dockerignore
 .gitignore
-admin
+/admin
 CONTRIBUTORS
 LICENSE
 makefile
