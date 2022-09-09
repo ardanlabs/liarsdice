@@ -18,7 +18,7 @@ function MainRoom() {
   const navigate = useNavigate()
 
   // Extracts state (a prop send by the router) from useLocation Hook.
-  const { state, key } = useLocation()
+  const { state } = useLocation()
 
   // Extracts game from the gameContext using useContext Hook.
   let { game } = useContext(GameContext)

@@ -8,12 +8,6 @@ import useEthersConnection from './hooks/useEthersConnection'
 
 // Players
 function Players() {
-  // Extracts account from useEthersConnection hook.
-  const { account } = useEthersConnection()
-
-  // Extracts game from useContext hook.
-  const { game } = useContext(GameContext)
-
   // Renders this markup
   return (
     <div

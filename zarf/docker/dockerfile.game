@@ -1,0 +1,21 @@
+FROM node:18.8.0 as development
+ENV NODE_ENV development
+
+ARG BUILD_REF
+ARG BUILD_DATE
+
+COPY . /
+
+WORKDIR /app/services/game
+
+RUN npm install
+
+EXPOSE 3001
+CMD PORT=3001 npm start
+
+LABEL org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.title="engine" \
+      org.opencontainers.image.authors="Bruno Belucci <bruno.belucci@ardanlabs.com>" \
+      org.opencontainers.image.source="https://github.com/ardanlabs/liarsdice/app/services/game" \
+      org.opencontainers.image.revision="${BUILD_REF}" \
+      org.opencontainers.image.vendor="Ardan Labs"

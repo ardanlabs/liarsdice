@@ -1,6 +1,5 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import SidebarDetails from './sidebarDetails'
-import { GameContext } from '../contexts/gameContext'
 import NotificationCenter from './notificationCenter/notificationCenter'
 import { SideBarProps } from '../types/props.d'
 

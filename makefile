@@ -153,7 +153,7 @@ game-engine:
 
 game-ui:
 	docker build \
-		-f zarf/docker/dockerfile.engine \
+		-f zarf/docker/dockerfile.game \
 		-t liarsdice-game-ui:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \

@@ -49,9 +49,6 @@ function useGame() {
       window.localStorage.setItem('playerDice', JSON.stringify(playerDice))
   }, [playerDice])
 
-  // Extracts navigation functionality from useNavigate hook.
-  const navigate = useNavigate()
-
   // ===========================================================================
 
   // SetNewGame updates the instance of the game in the local state.

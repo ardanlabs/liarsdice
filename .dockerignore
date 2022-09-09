@@ -12,3 +12,6 @@ LICENSE
 makefile
 README.md
 source.env
+**/node_modules
+**/npm-debug.log
+build
