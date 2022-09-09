@@ -1,0 +1,13 @@
+.circleci/
+.git/
+.reading/
+.dockerignore
+.gitignore
+zarf/docker/
+zarf/ethereum/
+CONTRIBUTORS
+LICENSE
+makefile
+README.md
+source.env
+admin
