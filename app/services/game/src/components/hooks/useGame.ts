@@ -119,9 +119,8 @@ function useGame() {
         'token',
         `bearer ${connectResponse.data.token}`,
       )
-
       const getAppConfigFn = (getConfigResponse: appConfig) => {
-        navigate('/mainRoom', { state: { ...getConfigResponse } })
+        window.location.reload()
       }
       getAppConfig.then(getAppConfigFn)
     }

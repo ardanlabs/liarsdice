@@ -3,11 +3,15 @@ import { useContext } from 'react'
 import { GameContext } from '../contexts/gameContext'
 import { user } from '../types/index.d'
 import { PlayersListProps } from '../types/props.d'
+import useEthersConnection from './hooks/useEthersConnection'
 
 // PlayersList component
 function PlayersList(props: PlayersListProps) {
   // Extracts props.
   const { title } = props
+
+  // Extracts account from ethersConnection hook.
+  const { account } = useEthersConnection()
 
   // Extracts game from useContext hook.
   const { game } = useContext(GameContext)
@@ -30,7 +34,9 @@ function PlayersList(props: PlayersListProps) {
           className={className}
           key={player.account}
         >
-          {shortenIfAddress(player.account)}
+          {`${
+            account === player.account ? 'Me' : shortenIfAddress(player.account)
+          }`}
         </li>,
       )
     })

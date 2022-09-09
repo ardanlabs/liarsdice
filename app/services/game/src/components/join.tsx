@@ -31,7 +31,10 @@ function Join(props: JoinProps) {
   }
 
   // Checks if button is disabled
-  const isButtonDisabled = game.status === 'playing' || disabled
+  const isButtonDisabled =
+    game.status === 'playing' ||
+    (game.status === 'newgame' && isPlayerInGame()) ||
+    disabled
 
   // ===========================================================================
 
@@ -124,6 +127,11 @@ function Join(props: JoinProps) {
       disabled={isButtonDisabled}
       classes="join__buton"
       clickHandler={() => handleClick()}
+      style={{
+        backgroundColor: `${
+          isButtonDisabled ? 'grey' : 'var(--primary-color)'
+        }`,
+      }}
     >
       <span>
         {game.status === 'nogame' || game.status === 'reconciled'

@@ -143,7 +143,6 @@ code {
 
 .join__buton {
   border-radius: 0;
-  background-color: var(--primary-color);
   width: 100%;
   color: var(--ternary-color);
   font-size: 32px;

@@ -1,12 +1,10 @@
 import { useState } from 'react'
 
-import { Icons, toast } from 'react-toastify'
 import { motion, AnimatePresence, MotionStyle } from 'framer-motion'
 
 import { useNotificationCenter } from 'react-toastify/addons/use-notification-center'
 import Trigger from './trigger'
 import Button from '../button'
-import TimeTracker from './timeTracker'
 
 // contains framer-motion variants to animate different parts of the UI
 // when the notification center is visible or not
@@ -67,7 +65,7 @@ function NotificationCenter(props: NotificationCenterProps) {
   let { mainContainerStyle } = props
 
   // Extracts functions and constants from the useNotificationCenter hook.
-  const { notifications, clear, remove, unreadCount } = useNotificationCenter()
+  const { notifications, clear, unreadCount } = useNotificationCenter()
 
   // Sets state to handle if the component is open.
   const [isOpen, setIsOpen] = useState(false)
