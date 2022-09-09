@@ -33,8 +33,8 @@ import (
 
 	-- Browser UI
 	Make the network change work.
+	Add app to container.
 	Add subtle animations to some game elements (For Ex. Cups).
-	Look into the double websocket connection and then handle the reconnection.
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.
