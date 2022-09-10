@@ -110,6 +110,8 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 	go func() {
 		defer wg.Done()
 
+		// This supports the ability to add a chat system and receive a client
+		// message.
 		for {
 			message, p, err := c.ReadMessage()
 			if err != nil {

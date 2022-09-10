@@ -33,7 +33,6 @@ import (
 
 	-- Browser UI
 	Make the network change work.
-	Add app to container.
 	Add subtle animations to some game elements (For Ex. Cups).
 */
 
