@@ -16,7 +16,7 @@ FROM alpine:3.16
 ARG BUILD_DATE
 ARG BUILD_REF
 RUN addgroup -g 1000 -S engine && \
-    adduser -u 1000 -h /engine -G engine -S engine
+    adduser -u 1000 -h /code -G engine -S engine
 COPY --from=build_engine --chown=engine:engine /code/zarf/keys/. /code/zarf/keys/.
 COPY --from=build_engine --chown=engine:engine /code/app/services/engine/engine /code/engine
 WORKDIR /code

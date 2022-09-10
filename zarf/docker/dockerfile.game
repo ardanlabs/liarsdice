@@ -1,17 +1,22 @@
-FROM node:18.8.0 as development
-ENV NODE_ENV development
+FROM node:18-alpine3.16
 
+ENV NODE_ENV development
 ARG BUILD_REF
 ARG BUILD_DATE
 
-COPY . /
+# Copy the source code into the container.
+COPY app/services/game/. /code
+WORKDIR /code
 
-WORKDIR /app/services/game
+# Verify the files are there.
+RUN echo $(ls)
 
-RUN npm install
+# Run npm install to install the node modules.
+RUN npm install --loglevel verbose
 
+# Start the node application.
 EXPOSE 3001
-CMD PORT=3001 npm start
+CMD [PORT=3001 npm start]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="engine" \

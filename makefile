@@ -152,9 +152,22 @@ game-engine:
 		.
 
 game-ui:
-	docker build \
+	docker -l debug build \
 		-f zarf/docker/dockerfile.game \
 		-t liarsdice-game-ui:$(VERSION) \
+		--progress=plain \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
+
+# ==============================================================================
+# Docker Compose
+
+docker-up:
+	docker compose -f zarf/docker/compose.yml up
+
+docker-down:
+	docker compose -f zarf/docker/compose.yml down
+
+docker-logs:
+	docker compose -f zarf/docker/compose.yml logs

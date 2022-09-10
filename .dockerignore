@@ -1,9 +1,11 @@
 .github/
 .git/
-.reading/
+app/services/game/node_modules/
+**/npm-debug.log
 zarf/docker/
 zarf/ethereum/geth/
 zarf/ethereum/history
+zarf/ethereum/geth.ipc
 .dockerignore
 .gitignore
 /admin
@@ -12,6 +14,3 @@ LICENSE
 makefile
 README.md
 source.env
-**/node_modules
-**/npm-debug.log
-build
