@@ -12,6 +12,8 @@ This class teaches you how to build an Ethereum Smart Contract. This project imp
 
 ![image info](https://github.com/ardanlabs/liarsdice/blob/main/screen.png)
 
+Read the [Wiki](https://github.com/ardanlabs/liarsdice/wiki) for more information about the project and running the code.
+
 ## Licensing
 
 ```
