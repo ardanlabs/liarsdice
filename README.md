@@ -10,6 +10,8 @@ hello@ardanlabs.com
 
 This class teaches you how to build an Ethereum Smart Contract. This project implements a game of Liar's Dice where a crypto wallet is used for authentication and a smart contract is used to maintain the bank. Once a player is authenticated, they bet money for each game played and that money comes from their crypto wallet. The class is a mix of lecture and coding. During the class you will learn the different aspects of smart contract technology and pair program with the instructor as you build this code base from scratch.
 
+![image info](https://github.com/ardanlabs/liarsdice/blob/main/screen.png)
+
 ## Licensing
 
 ```
