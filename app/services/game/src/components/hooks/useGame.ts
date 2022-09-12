@@ -16,7 +16,6 @@ import { apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
 import useEthersConnection from './useEthersConnection'
 import { connectResponse } from '../../types/responses.d'
-import { useNavigate } from 'react-router-dom'
 import { getAppConfig } from '../..'
 import { toast } from 'react-toastify'
 

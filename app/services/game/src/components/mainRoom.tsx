@@ -131,6 +131,7 @@ function MainRoom() {
   // If the timer updates we store it in the sessionStorage persist it when
   // refreshing the page.
   useEffect(() => {
+    console.log(seconds)
     window.sessionStorage.setItem('round_timer', `${seconds}`)
   }, [seconds])
 

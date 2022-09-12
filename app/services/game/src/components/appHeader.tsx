@@ -26,7 +26,7 @@ function AppHeader(AppHeaderProps: AppHeaderProps) {
       data-testid="app-header"
       className={isPlayerTurn ? 'active app-header' : 'app-header'}
     >
-      <h1>Ardan's Liar's Dice</h1>
+      <h1>dss</h1>
       <PlayerBalance />
     </header>
   ) : null

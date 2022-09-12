@@ -1,10 +1,7 @@
-import React, { useContext } from 'react'
-import { user } from '../types/index.d'
+import React from 'react'
 import PlayersList from './playersList'
 
-import { GameContext } from '../contexts/gameContext'
 import Join from './join'
-import useEthersConnection from './hooks/useEthersConnection'
 
 // Players
 function Players() {
