@@ -2,22 +2,25 @@ version: "3"
 
 # You are responsible for starting a local instance of geth.
 
+networks:
+    default:
+
 services:
 
   engine:
     container_name: engine
-    image: liarsdice-game-engin
+    image: liarsdice-game-engine:1.0
     ports:
-      - 300:3000
+      - 3000:3000
     environment:
       GAME_CONTRACT_ID: "0x531130464929826c57BBBF989e44085a02eeB120"
-      BANK_NETWORK: "http://localhost:8545"
+      BANK_NETWORK: "http://host.docker.internal:8545"
 
   ui:
     container_name: ui
-    image: liarsdice-game-ui
+    image: liarsdice-game-ui:1.0
     ports:
       - 3001:3001
     environment:
       GAME_CONTRACT_ID: "0x531130464929826c57BBBF989e44085a02eeB120"
-      BANK_NETWORK: "http://localhost:8545"
+      BANK_NETWORK: "http://host.docker.internal:8545"
