@@ -55,7 +55,7 @@ react-install:
 	npm install --prefix app/services/game/
 
 game-gui: react-install
-	PORT=3001 npm start --prefix app/services/game/
+	npm start --prefix app/services/game/
 
 # ==============================================================================
 # These commands build and deploy basic smart contract.
