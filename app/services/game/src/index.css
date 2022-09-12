@@ -176,6 +176,7 @@ code {
   background-position: center center;
   background-image: url(./assets/cupInactive.svg);
   aspect-ratio: 1;
+  transition: background-image 0.3s ease-out;
 }
 
 .player__ui.active {

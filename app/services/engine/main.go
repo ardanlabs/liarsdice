@@ -33,7 +33,6 @@ import (
 
 	-- Browser UI
 	Make the network change work.
-	Add subtle animations to some game elements (For Ex. Cups).
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.

@@ -88,23 +88,22 @@ function useWebSocket(restart: () => void) {
     // If the socket closes we show the user an error and set the game to
     // it's initial state.
     ws.onclose = (evt: CloseEvent) => {
-      toast(`Connection is closed. Reconnect will be attempted in 1 second.`)
-      setTimeout(function () {
-        setGame({
-          status: 'nogame',
-          lastOut: '',
-          lastWin: '',
-          currentPlayer: '',
-          currentCup: 0,
-          round: 1,
-          cups: [],
-          playerOrder: [],
-          bets: [],
-          anteUSD: 0,
-          currentID: '',
-          balances: [],
-        })
-      }, 1000)
+      restart()
+      toast(`Connection is closed. Refresh to reconnect.`)
+      setGame({
+        status: 'nogame',
+        lastOut: '',
+        lastWin: '',
+        currentPlayer: '',
+        currentCup: 0,
+        round: 1,
+        cups: [],
+        playerOrder: [],
+        bets: [],
+        anteUSD: 0,
+        currentID: '',
+        balances: [],
+      })
     }
 
     // ws.onerror binds an event listener that triggers with "error" event.

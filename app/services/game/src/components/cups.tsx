@@ -4,6 +4,7 @@ import Star from './icons/star'
 import Bet from './bet'
 import { GameContext } from '../contexts/gameContext'
 import { shortenIfAddress } from '../utils/address'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // Cups Component
 // Renders the players ui
@@ -38,10 +39,27 @@ function Cups() {
       )
     }
 
+    const cupAnimationsVariants = {
+      initial: {
+        x: '50%',
+        opacity: 0,
+        scale: 0.5,
+      },
+      animate: {
+        x: 0,
+        opacity: 1,
+        scale: 1,
+      },
+      transition: { staggerChildren: 0.07, delayChildren: 0.2, duration: 0.2 },
+    }
+
     // getCup returns the player cup ui
     function getCup() {
       return (
-        <div
+        <motion.div
+          initial={cupAnimationsVariants.initial}
+          animate={cupAnimationsVariants.animate}
+          transition={cupAnimationsVariants.transition}
           key={player.account}
           className={`player__ui ${isPlayerActive ? 'active' : ''}`}
           data-testid="player__ui"
@@ -62,7 +80,7 @@ function Cups() {
               />
             </div>
           ) : null}
-        </div>
+        </motion.div>
       )
     }
 
@@ -81,7 +99,9 @@ function Cups() {
       }}
       id="cupsContainer"
     >
+      {/* <AnimatePresence> */}
       {cupsElements}
+      {/* </AnimatePresence> */}
     </div>
   )
 }

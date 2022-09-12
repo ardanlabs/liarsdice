@@ -15,9 +15,10 @@ import assureGameType from '../../utils/assureGameType'
 import { apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
 import useEthersConnection from './useEthersConnection'
-import { connectResponse } from '../../types/responses.d'
+import { connectResponse, defaultApiError } from '../../types/responses.d'
 import { getAppConfig } from '../..'
 import { toast } from 'react-toastify'
+import { capitalize } from '../../utils/capitalize'
 
 // Create an axios instance to keep the token updated
 const axiosInstance = axios.create({
@@ -142,13 +143,76 @@ function useGame() {
 
   // Game flow methods
 
+    // joinGame calls to backend join endpoint.
+    function joinGame() {
+      toast.info('Joining game...')
+  
+      // catchFn catches the error
+      const catchFn = (error: defaultApiError) => {
+        const errorMessage = error.response.data.error.replace(
+          /\[[^\]]+\]/gm,
+          '',
+        )
+
+        console.log(errorMessage.replace(
+          /\[[^\]]+\]/gm,
+          '',
+        ))
+        
+        toast(capitalize(errorMessage))
+        console.group()
+        console.error('Error:', error.response.data.error)
+        console.groupEnd()
+      }
+  
+      axios
+        .get(`http://${apiUrl}/join`, {
+          headers: {
+            authorization: window.sessionStorage.getItem('token') as string,
+          },
+        })
+        .then(() => {
+          toast.info('Welcome to the game')
+        })
+        .catch(catchFn)
+    }
+  
+
+  function createNewGame() {
+    // Sets a new game in the gameContext.
+    const createGameFn = (response: AxiosResponse) => {
+      if (response.data) {
+        const newGame = assureGameType(response.data)
+        setGame(newGame)
+      }
+    }
+
+    // Catches the error from the axios call.
+    const createGameCatchFn = (error: defaultApiError) => {
+      // Figure out regex
+      console.log(error.response.data.error)
+      
+      let errorMessage = error.response.data.error.replace(
+        /\[[^\]]+\]/gm,
+        '',
+      )
+      toast(capitalize(errorMessage))
+      console.group()
+      console.error('Error:', error.response.data.error)
+      console.groupEnd()
+    }
+
+    axiosInstance
+      .get(`http://${apiUrl}/new`)
+      .then(createGameFn)
+      .catch(createGameCatchFn)
+  }
+
   // rolldice rolls the player dice.
   function rolldice(): void {
+    toast(`Rolling dice's`)
     axiosInstance
       .get(`http://${apiUrl}/rolldice`)
-      .then(function (response: AxiosResponse) {
-        toast(`Rolling dice's`)
-      })
       .catch(function (error: AxiosError) {
         console.error(error)
       })
@@ -168,7 +232,7 @@ function useGame() {
   function nextTurn() {
     axiosInstance
       .get(`http://${apiUrl}/next`)
-      .then(function (response: AxiosResponse) {
+      .then(function () {
         updateStatus()
       })
       .catch(function (error: AxiosError) {
@@ -214,7 +278,6 @@ function useGame() {
   function callLiar() {
     axiosInstance
       .get(`http://${apiUrl}/liar`)
-      .then(function (response: AxiosResponse) {})
       .catch(function (error: AxiosError) {
         console.error(error)
       })
@@ -230,6 +293,8 @@ function useGame() {
     callLiar,
     rolldice,
     connectToGameEngine,
+    createNewGame,
+    joinGame,
   }
 }
 
