@@ -24,3 +24,4 @@ services:
     environment:
       GAME_CONTRACT_ID: "0x531130464929826c57BBBF989e44085a02eeB120"
       BANK_NETWORK: "http://host.docker.internal:8545"
+      HOST: "0.0.0.0"
