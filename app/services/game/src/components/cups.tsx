@@ -4,7 +4,7 @@ import Star from './icons/star'
 import Bet from './bet'
 import { GameContext } from '../contexts/gameContext'
 import { shortenIfAddress } from '../utils/address'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 // Cups Component
 // Renders the players ui
