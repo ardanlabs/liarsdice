@@ -8,6 +8,7 @@ import 'react-toastify/ReactToastify.min.css'
 import { Route, Routes, useNavigate } from 'react-router-dom'
 import MainRoom from './components/mainRoom'
 import { getAppConfig } from '.'
+import { utils } from 'ethers'
 import {
   ethersConnectionInterface,
   EthersContext,
@@ -37,7 +38,7 @@ function App() {
   } as game)
 
   // Extracts provider from useEthersConnection hook
-  const { provider } = useEthersConnection()
+  const { provider, switchNetwork } = useEthersConnection()
 
   // Extracts router navigation functionality
   const navigate = useNavigate()
@@ -81,12 +82,16 @@ function App() {
     const fn = async (getConfigResponse: appConfig) => {
       if (newNetwork.chainId !== getConfigResponse.chainId) {
         window.sessionStorage.removeItem('token')
+        // It navigates to the wrongNetwork component, and switches the network.
+        // If the network isn't switched, it will stay at that component until it does.
         navigate('/wrongNetwork', { state: { ...getConfigResponse } })
+        switchNetwork({
+          chainId: utils.hexValue(getConfigResponse.chainId),
+        })
         return
       }
       navigate('/')
     }
-
     getAppConfig.then(fn)
   }
 
@@ -94,9 +99,7 @@ function App() {
 
   // effectFn handles network changes.
   const effectFn = () => {
-    provider.on('chainChanged', (newNetwork, _) =>
-      handleNetworkChange(newNetwork),
-    )
+    provider.on('network', (newNetwork, _) => handleNetworkChange(newNetwork))
   }
   // We disable the next line so eslint doens't complain about missing dependencies.
   // eslint-disable-next-line

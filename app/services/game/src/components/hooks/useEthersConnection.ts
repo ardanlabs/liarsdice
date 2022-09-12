@@ -45,10 +45,14 @@ function useEthersConnection() {
 
   // Switches the current network that metamask is connected to
   function switchNetwork(network: Partial<{ chainId: string }>) {
-    window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [network],
-    })
+    window.ethereum
+      .request({
+        method: 'wallet_switchEthereumChain',
+        params: [network],
+      })
+      .catch((response: any) => {
+        console.error(response)
+      })
   }
 
   return {
