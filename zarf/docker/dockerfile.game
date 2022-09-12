@@ -1,6 +1,6 @@
 FROM node:16
 
-ENV NODE_ENV development
+ENV NODE_ENV production
 ARG BUILD_REF
 ARG BUILD_DATE
 
@@ -9,7 +9,7 @@ COPY app/services/game/. /code
 WORKDIR /code
 
 # Run npm install to install the node modules.
-RUN npm install --loglevel verbose
+RUN npm install --production --loglevel verbose
 
 # Start the node application.
 EXPOSE 3001
