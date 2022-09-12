@@ -32,7 +32,6 @@ import (
 	Add a account fix function to adjust balances.
 
 	-- Browser UI
-	Make the network change work.
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.
