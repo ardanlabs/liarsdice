@@ -557,7 +557,7 @@ func generateToken(a *auth.Auth, address string) (string, error) {
 	claims := auth.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   address,
-			Issuer:    "service project",
+			Issuer:    "liar's project",
 			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		},
