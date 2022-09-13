@@ -3,14 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./error.sol";
 
-// abc
 contract Bank {
 
     // Owner represents the address who deployed the contract.
-    address public Owner; // 123
+    address public Owner;
 
     // API represents the address of the contract allowed to interact with this Bank.
-    address public API; // def
+    address public API;
 
     // accountBalances represents the amount of money an account has available.
     mapping (address => uint256) private accountBalances;
@@ -97,11 +96,10 @@ contract Bank {
     }
 }
 
-// def
 contract BankAPI {
 
     // Owner represents the address who deployed the contract.
-    address public Owner; // 123
+    address public Owner;
 
     // Bank represents the address of the bank store.
     address public Bank;
