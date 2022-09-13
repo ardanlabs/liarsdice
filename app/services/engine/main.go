@@ -90,7 +90,7 @@ func run(log *zap.SugaredLogger) error {
 		Game struct {
 			ContractID     string        `conf:"default:0x0"`
 			AnteUSD        float64       `conf:"default:5"`
-			ConnectTimeout time.Duration `conf:"default:5s"`
+			ConnectTimeout time.Duration `conf:"default:10s"`
 		}
 		Bank struct {
 			KeyPath          string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`

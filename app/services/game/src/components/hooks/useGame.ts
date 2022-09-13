@@ -10,7 +10,7 @@
 import { useEffect, useContext, useState, useMemo } from 'react'
 import axios, { AxiosError, AxiosResponse } from 'axios'
 import { GameContext } from '../../contexts/gameContext'
-import { appConfig, dice, die, game, user } from '../../types/index.d'
+import { dice, die, game, user } from '../../types/index.d'
 import assureGameType from '../../utils/assureGameType'
 import { apiUrl } from '../../utils/axiosConfig'
 import getActivePlayersLength from '../../utils/getActivePlayers'
@@ -87,7 +87,7 @@ function useGame() {
             ) {
               axiosInstance
                 .get(`http://${apiUrl}/reconcile`)
-                .then((response: AxiosResponse) => {
+                .then(() => {
                   updateStatus()
                 })
                 .catch((error: AxiosError) => {
@@ -110,13 +110,17 @@ function useGame() {
   // connectToGameEngine connects to the game engine, and stores the token
   // in the sessionStorage. Takes an object with the following type:
   // { dateTime: string; sig: string }
-  function connectToGameEngine(data: { dateTime: string; sig: string }) {
+  function connectToGameEngine(data: {
+    address: string
+    dateTime: string
+    sig: string
+  }) {
     const axiosFn = (connectResponse: connectResponse) => {
       window.sessionStorage.setItem(
         'token',
         `bearer ${connectResponse.data.token}`,
       )
-      const getAppConfigFn = (getConfigResponse: appConfig) => {
+      const getAppConfigFn = () => {
         window.location.reload()
       }
       getAppConfig.then(getAppConfigFn)
@@ -134,7 +138,7 @@ function useGame() {
     }
 
     axiosInstance
-      .post(`http://${apiUrl}/connect`, data)
+      .post(`http://${apiUrl}/connect`, { ...data })
       .then(axiosFn)
       .catch(axiosErrorFn)
   }
@@ -143,40 +147,33 @@ function useGame() {
 
   // Game flow methods
 
-    // joinGame calls to backend join endpoint.
-    function joinGame() {
-      toast.info('Joining game...')
-  
-      // catchFn catches the error
-      const catchFn = (error: defaultApiError) => {
-        const errorMessage = error.response.data.error.replace(
-          /\[[^\]]+\]/gm,
-          '',
-        )
+  // joinGame calls to backend join endpoint.
+  function joinGame() {
+    toast.info('Joining game...')
 
-        console.log(errorMessage.replace(
-          /\[[^\]]+\]/gm,
-          '',
-        ))
-        
-        toast(capitalize(errorMessage))
-        console.group()
-        console.error('Error:', error.response.data.error)
-        console.groupEnd()
-      }
-  
-      axios
-        .get(`http://${apiUrl}/join`, {
-          headers: {
-            authorization: window.sessionStorage.getItem('token') as string,
-          },
-        })
-        .then(() => {
-          toast.info('Welcome to the game')
-        })
-        .catch(catchFn)
+    // catchFn catches the error
+    const catchFn = (error: defaultApiError) => {
+      const errorMessage = error.response.data.error.replace(/\[[^\]]+\]/gm, '')
+
+      console.log(errorMessage.replace(/\[[^\]]+\]/gm, ''))
+
+      toast(capitalize(errorMessage))
+      console.group()
+      console.error('Error:', error.response.data.error)
+      console.groupEnd()
     }
-  
+
+    axios
+      .get(`http://${apiUrl}/join`, {
+        headers: {
+          authorization: window.sessionStorage.getItem('token') as string,
+        },
+      })
+      .then(() => {
+        toast.info('Welcome to the game')
+      })
+      .catch(catchFn)
+  }
 
   function createNewGame() {
     // Sets a new game in the gameContext.
@@ -191,11 +188,8 @@ function useGame() {
     const createGameCatchFn = (error: defaultApiError) => {
       // Figure out regex
       console.log(error.response.data.error)
-      
-      let errorMessage = error.response.data.error.replace(
-        /\[[^\]]+\]/gm,
-        '',
-      )
+
+      let errorMessage = error.response.data.error.replace(/\[[^\]]+\]/gm, '')
       toast(capitalize(errorMessage))
       console.group()
       console.error('Error:', error.response.data.error)

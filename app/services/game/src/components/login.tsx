@@ -116,7 +116,7 @@ function Login() {
 
     const date = getNowDate()
 
-    const doc = { dateTime: date }
+    const doc = { address: account as string, dateTime: date }
 
     const parsedDoc = docToUint8Array(doc)
 
