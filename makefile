@@ -52,10 +52,10 @@ game-tuio:
 	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
 
 react-install:
-	npm install --prefix app/services/game/
+	yarn --cwd app/services/game/ install
 
 game-gui: react-install
-	npm start --prefix app/services/game/
+	yarn --cwd app/services/game/ start
 
 # ==============================================================================
 # These commands build and deploy basic smart contract.

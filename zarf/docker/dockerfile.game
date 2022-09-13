@@ -9,11 +9,11 @@ COPY app/services/game/. /code
 WORKDIR /code
 
 # Run npm install to install the node modules.
-RUN npm install --production --loglevel verbose
+RUN yarn install --production --loglevel verbose
 
 # Start the node application.
 EXPOSE 3001
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
 
 LABEL org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.title="engine" \
