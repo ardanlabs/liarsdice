@@ -12,30 +12,30 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ardanlabs/liarsdice/business/web/auth"
-	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
-
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/gorilla/websocket"
+	"go.uber.org/zap"
 )
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
-	Converter   *currency.Converter
-	Bank        *bank.Bank
-	Log         *zap.SugaredLogger
-	WS          websocket.Upgrader
-	Evts        *events.Events
-	Auth        *auth.Auth
-	AnteUSD     float64
-	BankTimeout time.Duration
+	Converter      *currency.Converter
+	Bank           *bank.Bank
+	Log            *zap.SugaredLogger
+	WS             websocket.Upgrader
+	Evts           *events.Events
+	Auth           *auth.Auth
+	AnteUSD        float64
+	BankTimeout    time.Duration
+	ConnectTimeout time.Duration
 
 	game *game.Game
 	mu   sync.RWMutex
@@ -43,7 +43,7 @@ type Handlers struct {
 
 // Connect is used to return a game token for API usage.
 func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	address, err := validateSignature(r)
+	address, err := validateSignature(r, h.ConnectTimeout)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
@@ -512,7 +512,7 @@ func (h *Handlers) getGame() (*game.Game, error) {
 
 // =============================================================================
 
-func validateSignature(r *http.Request) (string, error) {
+func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
 	var dt struct {
 		Address   string `json:"address"`
 		DateTime  string `json:"dateTime"` // YYYYMMDDHHMMSS
@@ -528,8 +528,7 @@ func validateSignature(r *http.Request) (string, error) {
 		return "", fmt.Errorf("parse time: %w", err)
 	}
 
-	const delay = 5 * time.Second
-	if d := time.Since(t); d > delay {
+	if d := time.Since(t); d > timeout {
 		return "", fmt.Errorf("data is too old, %v", d.Seconds())
 	}
 

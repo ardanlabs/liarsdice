@@ -88,8 +88,9 @@ func run(log *zap.SugaredLogger) error {
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
 		Game struct {
-			ContractID string  `conf:"default:0x0"`
-			AnteUSD    float64 `conf:"default:5"`
+			ContractID     string        `conf:"default:0x0"`
+			AnteUSD        float64       `conf:"default:5"`
+			ConnectTimeout time.Duration `conf:"default:5s"`
 		}
 		Bank struct {
 			KeyPath          string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
@@ -203,14 +204,15 @@ func run(log *zap.SugaredLogger) error {
 
 	// Construct the mux for the API calls.
 	apiMux := handlers.APIMux(handlers.APIMuxConfig{
-		Shutdown:    shutdown,
-		Log:         log,
-		Auth:        auth,
-		Converter:   converter,
-		Bank:        bank,
-		Evts:        evts,
-		AnteUSD:     cfg.Game.AnteUSD,
-		BankTimeout: cfg.Bank.Timeout,
+		Shutdown:       shutdown,
+		Log:            log,
+		Auth:           auth,
+		Converter:      converter,
+		Bank:           bank,
+		Evts:           evts,
+		AnteUSD:        cfg.Game.AnteUSD,
+		BankTimeout:    cfg.Bank.Timeout,
+		ConnectTimeout: cfg.Game.ConnectTimeout,
 	}, handlers.WithCORS("*"))
 
 	// Construct a server to service the requests against the mux.

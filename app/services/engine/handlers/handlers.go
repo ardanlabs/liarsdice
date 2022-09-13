@@ -34,14 +34,15 @@ func WithCORS(origin string) func(opts *Options) {
 
 // APIMuxConfig contains all the mandatory systems required by handlers.
 type APIMuxConfig struct {
-	Shutdown    chan os.Signal
-	Log         *zap.SugaredLogger
-	Auth        *auth.Auth
-	Converter   *currency.Converter
-	Bank        *bank.Bank
-	Evts        *events.Events
-	AnteUSD     float64
-	BankTimeout time.Duration
+	Shutdown       chan os.Signal
+	Log            *zap.SugaredLogger
+	Auth           *auth.Auth
+	Converter      *currency.Converter
+	Bank           *bank.Bank
+	Evts           *events.Events
+	AnteUSD        float64
+	BankTimeout    time.Duration
+	ConnectTimeout time.Duration
 }
 
 // APIMux constructs a http.Handler with all application routes defined.
@@ -86,13 +87,14 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 
 	// Load the v1 routes.
 	v1.Routes(app, v1.Config{
-		Log:         cfg.Log,
-		Auth:        cfg.Auth,
-		Converter:   cfg.Converter,
-		Bank:        cfg.Bank,
-		Evts:        cfg.Evts,
-		AnteUSD:     cfg.AnteUSD,
-		BankTimeout: cfg.BankTimeout,
+		Log:            cfg.Log,
+		Auth:           cfg.Auth,
+		Converter:      cfg.Converter,
+		Bank:           cfg.Bank,
+		Evts:           cfg.Evts,
+		AnteUSD:        cfg.AnteUSD,
+		BankTimeout:    cfg.BankTimeout,
+		ConnectTimeout: cfg.ConnectTimeout,
 	})
 
 	return app

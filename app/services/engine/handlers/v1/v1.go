@@ -19,13 +19,14 @@ import (
 
 // Config contains all the mandatory systems required by handlers.
 type Config struct {
-	Log         *zap.SugaredLogger
-	Auth        *auth.Auth
-	Converter   *currency.Converter
-	Bank        *bank.Bank
-	Evts        *events.Events
-	AnteUSD     float64
-	BankTimeout time.Duration
+	Log            *zap.SugaredLogger
+	Auth           *auth.Auth
+	Converter      *currency.Converter
+	Bank           *bank.Bank
+	Evts           *events.Events
+	AnteUSD        float64
+	BankTimeout    time.Duration
+	ConnectTimeout time.Duration
 }
 
 // Routes binds all the version 1 routes.
@@ -34,14 +35,15 @@ func Routes(app *web.App, cfg Config) {
 
 	// Register group endpoints.
 	ggh := gamegrp.Handlers{
-		Converter:   cfg.Converter,
-		Bank:        cfg.Bank,
-		Log:         cfg.Log,
-		Evts:        cfg.Evts,
-		WS:          websocket.Upgrader{},
-		Auth:        cfg.Auth,
-		AnteUSD:     cfg.AnteUSD,
-		BankTimeout: cfg.BankTimeout,
+		Converter:      cfg.Converter,
+		Bank:           cfg.Bank,
+		Log:            cfg.Log,
+		Evts:           cfg.Evts,
+		WS:             websocket.Upgrader{},
+		Auth:           cfg.Auth,
+		AnteUSD:        cfg.AnteUSD,
+		BankTimeout:    cfg.BankTimeout,
+		ConnectTimeout: cfg.ConnectTimeout,
 	}
 
 	app.Handle(http.MethodPost, version, "/game/connect", ggh.Connect)
