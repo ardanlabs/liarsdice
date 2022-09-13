@@ -50,9 +50,11 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}
 
 	dt := struct {
+		Address  string `json:"address"`
 		DateTime string `json:"dateTime"` // YYYYMMDDHHMMSS
 	}{
-		DateTime: time.Now().Format("20060102150405"),
+		Address:  address,
+		DateTime: time.Now().UTC().Format("20060102150405"),
 	}
 
 	sig, err := ethereum.Sign(dt, privateKey)
@@ -61,9 +63,11 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}
 
 	dts := struct {
+		Address   string `json:"address"`
 		DateTime  string `json:"dateTime"`
 		Signature string `json:"sig"`
 	}{
+		Address:   address,
 		DateTime:  dt.DateTime,
 		Signature: fmt.Sprintf("0x%s", hex.EncodeToString(sig)),
 	}

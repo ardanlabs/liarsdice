@@ -514,6 +514,7 @@ func (h *Handlers) getGame() (*game.Game, error) {
 
 func validateSignature(r *http.Request) (string, error) {
 	var dt struct {
+		Address   string `json:"address"`
 		DateTime  string `json:"dateTime"` // YYYYMMDDHHMMSS
 		Signature string `json:"sig"`
 	}
@@ -522,15 +523,31 @@ func validateSignature(r *http.Request) (string, error) {
 		return "", fmt.Errorf("unable to decode payload: %w", err)
 	}
 
+	t, err := time.Parse("20060102150405", dt.DateTime)
+	if err != nil {
+		return "", fmt.Errorf("parse time: %w", err)
+	}
+
+	const delay = 5 * time.Second
+	if d := time.Since(t); d > delay {
+		return "", fmt.Errorf("data is too old, %v", d.Seconds())
+	}
+
 	data := struct {
+		Address  string `json:"address"`
 		DateTime string `json:"dateTime"`
 	}{
+		Address:  dt.Address,
 		DateTime: dt.DateTime,
 	}
 
 	address, err := ethereum.FromAddress(data, dt.Signature)
 	if err != nil {
 		return "", fmt.Errorf("unable to extract address: %w", err)
+	}
+
+	if !strings.EqualFold(strings.ToLower(address), strings.ToLower(data.Address)) {
+		return "", fmt.Errorf("invalid address match, got[%s] exp[%s]", address, data.Address)
 	}
 
 	return address, nil
