@@ -117,7 +117,7 @@ test-engine:
 	govulncheck ./...
 
 test-gui:
-	npm test --prefix app/services/game/
+	yarn --cwd app/services/game/ test
 
 # ==============================================================================
 # Modules support
