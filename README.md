@@ -46,12 +46,9 @@ https://www.ardanlabs.com/training
 - [Purchase Video](https://github.com/ardanlabs/blockchain#purchase-video)
 - [Experience](https://github.com/ardanlabs/blockchain#our-experience)
 - [Teacher](https://github.com/ardanlabs/blockchain#our-teacher)
-- [More About Go](https://github.com/ardanlabs/blockchain#more-about-go)
 - [Minimal Qualified Student](https://github.com/ardanlabs/blockchain#minimal-qualified-student)
 - [Important Reading](https://github.com/ardanlabs/blockchain#important-reading)
 - [Before You Come To Class](https://github.com/ardanlabs/blockchain#before-you-come-to-class)
-- [Starter Material](https://github.com/ardanlabs/blockchain#starter-material)
-- [Get The Training Material](https://github.com/ardanlabs/blockchain#go-get-the-training-material)
 
 ## Purchase Video
 
@@ -68,8 +65,7 @@ Our classes are perfect for intermediate-level developers who have at least a fe
 ## Our Teacher
 
 ### William Kennedy ([@goinggodotnet](https://twitter.com/goinggodotnet))
-
-_William Kennedy is a managing partner at Ardan Labs in Miami, Florida. Ardan Labs is a high-performance development and training firm working with startups and fortune 500 companies. He is also a co-author of the book Go in Action, the author of the blog GoingGo.Net, and a founding member of GoBridge which is working to increase Go adoption through diversity._
+_William Kennedy is a managing partner at Ardan Labs in Miami, Florida, a mobile, web, and systems development company. Bill has written extensively on the Ardan Labs blog, has written two books, and has trained thousands of developers worldwide in Go. Bill is also a founding member of GoBridge, which is working to increase Go adoption through diversity._
 
 _**Video Training**_  
 [Ultimate Go Video](https://education.ardanlabs.com)  
@@ -131,58 +127,32 @@ _**Podcasts**_
 [HelloTechPros: Your Tech Interviews are Scaring Away Brilliant People](http://hellotechpros.com/william-kennedy-people)  
 [HelloTechPros: The 4 Cornerstones of Writing Software](http://hellotechpros.com/bill-kennedy-productivity)
 
-## More About Go
-
-Go is an open source programming language that makes it easy to build simple, reliable, and efficient software. Although it borrows ideas from existing languages, it has a unique and simple nature that make Go programs different in character from programs written in other languages. It balances the capabilities of a low-level systems language with some high-level features you see in modern languages today. This creates a programming environment that allows you to be incredibly productive, performant and fully in control; in Go, you can write less code and do so much more.
-
-Go is the fusion of performance and productivity wrapped in a language that software developers can learn, use and understand. Go is not C, yet we have many of the benefits of C with the benefits of higher level programming languages.
-
-[The Ecosystem of the Go Programming Language](https://henvic.dev/posts/go/) - Henrique Vicente  
-[The Why of Go](https://www.infoq.com/presentations/go-concurrency-gc) - Carmen Andoh  
-[Go Ten Years and Climbing](https://commandcenter.blogspot.com/2017/09/go-ten-years-and-climbing.html) - Rob Pike  
-[The eigenvector of "Why we moved from language X to language Y"](https://erikbern.com/2017/03/15/the-eigenvector-of-why-we-moved-from-language-x-to-language-y.html) - Erik Bernhardsson  
-[Learn More](https://talks.golang.org/2012/splash.article) - Go Team  
-[Simplicity is Complicated](https://www.youtube.com/watch?v=rFejpH_tAHM) - Rob Pike  
-[Getting Started In Go](http://aarti.github.io/2016/08/13/getting-started-in-go) - Aarti Parikh
-
 ## Minimal Qualified Student
 
 The material has been designed to be taught in a classroom environment. The code is well commented but missing some contextual concepts and ideas that will be covered in class. Students with the following minimal background will get the most out of the class.
 
-- Studied CS in school or has a minimum of two years of experience programming full time professionally.
-- Familiar with structural and object oriented programming styles.
-- Has worked with arrays, lists, queues and stacks.
-- Understands processes, threads and synchronization at a high level.
-- Operating Systems
-  - Has worked with a command shell.
-  - Knows how to maneuver around the file system.
-  - Understands what environment variables are.
-
-**You will get the most out of this advanced Go class if you have taken the Ultimate Go and Service classes first.**
-
-[Ultimate Go Classes](https://www.ardanlabs.com/ultimate-go/#tabpanel)  
-[Scholarship](https://docs.google.com/forms/d/e/1FAIpQLSchEz6zg1fseR2XiIZgNB8Qm2a5JDB7n3EOWX5GeIP18OstaQ/viewform)
-
-**This is a free and great class to learning concepts behind blockchains.**
-
-[Blockchain Class](https://cryptocurrencyclass.github.io/) - Patrick McCorry
-
-## Important Reading
-
-Please check out this page of [important reading](.documentation/reading/README.md). You will find articles and videos around topics related to this repo.
+* Studied CS in school or has a minimum of two years of experience programming full time professionally.
+* Familiar with structural and object oriented programming styles.
+* Has worked with arrays, lists, queues and stacks.
+* Understands processes, threads and synchronization at a high level.
+* Operating Systems
+	* Has worked with a command shell.
+	* Knows how to maneuver around the file system.
+	* Understands what environment variables are.
 
 ## Before You Come To Class
 
-The following is a set of tasks that can be done prior to showing up for class. We will also do this in class if anyone has not completed it. However, the more attendees that complete this ahead of time the more time we have to cover additional training material.
+The following is a set of tasks that can be done prior to showing up for class.  We will also do this in class if anyone has not completed it.  However, the more attendees that complete this ahead of time the more time we have to cover additional training material.
 
 ### Prep Work
 
-The Ultimate Go and Service classes are critical classes to understanding the code in this class.  
-[Ultimate Go Classes](https://www.ardanlabs.com/ultimate-go/#tabpanel)  
-[Scholarship](https://docs.google.com/forms/d/e/1FAIpQLSchEz6zg1fseR2XiIZgNB8Qm2a5JDB7n3EOWX5GeIP18OstaQ/viewform)
+**You will get the most out of this class if you have taken the Ultimate Go bundle of classes first.**
 
-This is a free and great class to learning concepts behind blockchains. Watch videos 1, 2, 6 and 8.
-[Blockchain Class](https://cryptocurrencyclass.github.io/) - Patrick McCorry
+[Ultimate Go Classes](https://www.ardanlabs.com/ultimate-go)  
+[Scholarship](https://docs.google.com/forms/d/e/1FAIpQLSchEz6zg1fseR2XiIZgNB8Qm2a5JDB7n3EOWX5GeIP18OstaQ/viewform)  
+
+This is a free and great class to learning concepts behind blockchains. Watch videos 1, 2, 6 and 8 for sure.  
+[Blockchain Class](https://cryptocurrencyclass.github.io/) - Patrick McCorry  
 
 ### Joining the Go Slack Community
 
@@ -197,64 +167,13 @@ We use a Slack channel to share links, code, and examples during the training. T
 
 While many of the examples can be done using the online playground (http://play.golang.org), some may find it easier to complete them with their local editor. To do so, you will want to load the training material locally to your machine. From a command prompt, issue the following commands:
 
-```sh
-mkdir -p $(go env GOPATH)/src/github.com/ardanlabs && cd $_
-git clone https://github.com/ardanlabs/liarsdice.git
 ```
-
-## Twitter
-
-Jessie Frazelle ([@frazelledazzell](https://twitter.com/frazelledazzell/status/711355859066990592))  
-_"@goinggodotnet you were amazing!!! So enthusiastic!!! Thanks for doing this for everyone!"_
-
-Kelsey Hightower ([@kelseyhightower](https://twitter.com/kelseyhightower/status/673359937909592064))  
-_"Day 1 of the [Ultimate] Go workshop was outstanding! Big shoutout to @intel, @golangbridge, and @goinggodotnet for bringing this to Portland."_
-
-Katrina Owen ([@kytrinyx](https://twitter.com/kytrinyx/status/673360428278222848))  
-_"OH: "You thought you knew Go..." (You do Go? You want to do Go?) You should take this workshop. Seriously.) "_
-
-Ian Molee ([@ianfoo](https://twitter.com/ianfoo/status/752246569554964480))
-_"If you're at @GopherCon, get yourself to a session with @goinggodotnet. Superb! Pretty sure his pic appears with the definition of "dynamo.""_
-
-Matt Oswalt ([@Mierdin](https://twitter.com/mierdin/status/673570058392616961))  
-_"Should be mentioned that though I am no expert, I have been using Go for about a year - and this meetup is kicking my ass."_
-
-## Testimonials
-
-Paul Yeoh  
-\_"Today’s workshop was just mind blowing! You kept us all on the edge all day long - it was the most exhilarating all day workshop I have attended, period. The content was inspiring, moving - caused me to think deeply and gave me a lot of meat to chew on about what it is we are really doing as programmers, what an awesome day!
-
-And most of all, I just got such a kick out of the energy which you were putting out - larger than life, it felt like you were turned up to 200%. I really took a lot from it at many levels. Thank you!!"\_
-
-Ana-Maria Lazar, Software Engineer at Sainsbury's  
-_"Intensive crash course in Go that literally takes you to a whole new level. Not only Bill provides lots of examples and exercises to familiarize yourself faster with the language but there is also a lot of information that can be applied to other languages as well. Perfect combination!"_
-
-Susan Dady, Software Engineer - GE Digital  
-_"Rarely will you come across a course as worthwhile as this one. I learned many things relevant and useful in my daily work and William's energy kept me engaged. I came back to work excited to get coding in Go."_
-
-Richard Stanley, Software Engineer - GE Digital  
-_"Not only does Bill deeply understands the technical details of Go, he also can explain them in an effective, enthusiastic manner that helped me retain somewhat dry material. His passion for the language and its capabilities are obvious through out his training."_
-
-Shalab Goel, Ph.D.  
-_"It was a pleasure taking this course — learning lot of "dry" stuff in such animated and enthusiastic environment. The exercises were spot on for building what you called as "memory muscle. I have good amount of background in conventional multithreaded and distributed environments, but I have not put that knowledge to use more recently; so it was good refresher from that point of view as well. From Yuck to completely Wow-ed is how I will like to describe my respect for Go within three days. I knew nothing about GO before the course."_
-
-Geoff Clitheroe ([@gclitheroe](https://twitter.com/gclitheroe))  
-_"Your training is awesome! Myself and three colleagues recently caught variations of the training at GopherCon and OSCON. We all thought the Bootcamp was the best thing at any of these conferences (and I went to both). Awesome work to Bill for presenting and anyone involved in developing the training. I really liked the structure, emphasis on deeper understanding, me doing a small number of examples to emphasize this, and general content. Night and day to other training which is to often just watching someone else live code. Great work."_
-
-ACL Services ([@ACLServices](https://twitter.com/ACLServices))  
-_"I'd just like to thank you again for just a phenomenal training session. The feedback from everyone was overwhelmingly positive. You probably could tell first hand that there were skeptics at first, but you've turned many into golang converts and we are really excited in growing golang adoption internally."_
-
-Joshua Shuster ([@naysaier](https://twitter.com/naysaier))  
-_"I would consider Ardan Studio's 3 day course to be invaluable. Bill and his staff, being some of the foremost authorities in the Go language, were able to make many of the complex go topics understandable. Covering everything from memory management, all the way up to building concurrency programs and web API's. It has given me the knowledge to write idiomatic Go, and make the best use of its features. I would highly their courses to anyone new to Go, or to anyone wanting to widen their existing knowledge."_
-
-Neeru Dwivedi  
-_"I attended the one day workshop by Bill Kennedy from Ardan Labs. I was in for a surprise as before the workshop I was concerned whether I would understand concepts and whether I would be able to follow along. Bill has this wonderful way of explaining concepts and his knowledge on the concepts is so good that, I didn't feel that I was learning something new & complicated. The Go Workshop got me started on the Go language. This workshop is perfect for beginners and anyone who wants to learn more about Go. I highly recommend this."_
-
-Todd Rafferty ([@webrat](https://twitter.com/webrat))  
-_"I highly recommend William Kennedy / Ardan Lab for Go Training. William is extremely passionate about the Go language and his energy feeds into his training. Very professional, very informative. My favorite section of his training, if I had to pick, was the segment on MultiWriters. I highly recommend a 3 day course, over a 2 day course. Even after the classes were over, William was always responsive with additional questions via various social media channels."_
-
-Georgi Knox ([@GeorgiCodes](https://twitter.com/georgicodes))  
-_"The Intro to Go Workshop enabled me to come into class with very little knowledge of Go and leave having a firm grasp of the key concepts of the language. Each topic was followed up with hands-on coding problems which helped to solidify what I was learning. My teacher Bill was not only approachable, but very excited about the language and his enthusiasm was contagious. I enjoyed that we talked about some of the lower level implementation details of Go which was something that I had found lacking from some books on the language. Overall I would highly recommend this workshop to anyone looking to learn Go quickly and effectively."_
+$ cd $HOME
+$ mkdir code
+$ cd code
+$ git clone https://github.com/ardanlabs/liarsdice
+$ cd liarsdice
+```
 
 ---
 
