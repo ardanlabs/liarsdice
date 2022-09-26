@@ -3,7 +3,6 @@ package engine
 
 import (
 	"bytes"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,7 +56,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 		DateTime: time.Now().UTC().Format("20060102150405"),
 	}
 
-	sig, err := ethereum.Sign(dt, privateKey)
+	sig, _, err := ethereum.Sign(dt, privateKey)
 	if err != nil {
 		return Token{}, fmt.Errorf("sign: %w", err)
 	}
@@ -69,7 +68,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}{
 		Address:   address,
 		DateTime:  dt.DateTime,
-		Signature: fmt.Sprintf("0x%s", hex.EncodeToString(sig)),
+		Signature: sig,
 	}
 
 	data, err := json.Marshal(dts)

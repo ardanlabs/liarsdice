@@ -38,42 +38,51 @@ func PrivateKeyByKeyFile(keyFile string, passPhrase string) (*ecdsa.PrivateKey, 
 	return key.PrivateKey, nil
 }
 
-// Sign uses the specified private key to sign the data.
-func Sign(value any, privateKey *ecdsa.PrivateKey) ([]byte, error) {
+// Sign uses the specified private key to sign the specified value. The function
+// returns the calculated signature has a hexadecimal string, the raw bytes of
+// the data that was signed, and any error that might have occurred.
+func Sign(value any, privateKey *ecdsa.PrivateKey) (signature string, data []byte, err error) {
+
+	// Convert the value to bytes using our format.
+	b, err := json.Marshal(value)
+	if err != nil {
+		return "", nil, err
+	}
 
 	// Prepare the data for signing.
-	data, err := stamp(value)
+	data, err = Stamp(b)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	// Sign the hash with the private key to produce a signature.
 	sig, err := crypto.Sign(data, privateKey)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
 	// Extract the bytes for the original public key.
 	publicKeyOrg := privateKey.Public()
 	publicKeyECDSA, ok := publicKeyOrg.(*ecdsa.PublicKey)
 	if !ok {
-		return nil, errors.New("error casting public key to ECDSA")
+		return "", nil, errors.New("error casting public key to ECDSA")
 	}
 	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
 
 	// Check the public key validates the data and signature.
 	rs := sig[:crypto.RecoveryIDOffset]
 	if !crypto.VerifySignature(publicKeyBytes, data, rs) {
-		return nil, errors.New("invalid signature produced")
+		return "", nil, errors.New("invalid signature produced")
 	}
 
 	// Add the Ethereum ID to the last byte represents v.
 	sig[crypto.RecoveryIDOffset] += ethID
 
-	return sig, nil
+	return fmt.Sprintf("0x%s", hex.EncodeToString(sig)), data, nil
 }
 
-// FromAddress extracts the address for the account that signed the data.
+// FromAddress extracts the address for the account that signed the data. The
+// signature must be provided as a hexadecimal string.
 func FromAddress(value any, signature string) (string, error) {
 
 	// Perform a basic check that the signature is formatted properly.
@@ -87,8 +96,14 @@ func FromAddress(value any, signature string) (string, error) {
 	// way to check this on the node since we don't have a copy of the public
 	// key used. The public key is being extracted from the data and signature.
 
+	// Convert the value to bytes using our format.
+	data, err := json.Marshal(value)
+	if err != nil {
+		return "", err
+	}
+
 	// Prepare the data for public key extraction.
-	data, err := stamp(value)
+	stampData, err := Stamp(data)
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +112,7 @@ func FromAddress(value any, signature string) (string, error) {
 	sig[64] = sig[64] - ethID
 
 	// Capture the public key associated with this data and signature.
-	publicKey, err := crypto.SigToPub(data, sig)
+	publicKey, err := crypto.SigToPub(stampData, sig)
 	if err != nil {
 		return "", err
 	}
@@ -106,9 +121,30 @@ func FromAddress(value any, signature string) (string, error) {
 	return crypto.PubkeyToAddress(*publicKey).String(), nil
 }
 
+// Stamp returns a hash of 32 bytes that represents this data with the Ethereum
+// stamp embedded into the final hash. This is the data that is signed.
+func Stamp(b []byte) ([]byte, error) {
+
+	// Hash the data data into a 32 byte array. This will provide
+	// a data length consistency with all data.
+	txHash := crypto.Keccak256(b)
+
+	// Convert the stamp into a slice of bytes. This stamp is
+	// used so signatures we produce when signing data
+	// are always unique to the Ardan blockchain.
+	stamp := []byte("\x19Ethereum Signed Message:\n32")
+
+	// Hash the stamp and txHash together in a final 32 byte array
+	// that represents the data.
+	data := crypto.Keccak256(stamp, txHash)
+
+	return data, nil
+}
+
 // =============================================================================
 
-// verifySignature verifies the signature conforms to our standards.
+// verifySignature verifies the signature conforms to our standards. The
+// signature must be provided as a hexadecimal string.
 func verifySignature(signature string) ([]byte, error) {
 
 	// Convert the signature to a 65 bytes.
@@ -135,30 +171,4 @@ func verifySignature(signature string) ([]byte, error) {
 	}
 
 	return sig, nil
-}
-
-// stamp returns a hash of 32 bytes that represents this data with
-// the Ardan stamp embedded into the final hash.
-func stamp(value any) ([]byte, error) {
-
-	// Marshal the data.
-	v, err := json.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-
-	// Hash the data data into a 32 byte array. This will provide
-	// a data length consistency with all data.
-	txHash := crypto.Keccak256(v)
-
-	// Convert the stamp into a slice of bytes. This stamp is
-	// used so signatures we produce when signing data
-	// are always unique to the Ardan blockchain.
-	stamp := []byte("\x19Ethereum Signed Message:\n32")
-
-	// Hash the stamp and txHash together in a final 32 byte array
-	// that represents the data.
-	data := crypto.Keccak256(stamp, txHash)
-
-	return data, nil
 }
