@@ -3,8 +3,8 @@ github.com/DeOne4eg/eth-unit-converter v0.2.0/go.mod h1:XDLXgMOeUv4n8BkGn817q9yD
 github.com/VictoriaMetrics/fastcache v1.6.0 h1:C/3Oi3EiBCqufydp1neRZkqcwmEiuRT9c3fqvvgKm5o=
 github.com/ardanlabs/conf/v3 v3.1.2 h1:Oq2eaUx884FQQpKTzWTqGgv+J2vgoX3yukc0d/AlVHc=
 github.com/ardanlabs/conf/v3 v3.1.2/go.mod h1:bIacyuGeZjkTdtszdbvOcuq49VhHpV3+IPZ2ewOAK4I=
-github.com/ardanlabs/ethereum v0.3.0 h1:JNDK8moE/DHAPKYwwdBM9X91t9EibXPwCR+vXoqrv6k=
-github.com/ardanlabs/ethereum v0.3.0/go.mod h1:krVLeCvNbXA6esKGmrGuOgDumImyJrrLSPRPm43OnkA=
+github.com/ardanlabs/ethereum v0.4.0 h1:KIey5e/4Se7ckD4K9jgyG5Ueu3a9fmwWxoaey6nrqDU=
+github.com/ardanlabs/ethereum v0.4.0/go.mod h1:krVLeCvNbXA6esKGmrGuOgDumImyJrrLSPRPm43OnkA=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/btcsuite/btcd/btcec/v2 v2.2.1 h1:xP60mv8fvp+0khmrN0zTdPC3cNm24rfeE6lh2R/Yv3E=
 github.com/btcsuite/btcd/btcec/v2 v2.2.1/go.mod h1:9/CSmJxmuvqzX9Wh2fXMWToLOHhPd11lSPuIupwTkI8=
