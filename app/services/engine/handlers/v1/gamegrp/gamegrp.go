@@ -540,7 +540,7 @@ func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
 		DateTime: dt.DateTime,
 	}
 
-	address, err := ethereum.FromAddress(data, dt.Signature)
+	address, err := ethereum.FromAddressAny(data, dt.Signature)
 	if err != nil {
 		return "", fmt.Errorf("unable to extract address: %w", err)
 	}

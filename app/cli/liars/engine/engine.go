@@ -56,7 +56,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 		DateTime: time.Now().UTC().Format("20060102150405"),
 	}
 
-	sig, _, err := ethereum.Sign(dt, privateKey)
+	sig, err := ethereum.SignAny(dt, privateKey)
 	if err != nil {
 		return Token{}, fmt.Errorf("sign: %w", err)
 	}
