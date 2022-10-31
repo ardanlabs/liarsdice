@@ -14,9 +14,9 @@
 #   eth.getTransaction("0xaea41e7c13a7ea627169c74ade4d5ea86664ff1f740cd90e499f3f842656d4ad")
 #
 # make geth-deposit
-# ./admin -a 1000.00 -f 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd -c 0x531130464929826c57BBBF989e44085a02eeB120
-# ./admin -a 1000.00 -f 0x8e113078adf6888b7ba84967f299f29aece24c55 -c 0x531130464929826c57BBBF989e44085a02eeB120
-# ./admin -a 1000.00 -f 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -c 0x531130464929826c57BBBF989e44085a02eeB120
+# ./admin -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd -m 1000.00 -c 0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
+# ./admin -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00 -c 0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
+# ./admin -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00 -c 0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
 #
 # Web3 API
 # https://web3js.readthedocs.io/en/v1.7.4/
@@ -105,6 +105,8 @@ geth-new-account:
 geth-deposit:
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+	./admin -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00 -c 0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
+	./admin -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00 -c 0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
 
 # ==============================================================================
 # Running tests within the local computer
