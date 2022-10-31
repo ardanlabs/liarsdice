@@ -19,7 +19,7 @@ function SignOut(props: SignOutProps) {
   // ===========================================================================
   // handleDisconnectAccount disconnects the user and deletes the token.
   function handleDisconnectAccount() {
-    setAccount(undefined)
+    setAccount(null)
     window.sessionStorage.removeItem('token')
     navigate('/')
   }

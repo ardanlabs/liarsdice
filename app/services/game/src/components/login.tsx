@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Button from './button'
 import MetamaskLogo from './icons/metamask'
 import { toast } from 'react-toastify'
@@ -9,6 +9,8 @@ import { token } from '../utils/axiosConfig'
 import useEthersConnection from './hooks/useEthersConnection'
 import docToUint8Array from '../utils/docToUint8Array'
 import useGame from './hooks/useGame'
+import { WalletContext } from '@viaprotocol/web3-wallets'
+import LogOutIcon from './icons/logout'
 
 // Login component.
 // Doesn't receives parameters
@@ -29,19 +31,18 @@ function Login() {
   const { setSigner, account, signer, setAccount, provider } =
     useEthersConnection()
 
+  const { connect, isConnected, disconnect, address, signMessage } =
+    useContext(WalletContext)
+
   // Sets local state to trigger re-render when load is complete.
   const [loading, setLoading] = useState(true)
 
   // Prompts user to connect to metamask usign the provider
   // and registers it to useEthersConnection hook
   async function init() {
-    const signer = provider.getSigner()
+    console.log(address)
 
-    const signerAddress = await signer.getAddress()
-
-    setAccount(signerAddress)
-
-    setSigner(signer)
+    setAccount(address)
   }
 
   // ===========================================================================
@@ -104,7 +105,7 @@ function Login() {
 
   // handleConnectAccount takes care of the connection to the browser wallet.
   async function handleConnectAccount() {
-    await provider.send('eth_requestAccounts', []).then((accounts: string) => {
+    await connect({ name: 'MetaMask', chainId: 1 }).then(() => {
       init().then(() => setLoading(false))
     })
   }
@@ -116,19 +117,22 @@ function Login() {
 
     const date = getNowDate()
 
-    const doc = { address: account as string, dateTime: date }
+    const doc = { address: address as string, dateTime: date }
 
-    const parsedDoc = docToUint8Array(doc)
+    const parsedDoc = JSON.stringify(doc)
 
     // signerFn connects to the game Engine sending the signature and the signed document.
     const signerFn = (signerResponse: any) => {
+      console.log(signerResponse)
+
       const data = { ...doc, sig: signerResponse }
       connectToGameEngine(data)
     }
 
     // signer.signmessage signs the data. The underlying code will apply the Ardan stamp and
     // ID to the signature thanks to changes made to the ether.js api.
-    signer?.signMessage(parsedDoc).then(signerFn)
+
+    signMessage(parsedDoc).then(signerFn)
   }
 
   // ===========================================================================
@@ -152,9 +156,16 @@ function Login() {
         </h2>
         Or you can also select a provider to create one.
         <div id="wallets__wrapper" className="mt-4">
-          {account && !loading ? (
-            <div className="d-flex">
-              <span className="ml-2">Wallet {account} connected</span>
+          {isConnected && !loading ? (
+            <div className="d-flex justify-content-evenly">
+              <span className="ml-2">Wallet {address} connected</span>
+              <div
+                onClick={() => disconnect()}
+                className="mx-2"
+                style={{ cursor: 'pointer' }}
+              >
+                <LogOutIcon />
+              </div>
             </div>
           ) : (
             <Button

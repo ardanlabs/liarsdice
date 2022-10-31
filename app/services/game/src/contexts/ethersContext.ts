@@ -4,7 +4,7 @@ import React from 'react'
 export interface ethersConnectionInterface {
   network: object
   signer: Signer
-  account: string | undefined
+  account: string | null
 }
 
 export interface ethersContextInterface {

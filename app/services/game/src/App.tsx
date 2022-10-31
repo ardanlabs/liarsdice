@@ -17,6 +17,7 @@ import {
 import useEthersConnection from './components/hooks/useEthersConnection'
 import WrongNetwork from './components/wrongNetwork'
 import { Network } from '@ethersproject/networks'
+import { WalletProvider } from '@viaprotocol/web3-wallets'
 
 // =============================================================================
 
@@ -106,7 +107,6 @@ function App() {
   useEffect(effectFn, [])
 
   // ===========================================================================
-
   // Renders this final markup.
   return (
     <div
@@ -114,16 +114,18 @@ function App() {
       style={{ scrollSnapType: 'y mandatory' }}
       onClick={hideDropdowns}
     >
-      <EthersContext.Provider value={getEthersContextDefaultValue()}>
-        <ToastContainer />
-        <GameContext.Provider value={getProviderGame}>
-          <Routes>
-            <Route path="/" element={<Login />}></Route>
-            <Route path="/mainroom" element={<MainRoom />}></Route>
-            <Route path="/wrongNetwork" element={<WrongNetwork />}></Route>
-          </Routes>
-        </GameContext.Provider>
-      </EthersContext.Provider>
+      <WalletProvider>
+        <EthersContext.Provider value={getEthersContextDefaultValue()}>
+          <ToastContainer />
+          <GameContext.Provider value={getProviderGame}>
+            <Routes>
+              <Route path="/" element={<Login />}></Route>
+              <Route path="/mainroom" element={<MainRoom />}></Route>
+              <Route path="/wrongNetwork" element={<WrongNetwork />}></Route>
+            </Routes>
+          </GameContext.Provider>
+        </EthersContext.Provider>
+      </WalletProvider>
     </div>
   )
 }
