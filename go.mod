@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/ardanlabs/conf/v3 v3.1.2
-	github.com/ardanlabs/ethereum v0.6.0
+	github.com/ardanlabs/ethereum v0.7.0
 	github.com/dimfeld/httptreemux/v5 v5.5.0
 	github.com/ethereum/go-ethereum v1.10.25
 	github.com/gdamore/tcell/v2 v2.5.3
