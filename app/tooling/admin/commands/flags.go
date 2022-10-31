@@ -146,7 +146,10 @@ func validate(f Flags, args Args) error {
 
 	if _, exists := f["a"]; exists {
 		if args.ContractID == "" {
-			return errors.New("missing contract id")
+			args.ContractID = os.Getenv("GAME_CONTRACT_ID")
+			if args.ContractID == "" {
+				return errors.New("missing contract id")
+			}
 		}
 		if args.Money <= 0.0 {
 			return errors.New("incorrect amount of USD")
@@ -156,7 +159,10 @@ func validate(f Flags, args Args) error {
 
 	if _, exists := f["r"]; exists {
 		if args.ContractID == "" {
-			return errors.New("missing contract id")
+			args.ContractID = os.Getenv("GAME_CONTRACT_ID")
+			if args.ContractID == "" {
+				return errors.New("missing contract id")
+			}
 		}
 		return nil
 	}
