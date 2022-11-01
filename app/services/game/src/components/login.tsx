@@ -7,10 +7,11 @@ import { useNavigate } from 'react-router-dom'
 import { getAppConfig } from '..'
 import { token } from '../utils/axiosConfig'
 import useEthersConnection from './hooks/useEthersConnection'
-import docToUint8Array from '../utils/docToUint8Array'
 import useGame from './hooks/useGame'
 import { WalletContext } from '@viaprotocol/web3-wallets'
 import LogOutIcon from './icons/logout'
+import CoinBaseLogo from './icons/coinbase'
+import WalletConnectLogo from './icons/walletconnect'
 
 // Login component.
 // Doesn't receives parameters
@@ -40,8 +41,6 @@ function Login() {
   // Prompts user to connect to metamask usign the provider
   // and registers it to useEthersConnection hook
   async function init() {
-    console.log(address)
-
     setAccount(address)
   }
 
@@ -104,8 +103,8 @@ function Login() {
   // ===========================================================================
 
   // handleConnectAccount takes care of the connection to the browser wallet.
-  async function handleConnectAccount() {
-    await connect({ name: 'MetaMask', chainId: 1 }).then(() => {
+  async function handleConnectAccount(wallet: { name: any; chainId: any }) {
+    await connect(wallet).then(() => {
       init().then(() => setLoading(false))
     })
   }
@@ -123,8 +122,6 @@ function Login() {
 
     // signerFn connects to the game Engine sending the signature and the signed document.
     const signerFn = (signerResponse: any) => {
-      console.log(signerResponse)
-
       const data = { ...doc, sig: signerResponse }
       connectToGameEngine(data)
     }
@@ -168,16 +165,41 @@ function Login() {
               </div>
             </div>
           ) : (
-            <Button
-              {...{
-                id: 'metamask__wrapper',
-                clickHandler: handleConnectAccount,
-                classes: 'd-flex align-items-center',
-              }}
-            >
-              <MetamaskLogo {...{ width: '50px', height: '50px' }} />
-              <span className="ml-4"> Metamask </span>
-            </Button>
+            <div>
+              <Button
+                {...{
+                  id: 'metamask__wrapper',
+                  clickHandler: () =>
+                    handleConnectAccount({ name: 'MetaMask', chainId: 1 }),
+                  classes: 'd-flex align-items-center',
+                }}
+              >
+                <MetamaskLogo {...{ width: '50px', height: '50px' }} />
+                <span className="ml-4"> Metamask </span>
+              </Button>
+              <Button
+                {...{
+                  id: 'coinbase__wrapper',
+                  clickHandler: () =>
+                    handleConnectAccount({ name: 'Coinbase', chainId: 1337 }),
+                  classes: 'd-flex align-items-center',
+                }}
+              >
+                <CoinBaseLogo {...{ width: '50px', height: '50px' }} />
+                <span className="ml-4"> Coinbase </span>
+              </Button>
+              <Button
+                {...{
+                  id: 'walletConnect__wrapper',
+                  clickHandler: () =>
+                    handleConnectAccount({ name: 'WalletConnect', chainId: 1 }),
+                  classes: 'd-flex align-items-center',
+                }}
+              >
+                <WalletConnectLogo />
+                <span className="ml-4"> Wallet Connect</span>
+              </Button>
+            </div>
           )}
         </div>
         <div id="wallets__wrapper" className="mt-4">

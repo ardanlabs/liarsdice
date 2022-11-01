@@ -19,6 +19,7 @@ import { connectResponse, defaultApiError } from '../../types/responses.d'
 import { getAppConfig } from '../..'
 import { toast } from 'react-toastify'
 import { capitalize } from '../../utils/capitalize'
+import { useNavigate } from 'react-router-dom'
 
 // Create an axios instance to keep the token updated
 const axiosInstance = axios.create({
@@ -28,6 +29,8 @@ const axiosInstance = axios.create({
 })
 
 function useGame() {
+  const navigate = useNavigate()
+
   // Extracts account from useEthersConnection hook
   const { account } = useEthersConnection()
 
@@ -121,7 +124,7 @@ function useGame() {
         `bearer ${connectResponse.data.token}`,
       )
       const getAppConfigFn = () => {
-        window.location.reload()
+        navigate('/mainroom')
       }
       getAppConfig.then(getAppConfigFn)
     }
