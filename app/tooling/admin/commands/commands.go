@@ -88,7 +88,7 @@ func Deploy(ctx context.Context, converter *currency.Converter, ethereum *ethere
 
 	// =========================================================================
 
-	const gasLimit = 1600000
+	const gasLimit = 1700000
 	const valueGwei = 0.0
 	tranOpts, err := ethereum.NewTransactOpts(ctx, gasLimit, big.NewFloat(valueGwei))
 	if err != nil {
