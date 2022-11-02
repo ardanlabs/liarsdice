@@ -77,6 +77,8 @@ function Transaction(props: transactionProps) {
       .get(`http://${apiUrl}/usd2wei/${transactionAmount}`)
       .then(async (response: usd2weiResponse) => {
         const sendTransactionSendFn = async (txResponse: any) => {
+          console.log(txResponse)
+
           const transaction = await txResponse.wait(0)
 
           if (transaction.status !== 1) {

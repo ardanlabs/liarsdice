@@ -40,7 +40,9 @@ code {
   background-color: var(--modals);
 }
 
-#metamask__wrapper {
+#metamask__wrapper,
+#coinbase__wrapper,
+#walletConnect__wrapper {
   font-family: 'Euclid Circular B Medium', sans-serif;
   font-weight: 700;
   width: 100%;
@@ -226,72 +228,83 @@ code {
 }
 
 /* Metamask svg */
-.st0 {
+#metamask__wrapper .st0 {
   fill: #E2761B;
   stroke: #E2761B;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st1 {
+#metamask__wrapper .st1 {
   fill: #E4761B;
   stroke: #E4761B;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st2 {
+#metamask__wrapper .st2 {
   fill: #D7C1B3;
   stroke: #D7C1B3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st3 {
+#metamask__wrapper .st3 {
   fill: #233447;
   stroke: #233447;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st4 {
+#metamask__wrapper .st4 {
   fill: #CD6116;
   stroke: #CD6116;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st5 {
+#metamask__wrapper .st5 {
   fill: #E4751F;
   stroke: #E4751F;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st6 {
+#metamask__wrapper .st6 {
   fill: #F6851B;
   stroke: #F6851B;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st7 {
+#metamask__wrapper .st7 {
   fill: #C0AD9E;
   stroke: #C0AD9E;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st8 {
+#metamask__wrapper .st8 {
   fill: #161616;
   stroke: #161616;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-.st9 {
+#metamask__wrapper .st9 {
   fill: #763D16;
   stroke: #763D16;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+
+#walletConnect__wrapper .st0 {
+  fill-rule: evenodd;
+  clip-rule: evenodd;
+  fill: url(#SVGID_1_);
+}
+
+#walletConnect__wrapper .st1 {
+  fill: #FFFFFF;
 }

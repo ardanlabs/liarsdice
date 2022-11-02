@@ -24,7 +24,7 @@ function useEthersConnection() {
   const signer = ethersConnection.signer
 
   // Signer account
-  function setAccount(account: string | undefined) {
+  function setAccount(account: string | null) {
     const newContext = ethersConnection
     newContext.account = account
 
