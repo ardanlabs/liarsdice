@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 
 import { motion, AnimatePresence, MotionStyle } from 'framer-motion'
 
@@ -157,7 +157,7 @@ function NotificationCenter(props: NotificationCenterProps) {
                       borderBottom: '1px solid #9f9f9f',
                     }}
                   >
-                    {notification.content}
+                    {notification.content as ReactNode}
                   </motion.div>
                 )
               })}

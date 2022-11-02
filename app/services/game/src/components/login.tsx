@@ -12,6 +12,7 @@ import { WalletContext } from '@viaprotocol/web3-wallets'
 import LogOutIcon from './icons/logout'
 import CoinBaseLogo from './icons/coinbase'
 import WalletConnectLogo from './icons/walletconnect'
+import { Web3Provider } from '@ethersproject/providers'
 
 // Login component.
 // Doesn't receives parameters
@@ -29,10 +30,9 @@ function Login() {
 
   // Extracts functions from useEthersConnection Hook
   // useEthersConnection hook handles all connections to ethers.js
-  const { setSigner, account, signer, setAccount, provider } =
-    useEthersConnection()
+  const { account, setAccount, setSigner } = useEthersConnection()
 
-  const { connect, isConnected, disconnect, address, signMessage } =
+  const { connect, isConnected, disconnect, address, signMessage, provider } =
     useContext(WalletContext)
 
   // Sets local state to trigger re-render when load is complete.
@@ -41,6 +41,11 @@ function Login() {
   // Prompts user to connect to metamask usign the provider
   // and registers it to useEthersConnection hook
   async function init() {
+    if (provider instanceof Web3Provider) {
+      const signer = provider.getSigner()
+      setSigner(signer)
+    }
+
     setAccount(address)
   }
 
@@ -75,7 +80,7 @@ function Login() {
   // missing dependencies.
 
   // eslint-disable-next-line
-  useEffect(accountsChangeUEFn, [])
+  useEffect(accountsChangeUEFn, [isConnected])
 
   // ===========================================================================
 
