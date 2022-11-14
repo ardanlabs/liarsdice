@@ -53,10 +53,10 @@ game-tuio:
 	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
 
 react-install:
-	yarn --cwd app/services/game/ install
+	yarn --cwd app/services/ui/ install
 
-game-gui: react-install
-	yarn --cwd app/services/game/ start
+app-ui: react-install
+	yarn --cwd app/services/ui/ start
 
 # ==============================================================================
 # These commands build and deploy basic smart contract.
@@ -144,7 +144,7 @@ list:
 # $(shell git rev-parse --short HEAD)
 VERSION := 1.0
 
-all: game-engine game-ui
+all: game-engine ui
 
 game-engine:
 	docker build \
@@ -154,7 +154,7 @@ game-engine:
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
 
-game-ui:
+ui:
 	docker -l debug build \
 		-f zarf/docker/dockerfile.ui \
 		-t liarsdice-game-ui:$(VERSION) \

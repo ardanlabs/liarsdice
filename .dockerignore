@@ -1,6 +1,7 @@
 .github/
 .git/
-app/services/game/node_modules/
+app/services/ui/node_modules/
+app/services/ui/yarn.lock
 **/npm-debug.log
 zarf/docker/
 zarf/ethereum/geth/

@@ -8,12 +8,20 @@ WORKDIR /usr/src/app
 # COPY ../../app/services/game/.env.kind /usr/src/app/.env
 
 # copy the app, note .dockerignore
-COPY ../../app/services/game/package.json /usr/src/app/package.json
-RUN npm install
-COPY ../../app/services/game/. /usr/src/app/
-RUN npm run generate
+COPY ../../app/services/ui/package.json /usr/src/app/package.json
+RUN yarn install
+COPY ../../app/services/ui/. /usr/src/app/
+RUN yarn run build
 
 ### STAGE 2: CADDY ###
 FROM caddy:2.6-alpine
-COPY --from=build /usr/src/app/dist /usr/share/caddy/
+COPY --from=build /usr/src/app/build /usr/share/caddy/
 EXPOSE 80
+
+
+LABEL org-opencontainers. image. created="${BUILD DATE}" \
+  org.opencontainers. image. title="engine" \
+  org.opencontainers. image.authors="Bruno Belucci <bruno. belucci@ardanlabs.com>" \
+  org.opencontainers. image. source="https://github.com/ardanlabs/liarsdice/app/services/ui" \
+  org-opencontainers.image.revision="${BUILD_REF}" \
+  org.opencontainers. image. vendor="Ardan Labs"
