@@ -156,7 +156,7 @@ game-engine:
 
 game-ui:
 	docker -l debug build \
-		-f zarf/docker/dockerfile.game \
+		-f zarf/docker/dockerfile.ui \
 		-t liarsdice-game-ui:$(VERSION) \
 		--progress=plain \
 		--build-arg BUILD_REF=$(VERSION) \
