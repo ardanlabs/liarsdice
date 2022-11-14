@@ -30,8 +30,10 @@ import (
 	Add in-game chat support.
 	Add a Drain function to the smart contract.
 	Add a account fix function to adjust balances.
+	Have engine sign all transactions to the smart contract.
 
 	-- Browser UI
+	Upgrade deps to latest.
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.

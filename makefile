@@ -41,7 +41,7 @@ dev.update:
 # Game Engine and UI
 
 game-up:
-	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
+	CGO_ENABLED=0 go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
 game-tui1:
 	go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
@@ -70,7 +70,7 @@ contract-build:
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 admin-build:
-	go build -o admin app/tooling/admin/main.go
+	CGO_ENABLED=0 go build -o admin app/tooling/admin/main.go
 
 contract-deploy: contract-build admin-build
 	./admin -d
@@ -166,11 +166,11 @@ ui:
 # ==============================================================================
 # Docker Compose
 
-compose-up:
+fe-up:
 	docker compose -f zarf/docker/compose.yml up
 
-compose-down:
+fe-down:
 	docker compose -f zarf/docker/compose.yml down
 
-compose-logs:
+fe-logs:
 	docker compose -f zarf/docker/compose.yml logs

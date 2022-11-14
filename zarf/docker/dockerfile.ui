@@ -1,19 +1,15 @@
 FROM node:16 as build
 
-# create destination directory
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-# Set environment variables
-# COPY ../../app/services/game/.env.kind /usr/src/app/.env
-
-# copy the app, note .dockerignore
 COPY ../../app/services/ui/package.json /usr/src/app/package.json
 RUN yarn install
+
 COPY ../../app/services/ui/. /usr/src/app/
 RUN yarn run build
 
-### STAGE 2: CADDY ###
+
 FROM caddy:2.6-alpine
 COPY --from=build /usr/src/app/build /usr/share/caddy/
 EXPOSE 80

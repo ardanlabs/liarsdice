@@ -13,8 +13,8 @@ services:
     ports:
       - 3000:3000
     environment:
-      GAME_CONTRACT_ID: "0x531130464929826c57BBBF989e44085a02eeB120"
-      BANK_NETWORK: "http://host.docker.internal:8545"
+      GAME_CONTRACT_ID: "0xC91dB6B1012701De8BE5E5343cb877298c3705d9"
+      BANK_NETWORK: "http://0.0.0.0:8545"
 
   ui:
     container_name: ui
@@ -22,6 +22,6 @@ services:
     ports:
       - 3001:3001
     environment:
-      GAME_CONTRACT_ID: "0x531130464929826c57BBBF989e44085a02eeB120"
-      BANK_NETWORK: "http://host.docker.internal:8545"
+      GAME_CONTRACT_ID: "0xC91dB6B1012701De8BE5E5343cb877298c3705d9"
+      BANK_NETWORK: "http://0.0.0.0:8545"
       HOST: "0.0.0.0"
