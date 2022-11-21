@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -51,7 +52,7 @@ var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's
 
 // Board represents the game board and all its state.
 type Board struct {
-	accountID  string
+	accountID  common.Address
 	engine     *engine.Engine
 	config     engine.Config
 	screen     tcell.Screen
@@ -64,7 +65,7 @@ type Board struct {
 }
 
 // New contructs a game board and renders the board.
-func New(engine *engine.Engine, accountID string) (*Board, error) {
+func New(engine *engine.Engine, accountID common.Address) (*Board, error) {
 	config, err := engine.Configuration()
 	if err != nil {
 		return nil, fmt.Errorf("get game configuration: %w", err)
@@ -113,6 +114,6 @@ func (b *Board) Run() chan struct{} {
 
 // Events handles any events from the websocket. This function should be
 // registered with any code receiving the web socket events.
-func (b *Board) Events(event string, address string) {
+func (b *Board) Events(event string, address common.Address) {
 	b.webEvents(event, address)
 }

@@ -1,5 +1,7 @@
 package engine
 
+import "github.com/ethereum/go-ethereum/common"
+
 // ErrorResponse is the form used for API responses from failures in the API.
 type ErrorResponse struct {
 	Error  string            `json:"error"`
@@ -8,42 +10,42 @@ type ErrorResponse struct {
 
 // Config represents the configuration of the game engine.
 type Config struct {
-	Network    string `json:"network"`
-	ChainID    int    `json:"chainId"`
-	ContractID string `json:"contractId"`
+	Network    string         `json:"network"`
+	ChainID    int            `json:"chainId"`
+	ContractID common.Address `json:"contractId"`
 }
 
 // Token contains the user game token and public address of the player.
 type Token struct {
-	Token   string `json:"token"`
-	Address string `json:"address"`
+	Token   string         `json:"token"`
+	Address common.Address `json:"address"`
 }
 
 // Status represents the game status.
 type Status struct {
-	Status        string   `json:"status"`
-	AnteUSD       float64  `json:"anteUSD"`
-	LastOutAcctID string   `json:"lastOut"`
-	LastWinAcctID string   `json:"lastWin"`
-	CurrentAcctID string   `json:"currentID"`
-	Round         int      `json:"round"`
-	Cups          []Cup    `json:"cups"`
-	CupsOrder     []string `json:"playerOrder"`
-	Bets          []Bet    `json:"bets"`
-	Balances      []string `json:"balances"`
+	Status        string           `json:"status"`
+	AnteUSD       float64          `json:"anteUSD"`
+	LastOutAcctID common.Address   `json:"lastOut"`
+	LastWinAcctID common.Address   `json:"lastWin"`
+	CurrentAcctID common.Address   `json:"currentID"`
+	Round         int              `json:"round"`
+	Cups          []Cup            `json:"cups"`
+	CupsOrder     []common.Address `json:"playerOrder"`
+	Bets          []Bet            `json:"bets"`
+	Balances      []string         `json:"balances"`
 }
 
 // Bet represents the bet response.
 type Bet struct {
-	AccountID string `json:"account"`
-	Number    int    `json:"number"`
-	Suite     int    `json:"suite"`
+	AccountID common.Address `json:"account"`
+	Number    int            `json:"number"`
+	Suite     int            `json:"suite"`
 }
 
 // Cup represents the cup response.
 type Cup struct {
-	AccountID string `json:"account"`
-	Dice      []int  `json:"dice"`
-	LastBet   Bet    `json:"lastBet"`
-	Outs      int    `json:"outs"`
+	AccountID common.Address `json:"account"`
+	Dice      []int          `json:"dice"`
+	LastBet   Bet            `json:"lastBet"`
+	Outs      int            `json:"outs"`
 }

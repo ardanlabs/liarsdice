@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ardanlabs/ethereum"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gorilla/websocket"
 )
 
@@ -37,7 +38,7 @@ func (e *Engine) URL() string {
 }
 
 // Connect authenticates the use to the game engine.
-func (e *Engine) Connect(keyStorePath string, address string, passPhrase string) (Token, error) {
+func (e *Engine) Connect(keyStorePath string, address common.Address, passPhrase string) (Token, error) {
 	keyFile, err := findKeyFile(keyStorePath, address)
 	if err != nil {
 		return Token{}, fmt.Errorf("find key file: %w", err)
@@ -49,8 +50,8 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}
 
 	dt := struct {
-		Address  string `json:"address"`
-		DateTime string `json:"dateTime"` // YYYYMMDDHHMMSS
+		Address  common.Address `json:"address"`
+		DateTime string         `json:"dateTime"` // YYYYMMDDHHMMSS
 	}{
 		Address:  address,
 		DateTime: time.Now().UTC().Format("20060102150405"),
@@ -62,9 +63,9 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 	}
 
 	dts := struct {
-		Address   string `json:"address"`
-		DateTime  string `json:"dateTime"`
-		Signature string `json:"sig"`
+		Address   common.Address `json:"address"`
+		DateTime  string         `json:"dateTime"`
+		Signature string         `json:"sig"`
 	}{
 		Address:   address,
 		DateTime:  dt.DateTime,
@@ -89,7 +90,7 @@ func (e *Engine) Connect(keyStorePath string, address string, passPhrase string)
 }
 
 // Events establishes a web socket connection to the game engine.
-func (e *Engine) Events(f func(event string, address string)) (func(), error) {
+func (e *Engine) Events(f func(event string, address common.Address)) (func(), error) {
 	url := strings.Replace(e.url, "http", "ws", 1)
 	url = fmt.Sprintf("%s/v1/game/events", url)
 
@@ -111,16 +112,16 @@ func (e *Engine) Events(f func(event string, address string)) (func(), error) {
 		for {
 			_, message, err := socket.ReadMessage()
 			if err != nil {
-				f("error", err.Error()[:30])
+				f("error: "+err.Error()[:30], common.Address{})
 				return
 			}
 
 			var event struct {
-				Type    string `json:"type"`
-				Address string `json:"address"`
+				Type    string         `json:"type"`
+				Address common.Address `json:"address"`
 			}
 			if err := json.Unmarshal(message, &event); err != nil {
-				f("error", err.Error()[:30])
+				f("error: "+err.Error()[:30], common.Address{})
 				continue
 			}
 			f(event.Type, event.Address)
@@ -280,7 +281,7 @@ func (e Engine) do(url string, result interface{}, input []byte) error {
 }
 
 // findKeyFile searches the keystore for the specified address key file.
-func findKeyFile(keyStorePath string, address string) (string, error) {
+func findKeyFile(keyStorePath string, address common.Address) (string, error) {
 	keyStorePath = strings.TrimSuffix(keyStorePath, "/")
 	errFound := errors.New("found")
 
@@ -294,7 +295,7 @@ func findKeyFile(keyStorePath string, address string) (string, error) {
 			return nil
 		}
 
-		if strings.Contains(strings.ToLower(fileName), strings.ToLower(address[2:])) {
+		if strings.Contains(strings.ToLower(fileName), strings.ToLower(address.Hex()[2:])) {
 			filePath = fmt.Sprintf("%s/%s", keyStorePath, fileName)
 			return errFound
 		}

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 )
@@ -62,7 +63,8 @@ func (b *Board) drawBoard(status engine.Status) {
 	b.print(helpX+11, statusY-5, fmt.Sprintf("%d   ", status.Round))
 
 	// Show the account who last won and lost.
-	if status.LastWinAcctID != "" {
+	var empty common.Address
+	if status.LastWinAcctID != empty {
 		b.print(helpX+11, statusY-3, b.fmtAddress(status.LastWinAcctID))
 		b.print(helpX+11, statusY-2, b.fmtAddress(status.LastOutAcctID))
 	}
@@ -122,7 +124,7 @@ func (b *Board) drawBoard(status engine.Status) {
 		b.print(boardWidth-(balWidth+2), addrY, bal)
 
 		// Show the dice for the connected account.
-		if strings.EqualFold(cup.AccountID, b.accountID) {
+		if cup.AccountID == b.accountID {
 			if cup.Dice[0] != 0 {
 				dice := fmt.Sprintf("[%d][%d][%d][%d][%d]", cup.Dice[0], cup.Dice[1], cup.Dice[2], cup.Dice[3], status.Cups[i].Dice[4])
 				b.print(myDiceX, myDiceY, dice)
@@ -234,11 +236,8 @@ func (b *Board) print(x, y int, str string) {
 }
 
 // fmtAddress provides a shortened version of an address.
-func (*Board) fmtAddress(address string) string {
-	if len(address) != 42 {
-		return address
-	}
-	return fmt.Sprintf("%s..%s", address[:5], address[39:])
+func (*Board) fmtAddress(address common.Address) string {
+	return fmt.Sprintf("%s..%s", address.Hex()[:5], address.Hex()[39:])
 }
 
 // =============================================================================

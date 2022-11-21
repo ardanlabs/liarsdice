@@ -3,6 +3,7 @@ package bank
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 
@@ -19,19 +20,19 @@ import (
 // information about account balances.
 type Bank struct {
 	logger     *zap.SugaredLogger
-	contractID string
-	ethereum   *ethereum.Ethereum
+	contractID common.Address
+	ethereum   *ethereum.Client
 	contract   *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
-func New(ctx context.Context, logger *zap.SugaredLogger, network string, keyPath string, passPhrase string, contractID string) (*Bank, error) {
-	ethereum, err := ethereum.New(ctx, network, keyPath, passPhrase)
+func New(ctx context.Context, logger *zap.SugaredLogger, backend ethereum.Backend, privateKey *ecdsa.PrivateKey, contractID common.Address) (*Bank, error) {
+	clt, err := ethereum.NewClient(backend, privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("network connect: %w", err)
+		return nil, fmt.Errorf("client: %w", err)
 	}
 
-	contract, err := bank.NewBank(common.HexToAddress(contractID), ethereum.RawClient())
+	contract, err := bank.NewBank(contractID, clt.Backend)
 	if err != nil {
 		return nil, fmt.Errorf("new contract: %w", err)
 	}
@@ -39,44 +40,34 @@ func New(ctx context.Context, logger *zap.SugaredLogger, network string, keyPath
 	b := Bank{
 		logger:     logger,
 		contractID: contractID,
-		ethereum:   ethereum,
+		ethereum:   clt,
 		contract:   contract,
 	}
-
-	b.log(ctx, "new bank", "network", network, "contractid", contractID)
 
 	return &b, nil
 }
 
 // ContractID returns contract id in use.
-func (b *Bank) ContractID() string {
+func (b *Bank) ContractID() common.Address {
 	return b.contractID
 }
 
 // Client returns the underlying contract client.
-func (b *Bank) Client() *ethereum.Ethereum {
+func (b *Bank) Client() *ethereum.Client {
 	return b.ethereum
 }
 
-// AccountBalance will return the balance for the specified account. Only the
-// owner of the smart contract can make this call.
-func (b *Bank) AccountBalance(ctx context.Context, accountID string) (GWei *big.Float, err error) {
-	tranOpts, err := b.ethereum.NewCallOpts(ctx)
+// EthereumBalance returns the ethereum balance for the connected account.
+func (b *Bank) EthereumBalance(ctx context.Context) (wei *big.Int, err error) {
+	balance, err := b.ethereum.Balance(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("new call opts: %w", err)
+		return nil, fmt.Errorf("current balance: %w", err)
 	}
 
-	wei, err := b.contract.AccountBalance(tranOpts, common.HexToAddress(accountID))
-	if err != nil {
-		return nil, fmt.Errorf("account balance: %w", err)
-	}
-
-	b.log(ctx, "account balance", "accountid", accountID, "wei", wei)
-
-	return currency.Wei2GWei(wei), nil
+	return balance, nil
 }
 
-// Balance will return the balance for the connected account.
+// Balance will return the bank balance for the connected account.
 func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 	tranOpts, err := b.ethereum.NewCallOpts(ctx)
 	if err != nil {
@@ -93,24 +84,39 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 	return currency.Wei2GWei(wei), nil
 }
 
+// AccountBalance will return the bank balance for the specified account. Only
+// the owner of the smart contract can make this call.
+func (b *Bank) AccountBalance(ctx context.Context, accountID common.Address) (GWei *big.Float, err error) {
+	tranOpts, err := b.ethereum.NewCallOpts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("new call opts: %w", err)
+	}
+
+	wei, err := b.contract.AccountBalance(tranOpts, accountID)
+	if err != nil {
+		return nil, fmt.Errorf("account balance: %w", err)
+	}
+
+	b.log(ctx, "account balance", "accountid", accountID, "wei", wei)
+
+	return currency.Wei2GWei(wei), nil
+}
+
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
-func (b *Bank) Reconcile(ctx context.Context, winningAccountID string, losingAccountIDs []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
+func (b *Bank) Reconcile(ctx context.Context, winningAccountID common.Address, losingAccountIDs []common.Address, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
 	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewFloat(0))
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
 
 	var loserIDs []common.Address
-	for _, accountID := range losingAccountIDs {
-		loserIDs = append(loserIDs, common.HexToAddress(accountID))
-	}
+	loserIDs = append(loserIDs, losingAccountIDs...)
 
-	winnerID := common.HexToAddress(winningAccountID)
 	anteWei := currency.GWei2Wei(anteGWei)
 	gameFeeWei := currency.GWei2Wei(gameFeeGWei)
 
-	tx, err := b.contract.Reconcile(tranOpts, winnerID, loserIDs, anteWei, gameFeeWei)
+	tx, err := b.contract.Reconcile(tranOpts, winningAccountID, loserIDs, anteWei, gameFeeWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reconcile: %w", err)
 	}
@@ -173,17 +179,6 @@ func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt
 	b.log(ctx, "withdraw completed")
 
 	return tx, receipt, nil
-}
-
-// OwnerBalance returns the current balance for the account used to
-// create this bank.
-func (b *Bank) OwnerBalance(ctx context.Context) (wei *big.Int, err error) {
-	balance, err := b.ethereum.Balance(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("current balance: %w", err)
-	}
-
-	return balance, nil
 }
 
 // =============================================================================

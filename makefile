@@ -44,13 +44,13 @@ game-up:
 	CGO_ENABLED=0 go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
 game-tui1:
-	go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
+	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
 
 game-tui2:
-	go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
+	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
 
 game-tuio:
-	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
+	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
 
 react-install:
 	yarn --cwd app/services/ui/ install
@@ -114,8 +114,9 @@ geth-deposit:
 # go install honnef.co/go/tools/cmd/staticcheck@latest
 # go install golang.org/x/vuln/cmd/govulncheck@latest
 
-test-engine:
-	go test ./... -count=1
+test:
+	CGO_ENABLED=0 go test -count=1 ./...
+	CGO_ENABLED=0 go vet ./...
 	staticcheck -checks=all ./...
 	govulncheck ./...
 

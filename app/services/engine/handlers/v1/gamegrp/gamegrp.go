@@ -20,6 +20,7 @@ import (
 	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/web"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -152,9 +153,9 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 // Configuration returns the basic configuration the front end needs to use.
 func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	info := struct {
-		Network    string `json:"network"`
-		ChainID    int    `json:"chainId"`
-		ContractID string `json:"contractId"`
+		Network    string         `json:"network"`
+		ChainID    int            `json:"chainId"`
+		ContractID common.Address `json:"contractId"`
 	}{
 		Network:    h.Bank.Client().Network(),
 		ChainID:    h.Bank.Client().ChainID(),
@@ -191,7 +192,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	g, err := h.getGame()
 	if err != nil {
@@ -210,7 +211,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 		// Don't share the dice information for other players.
 		dice := []int{0, 0, 0, 0, 0}
-		if strings.Compare(strings.ToLower(accountID), strings.ToLower(address)) == 0 {
+		if accountID == address {
 			dice = cup.Dice
 		}
 		cups = append(cups, Cup{AccountID: cup.AccountID, Dice: dice, LastBet: Bet(cup.LastBet), Outs: cup.Outs})
@@ -266,7 +267,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	if err := g.AddAccount(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
@@ -310,7 +311,7 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	if err := g.RollDice(address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
@@ -332,7 +333,7 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	number, err := strconv.Atoi(web.Param(r, "number"))
 	if err != nil {
@@ -364,7 +365,7 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	if _, _, err := g.CallLiar(address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
@@ -390,7 +391,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
@@ -415,7 +416,7 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
-	balanceGWei, err := h.Bank.AccountBalance(ctx, address)
+	balanceGWei, err := h.Bank.AccountBalance(ctx, common.HexToAddress(address))
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
@@ -440,9 +441,9 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
-	if err := g.NextTurn(address); err != nil {
+	if err := g.NextTurn(); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -464,7 +465,7 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
 	}
-	address := claims.Subject
+	address := common.HexToAddress(claims.Subject)
 
 	outs, err := strconv.Atoi(web.Param(r, "outs"))
 	if err != nil {
@@ -488,7 +489,7 @@ func (h *Handlers) createGame(ctx context.Context, address string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	g, err := game.New(ctx, h.Log, h.Converter, h.Bank, address, h.AnteUSD)
+	g, err := game.New(ctx, h.Log, h.Converter, h.Bank, common.HexToAddress(address), h.AnteUSD)
 	if err != nil {
 		return fmt.Errorf("unable to create game: %w", err)
 	}

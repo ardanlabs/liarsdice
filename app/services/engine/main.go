@@ -13,13 +13,16 @@ import (
 	"time"
 
 	"github.com/ardanlabs/conf/v3"
+	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers"
+	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -156,10 +159,10 @@ func run(log *zap.SugaredLogger) error {
 		return errors.New("smart contract id not provided")
 	}
 
-	converter, err := currency.NewConverter(cfg.Bank.CoinMarketCapKey)
+	converter, err := currency.NewConverter(scbank.BankMetaData.ABI, cfg.Bank.CoinMarketCapKey)
 	if err != nil {
 		log.Infow("unable to create converter, using default", "ERROR", err)
-		converter = currency.NewDefaultConverter()
+		converter = currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 	}
 
 	oneETHToUSD, oneUSDToETH := converter.Values()
@@ -170,7 +173,18 @@ func run(log *zap.SugaredLogger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	bank, err := bank.New(ctx, log, cfg.Bank.Network, cfg.Bank.KeyPath, cfg.Bank.PassPhrase, cfg.Game.ContractID)
+	backend, err := ethereum.CreateDialedBackend(ctx, cfg.Bank.Network)
+	if err != nil {
+		return errors.New("ethereum backend")
+	}
+	defer backend.Close()
+
+	privateKey, err := ethereum.PrivateKeyByKeyFile(cfg.Bank.KeyPath, cfg.Bank.PassPhrase)
+	if err != nil {
+		return errors.New("capture private key")
+	}
+
+	bank, err := bank.New(ctx, log, backend, privateKey, common.HexToAddress(cfg.Game.ContractID))
 	if err != nil {
 		return fmt.Errorf("connecting to bank: %w", err)
 	}

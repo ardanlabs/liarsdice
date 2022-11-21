@@ -9,9 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/app/tooling/admin/commands"
+	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -61,18 +64,29 @@ func run() error {
 	// =========================================================================
 	// Construct the converted for ETH to USD conversions.
 
-	converter, err := currency.NewConverter(args.CoinMarketCapKey)
+	converter, err := currency.NewConverter(scbank.BankMetaData.ABI, args.CoinMarketCapKey)
 	if err != nil {
-		converter = currency.NewDefaultConverter()
+		converter = currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 	}
 	oneETHToUSD, oneUSDToETH := converter.Values()
 
 	// =========================================================================
 	// Construct the bank API.
 
-	bank, err := bank.New(ctx, nil, args.Network, keyFile, args.PassPhrase, args.ContractID)
+	backend, err := ethereum.CreateDialedBackend(ctx, args.Network)
 	if err != nil {
-		return err
+		return errors.New("ethereum backend")
+	}
+	defer backend.Close()
+
+	privateKey, err := ethereum.PrivateKeyByKeyFile(keyFile, args.PassPhrase)
+	if err != nil {
+		return errors.New("capture private key")
+	}
+
+	bank, err := bank.New(ctx, nil, backend, privateKey, common.HexToAddress(args.ContractID))
+	if err != nil {
+		return fmt.Errorf("connecting to bank: %w", err)
 	}
 
 	// =========================================================================

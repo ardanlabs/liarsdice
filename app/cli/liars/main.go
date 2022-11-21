@@ -7,6 +7,7 @@ import (
 	"github.com/ardanlabs/liarsdice/app/cli/liars/board"
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
 	"github.com/ardanlabs/liarsdice/app/cli/liars/settings"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -40,7 +41,7 @@ func run() error {
 	// Establish a client connection to the game engine.
 
 	eng := engine.New(args.Engine)
-	token, err := eng.Connect(keyStorePath, args.AccountID, passPhrase)
+	token, err := eng.Connect(keyStorePath, common.HexToAddress(args.AccountID), passPhrase)
 	if err != nil {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}

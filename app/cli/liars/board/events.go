@@ -5,11 +5,12 @@ import (
 	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // webEvents handles any events from the websocket.
-func (b *Board) webEvents(event string, address string) {
-	if !strings.Contains(address, "read tcp") {
+func (b *Board) webEvents(event string, address common.Address) {
+	if !strings.Contains(event, "read tcp") {
 		message := fmt.Sprintf("addr: %s type: %s", b.fmtAddress(address), event)
 		b.printMessage(message, true)
 	}

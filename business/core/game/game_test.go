@@ -2,119 +2,55 @@ package game_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
+	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
-const (
-	Owner   = "owner"
-	Player1 = "player1"
-	Player2 = "player2"
+var (
+	backend    *ethereum.SimulatedBackend
+	ownerClt   *ethereum.Client
+	player1Clt *ethereum.Client
+	player2Clt *ethereum.Client
 )
 
-// =============================================================================
-// A mock of a Banker. On reconcile no trasanction or receipt will be provided.
+func TestMain(m *testing.M) {
+	var err error
+	backend, err = ethereum.CreateSimulatedBackend(3, true, big.NewInt(100))
+	if err != nil {
+		fmt.Println("create backend", err)
+		os.Exit(1)
+	}
+	defer backend.Close()
 
-// mockBank represents an in-memory bank for testing.
-type mockBank struct {
-	Owner    string
-	Starting map[string]*big.Int
-	Balances map[string]*big.Int
-}
-
-// newMockBank constructs a mock bank for use with the game package.
-func newMockBank() *mockBank {
-	converter := currency.NewDefaultConverter()
-
-	ownerBalanceWei := converter.USD2Wei(big.NewFloat(0.0))
-	player1BalanceWei := converter.USD2Wei(big.NewFloat(100.00))
-	player2BalanceWei := converter.USD2Wei(big.NewFloat(100.00))
-
-	starting := map[string]*big.Int{
-		Owner:   ownerBalanceWei,
-		Player1: player1BalanceWei,
-		Player2: player2BalanceWei,
+	ownerClt, err = ethereum.NewClient(backend, backend.PrivateKeys[0])
+	if err != nil {
+		fmt.Println("create ownerClt client", err)
+		os.Exit(1)
 	}
 
-	balances := map[string]*big.Int{
-		Owner:   ownerBalanceWei,
-		Player1: player1BalanceWei,
-		Player2: player2BalanceWei,
+	player1Clt, err = ethereum.NewClient(backend, backend.PrivateKeys[1])
+	if err != nil {
+		fmt.Println("create player1Clt client", err)
+		os.Exit(1)
 	}
 
-	return &mockBank{
-		Owner:    Owner,
-		Starting: starting,
-		Balances: balances,
-	}
-}
-
-// AccountBalance implements the game.Banker interface and will return the
-// account balance for the specified account.
-func (mb *mockBank) AccountBalance(ctx context.Context, accountID string) (GWei *big.Float, err error) {
-	amountWei, exists := mb.Balances[accountID]
-	if !exists {
-		return nil, fmt.Errorf("account id %q does not exist", accountID)
+	player2Clt, err = ethereum.NewClient(backend, backend.PrivateKeys[2])
+	if err != nil {
+		fmt.Println("create player2Clt client", err)
+		os.Exit(1)
 	}
 
-	return currency.Wei2GWei(amountWei), nil
-}
-
-// Reconcile implements the game.Banker interface and will reconcile a game with
-// the same logic the bank smart contract is using.
-func (mb *mockBank) Reconcile(ctx context.Context, winningAccountID string, losingAccountIDs []string, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
-
-	// The smart contract deals in wei.
-	anteWei := currency.GWei2Wei(anteGWei)
-	gameFeeWei := currency.GWei2Wei(gameFeeGWei)
-
-	// Add the ante for each player to the pot. The initialization is
-	// for the winner's ante.
-	pot := anteWei
-	for _, accountID := range losingAccountIDs {
-		if mb.Balances[accountID].Cmp(anteWei) == -1 {
-			pot = big.NewInt(0).Add(pot, mb.Balances[accountID])
-			mb.Balances[accountID] = big.NewInt(0)
-		} else {
-			pot = big.NewInt(0).Add(pot, anteWei)
-			mb.Balances[accountID] = big.NewInt(0).Sub(mb.Balances[accountID], anteWei)
-		}
-	}
-
-	// This should not happen but check to see if the pot is 0 because none
-	// of the losers had an account balance.
-	if pot.Cmp(big.NewInt(0)) == 0 {
-		return nil, nil, errors.New("pot is zero")
-	}
-
-	// This should not happen but check there is enough in the pot to cover
-	// the game fee.
-	if pot.Cmp(gameFeeWei) == -1 {
-		fmt.Printf("pot less than fee: winner[0] owner[%d]\n", pot)
-		mb.Balances[mb.Owner] = big.NewInt(0).Add(mb.Balances[mb.Owner], pot)
-		return nil, nil, nil
-	}
-
-	// Take the game fee from the pot and give the winner the remaining pot
-	// and the owner the game fee.
-	pot = big.NewInt(0).Sub(pot, gameFeeWei)
-	mb.Balances[winningAccountID] = big.NewInt(0).Add(mb.Balances[winningAccountID], pot)
-	mb.Balances[mb.Owner] = big.NewInt(0).Add(mb.Balances[mb.Owner], gameFeeWei)
-
-	// Create a fake transaction and receipt.
-	const zeroHash string = "0x0000000000000000000000000000000000000000000000000000000000000000"
-	tx := types.NewTransaction(0, common.HexToAddress(zeroHash), big.NewInt(0), 0, big.NewInt(0), nil)
-	receipt := types.NewReceipt(nil, false, 0)
-
-	return tx, receipt, nil
+	m.Run()
 }
 
 // =============================================================================
@@ -123,90 +59,72 @@ func Test_SuccessGamePlay(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	converter := currency.NewDefaultConverter()
-	bank := newMockBank()
+	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
+
+	bank, engine := gameSetup(t)
+
+	player1Addr := player1Clt.Address()
+	player2Addr := player2Clt.Address()
+
+	// =========================================================================
+	// Define the ante for each player
 
 	anteUSD := float64(5.0)
 	anteWei := converter.USD2Wei(big.NewFloat(anteUSD))
 
 	// =========================================================================
-	// Create game and add players
-	// =========================================================================
-
-	// Create a game and add player1 and the owner and first player in the game.
-	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
-	if err != nil {
-		t.Fatalf("unexpected error creating game: %s", err)
-	}
-
-	// Add player2 as the second player in the game.
-	err = g.AddAccount(ctx, Player2)
-	if err != nil {
-		t.Fatalf("unexpected error adding player 2: %s", err)
-	}
-
-	status := g.Info()
-
-	if len(status.Cups) != 2 {
-		t.Fatalf("expecting 2 players; got %d", len(status.Cups))
-	}
-
-	// =========================================================================
 	// Start first round
-	// =========================================================================
 
-	err = g.StartGame()
+	err := engine.StartGame()
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status = g.Info()
-
+	status := engine.Info()
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
 	// =========================================================================
-	// Mocked roll dice so we can validate the winner and loser.
+	// Mocked roll dice so we can validate the winner and loser
 
 	dice := []int{6, 5, 3, 3, 3}
-	g.RollDice(Player1, dice...)
+	engine.RollDice(player1Addr, dice...)
 
 	dice = []int{1, 1, 4, 4, 2}
-	g.RollDice(Player2, dice...)
+	engine.RollDice(player2Addr, dice...)
 
 	// =========================================================================
-	// Game Play.
+	// Game Play: Each player makes a bet and player1 calls liar.
 
-	if err := g.Bet(Player1, 2, 3); err != nil {
+	if err := engine.Bet(player1Addr, 2, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	if err := g.Bet(Player2, 3, 4); err != nil {
+	if err := engine.Bet(player2Addr, 3, 4); err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	// Player1 calls Player2 a liar.
-	winner, loser, err := g.CallLiar(Player1)
+	winner, loser, err := engine.CallLiar(player1Addr)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
 
 	// =========================================================================
-	// Check winner and loser.
+	// Check winner and loser
 
-	if winner != Player1 {
+	if winner != player1Addr {
 		t.Fatalf("expecting 'player1' to be the winner; got '%s'", winner)
 	}
 
-	if loser != Player2 {
+	if loser != player2Addr {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = g.Info()
+	status = engine.Info()
 
-	if status.Cups[Player2].Outs != 1 {
-		t.Fatalf("expecting 'player2' to have 1 out; got %d", status.Cups[Player2].Outs)
+	if status.Cups[player2Addr].Outs != 1 {
+		t.Fatalf("expecting 'player2' to have 1 out; got %d", status.Cups[player2Addr].Outs)
 	}
 
 	if status.Status != game.StatusRoundOver {
@@ -215,9 +133,8 @@ func Test_SuccessGamePlay(t *testing.T) {
 
 	// =========================================================================
 	// Start second round
-	// =========================================================================
 
-	leftToPlay, err := g.NextRound()
+	leftToPlay, err := engine.NextRound()
 	if err != nil {
 		t.Fatalf("unexpected error starting new round: %s", err)
 	}
@@ -226,49 +143,49 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 2 players; got %d", leftToPlay)
 	}
 
-	status = g.Info()
+	status = engine.Info()
 
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
 	// =========================================================================
-	// Mocked roll dice so we can validate the winner and loser.
+	// Mocked roll dice so we can validate the winner and loser
 
 	dice = []int{1, 2, 3, 1, 6}
-	g.RollDice(Player1, dice...)
+	engine.RollDice(player1Addr, dice...)
 
 	dice = []int{3, 2, 6, 5, 6}
-	g.RollDice(Player2, dice...)
+	engine.RollDice(player2Addr, dice...)
 
 	// =========================================================================
-	// Game Play.
+	// Game Play : Player 2 places a bet and player 1 calls liar
 
-	err = g.Bet(Player2, 5, 1)
+	err = engine.Bet(player2Addr, 5, 1)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	winner, loser, err = g.CallLiar(Player1)
+	winner, loser, err = engine.CallLiar(player1Addr)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player2: %s", err)
 	}
 
 	// =========================================================================
-	// Check winner and loser.
+	// Check winner and loser
 
-	if winner != Player1 {
+	if winner != player1Addr {
 		t.Fatalf("expecting 'player1' to be the winner; got '%s'", winner)
 	}
 
-	if loser != Player2 {
+	if loser != player2Addr {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = g.Info()
+	status = engine.Info()
 
-	if status.Cups[Player2].Outs != 2 {
-		t.Fatalf("expecting 'player2' to have 2 out; got %d", status.Cups[Player2].Outs)
+	if status.Cups[player2Addr].Outs != 2 {
+		t.Fatalf("expecting 'player2' to have 2 out; got %d", status.Cups[player2Addr].Outs)
 	}
 
 	if status.Status != game.StatusRoundOver {
@@ -277,9 +194,8 @@ func Test_SuccessGamePlay(t *testing.T) {
 
 	// =========================================================================
 	// Start third round
-	// =========================================================================
 
-	leftToPlay, err = g.NextRound()
+	leftToPlay, err = engine.NextRound()
 	if err != nil {
 		t.Fatalf("unexpected error starting new round: %s", err)
 	}
@@ -288,30 +204,30 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 2 players; got %d", leftToPlay)
 	}
 
-	status = g.Info()
+	status = engine.Info()
 
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
 	// =========================================================================
-	// Mocked roll dice so we can validate the winner and loser.
+	// Mocked roll dice so we can validate the winner and loser
 
 	dice = []int{1, 1, 6, 1, 1}
-	g.RollDice(Player1, dice...)
+	engine.RollDice(player1Clt.Address(), dice...)
 
 	dice = []int{3, 3, 3, 5, 6}
-	g.RollDice(Player2, dice...)
+	engine.RollDice(player2Clt.Address(), dice...)
 
 	// =========================================================================
-	// Game Play.
+	// Game Play : Player 2 makes a bet and player1 calls liar
 
-	err = g.Bet(Player2, 4, 3)
+	err = engine.Bet(player2Addr, 4, 3)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	winner, loser, err = g.CallLiar(Player1)
+	winner, loser, err = engine.CallLiar(player1Addr)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
@@ -319,18 +235,18 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Check winner and loser.
 
-	if winner != Player1 {
+	if winner != player1Addr {
 		t.Fatalf("expecting 'player1' to be the winner; got '%s'", winner)
 	}
 
-	if loser != Player2 {
+	if loser != player2Addr {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = g.Info()
+	status = engine.Info()
 
-	if status.Cups[Player2].Outs != 3 {
-		t.Fatalf("expecting 'player2' to have 3 out; got %d", status.Cups[Player2].Outs)
+	if status.Cups[player2Addr].Outs != 3 {
+		t.Fatalf("expecting 'player2' to have 3 out; got %d", status.Cups[player2Addr].Outs)
 	}
 
 	if status.Status != game.StatusRoundOver {
@@ -339,9 +255,8 @@ func Test_SuccessGamePlay(t *testing.T) {
 
 	// =========================================================================
 	// There should be only one player left, player1
-	// =========================================================================
 
-	leftToPlay, err = g.NextRound()
+	leftToPlay, err = engine.NextRound()
 	if err != nil {
 		t.Fatalf("unexpected error starting new round: %s", err)
 	}
@@ -350,49 +265,63 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 1 player; got %d", leftToPlay)
 	}
 
-	status = g.Info()
+	status = engine.Info()
 
 	if status.Status != game.StatusGameOver {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusGameOver, status.Status)
 	}
 
-	if status.LastWinAcctID != Player1 {
+	if status.LastWinAcctID != player1Addr {
 		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", status.LastWinAcctID)
 	}
 
 	// =========================================================================
 	// Reconcile the game
-	// =========================================================================
 
-	if _, _, err := g.Reconcile(ctx, winner); err != nil {
+	if _, _, err := engine.Reconcile(ctx, winner); err != nil {
 		t.Fatalf("unexpected error reconciling the game: %s", err)
 	}
 
 	// =========================================================================
-	// Check balances.
+	// Check balances
 
-	ownerBalance := bank.Balances[Owner]
-	if ownerBalance.Cmp(anteWei) != 0 {
-		t.Errorf("expecting 'owner' to have a balance of %d WEI; got %d WEI", anteWei, ownerBalance)
+	engineBalance, err := bank.Balance(ctx)
+	if err != nil {
+		t.Fatalf("unexpected to retrieve the balance of the bank owner: %s", err)
 	}
 
-	expBalance := big.NewInt(0).Add(bank.Starting[Player1], anteWei)
-	player1Balance := bank.Balances[Player1]
-	if player1Balance.Cmp(expBalance) != 0 {
-		t.Errorf("expecting 'player1' to have a balance of %d WEI; got %d WEI", expBalance, player1Balance)
+	player1Balance, err := bank.AccountBalance(ctx, player1Addr)
+	if err != nil {
+		t.Fatalf("unexpected to retrieve the balance of player 1: %s", err)
 	}
 
-	expBalance = big.NewInt(0).Sub(bank.Starting[Player2], anteWei)
-	player2Balance := bank.Balances[Player2]
-	if player2Balance.Cmp(expBalance) != 0 {
-		t.Errorf("expecting 'player2' to have a balance of %d WEI; got %d WEI", expBalance, player2Balance)
+	player2Balance, err := bank.AccountBalance(ctx, player2Addr)
+	if err != nil {
+		t.Fatalf("unexpected to retrieve the balance of player 2: %s", err)
+	}
+
+	if currency.GWei2Wei(engineBalance).Cmp(anteWei) != 0 {
+		t.Errorf("expecting 'engine' to have a balance of %d WEI; got %d WEI", anteWei, currency.GWei2Wei(engineBalance))
+	}
+
+	initalDepositWei := converter.USD2Wei(big.NewFloat(100))
+
+	got := currency.GWei2Wei(player1Balance)
+	exp := big.NewInt(0).Add(initalDepositWei, anteWei)
+	if got.Cmp(exp) != 0 {
+		t.Errorf("expecting 'player1' to have a balance of %d WEI; got %d WEI", exp, got)
+	}
+
+	got = currency.GWei2Wei(player2Balance)
+	exp = big.NewInt(0).Sub(initalDepositWei, anteWei)
+	if got.Cmp(exp) != 0 {
+		t.Errorf("expecting 'player2' to have a balance of %d WEI; got %d WEI", exp, got)
 	}
 
 	// =========================================================================
 	// Validate final game state
-	// =========================================================================
 
-	status = g.Info()
+	status = engine.Info()
 
 	if status.Status != game.StatusReconciled {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusReconciled, status.Status)
@@ -400,45 +329,20 @@ func Test_SuccessGamePlay(t *testing.T) {
 }
 
 func Test_InvalidBet(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	_, engine := gameSetup(t)
 
-	converter := currency.NewDefaultConverter()
-	bank := newMockBank()
-
-	anteUSD := float64(5.0)
-
-	// =========================================================================
-	// Create game and add players
-	// =========================================================================
-
-	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
-	if err != nil {
-		t.Fatalf("unexpected error adding owner: %s", err)
-	}
-
-	err = g.AddAccount(ctx, Player2)
-	if err != nil {
-		t.Fatalf("unexpected error adding player 2: %s", err)
-	}
-
-	status := g.Info()
-
-	if len(status.Cups) != 2 {
-		t.Fatalf("expecting 2 players; got %d", len(status.Cups))
-	}
+	player1Addr := player1Clt.Address()
+	player2Addr := player2Clt.Address()
 
 	// =========================================================================
 	// Start first round
-	// =========================================================================
 
-	err = g.StartGame()
+	err := engine.StartGame()
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status = g.Info()
-
+	status := engine.Info()
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
@@ -447,113 +351,224 @@ func Test_InvalidBet(t *testing.T) {
 	// Mocked roll dice so we can validate the winner and loser.
 
 	dice := []int{6, 5, 3, 3, 3}
-	g.RollDice(Player1, dice...)
+	engine.RollDice(player1Addr, dice...)
 
 	dice = []int{1, 1, 4, 4, 2}
-	g.RollDice(Player2, dice...)
+	engine.RollDice(player2Addr, dice...)
 
 	// =========================================================================
-	// Game Play.
+	// Game Play : player 1 makes bet and player 2 makes invalid bet
 
-	if err := g.Bet(Player1, 3, 3); err != nil {
+	if err := engine.Bet(player1Addr, 3, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	g.NextTurn(Player1)
+	engine.NextTurn()
 
-	if err := g.Bet(Player2, 2, 6); err == nil {
+	if err := engine.Bet(player2Addr, 2, 6); err == nil {
 		t.Fatal("expecting error making an invalid bet")
 	}
 }
 
-func Test_GameWithoutEnoughPlayers(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	converter := currency.NewDefaultConverter()
-	bank := newMockBank()
-
-	anteUSD := float64(5.0)
-
-	// =========================================================================
-	// Create game and add players
-	// =========================================================================
-
-	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
-	if err != nil {
-		t.Fatalf("unexpected error adding owner: %s", err)
-	}
-
-	err = g.StartGame()
-	if err == nil {
-		t.Fatal("expecting error trying to start a game without enough players")
-	}
-}
-
 func Test_WrongPlayerTryingToPlay(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	_, engine := gameSetup(t)
 
-	converter := currency.NewDefaultConverter()
-	bank := newMockBank()
-
-	anteUSD := float64(5.0)
-
-	// =========================================================================
-	// Create game and add players
-	// =========================================================================
-
-	g, err := game.New(ctx, nil, converter, bank, Player1, anteUSD)
-	if err != nil {
-		t.Fatalf("unexpected error adding owner: %s", err)
-	}
-
-	err = g.AddAccount(ctx, Player2)
-	if err != nil {
-		t.Fatalf("unexpected error adding player 2: %s", err)
-	}
-
-	status := g.Info()
-
-	if len(status.Cups) != 2 {
-		t.Fatalf("expecting 2 players; got %d", len(status.Cups))
-	}
+	player2Addr := player2Clt.Address()
 
 	// =========================================================================
 	// Start first round
-	// =========================================================================
 
-	err = g.StartGame()
+	err := engine.StartGame()
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status = g.Info()
-
+	status := engine.Info()
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	err = g.Bet(Player2, 1, 1)
+	err = engine.Bet(player2Addr, 1, 1)
 	if err == nil {
 		t.Fatal("expecting error making bet with a player not in the game")
 	}
 }
 
-func Test_NewGameNotEnoughBalance(t *testing.T) {
+func Test_GameWithoutEnoughPlayers(t *testing.T) {
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	converter := currency.NewDefaultConverter()
-	bank := newMockBank()
-
-	anteUSD := float64(2000.0)
+	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
 	// =========================================================================
-	// Create game where account doesn't have enough money
-	// =========================================================================
+	// Players need to deposit money into their accounts
 
-	if _, err := game.New(ctx, nil, converter, bank, Owner, anteUSD); err == nil {
-		t.Fatal("expecting error adding player without enough balance")
+	player1Bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	if err != nil {
+		t.Fatalf("creating new bank for player 1: %s", err)
 	}
+
+	initalDepositGwei := converter.USD2GWei(big.NewFloat(100))
+	_, _, err = player1Bank.Deposit(ctx, initalDepositGwei)
+	if err != nil {
+		t.Fatalf("depositing money into bank for player1: %s", err)
+	}
+
+	// =========================================================================
+	// Create game and add players
+
+	bank, err := bank.New(ctx, nil, backend, ownerClt.PrivateKey(), contractID)
+	if err != nil {
+		t.Fatalf("creating new bank for the engine: %s", err)
+	}
+
+	const anteUSD = 5.0
+	game, err := game.New(ctx, nil, converter, bank, player1Clt.Address(), anteUSD)
+	if err != nil {
+		t.Fatalf("unexpected error creating game: %s", err)
+	}
+
+	// =========================================================================
+	// Start the game with only 1 player
+
+	err = game.StartGame()
+	if err == nil {
+		t.Fatal("expecting error trying to start a game without enough players")
+	}
+}
+
+func Test_NewGameNotEnoughBalance(t *testing.T) {
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
+
+	// =========================================================================
+	// Players need to deposit money into their accounts
+
+	bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	if err != nil {
+		t.Fatalf("creating new bank for player 1: %s", err)
+	}
+
+	const anteUSD = 5.0
+	_, err = game.New(ctx, nil, converter, bank, player1Clt.Address(), anteUSD)
+	if err == nil {
+		t.Fatalf("expecting an error creating a game: %s", err)
+	}
+}
+
+// =============================================================================
+
+func deployContract() (common.Address, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	fmt.Println("Deploying Contract ...")
+	defer fmt.Println("Deployed")
+
+	contractID, err := smartContract(ctx)
+	if err != nil {
+		fmt.Println("error deploying a new contract:", err)
+
+		var empty common.Address
+		return empty, err
+	}
+
+	return contractID, nil
+}
+
+func smartContract(ctx context.Context) (common.Address, error) {
+	var empty common.Address
+
+	tranOpts, err := ownerClt.NewTransactOpts(ctx, 10_000_000, big.NewFloat(0))
+	if err != nil {
+		return empty, err
+	}
+
+	address, tx, _, err := scbank.DeployBank(tranOpts, ownerClt.Backend)
+	if err != nil {
+		return empty, err
+	}
+
+	if _, err := ownerClt.WaitMined(ctx, tx); err != nil {
+		return empty, err
+	}
+
+	return address, nil
+}
+
+func gameSetup(t *testing.T) (*bank.Bank, *game.Game) {
+	contractID, err := deployContract()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
+
+	// =========================================================================
+	// Players need to deposit money into their accounts
+
+	player1Bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	if err != nil {
+		t.Fatalf("creating new bank for player 1: %s", err)
+	}
+
+	player2Bank, err := bank.New(ctx, nil, backend, player2Clt.PrivateKey(), contractID)
+	if err != nil {
+		t.Fatalf("creating new bank for player 2: %s", err)
+	}
+
+	initalDepositGwei := converter.USD2GWei(big.NewFloat(100))
+	_, _, err = player1Bank.Deposit(ctx, initalDepositGwei)
+	if err != nil {
+		t.Fatalf("depositing money into bank for player1: %s", err)
+	}
+
+	_, _, err = player2Bank.Deposit(ctx, initalDepositGwei)
+	if err != nil {
+		t.Fatalf("depositing money into bank for player2: %s", err)
+	}
+
+	// =========================================================================
+	// Create game and add players
+
+	bank, err := bank.New(ctx, nil, backend, ownerClt.PrivateKey(), contractID)
+	if err != nil {
+		t.Fatalf("creating new bank for the engine: %s", err)
+	}
+
+	// Create a game and add player1 as first player in the game.
+	const anteUSD = 5.0
+	game, err := game.New(ctx, nil, converter, bank, player1Clt.Address(), anteUSD)
+	if err != nil {
+		t.Fatalf("unexpected error creating game: %s", err)
+	}
+
+	// Add player2 as the second player in the game.
+	err = game.AddAccount(ctx, player2Clt.Address())
+	if err != nil {
+		t.Fatalf("unexpected error adding player 2: %s", err)
+	}
+
+	status := game.Info()
+
+	if len(status.Cups) != 2 {
+		t.Fatalf("expecting 2 players; got %d", len(status.Cups))
+	}
+
+	return bank, game
 }
