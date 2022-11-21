@@ -75,12 +75,12 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Start first round
 
-	err := engine.StartGame()
+	err := engine.StartGame(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status := engine.Info()
+	status := engine.Info(ctx)
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
@@ -89,23 +89,23 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// Mocked roll dice so we can validate the winner and loser
 
 	dice := []int{6, 5, 3, 3, 3}
-	engine.RollDice(player1Addr, dice...)
+	engine.RollDice(ctx, player1Addr, dice...)
 
 	dice = []int{1, 1, 4, 4, 2}
-	engine.RollDice(player2Addr, dice...)
+	engine.RollDice(ctx, player2Addr, dice...)
 
 	// =========================================================================
 	// Game Play: Each player makes a bet and player1 calls liar.
 
-	if err := engine.Bet(player1Addr, 2, 3); err != nil {
+	if err := engine.Bet(ctx, player1Addr, 2, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	if err := engine.Bet(player2Addr, 3, 4); err != nil {
+	if err := engine.Bet(ctx, player2Addr, 3, 4); err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	winner, loser, err := engine.CallLiar(player1Addr)
+	winner, loser, err := engine.CallLiar(ctx, player1Addr)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
@@ -121,7 +121,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Cups[player2Addr].Outs != 1 {
 		t.Fatalf("expecting 'player2' to have 1 out; got %d", status.Cups[player2Addr].Outs)
@@ -134,7 +134,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Start second round
 
-	leftToPlay, err := engine.NextRound()
+	leftToPlay, err := engine.NextRound(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error starting new round: %s", err)
 	}
@@ -143,7 +143,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 2 players; got %d", leftToPlay)
 	}
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
@@ -153,20 +153,20 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// Mocked roll dice so we can validate the winner and loser
 
 	dice = []int{1, 2, 3, 1, 6}
-	engine.RollDice(player1Addr, dice...)
+	engine.RollDice(ctx, player1Addr, dice...)
 
 	dice = []int{3, 2, 6, 5, 6}
-	engine.RollDice(player2Addr, dice...)
+	engine.RollDice(ctx, player2Addr, dice...)
 
 	// =========================================================================
 	// Game Play : Player 2 places a bet and player 1 calls liar
 
-	err = engine.Bet(player2Addr, 5, 1)
+	err = engine.Bet(ctx, player2Addr, 5, 1)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	winner, loser, err = engine.CallLiar(player1Addr)
+	winner, loser, err = engine.CallLiar(ctx, player1Addr)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player2: %s", err)
 	}
@@ -182,7 +182,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Cups[player2Addr].Outs != 2 {
 		t.Fatalf("expecting 'player2' to have 2 out; got %d", status.Cups[player2Addr].Outs)
@@ -195,7 +195,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Start third round
 
-	leftToPlay, err = engine.NextRound()
+	leftToPlay, err = engine.NextRound(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error starting new round: %s", err)
 	}
@@ -204,7 +204,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 2 players; got %d", leftToPlay)
 	}
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
@@ -214,20 +214,20 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// Mocked roll dice so we can validate the winner and loser
 
 	dice = []int{1, 1, 6, 1, 1}
-	engine.RollDice(player1Clt.Address(), dice...)
+	engine.RollDice(ctx, player1Clt.Address(), dice...)
 
 	dice = []int{3, 3, 3, 5, 6}
-	engine.RollDice(player2Clt.Address(), dice...)
+	engine.RollDice(ctx, player2Clt.Address(), dice...)
 
 	// =========================================================================
 	// Game Play : Player 2 makes a bet and player1 calls liar
 
-	err = engine.Bet(player2Addr, 4, 3)
+	err = engine.Bet(ctx, player2Addr, 4, 3)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	winner, loser, err = engine.CallLiar(player1Addr)
+	winner, loser, err = engine.CallLiar(ctx, player1Addr)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
@@ -243,7 +243,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Cups[player2Addr].Outs != 3 {
 		t.Fatalf("expecting 'player2' to have 3 out; got %d", status.Cups[player2Addr].Outs)
@@ -256,7 +256,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// There should be only one player left, player1
 
-	leftToPlay, err = engine.NextRound()
+	leftToPlay, err = engine.NextRound(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error starting new round: %s", err)
 	}
@@ -265,7 +265,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 1 player; got %d", leftToPlay)
 	}
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Status != game.StatusGameOver {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusGameOver, status.Status)
@@ -321,7 +321,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Validate final game state
 
-	status = engine.Info()
+	status = engine.Info(ctx)
 
 	if status.Status != game.StatusReconciled {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusReconciled, status.Status)
@@ -329,6 +329,9 @@ func Test_SuccessGamePlay(t *testing.T) {
 }
 
 func Test_InvalidBet(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	_, engine := gameSetup(t)
 
 	player1Addr := player1Clt.Address()
@@ -337,12 +340,12 @@ func Test_InvalidBet(t *testing.T) {
 	// =========================================================================
 	// Start first round
 
-	err := engine.StartGame()
+	err := engine.StartGame(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status := engine.Info()
+	status := engine.Info(ctx)
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
@@ -351,26 +354,29 @@ func Test_InvalidBet(t *testing.T) {
 	// Mocked roll dice so we can validate the winner and loser.
 
 	dice := []int{6, 5, 3, 3, 3}
-	engine.RollDice(player1Addr, dice...)
+	engine.RollDice(ctx, player1Addr, dice...)
 
 	dice = []int{1, 1, 4, 4, 2}
-	engine.RollDice(player2Addr, dice...)
+	engine.RollDice(ctx, player2Addr, dice...)
 
 	// =========================================================================
 	// Game Play : player 1 makes bet and player 2 makes invalid bet
 
-	if err := engine.Bet(player1Addr, 3, 3); err != nil {
+	if err := engine.Bet(ctx, player1Addr, 3, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	engine.NextTurn()
+	engine.NextTurn(ctx)
 
-	if err := engine.Bet(player2Addr, 2, 6); err == nil {
+	if err := engine.Bet(ctx, player2Addr, 2, 6); err == nil {
 		t.Fatal("expecting error making an invalid bet")
 	}
 }
 
 func Test_WrongPlayerTryingToPlay(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	_, engine := gameSetup(t)
 
 	player2Addr := player2Clt.Address()
@@ -378,17 +384,17 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 	// =========================================================================
 	// Start first round
 
-	err := engine.StartGame()
+	err := engine.StartGame(ctx)
 	if err != nil {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status := engine.Info()
+	status := engine.Info(ctx)
 	if status.Status != game.StatusPlaying {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	err = engine.Bet(player2Addr, 1, 1)
+	err = engine.Bet(ctx, player2Addr, 1, 1)
 	if err == nil {
 		t.Fatal("expecting error making bet with a player not in the game")
 	}
@@ -436,20 +442,20 @@ func Test_GameWithoutEnoughPlayers(t *testing.T) {
 	// =========================================================================
 	// Start the game with only 1 player
 
-	err = game.StartGame()
+	err = game.StartGame(ctx)
 	if err == nil {
 		t.Fatal("expecting error trying to start a game without enough players")
 	}
 }
 
 func Test_NewGameNotEnoughBalance(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	contractID, err := deployContract()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
@@ -509,13 +515,13 @@ func smartContract(ctx context.Context) (common.Address, error) {
 }
 
 func gameSetup(t *testing.T) (*bank.Bank, *game.Game) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	contractID, err := deployContract()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
@@ -564,7 +570,7 @@ func gameSetup(t *testing.T) (*bank.Bank, *game.Game) {
 		t.Fatalf("unexpected error adding player 2: %s", err)
 	}
 
-	status := game.Info()
+	status := game.Info(ctx)
 
 	if len(status.Cups) != 2 {
 		t.Fatalf("expecting 2 players; got %d", len(status.Cups))

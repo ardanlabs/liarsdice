@@ -203,7 +203,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		return web.Respond(ctx, w, resp, http.StatusOK)
 	}
 
-	status := g.Info()
+	status := g.Info(ctx)
 
 	var cups []Cup
 	for _, accountID := range status.CupsOrder {
@@ -291,7 +291,7 @@ func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http
 	}
 	address := claims.Subject
 
-	if err := g.StartGame(); err != nil {
+	if err := g.StartGame(ctx); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -313,7 +313,7 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 	address := common.HexToAddress(claims.Subject)
 
-	if err := g.RollDice(address); err != nil {
+	if err := g.RollDice(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -345,11 +345,11 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1Web.NewRequestError(fmt.Errorf("converting suite: %s", err), http.StatusBadRequest)
 	}
 
-	if err := g.Bet(address, number, suite); err != nil {
+	if err := g.Bet(ctx, address, number, suite); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info().Cups[address].OrderIdx))
+	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info(ctx).Cups[address].OrderIdx))
 
 	return h.Status(ctx, w, r)
 }
@@ -367,11 +367,11 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 	address := common.HexToAddress(claims.Subject)
 
-	if _, _, err := g.CallLiar(address); err != nil {
+	if _, _, err := g.CallLiar(ctx, address); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	if _, err := g.NextRound(); err != nil {
+	if _, err := g.NextRound(ctx); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -443,7 +443,7 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 	address := common.HexToAddress(claims.Subject)
 
-	if err := g.NextTurn(); err != nil {
+	if err := g.NextTurn(ctx); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
@@ -472,7 +472,7 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 		return v1Web.NewRequestError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
 	}
 
-	if err := g.ApplyOut(address, outs); err != nil {
+	if err := g.ApplyOut(ctx, address, outs); err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 

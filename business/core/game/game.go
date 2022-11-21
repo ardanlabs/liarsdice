@@ -177,7 +177,7 @@ func (g *Game) AddAccount(ctx context.Context, accountID common.Address) error {
 }
 
 // StartGame changes the status to Playing to allow the game to begin.
-func (g *Game) StartGame() error {
+func (g *Game) StartGame(ctx context.Context) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -197,7 +197,7 @@ func (g *Game) StartGame() error {
 // ApplyOut will apply the specified number of outs to the account.
 // If an account is out, it will check the number of active accounts, and end
 // the round if there is only 1 left.
-func (g *Game) ApplyOut(accountID common.Address, outs int) error {
+func (g *Game) ApplyOut(ctx context.Context, accountID common.Address, outs int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -247,7 +247,7 @@ func (g *Game) ApplyOut(accountID common.Address, outs int) error {
 
 // RollDice will generate 5 new random integers for the players cup. The caller
 // can specific the dice if they choose.
-func (g *Game) RollDice(accountID common.Address, manualRole ...int) error {
+func (g *Game) RollDice(ctx context.Context, accountID common.Address, manualRole ...int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -260,12 +260,12 @@ func (g *Game) RollDice(accountID common.Address, manualRole ...int) error {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
-	return g.rollDice(accountID, manualRole...)
+	return g.rollDice(ctx, accountID, manualRole...)
 }
 
 // rollDice will generate 5 new random integers for the players cup. The caller
 // can specific the dice if they choose.
-func (g *Game) rollDice(accountID common.Address, manualRole ...int) error {
+func (g *Game) rollDice(ctx context.Context, accountID common.Address, manualRole ...int) error {
 	cup, exists := g.cups[accountID]
 	if !exists {
 		return fmt.Errorf("account id [%s] does not exist in the game", accountID)
@@ -287,7 +287,7 @@ func (g *Game) rollDice(accountID common.Address, manualRole ...int) error {
 // Bet accepts a bet from an account, but validates the bet is valid first.
 // If the bet is valid, it's added to the list of bets for the game. Then
 // the next player is determined and set.
-func (g *Game) Bet(accountID common.Address, number int, suite int) error {
+func (g *Game) Bet(ctx context.Context, accountID common.Address, number int, suite int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -344,7 +344,7 @@ func (g *Game) Bet(accountID common.Address, number int, suite int) error {
 }
 
 // NextTurn determines which account makes the next move.
-func (g *Game) NextTurn() error {
+func (g *Game) NextTurn(ctx context.Context) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -380,7 +380,7 @@ func (g *Game) nextTurn() {
 
 // CallLiar checks the last bet that was made and determines the winner and
 // loser of the current round.
-func (g *Game) CallLiar(accountID common.Address) (winningAcct common.Address, losingAcct common.Address, err error) {
+func (g *Game) CallLiar(ctx context.Context, accountID common.Address) (winningAcct common.Address, losingAcct common.Address, err error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -452,7 +452,7 @@ func (g *Game) CallLiar(accountID common.Address) (winningAcct common.Address, l
 // NextRound updates the game state for players who are out and determining
 // which player goes next. The function returns the number of players left
 // in the game.
-func (g *Game) NextRound() (int, error) {
+func (g *Game) NextRound(ctx context.Context) (int, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -478,7 +478,7 @@ func (g *Game) NextRound() (int, error) {
 			continue
 		}
 
-		g.rollDice(accountID)
+		g.rollDice(ctx, accountID)
 
 		leftToPlay++
 	}
@@ -488,7 +488,7 @@ func (g *Game) NextRound() (int, error) {
 	if leftToPlay == 1 {
 		g.bets = []Bet{}
 		g.status = StatusGameOver
-		g.rollDice(g.lastWinAcctID, 0, 0, 0, 0, 0)
+		g.rollDice(ctx, g.lastWinAcctID, 0, 0, 0, 0, 0)
 		return 1, nil
 	}
 
@@ -562,7 +562,7 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID common.Address) (
 }
 
 // Info returns a copy of the game status.
-func (g *Game) Info() Status {
+func (g *Game) Info(ctx context.Context) Status {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
