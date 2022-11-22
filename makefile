@@ -27,15 +27,32 @@
 # https://geth.ethereum.org/docs/install-and-build/installing-geth
 # https://docs.soliditylang.org/en/v0.8.11/installing-solidity.html
 
-dev.setup:
+GOLANG       := golang:1.19
+ALPINE       := alpine:3.16
+KIND         := kindest/node:v1.25.3
+GETH := ethereum/client-go:stable
+TELEPRESENCE := docker.io/datawire/tel2:2.8.5
+
+dev.setup.mac.common:
 	brew update
+	brew list kind || brew install kind
+	brew list kubectl || brew install kubectl
+	brew list kustomize || brew install kustomize
 	brew list ethereum || brew install ethereum
 	brew list solidity || brew install solidity
 
-dev.update:
-	brew update
-	brew list ethereum || brew upgrade ethereum
-	brew list solidity || brew upgrade solidity
+dev.setup.mac: dev.setup.mac.common
+	brew datawire/blackbird/telepresence || brew install datawire/blackbird/telepresence
+
+dev.setup.mac.arm64: dev.setup.mac.common
+	brew datawire/blackbird/telepresence-arm64 || brew install datawire/blackbird/telepresence-arm64
+
+dev.docker:
+	docker pull $(GOLANG)
+	docker pull $(ALPINE)
+	docker pull $(KIND)
+	docker pull $(GETH)
+	docker pull $(TELEPRESENCE)
 
 # ==============================================================================
 # Game Engine and UI
@@ -168,8 +185,6 @@ ui:
 # Running from within k8s/kind
 
 KIND_CLUSTER := liars-game-cluster
-TELEPRESENCE := docker.io/datawire/tel2:2.8.5
-GETH := ethereum/client-go:stable
 
 dev-up:
 	kind create cluster \
