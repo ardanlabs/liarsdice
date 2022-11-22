@@ -30,6 +30,7 @@
 GOLANG       := golang:1.19
 NODE         := node:16
 ALPINE       := alpine:3.16
+CADDY        := caddy:2.6-alpine
 KIND         := kindest/node:v1.25.3
 GETH         := ethereum/client-go:stable
 TELEPRESENCE := docker.io/datawire/tel2:2.9.2
@@ -52,6 +53,7 @@ dev.docker:
 	docker pull $(GOLANG)
 	docker pull $(NODE)
 	docker pull $(ALPINE)
+	docker pull $(CADDY)
 	docker pull $(KIND)
 	docker pull $(GETH)
 	docker pull $(TELEPRESENCE)
