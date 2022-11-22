@@ -59,44 +59,6 @@ dev.docker:
 	docker pull $(TELEPRESENCE)
 
 # ==============================================================================
-# Game Engine and UI
-
-game-up:
-	CGO_ENABLED=0 go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
-
-game-tui1:
-	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
-
-game-tui2:
-	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
-
-game-tuio:
-	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
-
-react-install:
-	yarn --cwd app/services/ui/ install
-
-app-ui: react-install
-	yarn --cwd app/services/ui/ start
-
-# ==============================================================================
-# These commands build and deploy basic smart contract.
-
-# This will compile the smart contract and produce the binary code. Then with the
-# abi and binary code, a Go source code file can be generated for Go API access.
-contract-build:
-	solc --abi business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
-	solc --bin business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
-	abigen --bin=business/contract/abi/bank/Bank.bin --abi=business/contract/abi/bank/Bank.abi --pkg=bank --out=business/contract/go/bank/bank.go
-
-# This will deploy the smart contract to the locally running Ethereum environment.
-admin-build:
-	CGO_ENABLED=0 go build -o admin app/tooling/admin/main.go
-
-contract-deploy: contract-build admin-build
-	./admin -d
-
-# ==============================================================================
 # These commands start the Ethereum node and provide examples of attaching
 # directly with potential commands to try, and creating a new account if necessary.
 
@@ -104,10 +66,6 @@ contract-deploy: contract-build admin-build
 # Ethereum mine a block. It provides a minimal environment for development.
 geth-up:
 	geth --dev --ipcpath zarf/ethereum/geth.ipc --http.corsdomain '*' --http --allow-insecure-unlock --rpc.allow-unprotected-txs --http.vhosts=* --mine --miner.threads 1 --verbosity 5 --datadir "zarf/ethereum/" --unlock 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd --password zarf/ethereum/password
-
-# This will signal Ethereum to shutdown.
-geth-down:
-	kill -INT $(shell ps | grep "geth " | grep -v grep | sed -n 1,1p | cut -c1-5)
 
 # This will remove the local blockchain and let you start new.
 geth-reset:
@@ -129,6 +87,44 @@ geth-deposit:
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
 	./admin -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
 	./admin -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
+
+# ==============================================================================
+# These commands build and deploy basic smart contract.
+
+# This will compile the smart contract and produce the binary code. Then with the
+# abi and binary code, a Go source code file can be generated for Go API access.
+contract-build:
+	solc --abi business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
+	solc --bin business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
+	abigen --bin=business/contract/abi/bank/Bank.bin --abi=business/contract/abi/bank/Bank.abi --pkg=bank --out=business/contract/go/bank/bank.go
+
+# This will deploy the smart contract to the locally running Ethereum environment.
+admin-build:
+	CGO_ENABLED=0 go build -o admin app/tooling/admin/main.go
+
+contract-deploy: contract-build admin-build
+	./admin -d
+
+# ==============================================================================
+# Game Engine and UI
+
+game-up:
+	CGO_ENABLED=0 go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
+
+game-tui1:
+	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
+
+game-tui2:
+	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
+
+game-tuio:
+	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
+
+react-install:
+	yarn --cwd app/services/ui/ install
+
+app-ui: react-install
+	yarn --cwd app/services/ui/ start
 
 # ==============================================================================
 # Running tests within the local computer
