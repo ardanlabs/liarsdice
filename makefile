@@ -28,10 +28,11 @@
 # https://docs.soliditylang.org/en/v0.8.11/installing-solidity.html
 
 GOLANG       := golang:1.19
+NODE         := node:16
 ALPINE       := alpine:3.16
 KIND         := kindest/node:v1.25.3
-GETH := ethereum/client-go:stable
-TELEPRESENCE := docker.io/datawire/tel2:2.8.5
+GETH         := ethereum/client-go:stable
+TELEPRESENCE := docker.io/datawire/tel2:2.9.2
 
 dev.setup.mac.common:
 	brew update
@@ -49,6 +50,7 @@ dev.setup.mac.arm64: dev.setup.mac.common
 
 dev.docker:
 	docker pull $(GOLANG)
+	docker pull $(NODE)
 	docker pull $(ALPINE)
 	docker pull $(KIND)
 	docker pull $(GETH)
