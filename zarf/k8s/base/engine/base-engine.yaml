@@ -18,6 +18,9 @@ spec:
         app: engine
     spec:
       terminationGracePeriodSeconds: 60
+      initContainers:
+      # NEED TO DEPLOY CONTRACT AND GET CONTRACTID SET AS
+      # CONFIGURATION FOR THE ENGINE AND UI
       containers:
       # game-engine container configuration
       - name: game-engine
