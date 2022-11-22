@@ -165,6 +165,81 @@ ui:
 		.
 
 # ==============================================================================
+# Running from within k8s/kind
+
+KIND_CLUSTER := liars-game-cluster
+TELEPRESENCE := docker.io/datawire/tel2:2.8.5
+GETH := ethereum/client-go:stable
+
+dev-up:
+	kind create cluster \
+		--image kindest/node:v1.25.3@sha256:f52781bc0d7a19fb6c405c2af83abfeb311f130707a0e219175677e366cc45d1 \
+		--name $(KIND_CLUSTER) \
+		--config zarf/k8s/dev/kind-config.yaml
+	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
+	
+	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
+	kind load docker-image $(GETH) --name $(KIND_CLUSTER)
+	
+	telepresence --context=kind-$(KIND_CLUSTER) helm install
+	telepresence --context=kind-$(KIND_CLUSTER) connect
+
+dev-down:
+	telepresence quit -r -u
+	kind delete cluster --name $(KIND_CLUSTER)
+
+dev-load:
+	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
+	kind load docker-image liarsdice-game-ui:$(VERSION) --name $(KIND_CLUSTER)
+
+dev-apply:
+	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
+		
+	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
+
+	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
+
+dev-restart:
+	kubectl rollout restart deployment sales --namespace=liars-system
+
+dev-update: all dev-load dev-restart
+
+dev-update-apply: all dev-load dev-apply
+
+dev-logs:
+	kubectl logs --namespace=liars-system --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+
+dev-logs-engine:
+	kubectl logs --namespace=liars-system -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+
+dev-logs-ui:
+	kubectl logs --namespace=liars-system -l app=ui --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+
+dev-status:
+	kubectl get nodes -o wide
+	kubectl get svc -o wide
+	kubectl get pods -o wide --watch --all-namespaces
+
+dev-describe:
+	kubectl describe nodes
+	kubectl describe svc
+
+dev-describe-deployment-engine:
+	kubectl describe deployment --namespace=liars-system engine
+
+dev-describe-engine:
+	kubectl describe pod --namespace=liars-system -l app=engine
+
+dev-describe-deployment-ui:
+	kubectl describe deployment --namespace=liars-system ui
+
+dev-describe-ui:
+	kubectl describe pod --namespace=liars-system -l app=ui
+
+# ==============================================================================
 # Docker Compose
 
 fe-up:

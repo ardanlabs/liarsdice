@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ./dev-geth.yaml
+images:
+  - name: geth-image
+    newName: ethereum/client-go
+    newTag: stable

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui
+  namespace: liars-system
+spec:
+  selector:
+    matchLabels:
+      app: ui
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ui
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      containers:
+      - name: game-ui
+        resources:
+          limits:
+            cpu: "1000m" # Up to 2 full cores
+          requests:
+            cpu: "1000m" # Use 1 full cores
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ui-service
+  namespace: liars-system
+spec:
+  selector:
+    app: ui
+  type: ClusterIP
+  ports:
+  - name: game-engine
+    port: 80
+    targetPort: game-engine
