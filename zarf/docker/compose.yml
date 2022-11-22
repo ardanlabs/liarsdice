@@ -13,15 +13,15 @@ services:
     ports:
       - 3000:3000
     environment:
-      GAME_CONTRACT_ID: "0xC91dB6B1012701De8BE5E5343cb877298c3705d9"
+      GAME_CONTRACT_ID: "0x4C71C4C37F9295b66a0Ae09B637651150b367365"
       BANK_NETWORK: "http://0.0.0.0:8545"
 
   ui:
     container_name: ui
     image: liarsdice-game-ui:1.0
     ports:
-      - 3001:3001
+      - 80:80
     environment:
-      GAME_CONTRACT_ID: "0xC91dB6B1012701De8BE5E5343cb877298c3705d9"
+      GAME_CONTRACT_ID: "0x4C71C4C37F9295b66a0Ae09B637651150b367365"
       BANK_NETWORK: "http://0.0.0.0:8545"
       HOST: "0.0.0.0"

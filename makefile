@@ -182,6 +182,18 @@ ui:
 		.
 
 # ==============================================================================
+# Docker Compose
+
+compose-up:
+	docker compose -f zarf/docker/compose.yml up
+
+compose-down:
+	docker compose -f zarf/docker/compose.yml down
+
+compose-logs:
+	docker compose -f zarf/docker/compose.yml logs
+
+# ==============================================================================
 # Running from within k8s/kind
 
 KIND_CLUSTER := liars-game-cluster
@@ -253,15 +265,3 @@ dev-describe-deployment-ui:
 
 dev-describe-ui:
 	kubectl describe pod --namespace=liars-system -l app=ui
-
-# ==============================================================================
-# Docker Compose
-
-fe-up:
-	docker compose -f zarf/docker/compose.yml up
-
-fe-down:
-	docker compose -f zarf/docker/compose.yml down
-
-fe-logs:
-	docker compose -f zarf/docker/compose.yml logs
