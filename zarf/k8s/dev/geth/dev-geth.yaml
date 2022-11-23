@@ -26,17 +26,6 @@ metadata:
 stringData:
   password: "123"
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: geth-keystore
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,7 +46,7 @@ spec:
       initContainers:
         - name: copy-keystore
           image: busybox
-          command: ["sh", "-c", "cp /secrets/keystore/* /ethereum/keystore"]
+          command: ["sh", "-c", "mkdir -p /ethereum/keystore; cp /secrets/keystore/* /ethereum/keystore"]
           volumeMounts:
             - name: vol-ethereum
               mountPath: /ethereum
