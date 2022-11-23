@@ -158,6 +158,9 @@ list:
 
 # ==============================================================================
 # Building containers
+#
+# The new docker buildx build system is required for these docker build commands On systems other than Docker Desktop
+# buildx is not the default build system. You will need to enable it with: docker buildx install
 
 # $(shell git rev-parse --short HEAD)
 VERSION := 1.0
@@ -170,15 +173,16 @@ game-engine:
 		-t liarsdice-game-engine:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		--load \
 		.
 
 ui:
-	docker -l debug build \
+	docker build \
 		-f zarf/docker/dockerfile.ui \
 		-t liarsdice-game-ui:$(VERSION) \
-		--progress=plain \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		--load \
 		.
 
 # ==============================================================================
