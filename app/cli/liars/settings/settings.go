@@ -38,7 +38,7 @@ type Args struct {
 // the defaults.
 func Parse() (Flags, Args, error) {
 	const (
-		engine    = "http://0.0.0.0:3000"
+		engine    = "http://engine-service.liars-system.svc.cluster.local:3000"
 		accountID = "0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7"
 	)
 

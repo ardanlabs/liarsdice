@@ -3,6 +3,14 @@ kind: Namespace
 metadata:
   name: liars-system
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: engine-config
+  namespace: liars-system
+data:
+  bank_network: "http://geth-service.liars-system.svc.cluster.local:8545"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,8 +26,6 @@ spec:
         app: engine
     spec:
       terminationGracePeriodSeconds: 60
-      initContainers:
-      # NEED TO DEPLOY CONTRACT AND GET CONTRACTID SET AS
       # CONFIGURATION FOR THE ENGINE AND UI
       containers:
       # game-engine container configuration
@@ -28,7 +34,7 @@ spec:
         ports:
         - name: game-engine
           containerPort: 3000
-        - name: game-engine-debug
+        - name: ge-debug
           containerPort: 4000
         readinessProbe: # readiness probes mark the service available to accept traffic.
           httpGet:
@@ -49,6 +55,11 @@ spec:
           successThreshold: 1
           failureThreshold: 2
         env:
+        - name: GAME_CONTRACT_ID
+          valueFrom:
+            secretKeyRef:
+              name: contract-id
+              key: id
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:

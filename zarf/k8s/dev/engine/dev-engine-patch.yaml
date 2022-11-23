@@ -40,4 +40,4 @@ spec:
     targetPort: game-engine
   - name: game-engine-debug
     port: 4000
-    targetPort: game-engine-debug
+    targetPort: ge-debug
