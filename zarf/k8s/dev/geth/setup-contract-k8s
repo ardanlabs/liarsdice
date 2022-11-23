@@ -12,10 +12,7 @@ if [ ${RET} -eq 0 ]; then
   exit 0
 fi
 
-PORT_FORWARD="kubectl -n liars-system port-forward svc/geth-service 8545"
-${PORT_FORWARD} &
-
-CONTRACT_OUTPUT=$(./admin -n http://localhost:8545 -d)
+CONTRACT_OUTPUT=$(./admin -n http://geth-service.liars-system.svc.cluster.local:8545 -d)
 RET=${?}
 
 if [ ${RET} -ne 0 ]; then
@@ -31,7 +28,5 @@ kubectl -n liars-system create secret generic contract-id --from-literal=id=${CO
 
 echo "Add balances to the test accounts"
 
-./admin -n http://localhost:8545 -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
-./admin -n http://localhost:8545 -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
-
-kill $(ps -ef | grep "${PORT_FORWARD}" | grep -v grep | awk '{print $2}')
+./admin -n http://geth-service.liars-system.svc.cluster.local:8545 -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
+./admin -n http://geth-service.liars-system.svc.cluster.local:8545 -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
