@@ -1,0 +1,37 @@
+#!/bin/sh
+
+if [ "${1}" = "force" ]; then
+  kubectl -n liars-system delete secret contract-id
+fi
+
+kubectl -n liars-system get secret contract-id >/dev/null 2>&1
+RET=${?}
+
+if [ ${RET} -eq 0 ]; then
+  echo "Contract already exists, not re-deploying"
+  exit 0
+fi
+
+PORT_FORWARD="kubectl -n liars-system port-forward svc/geth-service 8545"
+${PORT_FORWARD} &
+
+CONTRACT_OUTPUT=$(./admin -n http://localhost:8545 -d)
+RET=${?}
+
+if [ ${RET} -ne 0 ]; then
+  echo "Error deploying contract:"
+  echo ${CONTRACT_OUTPUT}
+  exit 1
+fi
+
+CONTRACT_ID=$(echo "${CONTRACT_OUTPUT}" | awk '/export GAME_CONTRACT_ID/ {split($2,a,"="); print a[2]}')
+echo $CONTRACT_ID
+
+kubectl -n liars-system create secret generic contract-id --from-literal=id=${CONTRACT_ID}
+
+echo "Add balances to the test accounts"
+
+./admin -n http://localhost:8545 -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
+./admin -n http://localhost:8545 -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
+
+kill $(ps -ef | grep "${PORT_FORWARD}" | grep -v grep | awk '{print $2}')

@@ -223,10 +223,18 @@ dev-load:
 	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
 	kind load docker-image liarsdice-game-ui:$(VERSION) --name $(KIND_CLUSTER)
 
+dev-deploy:
+	@app/tooling/setup-contract-k8s
+
+dev-deploy-force:
+	@app/tooling/setup-contract-k8s force
+
 dev-apply:
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
-		
+
+	@app/tooling/setup-contract-k8s
+
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
 
