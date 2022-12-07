@@ -204,7 +204,7 @@ dev-up:
 	telepresence --context=kind-$(KIND_CLUSTER) connect
 
 dev-down:
-	telepresence quit -r -u
+	telepresence quit -s
 	kind delete cluster --name $(KIND_CLUSTER)
 
 dev-load:
@@ -218,6 +218,8 @@ dev-deploy-force:
 	@zarf/k8s/dev/geth/setup-contract-k8s force
 
 dev-apply:
+	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
+
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
 

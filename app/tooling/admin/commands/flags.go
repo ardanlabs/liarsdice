@@ -32,6 +32,7 @@ Options:
 	-f, --filekey    Sets the private key file to use for blockchain calls. Default: 0x6327a38415c53ffb36c11db55ea74cc9cb4976fd
 	-p, --passphrase Sets the pass phrase for the key file. Default: 123
 	-k, --keycoin    Sets the key for the coin market cap API. Default: a8cd12fb-d056-423f-877b-659046af0aa5
+	-v, --vault-init Initializes the vault server
 
 	-h. --help       Show the usage information.
 `
@@ -121,6 +122,8 @@ func parseCmdline(args *Args) Flags {
 	flag.Bool("help", false, "")
 	flag.Bool("d", false, "")
 	flag.Bool("deploy", false, "")
+	flag.Bool("v", false, "")
+	flag.Bool("vault-init", false, "")
 
 	flag.Parse()
 

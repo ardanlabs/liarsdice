@@ -6,6 +6,10 @@ ARG BUILD_REF
 # Copy the source code into the container.
 COPY . /code
 
+# Build the admin binary.
+WORKDIR /code/app/tooling/admin
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
 # Build the service binary.
 WORKDIR /code/app/services/engine
 RUN go build -ldflags "-X main.build=${BUILD_REF}"
@@ -21,6 +25,7 @@ COPY --from=build_engine --chown=engine:engine /code/zarf/ethereum/password /cod
 COPY --from=build_engine --chown=engine:engine /code/zarf/ethereum/keystore/. /code/zarf/ethereum/keystore/.
 COPY --from=build_engine --chown=engine:engine /code/zarf/keys/. /code/zarf/keys/.
 COPY --from=build_engine --chown=engine:engine /code/app/services/engine/engine /code/engine
+COPY --from=build_engine --chown=engine:engine /code/app/tooling/admin/admin /code/admin
 WORKDIR /code
 USER engine
 CMD ["./engine"]
