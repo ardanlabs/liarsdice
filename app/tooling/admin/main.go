@@ -61,8 +61,6 @@ func run() error {
 			Token:     "mytoken",
 			MountPath: "secret",
 		})
-
-		return nil
 	}
 
 	// =========================================================================
