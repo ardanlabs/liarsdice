@@ -221,10 +221,10 @@ dev-apply:
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
 
-	@zarf/k8s/dev/geth/setup-contract-k8s
-
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
+
+	@zarf/k8s/dev/geth/setup-contract-k8s
 
 	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
