@@ -25,6 +25,7 @@ type Config struct {
 	Bank           *bank.Bank
 	Evts           *events.Events
 	AnteUSD        float64
+	ActiveKID      string
 	BankTimeout    time.Duration
 	ConnectTimeout time.Duration
 }
@@ -41,6 +42,7 @@ func Routes(app *web.App, cfg Config) {
 		Evts:           cfg.Evts,
 		WS:             websocket.Upgrader{},
 		Auth:           cfg.Auth,
+		ActiveKID:      cfg.ActiveKID,
 		AnteUSD:        cfg.AnteUSD,
 		BankTimeout:    cfg.BankTimeout,
 		ConnectTimeout: cfg.ConnectTimeout,
@@ -52,17 +54,17 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/config", ggh.Configuration)
 	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", ggh.USD2Wei)
 
-	app.Handle(http.MethodGet, version, "/game/status", ggh.Status, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/bet/:number/:suite", ggh.Bet, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/status", ggh.Status, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/new", ggh.NewGame, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/join", ggh.Join, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/start", ggh.StartGame, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/rolldice", ggh.RollDice, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/bet/:number/:suite", ggh.Bet, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/liar", ggh.CallLiar, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/reconcile", ggh.Reconcile, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/balance", ggh.Balance, mid.Authenticate(cfg.Auth))
 
 	// Timeout Situations with a player
-	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Log, cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/out/:outs", ggh.UpdateOut, mid.Authenticate(cfg.Log, cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/next", ggh.NextTurn, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/out/:outs", ggh.UpdateOut, mid.Authenticate(cfg.Auth))
 }

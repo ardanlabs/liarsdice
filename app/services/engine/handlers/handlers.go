@@ -41,6 +41,7 @@ type APIMuxConfig struct {
 	Bank           *bank.Bank
 	Evts           *events.Events
 	AnteUSD        float64
+	ActiveKID      string
 	BankTimeout    time.Duration
 	ConnectTimeout time.Duration
 }
@@ -93,6 +94,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 		Bank:           cfg.Bank,
 		Evts:           cfg.Evts,
 		AnteUSD:        cfg.AnteUSD,
+		ActiveKID:      cfg.ActiveKID,
 		BankTimeout:    cfg.BankTimeout,
 		ConnectTimeout: cfg.ConnectTimeout,
 	})
