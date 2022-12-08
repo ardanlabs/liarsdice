@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ardanlabs/service/foundation/docker"
-	"github.com/ardanlabs/service/foundation/vault"
+	"github.com/ardanlabs/liarsdice/foundation/docker"
+	"github.com/ardanlabs/liarsdice/foundation/vault"
 )
 
 // Success and failure markers.
