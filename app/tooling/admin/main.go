@@ -86,13 +86,13 @@ func run() error {
 
 	backend, err := ethereum.CreateDialedBackend(ctx, args.Network)
 	if err != nil {
-		return errors.New("ethereum backend")
+		return fmt.Errorf("ethereum backend: %w", err)
 	}
 	defer backend.Close()
 
 	privateKey, err := ethereum.PrivateKeyByKeyFile(keyFile, args.PassPhrase)
 	if err != nil {
-		return errors.New("capture private key")
+		return fmt.Errorf("capture private key: %w", err)
 	}
 
 	bankClient, err := bank.New(ctx, nil, backend, privateKey, common.HexToAddress(args.ContractID))
