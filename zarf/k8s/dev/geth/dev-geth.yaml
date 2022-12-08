@@ -35,6 +35,9 @@ spec:
   selector:
     matchLabels:
       app: geth
+  replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -57,7 +60,6 @@ spec:
           image: geth-image
           args:
             - --dev
-            - --ipcpath=/ethereum/geth.ipc
             - --http
             - --http.addr=0.0.0.0
             - --http.corsdomain=*
