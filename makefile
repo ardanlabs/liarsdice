@@ -33,7 +33,7 @@ ALPINE       := alpine:3.16
 CADDY        := caddy:2.6-alpine
 KIND         := kindest/node:v1.25.3
 GETH         := ethereum/client-go:stable
-TELEPRESENCE := docker.io/datawire/tel2:2.9.2
+TELEPRESENCE := docker.io/datawire/tel2:2.9.4
 
 dev.setup.mac.common:
 	brew update
