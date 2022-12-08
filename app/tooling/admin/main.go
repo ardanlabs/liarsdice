@@ -54,7 +54,8 @@ func run() error {
 		return nil
 	}
 
-	//
+	// This is mainly to be called from the init container. This initialized vault if it's a new install
+	// and unseals it if it's an existing service.
 	if _, exists := flags["v"]; exists {
 		return commands.VaultInit(vault.Config{
 			Address:   "http://vault-service.liars-system.svc.cluster.local:8200",
