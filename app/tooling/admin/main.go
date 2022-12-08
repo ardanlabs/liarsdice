@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ardanlabs/liarsdice/foundation/vault"
 	"io/fs"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 	"github.com/ardanlabs/liarsdice/app/tooling/admin/commands"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/foundation/vault"
 	"github.com/ethereum/go-ethereum/common"
 )
 
