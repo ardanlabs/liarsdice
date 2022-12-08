@@ -8,3 +8,6 @@ images:
   - name: game-ui-image
     newName: liarsdice-game-ui
     newTag: "1.0"
+  - name: game-engine-image
+    newName: liarsdice-game-engine
+    newTag: "1.0"

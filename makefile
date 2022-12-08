@@ -173,6 +173,7 @@ game-engine:
 		-t liarsdice-game-engine:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		--load \
 		.
 
 ui:
@@ -181,6 +182,7 @@ ui:
 		-t liarsdice-game-ui:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		--load \
 		.
 
 # ==============================================================================
@@ -221,13 +223,13 @@ dev-apply:
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
 
-	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
+	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
 
 	@zarf/k8s/dev/geth/setup-contract-k8s
 
-	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
+	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
 
 dev-restart:
 	kubectl rollout restart deployment sales --namespace=liars-system

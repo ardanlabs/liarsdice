@@ -11,19 +11,6 @@ metadata:
 data:
   bank_network: "http://geth-service.liars-system.svc.cluster.local:8545"
 ---
-# We need the vault credentials to exist across pod restarts
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  namespace: liars-system
-  name: vault-credentials
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
