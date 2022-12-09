@@ -66,7 +66,7 @@ func run() error {
 		})
 	}
 
-	if _, exists := flags["k"]; exists {
+	if _, exists := flags["y"]; exists {
 		return commands.Vault(vault.Config{
 			Address:   "http://vault-service.liars-system.svc.cluster.local:8200",
 			Token:     "mytoken",

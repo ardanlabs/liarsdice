@@ -5,8 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/ardanlabs/ethereum"
 )
 
 const usage = `
@@ -33,7 +31,7 @@ Options:
 	-p, --passphrase Sets the pass phrase for the key file. Default: 123
 	-k, --keycoin    Sets the key for the coin market cap API. Default: a8cd12fb-d056-423f-877b-659046af0aa5
 	-v, --vault-init Initializes the vault server.
-	-k, --vault-keys Adds keys to the valut system.
+	-y, --vault-keys Adds keys to the valut system.
 
 	-h. --help       Show the usage information.
 `
@@ -72,7 +70,7 @@ func Parse() (Flags, Args, error) {
 	flag.Usage = func() { fmt.Fprintf(os.Stderr, "%s\n", usage) }
 
 	args := Args{
-		Network:          ethereum.NetworkLocalhost,
+		Network:          "http://geth-service.liars-system.svc.cluster.local:8545",
 		FileKey:          fileKey,
 		PassPhrase:       passPhrase,
 		ContractID:       os.Getenv("GAME_CONTRACT_ID"),
@@ -125,6 +123,7 @@ func parseCmdline(args *Args) Flags {
 	flag.Bool("deploy", false, "")
 	flag.Bool("v", false, "")
 	flag.Bool("vault-init", false, "")
+	flag.Bool("y", false, "")
 	flag.Bool("vault-keys", false, "")
 
 	flag.Parse()

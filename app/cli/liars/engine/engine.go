@@ -257,7 +257,7 @@ func (e Engine) do(url string, result interface{}, input []byte) error {
 		return fmt.Errorf("new request: %w", err)
 	}
 
-	req.Header.Add("authorization", fmt.Sprintf("bearer %s", e.token))
+	req.Header.Add("authorization", fmt.Sprintf("Bearer %s", e.token))
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

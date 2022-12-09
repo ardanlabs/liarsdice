@@ -15,6 +15,6 @@ decoded_jwt := [valid, header, payload] {
 	[valid, header, payload] := io.jwt.decode_verify(input.Token, {
 		"cert": input.Key,
 		"alg": "RS256",
-        "iss": "service project",
+        "iss": "liar's project",
 	})
 }

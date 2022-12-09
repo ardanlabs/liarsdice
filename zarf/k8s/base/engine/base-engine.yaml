@@ -38,13 +38,13 @@ spec:
       initContainers:
       - name: init-vault-server
         image: game-engine-image
-        command: ['./admin', '--vault-init']
+        command: ['./admin', '-v']
         volumeMounts:
           - name: vault
             mountPath: /vault
       - name: init-vault-keys
         image: game-engine-image
-        command: ['./admin', '--vault-keys']
+        command: ['./admin', '-y']
       containers:
       - name: game-engine
         image: game-engine-image
