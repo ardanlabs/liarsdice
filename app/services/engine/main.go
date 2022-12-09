@@ -20,8 +20,8 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"
-	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/vault"
 	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
@@ -88,9 +88,13 @@ func run(log *zap.SugaredLogger) error {
 			APIHost         string        `conf:"default:0.0.0.0:3000"`
 			DebugHost       string        `conf:"default:0.0.0.0:4000"`
 		}
+		Vault struct {
+			Address   string `conf:"default:http://vault-service.sales-system.svc.cluster.local:8200"`
+			MountPath string `conf:"default:secret"`
+			Token     string `conf:"default:mytoken,mask"`
+		}
 		Auth struct {
-			KeysFolder string `conf:"default:zarf/keys/"`
-			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
+			ActiveKID string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
 		Game struct {
 			ContractID     string        `conf:"default:0x0"`
@@ -140,14 +144,21 @@ func run(log *zap.SugaredLogger) error {
 
 	log.Infow("startup", "status", "initializing authentication support")
 
-	// Construct a key store based on the key files stored in
-	// the specified directory.
-	ks, err := keystore.NewFS(os.DirFS(cfg.Auth.KeysFolder))
+	vault, err := vault.New(vault.Config{
+		Address:   cfg.Vault.Address,
+		Token:     cfg.Vault.Token,
+		MountPath: cfg.Vault.MountPath,
+	})
 	if err != nil {
-		return fmt.Errorf("reading keys: %w", err)
+		return fmt.Errorf("constructing vault: %w", err)
 	}
 
-	auth, err := auth.New(cfg.Auth.ActiveKID, ks)
+	authCfg := auth.Config{
+		Log:       log,
+		KeyLookup: vault,
+	}
+
+	auth, err := auth.New(authCfg)
 	if err != nil {
 		return fmt.Errorf("constructing auth: %w", err)
 	}
@@ -227,6 +238,7 @@ func run(log *zap.SugaredLogger) error {
 		Bank:           bank,
 		Evts:           evts,
 		AnteUSD:        cfg.Game.AnteUSD,
+		ActiveKID:      cfg.Auth.ActiveKID,
 		BankTimeout:    cfg.Bank.Timeout,
 		ConnectTimeout: cfg.Game.ConnectTimeout,
 	}, handlers.WithCORS("*"))

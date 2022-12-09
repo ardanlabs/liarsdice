@@ -26,7 +26,19 @@ spec:
         app: engine
     spec:
       terminationGracePeriodSeconds: 60
+      volumes:
+        - name: vault
+          persistentVolumeClaim:
+            claimName: vault-credentials
       # CONFIGURATION FOR THE ENGINE AND UI
+      initContainers:
+      # sales-api init container configuration
+      - name: init-vault-server
+        image: game-engine-image
+        command: ['./admin', '-v']
+        volumeMounts:
+          - name: vault
+            mountPath: /vault
       containers:
       # game-engine container configuration
       - name: game-engine

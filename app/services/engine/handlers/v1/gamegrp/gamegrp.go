@@ -33,6 +33,7 @@ type Handlers struct {
 	Log            *zap.SugaredLogger
 	WS             websocket.Upgrader
 	Evts           *events.Events
+	ActiveKID      string
 	Auth           *auth.Auth
 	AnteUSD        float64
 	BankTimeout    time.Duration
@@ -49,7 +50,7 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
 
-	token, err := generateToken(h.Auth, address)
+	token, err := generateToken(h.Auth, h.ActiveKID, address)
 	if err != nil {
 		return v1Web.NewRequestError(err, http.StatusBadRequest)
 	}
@@ -67,10 +68,7 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // Events handles a web socket to provide events to a client.
 func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	v, err := web.GetValues(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(errors.New("web value missing from context"), http.StatusBadRequest)
-	}
+	v := web.GetValues(ctx)
 
 	// Need this to handle CORS on the websocket.
 	h.WS.CheckOrigin = func(r *http.Request) bool { return true }
@@ -188,10 +186,7 @@ func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // Status will return information about the game.
 func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	g, err := h.getGame()
@@ -241,10 +236,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 // NewGame creates a new game if there is no game or the status of the current game
 // is GameOver.
 func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := claims.Subject
 
 	if err := h.createGame(ctx, address); err != nil {
@@ -263,10 +255,7 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if err := g.AddAccount(ctx, address); err != nil {
@@ -285,10 +274,7 @@ func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := claims.Subject
 
 	if err := g.StartGame(ctx); err != nil {
@@ -307,10 +293,7 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if err := g.RollDice(ctx, address); err != nil {
@@ -329,10 +312,7 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	number, err := strconv.Atoi(web.Param(r, "number"))
@@ -361,10 +341,7 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if _, _, err := g.CallLiar(ctx, address); err != nil {
@@ -387,10 +364,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
@@ -407,10 +381,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 // Balance returns the player balance from the smart contract.
 func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := claims.Subject
 
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
@@ -437,10 +408,7 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if err := g.NextTurn(ctx); err != nil {
@@ -461,10 +429,7 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrForbidden, http.StatusForbidden)
-	}
+	claims := auth.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	outs, err := strconv.Atoi(web.Param(r, "outs"))
@@ -553,7 +518,7 @@ func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
 	return address, nil
 }
 
-func generateToken(a *auth.Auth, address string) (string, error) {
+func generateToken(a *auth.Auth, kid string, address string) (string, error) {
 	claims := auth.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   address,
@@ -563,7 +528,7 @@ func generateToken(a *auth.Auth, address string) (string, error) {
 		},
 	}
 
-	token, err := a.GenerateToken(claims)
+	token, err := a.GenerateToken(kid, claims)
 	if err != nil {
 		return "", fmt.Errorf("generating token: %w", err)
 	}

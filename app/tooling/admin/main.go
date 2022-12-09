@@ -14,12 +14,13 @@ import (
 	"github.com/ardanlabs/liarsdice/app/tooling/admin/commands"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/foundation/vault"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
 	keyStorePath = "zarf/ethereum/keystore/"
-	passPhrase   = "123"
+	//passPhrase   = "123"
 )
 
 func main() {
@@ -53,6 +54,16 @@ func run() error {
 		return nil
 	}
 
+	// This is mainly to be called from the init container. This initialized vault if it's a new install
+	// and unseals it if it's an existing service.
+	if _, exists := flags["v"]; exists {
+		return commands.VaultInit(vault.Config{
+			Address:   "http://vault-service.liars-system.svc.cluster.local:8200",
+			Token:     "mytoken",
+			MountPath: "secret",
+		})
+	}
+
 	// =========================================================================
 	// Find the key file for the specified address.
 
@@ -71,22 +82,22 @@ func run() error {
 	oneETHToUSD, oneUSDToETH := converter.Values()
 
 	// =========================================================================
-	// Construct the bank API.
+	// Construct the bankClient API.
 
 	backend, err := ethereum.CreateDialedBackend(ctx, args.Network)
 	if err != nil {
-		return errors.New("ethereum backend")
+		return fmt.Errorf("ethereum backend: %w", err)
 	}
 	defer backend.Close()
 
 	privateKey, err := ethereum.PrivateKeyByKeyFile(keyFile, args.PassPhrase)
 	if err != nil {
-		return errors.New("capture private key")
+		return fmt.Errorf("capture private key: %w", err)
 	}
 
-	bank, err := bank.New(ctx, nil, backend, privateKey, common.HexToAddress(args.ContractID))
+	bankClient, err := bank.New(ctx, nil, backend, privateKey, common.HexToAddress(args.ContractID))
 	if err != nil {
-		return fmt.Errorf("connecting to bank: %w", err)
+		return fmt.Errorf("connecting to bankClient: %w", err)
 	}
 
 	// =========================================================================
@@ -99,27 +110,27 @@ func run() error {
 	fmt.Println("passphrase      :", args.PassPhrase)
 	fmt.Println("oneETHToUSD     :", oneETHToUSD)
 	fmt.Println("oneUSDToETH     :", oneUSDToETH)
-	fmt.Println("key address     :", bank.Client().Address())
+	fmt.Println("key address     :", bankClient.Client().Address())
 	fmt.Println("contract id     :", args.ContractID)
 
 	if _, exists := flags["a"]; exists {
-		return commands.Deposit(ctx, converter, bank, args.Money)
+		return commands.Deposit(ctx, converter, bankClient, args.Money)
 	}
 	if _, exists := flags["r"]; exists {
-		return commands.Withdraw(ctx, converter, bank)
+		return commands.Withdraw(ctx, converter, bankClient)
 	}
 	if _, exists := flags["b"]; exists {
-		return commands.Balance(ctx, converter, bank, args.Address)
+		return commands.Balance(ctx, converter, bankClient, args.Address)
 	}
 
 	if _, exists := flags["w"]; exists {
-		return commands.Wallet(ctx, converter, bank.Client(), args.Address)
+		return commands.Wallet(ctx, converter, bankClient.Client(), args.Address)
 	}
 	if _, exists := flags["d"]; exists {
-		return commands.Deploy(ctx, converter, bank.Client())
+		return commands.Deploy(ctx, converter, bankClient.Client())
 	}
 	if _, exists := flags["t"]; exists {
-		return commands.Transaction(ctx, converter, bank.Client(), args.TranID)
+		return commands.Transaction(ctx, converter, bankClient.Client(), args.TranID)
 	}
 
 	return errors.New("no functional command provided")

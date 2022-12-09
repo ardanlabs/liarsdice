@@ -1,0 +1,12 @@
+# We need the vault credentials to exist across pod restarts
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: liars-system
+  name: vault-credentials
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

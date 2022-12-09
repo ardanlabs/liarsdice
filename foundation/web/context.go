@@ -2,14 +2,11 @@ package web
 
 import (
 	"context"
-	"errors"
 	"time"
 )
 
-// ctxKey represents the type of value for the context key.
 type ctxKey int
 
-// key is how request values are stored/retrieved.
 const key ctxKey = 1
 
 // Values represent state for each request.
@@ -20,12 +17,16 @@ type Values struct {
 }
 
 // GetValues returns the values from the context.
-func GetValues(ctx context.Context) (*Values, error) {
+func GetValues(ctx context.Context) *Values {
 	v, ok := ctx.Value(key).(*Values)
 	if !ok {
-		return nil, errors.New("web value missing from context")
+		return &Values{
+			TraceID: "00000000-0000-0000-0000-000000000000",
+			Now:     time.Now(),
+		}
 	}
-	return v, nil
+
+	return v
 }
 
 // GetTraceID returns the trace id from the context.
@@ -37,12 +38,21 @@ func GetTraceID(ctx context.Context) string {
 	return v.TraceID
 }
 
-// SetStatusCode sets the status code back into the context.
-func SetStatusCode(ctx context.Context, statusCode int) error {
+// GetTime returns the time from the context.
+func GetTime(ctx context.Context) time.Time {
 	v, ok := ctx.Value(key).(*Values)
 	if !ok {
-		return errors.New("web value missing from context")
+		return time.Now()
 	}
+	return v.Now
+}
+
+// SetStatusCode sets the status code back into the context.
+func SetStatusCode(ctx context.Context, statusCode int) {
+	v, ok := ctx.Value(key).(*Values)
+	if !ok {
+		return
+	}
+
 	v.StatusCode = statusCode
-	return nil
 }

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -11,6 +10,8 @@ import (
 type Claims struct {
 	jwt.RegisteredClaims
 }
+
+// =============================================================================
 
 // ctxKey represents the type of value for the context key.
 type ctxKey int
@@ -24,10 +25,10 @@ func SetClaims(ctx context.Context, claims Claims) context.Context {
 }
 
 // GetClaims returns the claims from the context.
-func GetClaims(ctx context.Context) (Claims, error) {
+func GetClaims(ctx context.Context) Claims {
 	v, ok := ctx.Value(key).(Claims)
 	if !ok {
-		return Claims{}, errors.New("claim value missing from context")
+		return Claims{}
 	}
-	return v, nil
+	return v
 }
