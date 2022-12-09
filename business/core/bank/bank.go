@@ -189,6 +189,6 @@ func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}
 		return
 	}
 
-	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
+	keysAndvalues = append(keysAndvalues, "trace_id", web.GetTraceID(ctx))
 	b.logger.Infow(msg, keysAndvalues...)
 }
