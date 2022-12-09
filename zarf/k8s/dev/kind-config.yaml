@@ -5,11 +5,3 @@ nodes:
   extraPortMappings:
   - containerPort: 80
     hostPort: 80
-  - containerPort: 8545
-    hostPort: 8545
-  - containerPort: 3000
-    hostPort: 3000
-  - containerPort: 4000
-    hostPort: 4000
-  - containerPort: 8200
-    hostPort: 8200
