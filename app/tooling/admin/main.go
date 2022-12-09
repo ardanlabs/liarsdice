@@ -20,7 +20,6 @@ import (
 
 const (
 	keyStorePath = "zarf/ethereum/keystore/"
-	//passPhrase   = "123"
 )
 
 func main() {

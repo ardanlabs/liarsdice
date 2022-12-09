@@ -29,14 +29,21 @@ import (
 
 /*
 	-- Game Engine
+	Move ECDSA keys into vault and get them from vault.
 	We could choose a random person to start a new game from those that join.
 	Add in-game chat support.
 	Add a Drain function to the smart contract.
 	Add a account fix function to adjust balances.
 	Have engine sign all transactions to the smart contract.
 
+	-- Admin Tooling
+	Bring in Cobra to clean up the mess
+
+	-- Init Sequence
+	Add an init sequence to the admin tooling for geth and vault.
+
 	-- Browser UI
-	Upgrade deps to latest.
+	Use Phaser as a new UI
 */
 
 // build is the git version of this program. It is set using build flags in the makefile.
