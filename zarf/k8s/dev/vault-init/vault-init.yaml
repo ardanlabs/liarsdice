@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vault-init
+  namespace: liars-system
+spec:
+  template:
+    spec:
+      volumes:
+        - name: vault
+          persistentVolumeClaim:
+            claimName: vault-credentials
+      containers:
+      - name: vault-init
+        image: game-engine-image
+        command: ['./admin', '-v']
+        volumeMounts:
+          - name: vault
+            mountPath: /vault
+      restartPolicy: Never
