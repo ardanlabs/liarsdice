@@ -83,8 +83,8 @@ geth-new-account:
 # This will deposit 1 ETH into the two extra accounts from the coinbase account.
 # Do this if you delete the geth folder and start over or if the accounts need money.
 geth-deposit:
-	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
-	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' localhost:8545
+	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' geth-service.liars-system.svc.cluster.local:8545:8545
+	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' geth-service.liars-system.svc.cluster.local:8545:8545
 	./admin -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
 	./admin -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
 
@@ -100,7 +100,7 @@ contract-build:
 
 # This will deploy the smart contract to the locally running Ethereum environment.
 admin-build:
-	CGO_ENABLED=0 go build -o admin app/tooling/admin/main.go
+	go build -o admin app/tooling/admin/main.go
 
 contract-deploy: contract-build admin-build
 	./admin -d
@@ -109,16 +109,16 @@ contract-deploy: contract-build admin-build
 # Game Engine and UI
 
 game-up:
-	CGO_ENABLED=0 go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
+	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
 
 game-tui1:
-	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
+	go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
 
 game-tui2:
-	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
+	go run app/cli/liars/main.go -a 0x8e113078adf6888b7ba84967f299f29aece24c55
 
 game-tuio:
-	CGO_ENABLED=0 go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
+	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
 
 react-install:
 	yarn --cwd app/services/ui/ install
@@ -132,8 +132,8 @@ app-ui: react-install
 # go install golang.org/x/vuln/cmd/govulncheck@latest
 
 test:
-	CGO_ENABLED=0 go test -count=1 ./...
-	CGO_ENABLED=0 go vet ./...
+	go test -count=1 ./...
+	go vet ./...
 	staticcheck -checks=all ./...
 	govulncheck ./...
 
