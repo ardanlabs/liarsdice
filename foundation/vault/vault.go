@@ -465,7 +465,7 @@ func (v *Vault) retrieveKID(ctx context.Context, kid string) (string, error) {
 
 	resp, err := v.client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("do: %w", err)
+		return "", fmt.Errorf("do: url: %s: %w", url, err)
 	}
 	defer resp.Body.Close()
 

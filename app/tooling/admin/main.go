@@ -54,14 +54,24 @@ func run() error {
 		return nil
 	}
 
-	// This is mainly to be called from the init container. This initialized vault if it's a new install
-	// and unseals it if it's an existing service.
+	// These calls are made from the init-container and don't need any other
+	// special initialization.
+	// TODO: we need to be better here.
+
 	if _, exists := flags["v"]; exists {
 		return commands.VaultInit(vault.Config{
 			Address:   "http://vault-service.liars-system.svc.cluster.local:8200",
 			Token:     "mytoken",
 			MountPath: "secret",
 		})
+	}
+
+	if _, exists := flags["k"]; exists {
+		return commands.Vault(vault.Config{
+			Address:   "http://vault-service.liars-system.svc.cluster.local:8200",
+			Token:     "mytoken",
+			MountPath: "secret",
+		}, "zarf/keys/")
 	}
 
 	// =========================================================================

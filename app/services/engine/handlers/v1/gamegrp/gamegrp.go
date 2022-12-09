@@ -530,7 +530,7 @@ func generateToken(a *auth.Auth, kid string, address string) (string, error) {
 
 	token, err := a.GenerateToken(kid, claims)
 	if err != nil {
-		return "", fmt.Errorf("generating token: %w", err)
+		return "", fmt.Errorf("generating token: kid: %s: %w", kid, err)
 	}
 
 	return token, nil

@@ -230,7 +230,7 @@ dev-apply:
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
 
 dev-restart:
-	kubectl rollout restart deployment sales --namespace=liars-system
+	kubectl rollout restart deployment engine --namespace=liars-system
 
 dev-update: all dev-load dev-restart
 

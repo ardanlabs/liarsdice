@@ -3,13 +3,18 @@ kind: Namespace
 metadata:
   name: liars-system
 ---
+# We need the vault credentials to exist across pod restarts
 apiVersion: v1
-kind: ConfigMap
+kind: PersistentVolumeClaim
 metadata:
-  name: engine-config
   namespace: liars-system
-data:
-  bank_network: "http://geth-service.liars-system.svc.cluster.local:8545"
+  name: vault-credentials
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,17 +35,17 @@ spec:
         - name: vault
           persistentVolumeClaim:
             claimName: vault-credentials
-      # CONFIGURATION FOR THE ENGINE AND UI
       initContainers:
-      # sales-api init container configuration
       - name: init-vault-server
         image: game-engine-image
-        command: ['./admin', '-v']
+        command: ['./admin', '--vault-init']
         volumeMounts:
           - name: vault
             mountPath: /vault
+      - name: init-vault-keys
+        image: game-engine-image
+        command: ['./admin', '--vault-keys']
       containers:
-      # game-engine container configuration
       - name: game-engine
         image: game-engine-image
         ports:
@@ -48,7 +53,7 @@ spec:
           containerPort: 3000
         - name: ge-debug
           containerPort: 4000
-        readinessProbe: # readiness probes mark the service available to accept traffic.
+        readinessProbe:
           httpGet:
             path: /debug/readiness
             port: 4000
@@ -57,7 +62,7 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 2
-        livenessProbe: # liveness probes mark the service alive or dead (to be restarted).
+        livenessProbe:
           httpGet:
             path: /debug/liveness
             port: 4000
