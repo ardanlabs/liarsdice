@@ -48,7 +48,7 @@ func Test_Auth(t *testing.T) {
 
 			claims := auth.Claims{
 				RegisteredClaims: jwt.RegisteredClaims{
-					Issuer:    "service project",
+					Issuer:    "liar's project",
 					Subject:   "5cf37266-3473-4006-984f-9325122678b7",
 					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
