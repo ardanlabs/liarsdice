@@ -27,9 +27,12 @@ Options:
 	-c, --contract   Provides the contract id for required calls.
 	-m, --money      Sets the amount of USD to use.
 	-n, --network    Sets the network to use. Default: zarf/ethereum/geth.ipc
+	
 	-f, --filekey    Sets the private key file to use for blockchain calls. Default: 0x6327a38415c53ffb36c11db55ea74cc9cb4976fd
 	-p, --passphrase Sets the pass phrase for the key file. Default: 123
+	
 	-k, --keycoin    Sets the key for the coin market cap API. Default: a8cd12fb-d056-423f-877b-659046af0aa5
+	
 	-v, --vault-init Initializes the vault server.
 	-y, --vault-keys Adds keys to the valut system.
 
