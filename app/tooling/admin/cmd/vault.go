@@ -1,12 +1,8 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"fmt"
-	"os"
-
+	"github.com/ardanlabs/liarsdice/foundation/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -16,19 +12,47 @@ var vaultCmd = &cobra.Command{
 	Short: "Utility tasks to manage Vault",
 	Long: `Can be used to initialize or unseal a Vault instance as well as load keys into vault
 for liars dice.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			cmd.Help()
-			os.Exit(0)
+			return cmd.Help()
 		}
 
 		fmt.Println("vault called")
+		return nil
 	},
 }
 
+const (
+	defaultVaultAddress = "http://vault-service.liars-system.svc.cluster.local:8200"
+	defaultMountPath    = "secret"
+	defaultToken        = "mytoken"
+)
+
 func init() {
 	rootCmd.AddCommand(vaultCmd)
-	vaultCmd.Flags().BoolP("init", "i", false, "Initialize or unseal a Vault instance")
-	vaultCmd.Flags().BoolP("add-keys", "k", false, "Add keys to Vault")
-	vaultCmd.MarkFlagsMutuallyExclusive("init", "add-keys")
+	vaultCmd.PersistentFlags().StringP("vault-address", "a", defaultVaultAddress, "The network address of our vault server")
+	vaultCmd.PersistentFlags().StringP("mount-path", "m", defaultMountPath, "The mount path we want to use in vault")
+	vaultCmd.PersistentFlags().StringP("token", "t", defaultToken, "The (non-root) token used to access vault")
+}
+
+func getVaultConfig(cmd *cobra.Command) (vault.Config, error) {
+	var vaultConfig vault.Config
+	var err error
+
+	vaultConfig.Address, err = cmd.Flags().GetString("vault-address")
+	if err != nil {
+		return vault.Config{}, err
+	}
+
+	vaultConfig.MountPath, err = cmd.Flags().GetString("mount-path")
+	if err != nil {
+		return vault.Config{}, err
+	}
+
+	vaultConfig.Token, err = cmd.Flags().GetString("token")
+	if err != nil {
+		return vault.Config{}, err
+	}
+
+	return vaultConfig, nil
 }

@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 	Short: "A small tool to manage liars dice",
 	Long: `Provides the ability to deploy the contract, move funds, check balances as well as
 initialize vault and load keys into it.`,
+	Version: "set me",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
