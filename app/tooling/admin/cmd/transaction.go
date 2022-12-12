@@ -18,7 +18,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const defaultCoinMarketCapKey = "a8cd12fb-d056-423f-877b-659046af0aa5"
+const (
+	defaultCoinMarketCapKey = "a8cd12fb-d056-423f-877b-659046af0aa5"
+	defaultBankNetwork      = "http://geth-service.liars-system.svc.cluster.local:8545"
+)
 
 // transactionCmd represents the transaction command
 var transactionCmd = &cobra.Command{
@@ -41,6 +44,21 @@ var transactionCmd = &cobra.Command{
 			return err
 		}
 
+		bankNetwork, err := cmd.Flags().GetString("network")
+		if err != nil {
+			return err
+		}
+
+		keyPath, err := cmd.Flags().GetString("key-path")
+		if err != nil {
+			return err
+		}
+
+		passPhrase, err := cmd.Flags().GetString("passphrase")
+		if err != nil {
+			return err
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
@@ -49,12 +67,28 @@ var transactionCmd = &cobra.Command{
 			converter = currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 		}
 
+		backend, err := ethereum.CreateDialedBackend(ctx, bankNetwork)
+		if err != nil {
+			return errors.New("ethereum backend")
+		}
+		defer backend.Close()
+
+		privateKey, err := ethereum.PrivateKeyByKeyFile(keyPath, passPhrase)
+		if err != nil {
+			return errors.New("capture private key")
+		}
+
+		ethClient, err := ethereum.NewClient(backend, privateKey)
+		if err != nil {
+			return err
+		}
+
 		fmt.Println("\nTransaction ID")
 		fmt.Println("----------------------------------------------------")
 		fmt.Println("tran id         :", tranID)
 
 		txHash := common.HexToHash(tranID)
-		tx, pending, err := ethereum.TransactionByHash(ctx, txHash)
+		tx, pending, err := ethClient.TransactionByHash(ctx, txHash)
 		if err != nil {
 			return err
 		}
@@ -65,7 +99,7 @@ var transactionCmd = &cobra.Command{
 
 		fmt.Print(converter.FmtTransaction(tx))
 
-		receipt, err := ethereum.TransactionReceipt(ctx, txHash)
+		receipt, err := ethClient.TransactionReceipt(ctx, txHash)
 		if err != nil {
 			return err
 		}
@@ -81,4 +115,7 @@ func init() {
 
 	transactionCmd.Flags().StringP("transaction", "t", "", "Show transaction details for the specified transaction hash.")
 	transactionCmd.Flags().StringP("coin-market-cap-key", "c", defaultCoinMarketCapKey, "Key that references market cap.")
+	transactionCmd.Flags().StringP("network", "n", defaultBankNetwork, "The bank network to use.")
+	transactionCmd.Flags().StringP("key-path", "k", "", "The key path to use.")
+	transactionCmd.Flags().StringP("passphrase", "p", "", "The pass phrase to use.")
 }
