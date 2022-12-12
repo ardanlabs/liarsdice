@@ -118,14 +118,18 @@ function useGame() {
     dateTime: string
     sig: string
   }) {
+    const getAppConfigFn = () => {
+      navigate('/mainroom')
+    }
+    if (window.sessionStorage.getItem('token')) {
+      getAppConfig.then(getAppConfigFn)
+    }
     const axiosFn = (connectResponse: connectResponse) => {
       window.sessionStorage.setItem(
         'token',
-        `bearer ${connectResponse.data.token}`,
+        `Bearer ${connectResponse.data.token}`,
       )
-      const getAppConfigFn = () => {
-        navigate('/mainroom')
-      }
+
       getAppConfig.then(getAppConfigFn)
     }
 

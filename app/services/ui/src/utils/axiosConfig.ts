@@ -18,4 +18,4 @@ export const axiosConfig: AxiosRequestConfig = {
 // Prefix REACT_APP is used so react recongnize the variable
 export const apiUrl = process.env.REACT_APP_GO_HOST
   ? process.env.REACT_APP_GO_HOST
-  : 'localhost:3000/v1/game'
+  : 'engine-service.liars-system.svc.cluster.local:3000/v1/game'
