@@ -98,6 +98,9 @@ function useGame() {
                 })
             }
             break
+          case 'nogame':
+            window.localStorage.removeItem('playerDice')
+            break
         }
       }
     }

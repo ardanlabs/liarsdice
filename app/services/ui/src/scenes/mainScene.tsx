@@ -4,7 +4,7 @@ import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../utils/config'
 import { apiUrl, axiosConfig } from '../utils/axiosConfig'
 import { defaultApiError } from '../types/responses.d'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import { bet, dice, die, game, user } from '../types/index.d'
+import { bet, dice, DiceConfigs, die, game, user } from '../types/index.d'
 import assureGameType from '../utils/assureGameType'
 import getActivePlayersLength from '../utils/getActivePlayers'
 import { shortenIfAddress } from '../utils/address'
@@ -28,6 +28,8 @@ const axiosInstance = axios.create({
 // Variables
 var playerDice = window.localStorage.getItem('playerDice')
 
+console.log(playerDice)
+
 var player: user
 
 // Details bar
@@ -42,6 +44,7 @@ var statusText: Phaser.GameObjects.Text,
 
 export default class MainScene extends Phaser.Scene {
   ws: WebSocket
+  diceConfigs: DiceConfigs
   constructor() {
     super({ key: 'MainScene' })
     this.ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -59,6 +62,53 @@ export default class MainScene extends Phaser.Scene {
       currentID: '-',
       anteUSD: 0,
     }
+
+    const dieConfig = {
+      key: 'dice',
+      y: DEFAULT_HEIGHT - 80,
+      scale: 1,
+      // anims: {
+      //   key: 'die',
+      //   repeat: -1,
+      //   repeatDelay: { randInt: [1000, 4000] },
+      //   delayedPlay: function () {
+      //     return Math.random() * 6000
+      //   },
+      // },
+    }
+
+    this.diceConfigs = {
+      1: {
+        ...dieConfig,
+        frame: `die_1`,
+        x: DEFAULT_WIDTH / 2 - 200,
+      },
+      2: {
+        ...dieConfig,
+        frame: `die_2`,
+        x: DEFAULT_WIDTH / 2 - 120,
+      },
+      3: {
+        ...dieConfig,
+        frame: `die_3`,
+        x: DEFAULT_WIDTH / 2 - 40,
+      },
+      4: {
+        ...dieConfig,
+        frame: `die_4`,
+        x: DEFAULT_WIDTH / 2 + 40,
+      },
+      5: {
+        ...dieConfig,
+        frame: `die_5`,
+        x: DEFAULT_WIDTH / 2 + 120,
+      },
+      6: {
+        ...dieConfig,
+        frame: `die_6`,
+        x: DEFAULT_WIDTH / 2 + 200,
+      },
+    }
   }
 
   preload() {
@@ -66,6 +116,7 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('background', 'images/background.png')
     this.load.image('table', 'images/table.png')
     this.load.image('pointer', 'images/pointer.png')
+    this.load.atlas('dice', 'animations/dice.png', 'animations/dice.json')
   }
 
   create() {
@@ -115,13 +166,37 @@ export default class MainScene extends Phaser.Scene {
       playerOutsText = this.add.text(textSpacing, textSpacing * 8, `Outs: 0`)
     }
 
+    this.anims.create({
+      key: 'die',
+      frames: this.anims.generateFrameNames('dice', {
+        prefix: 'die_',
+        end: 6,
+        zeroPad: 4,
+      }),
+      repeat: -1,
+    })
+
+    //  The Sprite config
+
+    // Position dices and multiple them by amount of players.
+    // Figure out an algorithm to calculate the position of the players
+
+    if (playerDice) {
+      let x = DEFAULT_WIDTH / 2 - 240
+      JSON.parse(playerDice).forEach((die: die) => {
+        x += 80
+
+        if (die !== 0) this.make.sprite({ ...this.diceConfigs[die], x })
+      })
+    }
+
     // =========================================================================
 
-    const table = this.physics.add.staticGroup()
-    table
-      .create(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 'table')
-      .setScale(0.5)
-      .refreshBody()
+    // const table = this.physics.add.staticGroup()
+    // table
+    //   .create(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 'table')
+    //   .setScale(0.5)
+    //   .refreshBody()
     pointer = this.add
       .image(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 'pointer')
       .setOrigin(0.5, 0.4)
@@ -301,7 +376,6 @@ export default class MainScene extends Phaser.Scene {
         const parsedGame = this.setNewGame(response.data)
         switch (parsedGame.status) {
           case 'newgame':
-            playerDice = '[0,0,0,0,0]'
             if (getActivePlayersLength(parsedGame.cups) >= 2) {
               this.startGame()
             }
@@ -320,6 +394,11 @@ export default class MainScene extends Phaser.Scene {
                   console.error(error)
                 })
             }
+            break
+          case 'nogame':
+            console.log('hi')
+
+            window.localStorage.removeItem('playerDice')
             break
         }
       }
