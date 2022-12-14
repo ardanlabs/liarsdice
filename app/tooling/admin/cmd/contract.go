@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ardanlabs/ethereum/currency"
-	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/spf13/cobra"
 	"math/big"
 	"time"
+
+	"github.com/ardanlabs/ethereum/currency"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/cobra"
+
+	"github.com/ardanlabs/liarsdice/business/core/bank"
 )
 
 // contractCmd represents the contract command
@@ -18,6 +20,10 @@ var contractCmd = &cobra.Command{
 	Short: "Manage contract related items",
 	Long:  `Manage contract: deploy contract, show balance, add and remove money, etc.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if cmd.Flags().NFlag() == 0 {
+			return cmd.Help()
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
@@ -51,7 +57,7 @@ var contractCmd = &cobra.Command{
 		}
 
 		if len(addMoney) != 0 {
-			amountUSD, err := cmd.Flags().GetFloat64("add-money")
+			amountUSD, err := cmd.Flags().GetFloat64("money")
 			if err != nil {
 				return err
 			}
