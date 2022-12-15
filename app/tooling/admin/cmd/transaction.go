@@ -29,7 +29,7 @@ var transactionCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		converter, ethClient, _, err := getDependencies(ctx, cmd)
+		converter, ethClient, _, err := getDependencies(ctx, cmd, "")
 		if err != nil {
 			return err
 		}

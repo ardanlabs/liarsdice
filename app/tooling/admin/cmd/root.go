@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
+	"strings"
 
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
@@ -21,7 +23,7 @@ var rootCmd = &cobra.Command{
 	Short: "A small tool to manage liars dice",
 	Long: `Provides the ability to deploy the contract, move funds, check balances as well as
 initialize vault and load keys into it.`,
-	Version: "set me",
+	Version: "1.0.0",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -39,13 +41,14 @@ const (
 	defaultKeyPath          = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	defaultPassPhrase       = "123"
 	defaultFileKey          = "6327a38415c53ffb36c11db55ea74cc9cb4976fd"
+	defaultKeyStorePath     = "zarf/ethereum/keystore/"
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringP("network", "n", defaultNetwork, "Sets the network to use.")
 	rootCmd.PersistentFlags().StringP("key-coin", "K", defaultCoinMarketCapKey, "Key that references market cap.")
 	rootCmd.PersistentFlags().StringP("key-path", "k", defaultKeyPath, "The key path to use.")
-	rootCmd.PersistentFlags().StringP("file-key", "F", defaultFileKey, "The file key to use.")
+	rootCmd.PersistentFlags().StringP("key-store-path", "P", defaultKeyStorePath, "The key path to use.")
 	rootCmd.PersistentFlags().StringP("passphrase", "p", defaultPassPhrase, "The pass phrase to use.")
 	rootCmd.PersistentFlags().StringP(
 		"contract-id",
@@ -55,7 +58,7 @@ func init() {
 	)
 }
 
-func getDependencies(ctx context.Context, cmd *cobra.Command) (*currency.Converter, *ethereum.Client, *bank.Bank, error) {
+func getDependencies(ctx context.Context, cmd *cobra.Command, fileKeyKey string) (*currency.Converter, *ethereum.Client, *bank.Bank, error) {
 	coinMarketCapKey, err := cmd.Flags().GetString("key-coin")
 	if err != nil {
 		return nil, nil, nil, err
@@ -66,7 +69,20 @@ func getDependencies(ctx context.Context, cmd *cobra.Command) (*currency.Convert
 		return nil, nil, nil, err
 	}
 
-	keyPath, err := cmd.Flags().GetString("key-path")
+	keyStorePath, err := cmd.Flags().GetString("key-store-path")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	var fileKey string
+	switch len(fileKeyKey) {
+	case 0:
+		fileKey = defaultFileKey
+	default:
+		fileKey = fileKeyKey
+	}
+
+	keyFile, err := findKeyFile(keyStorePath, fileKey)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -87,7 +103,7 @@ func getDependencies(ctx context.Context, cmd *cobra.Command) (*currency.Convert
 	}
 	defer backend.Close()
 
-	privateKey, err := ethereum.PrivateKeyByKeyFile(keyPath, passPhrase)
+	privateKey, err := ethereum.PrivateKeyByKeyFile(keyFile, passPhrase)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("capture private key: %w", err)
 	}
@@ -107,6 +123,20 @@ func getDependencies(ctx context.Context, cmd *cobra.Command) (*currency.Convert
 		return nil, nil, nil, fmt.Errorf("connecting to bankClient: %w", err)
 	}
 
+	// =========================================================================
+	// Display the settings and execute the specified command.
+
+	oneETHToUSD, oneUSDToETH := converter.Values()
+	fmt.Println("\nSettings")
+	fmt.Println("----------------------------------------------------")
+	fmt.Println("network         :", bankNetwork)
+	fmt.Println("privatekey      :", keyFile)
+	fmt.Println("passphrase      :", passPhrase)
+	fmt.Println("oneETHToUSD     :", oneETHToUSD)
+	fmt.Println("oneUSDToETH     :", oneUSDToETH)
+	fmt.Println("key address     :", bankClient.Client().Address())
+	fmt.Println("contract id     :", contractID)
+
 	return converter, ethClient, bankClient, nil
 }
 
@@ -115,4 +145,37 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// findKeyFile searches the keystore for the specified address key file.
+func findKeyFile(keyStorePath string, address string) (string, error) {
+	keyStorePath = strings.TrimSuffix(keyStorePath, "/")
+	errFound := errors.New("found")
+
+	var filePath string
+	fn := func(fileName string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("walkdir failure: %w", err)
+		}
+
+		if dirEntry.IsDir() {
+			return nil
+		}
+
+		if strings.Contains(strings.ToLower(fileName), strings.ToLower(address[2:])) {
+			filePath = fmt.Sprintf("%s/%s", keyStorePath, fileName)
+			return errFound
+		}
+
+		return nil
+	}
+
+	if err := fs.WalkDir(os.DirFS(keyStorePath), ".", fn); err != nil {
+		if errors.Is(err, errFound) {
+			return filePath, nil
+		}
+		return "", fmt.Errorf("walking directory: %w", err)
+	}
+
+	return "", errors.New("not found")
 }

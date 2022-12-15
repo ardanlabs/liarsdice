@@ -27,11 +27,6 @@ var contractCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		converter, _, bankClient, err := getDependencies(ctx, cmd)
-		if err != nil {
-			return err
-		}
-
 		getBalance, err := cmd.Flags().GetString("balance")
 		if err != nil {
 			return nil
@@ -48,10 +43,10 @@ var contractCmd = &cobra.Command{
 		}
 
 		if len(getBalance) != 0 {
-			//contract, err := cmd.Flags().GetString("contract")
-			//if err != nil {
-			//	return err
-			//}
+			converter, _, bankClient, err := getDependencies(ctx, cmd, "")
+			if err != nil {
+				return err
+			}
 
 			return balance(ctx, converter, bankClient, getBalance)
 		}
@@ -66,10 +61,20 @@ var contractCmd = &cobra.Command{
 				return errors.New("must set money value to greater than 0")
 			}
 
+			converter, _, bankClient, err := getDependencies(ctx, cmd, addMoney)
+			if err != nil {
+				return err
+			}
+
 			return deposit(ctx, converter, bankClient, amountUSD)
 		}
 
 		if len(removeMoney) != 0 {
+			converter, _, bankClient, err := getDependencies(ctx, cmd, removeMoney)
+			if err != nil {
+				return err
+			}
+
 			return withdraw(ctx, converter, bankClient)
 		}
 
