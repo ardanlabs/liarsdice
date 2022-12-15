@@ -103,7 +103,7 @@ admin-build:
 	go build -o admin app/tooling/admin/main.go
 
 contract-deploy: contract-build admin-build
-	./admin -d
+	./admin contract deploy
 
 # ==============================================================================
 # Game Engine and UI
@@ -206,6 +206,7 @@ dev-up:
 dev-down:
 	telepresence quit -s
 	kind delete cluster --name $(KIND_CLUSTER)
+	rm -f /tmp/credentials.json
 
 dev-load:
 	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
@@ -217,19 +218,21 @@ dev-deploy:
 dev-deploy-force:
 	@zarf/k8s/dev/geth/setup-contract-k8s force
 
-dev-apply:
+dev-apply: admin-build
 	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
+
+	@zarf/k8s/dev/vault/initialize_vault.sh
 
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
-
-	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
 
 	@zarf/k8s/dev/geth/setup-contract-k8s
 
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
+
+	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
 
 dev-restart:
 	kubectl rollout restart deployment engine --namespace=liars-system

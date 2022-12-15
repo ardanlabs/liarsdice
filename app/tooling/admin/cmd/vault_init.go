@@ -34,7 +34,7 @@ var vaultInitCmd = &cobra.Command{
 	},
 }
 
-const defaultCredentialFile = "/vault/credentials.json"
+const defaultCredentialFile = "/tmp/credentials.json"
 
 func init() {
 	vaultCmd.AddCommand(vaultInitCmd)
