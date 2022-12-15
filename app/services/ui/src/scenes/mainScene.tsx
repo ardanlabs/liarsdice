@@ -1,6 +1,6 @@
 import React from 'react'
 import Phaser from 'phaser'
-import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../utils/config'
+import { DEFAULT_HEIGHT, DEFAULT_WIDTH, DICE_SPACING } from '../utils/config'
 import { apiUrl, axiosConfig } from '../utils/axiosConfig'
 import { defaultApiError } from '../types/responses.d'
 import axios, { AxiosError, AxiosResponse } from 'axios'
@@ -8,16 +8,10 @@ import { bet, dice, DiceConfigs, die, game, user } from '../types/index.d'
 import assureGameType from '../utils/assureGameType'
 import getActivePlayersLength from '../utils/getActivePlayers'
 import { shortenIfAddress } from '../utils/address'
-// import PlayerBalance from '../components/playerBalance'
-// var cursors: Phaser.Types.Input.Keyboard.CursorKeys
-// var player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-var pointer: Phaser.GameObjects.Image
-var localGame: game
+import getDicePosition from '../utils/diceRotations'
 
-var account: string | null = window.sessionStorage.getItem('account')
-
+// Configs
 var ENV = 'DEV'
-
 // Create an axios instance to keep the token updated
 const axiosInstance = axios.create({
   headers: {
@@ -25,13 +19,16 @@ const axiosInstance = axios.create({
   },
 })
 
-// Variables
+// BackendGame Variables
 var playerDice = window.localStorage.getItem('playerDice')
-
-console.log(playerDice)
-
+var localGame: game
+var account: string | null = window.sessionStorage.getItem('account')
 var player: user
 
+// UI Variables
+var pointer: Phaser.GameObjects.Image
+var table: Phaser.GameObjects.Image
+// var diceContainer2: Phaser.GameObjects.Container
 // Details bar
 var statusText: Phaser.GameObjects.Text,
   roundText: Phaser.GameObjects.Text,
@@ -44,7 +41,12 @@ var statusText: Phaser.GameObjects.Text,
 
 export default class MainScene extends Phaser.Scene {
   ws: WebSocket
-  diceConfigs: DiceConfigs
+  dieConfig: Phaser.Types.GameObjects.Sprite.SpriteConfig
+  x: number
+  y: number
+  rotation: number
+  initialYPos: number
+  center = { x: DEFAULT_WIDTH / 2, y: DEFAULT_HEIGHT / 2 }
   constructor() {
     super({ key: 'MainScene' })
     this.ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -63,10 +65,14 @@ export default class MainScene extends Phaser.Scene {
       anteUSD: 0,
     }
 
-    const dieConfig = {
+    this.initialYPos = DEFAULT_HEIGHT / 2 + 310
+    this.x = this.center.x - DICE_SPACING * 2.5
+    this.y = this.initialYPos
+    this.rotation = 0.3
+
+    this.dieConfig = {
       key: 'dice',
-      y: DEFAULT_HEIGHT - 80,
-      scale: 1,
+      scale: 0.8,
       // anims: {
       //   key: 'die',
       //   repeat: -1,
@@ -76,39 +82,6 @@ export default class MainScene extends Phaser.Scene {
       //   },
       // },
     }
-
-    this.diceConfigs = {
-      1: {
-        ...dieConfig,
-        frame: `die_1`,
-        x: DEFAULT_WIDTH / 2 - 200,
-      },
-      2: {
-        ...dieConfig,
-        frame: `die_2`,
-        x: DEFAULT_WIDTH / 2 - 120,
-      },
-      3: {
-        ...dieConfig,
-        frame: `die_3`,
-        x: DEFAULT_WIDTH / 2 - 40,
-      },
-      4: {
-        ...dieConfig,
-        frame: `die_4`,
-        x: DEFAULT_WIDTH / 2 + 40,
-      },
-      5: {
-        ...dieConfig,
-        frame: `die_5`,
-        x: DEFAULT_WIDTH / 2 + 120,
-      },
-      6: {
-        ...dieConfig,
-        frame: `die_6`,
-        x: DEFAULT_WIDTH / 2 + 200,
-      },
-    }
   }
 
   preload() {
@@ -117,12 +90,18 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('table', 'images/table.png')
     this.load.image('pointer', 'images/pointer.png')
     this.load.atlas('dice', 'animations/dice.png', 'animations/dice.json')
+    this.load.image('die_0', 'images/die_0.png')
   }
 
   create() {
     // We set the background
-    this.add.image(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 'background')
-
+    this.add.image(this.center.x, this.center.y, 'background')
+    table = this.add.image(this.center.x, this.center.y, 'table').setScale(0.65)
+    // table = this.physics.add.staticGroup()
+    // table
+    //   .create(this.center.x, this.center.y, 'table')
+    //   .setScale(0.65)
+    //   .refreshBody()
     // Details bar
     if (ENV === 'DEV') {
       const textSpacing = 20
@@ -176,29 +155,18 @@ export default class MainScene extends Phaser.Scene {
       repeat: -1,
     })
 
-    //  The Sprite config
-
-    // Position dices and multiple them by amount of players.
-    // Figure out an algorithm to calculate the position of the players
-
-    if (playerDice) {
-      let x = DEFAULT_WIDTH / 2 - 240
-      JSON.parse(playerDice).forEach((die: die) => {
-        x += 80
-
-        if (die !== 0) this.make.sprite({ ...this.diceConfigs[die], x })
-      })
-    }
+    // const die = this.physics.add.sprite(
+    //   this.center.x,
+    //   200,
+    //   'dice',
+    //   'die_6',
+    // )
+    // die.setCollideWorldBounds(true)
+    // this.physics.add.collider(die, table)
 
     // =========================================================================
-
-    // const table = this.physics.add.staticGroup()
-    // table
-    //   .create(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 'table')
-    //   .setScale(0.5)
-    //   .refreshBody()
     pointer = this.add
-      .image(DEFAULT_WIDTH / 2, DEFAULT_HEIGHT / 2, 'pointer')
+      .image(this.center.x, this.center.y, 'pointer')
       .setOrigin(0.5, 0.4)
       .setScale(0.2)
 
@@ -243,7 +211,6 @@ export default class MainScene extends Phaser.Scene {
 
   update() {
     pointer.rotation += 0.011
-
     player = localGame.cups.filter((player: user) => {
       return player.account === localGame.currentID
     })[0]
@@ -260,9 +227,50 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
+  renderDice(game: game) {
+    // Position dices and multiple them by amount of players.
+    // Figure out an algorithm to calculate the position of the players
+    // game.cups.forEach((user: user) => {
+    const userDice: dice = [
+      1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5,
+    ]
+    //
+
+    userDice.forEach((dieNumber: die, i: number) => {
+      const position = getDicePosition(
+        this.initialYPos,
+        this.x,
+        this.y,
+        this.rotation,
+        i,
+      )
+
+      this.initialYPos = position.initialYPos
+      this.x = position.position.x
+      this.y = position.position.y
+      this.rotation = position.position.rotation
+
+      if (dieNumber !== 0) {
+        const die = this.make.sprite({
+          ...this.dieConfig,
+          frame: `die_${dieNumber}`,
+          ...position.position,
+        })
+      }
+      // if (dieNumber === 0) {
+      //   const die = this.make
+      //     .sprite({ key: 'die_0', x: this.x, y: this.y })
+      //     .setRotation(this.rotation)
+      //   diceContainer.add(die)
+      // }
+    })
+    // })
+  }
+
   // game functions
 
   initGame() {
+    this.renderDice(localGame)
     const initGameAxiosFn = (response: AxiosResponse) => {
       this.setNewGame(response.data)
       if (
@@ -370,12 +378,12 @@ export default class MainScene extends Phaser.Scene {
   updateStatus() {
     // updatesStatusAxiosFn handles the backend answer.
     const updateStatusAxiosFn = (response: AxiosResponse) => {
-      console.log(response)
-
       if (response.data) {
         const parsedGame = this.setNewGame(response.data)
+        this.renderDice(parsedGame)
         switch (parsedGame.status) {
           case 'newgame':
+            window.localStorage.removeItem('playerDice')
             if (getActivePlayersLength(parsedGame.cups) >= 2) {
               this.startGame()
             }
@@ -388,6 +396,7 @@ export default class MainScene extends Phaser.Scene {
               axiosInstance
                 .get(`http://${apiUrl}/reconcile`)
                 .then(() => {
+                  window.localStorage.removeItem('playerDice')
                   this.updateStatus()
                 })
                 .catch((error: AxiosError) => {
@@ -396,8 +405,6 @@ export default class MainScene extends Phaser.Scene {
             }
             break
           case 'nogame':
-            console.log('hi')
-
             window.localStorage.removeItem('playerDice')
             break
         }

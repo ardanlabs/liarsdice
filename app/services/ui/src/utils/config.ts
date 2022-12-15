@@ -3,6 +3,7 @@ import MainScene from '../scenes/mainScene'
 
 export const DEFAULT_WIDTH = document.documentElement.clientWidth ?? 1280
 export const DEFAULT_HEIGHT = document.documentElement.clientHeight ?? 720
+export const DICE_SPACING = 41.6
 
 export const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -21,7 +22,8 @@ export const config: Phaser.Types.Core.GameConfig = {
     default: 'arcade',
     arcade: {
       gravity: { y: 300 },
-      debug: false,
+      debug: true,
+      debugShowBody: true,
     },
   },
   scene: MainScene,
