@@ -45,14 +45,14 @@ const (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringP("network", "n", defaultNetwork, "Sets the network to use.")
-	rootCmd.PersistentFlags().StringP("key-coin", "K", defaultCoinMarketCapKey, "Key that references market cap.")
-	rootCmd.PersistentFlags().StringP("key-path", "k", defaultKeyPath, "The key path to use.")
-	rootCmd.PersistentFlags().StringP("key-store-path", "P", defaultKeyStorePath, "The key path to use.")
-	rootCmd.PersistentFlags().StringP("passphrase", "p", defaultPassPhrase, "The pass phrase to use.")
+	rootCmd.PersistentFlags().StringP(network, shortName[network], defaultNetwork, "Sets the network to use.")
+	rootCmd.PersistentFlags().StringP(keyCoin, shortName[keyCoin], defaultCoinMarketCapKey, "Key that references market cap.")
+	rootCmd.PersistentFlags().StringP(keyPath, shortName[keyPath], defaultKeyPath, "The key path to use.")
+	rootCmd.PersistentFlags().StringP(keyStorePath, shortName[keyStorePath], defaultKeyStorePath, "The key path to use.")
+	rootCmd.PersistentFlags().StringP(passPhrase, shortName[passPhrase], defaultPassPhrase, "The pass phrase to use.")
 	rootCmd.PersistentFlags().StringP(
-		"contract-id",
-		"C",
+		contractID,
+		shortName[contractID],
 		getEnv("GAME_CONTRACT_ID", ""),
 		"Sets the Contract ID to use.",
 	)
@@ -130,7 +130,7 @@ func getDependencies(ctx context.Context, cmd *cobra.Command, fileKeyKey string)
 	fmt.Println("\nSettings")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("network         :", bankNetwork)
-	fmt.Println("privatekey      :", keyFile)
+	fmt.Println("private key     :", keyFile)
 	fmt.Println("passphrase      :", passPhrase)
 	fmt.Println("oneETHToUSD     :", oneETHToUSD)
 	fmt.Println("oneUSDToETH     :", oneUSDToETH)

@@ -34,18 +34,17 @@ var transactionCmd = &cobra.Command{
 			return err
 		}
 
-		return transaction(ctx, converter, ethClient, tranID)
+		return getTransaction(ctx, converter, ethClient, tranID)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(transactionCmd)
 
-	transactionCmd.Flags().StringP("transaction", "t", "", "Show transaction details for the specified transaction hash.")
-	transactionCmd.Flags().StringP("network", "n", defaultBankNetwork, "The bank network to use.")
+	transactionCmd.Flags().StringP(transaction, shortName[transaction], "", "Show transaction details for the specified transaction hash.")
 }
 
-func transaction(ctx context.Context, converter *currency.Converter, ethClient *ethereum.Client, tranID string) error {
+func getTransaction(ctx context.Context, converter *currency.Converter, ethClient *ethereum.Client, tranID string) error {
 	fmt.Println("\nTransaction ID")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("tran id         :", tranID)

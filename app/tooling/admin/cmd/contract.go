@@ -27,7 +27,7 @@ var contractCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		getBalance, err := cmd.Flags().GetString("balance")
+		_getBalance, err := cmd.Flags().GetString("balance")
 		if err != nil {
 			return nil
 		}
@@ -42,13 +42,13 @@ var contractCmd = &cobra.Command{
 			return nil
 		}
 
-		if len(getBalance) != 0 {
+		if len(_getBalance) != 0 {
 			converter, _, bankClient, err := getDependencies(ctx, cmd, "")
 			if err != nil {
 				return err
 			}
 
-			return balance(ctx, converter, bankClient, getBalance)
+			return getBalance(ctx, converter, bankClient, _getBalance)
 		}
 
 		if len(addMoney) != 0 {
@@ -84,13 +84,12 @@ var contractCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(contractCmd)
-	contractCmd.Flags().StringP("balance", "b", "", "Show the smart contract balance.")
-	contractCmd.Flags().StringP("add-money", "a", "", "Deposit USD into the game contract.")
-	contractCmd.Flags().StringP("remove-money", "r", "", "Withdraw money from the game contract.")
-	contractCmd.MarkFlagsMutuallyExclusive("balance", "add-money", "remove-money")
+	contractCmd.Flags().StringP(balance, shortName[balance], "", "Show the smart contract balance.")
+	contractCmd.Flags().StringP(addMoney, shortName[addMoney], "", "Deposit USD into the game contract.")
+	contractCmd.Flags().StringP(removeMoney, shortName[removeMoney], "", "Withdraw money from the game contract.")
+	contractCmd.MarkFlagsMutuallyExclusive(balance, addMoney, removeMoney)
 
-	contractCmd.Flags().StringP("contract", "c", "", "Provides the contract id for required calls.")
-	contractCmd.Flags().Float64P("money", "m", 0, "Sets the amount of USD to use.")
+	contractCmd.Flags().Float64P(money, shortName[money], 0, "Sets the amount of USD to use.")
 }
 
 func deposit(ctx context.Context, converter *currency.Converter, bankClient *bank.Bank, amountUSD float64) error {
@@ -127,7 +126,7 @@ func withdraw(ctx context.Context, converter *currency.Converter, bankClient *ba
 	return nil
 }
 
-func balance(ctx context.Context, converter *currency.Converter, bankClient *bank.Bank, address string) error {
+func getBalance(ctx context.Context, converter *currency.Converter, bankClient *bank.Bank, address string) error {
 	fmt.Println("\nGame Balance")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("account         :", address)

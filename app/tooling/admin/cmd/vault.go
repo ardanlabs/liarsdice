@@ -30,9 +30,9 @@ const (
 
 func init() {
 	rootCmd.AddCommand(vaultCmd)
-	vaultCmd.PersistentFlags().StringP("vault-address", "a", defaultVaultAddress, "The network address of our vault server")
-	vaultCmd.PersistentFlags().StringP("mount-path", "m", defaultMountPath, "The mount path we want to use in vault")
-	vaultCmd.PersistentFlags().StringP("token", "t", defaultToken, "The (non-root) token used to access vault")
+	vaultCmd.PersistentFlags().StringP(vaultAddress, shortName[vaultAddress], defaultVaultAddress, "The network address of our vault server")
+	vaultCmd.PersistentFlags().StringP(mountPath, shortName[mountPath], defaultMountPath, "The mount path we want to use in vault")
+	vaultCmd.PersistentFlags().StringP(token, shortName[token], defaultToken, "The (non-root) token used to access vault")
 }
 
 func getVaultConfig(cmd *cobra.Command) (vault.Config, error) {

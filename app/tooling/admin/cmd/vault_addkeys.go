@@ -38,7 +38,7 @@ const defaultKeysFolder = "zarf/keys/"
 
 func init() {
 	vaultCmd.AddCommand(vaultAddKeysCmd)
-	vaultAddKeysCmd.Flags().StringP("keys-folder", "f", defaultKeysFolder, "The folder of keys to be loaded into vault")
+	vaultAddKeysCmd.Flags().StringP(keysFolder, shortName[keysFolder], defaultKeysFolder, "The folder of keys to be loaded into vault")
 }
 
 func loadKeys(fSys fs.FS, vaultConfig vault.Config) error {

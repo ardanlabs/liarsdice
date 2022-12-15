@@ -29,7 +29,7 @@ var walletCmd = &cobra.Command{
 			return err
 		}
 
-		return wallet(ctx, converter, ethClient, address)
+		return getWallet(ctx, converter, ethClient, address)
 	},
 }
 
@@ -38,10 +38,10 @@ const defaultWalletAddress = "0x8e113078adf6888b7ba84967f299f29aece24c55"
 func init() {
 	rootCmd.AddCommand(walletCmd)
 
-	walletCmd.Flags().StringP("wallet", "w", defaultWalletAddress, "Wallet address")
+	walletCmd.Flags().StringP(wallet, shortName[wallet], defaultWalletAddress, "Wallet address")
 }
 
-func wallet(ctx context.Context, converter *currency.Converter, ethClient *ethereum.Client, address string) error {
+func getWallet(ctx context.Context, converter *currency.Converter, ethClient *ethereum.Client, address string) error {
 	fmt.Println("\nWallet Balance")
 	fmt.Println("----------------------------------------------------")
 	fmt.Println("account         :", address)
