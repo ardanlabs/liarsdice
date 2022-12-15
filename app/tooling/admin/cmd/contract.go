@@ -27,7 +27,7 @@ var contractCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		_getBalance, err := cmd.Flags().GetString("balance")
+		performBalance, err := cmd.Flags().GetString("balance")
 		if err != nil {
 			return nil
 		}
@@ -42,13 +42,13 @@ var contractCmd = &cobra.Command{
 			return nil
 		}
 
-		if len(_getBalance) != 0 {
+		if len(performBalance) != 0 {
 			converter, _, bankClient, err := getDependencies(ctx, cmd, "")
 			if err != nil {
 				return err
 			}
 
-			return getBalance(ctx, converter, bankClient, _getBalance)
+			return getBalance(ctx, converter, bankClient, performBalance)
 		}
 
 		if len(addMoney) != 0 {
