@@ -18,7 +18,7 @@ import (
 var vaultInitCmd = &cobra.Command{
 	Use:   "init",
 	Short: "initialize/unseal a vault instance",
-	Long:  `Used to initialize and unseal a Vault instance.`,
+	Long:  `Used to initialize and unseal a Vault instance in an idempotent manner.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vaultConfig, err := getVaultConfig(cmd)
 		if err != nil {

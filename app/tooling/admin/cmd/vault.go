@@ -10,8 +10,8 @@ import (
 var vaultCmd = &cobra.Command{
 	Use:   "vault",
 	Short: "Utility tasks to manage Vault",
-	Long: `Can be used to initialize or unseal a Vault instance as well as load keys into vault
-for liars dice.`,
+	Long: `Can be used to initialize or unseal a Vault instance in an idempotent manner as well as load keys into
+vault for liars dice.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return cmd.Help()

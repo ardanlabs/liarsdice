@@ -17,8 +17,7 @@ import (
 var vaultAddKeysCmd = &cobra.Command{
 	Use:   "add-keys",
 	Short: "Add pem keys to vault.",
-	Long: `Used to load pem keys into vault
-for liars dice.`,
+	Long:  `Used to load pem keys into vault for liars dice.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vaultConfig, err := getVaultConfig(cmd)
 		if err != nil {
