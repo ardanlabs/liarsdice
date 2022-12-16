@@ -5,6 +5,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"net/http"
 	"os"
 	"os/signal"
@@ -98,7 +99,7 @@ func run(log *zap.SugaredLogger) error {
 			DebugHost       string        `conf:"default:0.0.0.0:4000"`
 		}
 		Vault struct {
-			Address   string `conf:"default:http://vault-service.liars-system.svc.cluster.local:8200"`
+			Address   string `conf:"default:http://vaultConfig-service.liars-system.svc.cluster.local:8200"`
 			MountPath string `conf:"default:secret"`
 			Token     string `conf:"default:mytoken,mask"`
 		}
@@ -111,8 +112,7 @@ func run(log *zap.SugaredLogger) error {
 			ConnectTimeout time.Duration `conf:"default:60s"`
 		}
 		Bank struct {
-			KeyPath          string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
-			PassPhrase       string        `conf:"default:123"`
+			KeyID            string        `conf:"default:6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
 			Network          string        `conf:"default:http://geth-service.liars-system.svc.cluster.local:8545"`
 			Timeout          time.Duration `conf:"default:10s"`
 			CoinMarketCapKey string        `conf:"default:a8cd12fb-d056-423f-877b-659046af0aa5"`
@@ -153,27 +153,27 @@ func run(log *zap.SugaredLogger) error {
 
 	log.Infow("startup", "status", "initializing authentication support")
 
-	vault, err := vault.New(vault.Config{
+	vaultClient, err := vault.New(vault.Config{
 		Address:   cfg.Vault.Address,
 		Token:     cfg.Vault.Token,
 		MountPath: cfg.Vault.MountPath,
 	})
 	if err != nil {
-		return fmt.Errorf("constructing vault: %w", err)
+		return fmt.Errorf("constructing vaultConfig: %w", err)
 	}
 
 	authCfg := auth.Config{
 		Log:       log,
-		KeyLookup: vault,
+		KeyLookup: vaultClient,
 	}
 
-	auth, err := auth.New(authCfg)
+	authClient, err := auth.New(authCfg)
 	if err != nil {
-		return fmt.Errorf("constructing auth: %w", err)
+		return fmt.Errorf("constructing authClient: %w", err)
 	}
 
 	// =========================================================================
-	// Create the currency converter and bank needed for the game
+	// Create the currency converter and bankClient needed for the game
 
 	if cfg.Game.ContractID == "0x0" {
 		return errors.New("smart contract id not provided")
@@ -199,14 +199,19 @@ func run(log *zap.SugaredLogger) error {
 	}
 	defer backend.Close()
 
-	privateKey, err := ethereum.PrivateKeyByKeyFile(cfg.Bank.KeyPath, cfg.Bank.PassPhrase)
+	privateKey, err := vaultClient.PrivateKeyPEM(cfg.Bank.KeyID)
 	if err != nil {
 		return errors.New("capture private key")
 	}
 
-	bank, err := bank.New(ctx, log, backend, privateKey, common.HexToAddress(cfg.Game.ContractID))
+	ecdsaKey, err := crypto.ToECDSA([]byte(privateKey))
 	if err != nil {
-		return fmt.Errorf("connecting to bank: %w", err)
+		return fmt.Errorf("error converting PEM to ECDSA: %w", err)
+	}
+
+	bankClient, err := bank.New(ctx, log, backend, ecdsaKey, common.HexToAddress(cfg.Game.ContractID))
+	if err != nil {
+		return fmt.Errorf("connecting to bankClient: %w", err)
 	}
 
 	// =========================================================================
@@ -242,9 +247,9 @@ func run(log *zap.SugaredLogger) error {
 	apiMux := handlers.APIMux(handlers.APIMuxConfig{
 		Shutdown:       shutdown,
 		Log:            log,
-		Auth:           auth,
+		Auth:           authClient,
 		Converter:      converter,
-		Bank:           bank,
+		Bank:           bankClient,
 		Evts:           evts,
 		AnteUSD:        cfg.Game.AnteUSD,
 		ActiveKID:      cfg.Auth.ActiveKID,
