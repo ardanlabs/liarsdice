@@ -5,13 +5,14 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ardanlabs/ethereum"
@@ -195,13 +196,13 @@ func run(log *zap.SugaredLogger) error {
 
 	backend, err := ethereum.CreateDialedBackend(ctx, cfg.Bank.Network)
 	if err != nil {
-		return errors.New("ethereum backend")
+		return fmt.Errorf("ethereum backend: %w", err)
 	}
 	defer backend.Close()
 
 	privateKey, err := vaultClient.PrivateKeyPEM(cfg.Bank.KeyID)
 	if err != nil {
-		return errors.New("capture private key")
+		return fmt.Errorf("capture private key: %w", err)
 	}
 
 	ecdsaKey, err := crypto.ToECDSA([]byte(privateKey))
