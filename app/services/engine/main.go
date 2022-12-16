@@ -207,7 +207,6 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	block, _ := pem.Decode([]byte(privateKey))
-
 	ecdsaKey, err := crypto.ToECDSA(block.Bytes)
 	if err != nil {
 		return fmt.Errorf("error converting PEM to ECDSA: %w", err)
