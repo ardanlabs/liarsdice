@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/pem"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io"
@@ -10,6 +11,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/liarsdice/foundation/vault"
 )
 
@@ -19,9 +23,16 @@ var vaultAddKeysCmd = &cobra.Command{
 	Short: "Add pem keys to vault.",
 	Long:  `Used to load pem keys into vault for liars dice.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := context.Background()
+
 		vaultConfig, err := getVaultConfig(cmd)
 		if err != nil {
 			return err
+		}
+
+		vaultSrv, err := vault.New(vaultConfig)
+		if err != nil {
+			return fmt.Errorf("constructing vault: %w", err)
 		}
 
 		kFolder, err := cmd.Flags().GetString(keysFolder)
@@ -29,7 +40,27 @@ var vaultAddKeysCmd = &cobra.Command{
 			return err
 		}
 
-		return loadKeys(os.DirFS(kFolder), vaultConfig)
+		err = loadKeys(ctx, os.DirFS(kFolder), vaultSrv)
+		if err != nil {
+			return err
+		}
+
+		ksPath, err := cmd.Flags().GetString(keyStorePath)
+		if err != nil {
+			return err
+		}
+
+		passPhrase, err := cmd.Flags().GetString(passPhrase)
+		if err != nil {
+			return err
+		}
+
+		err = loadBankKeys(ctx, ksPath, passPhrase, vaultSrv)
+		if err != nil {
+			return err
+		}
+
+		return nil
 	},
 }
 
@@ -40,11 +71,50 @@ func init() {
 	vaultAddKeysCmd.Flags().StringP(keysFolder, shortName[keysFolder], defaultKeysFolder, "The folder of keys to be loaded into vault")
 }
 
-func loadKeys(fSys fs.FS, vaultConfig vault.Config) error {
-	vaultSrv, err := vault.New(vaultConfig)
-	if err != nil {
-		return fmt.Errorf("constructing vault: %w", err)
+func loadBankKeys(ctx context.Context, ksPath, passPhrase string, vaultSrv *vault.Vault) error {
+	fSys := os.DirFS(ksPath)
+
+	fn := func(fileName string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("walkdir failure: %w", err)
+		}
+
+		if dirEntry.IsDir() {
+			return nil
+		}
+
+		privateKey, err := ethereum.PrivateKeyByKeyFile(fmt.Sprintf("%s%s", ksPath, fileName), passPhrase)
+		if err != nil {
+			return fmt.Errorf("capture private key: %s", err)
+		}
+
+		kid := strings.Split(dirEntry.Name(), "Z--")
+		if len(kid) != 2 {
+			return fmt.Errorf("misformed file name: %s", dirEntry.Name())
+		}
+		fmt.Println("Loading kid:", kid[1])
+
+		privatePEM := pem.EncodeToMemory(&pem.Block{
+			Type:  "EC PRIVATE KEY",
+			Bytes: crypto.FromECDSA(privateKey),
+		})
+
+		if err := vaultSrv.AddPrivateKey(ctx, kid[1], privatePEM); err != nil {
+			return fmt.Errorf("put: %w", err)
+		}
+
+		return nil
 	}
+
+	fmt.Print("\n")
+	if err := fs.WalkDir(fSys, ".", fn); err != nil {
+		return fmt.Errorf("walking directory: %w", err)
+	}
+
+	return nil
+}
+
+func loadKeys(ctx context.Context, fSys fs.FS, vaultSrv *vault.Vault) error {
 
 	fn := func(fileName string, dirEntry fs.DirEntry, err error) error {
 		if err != nil {
@@ -81,7 +151,7 @@ func loadKeys(fSys fs.FS, vaultConfig vault.Config) error {
 		kid := strings.TrimSuffix(dirEntry.Name(), ".pem")
 		fmt.Println("Loading kid:", kid)
 
-		if err := vaultSrv.AddPrivateKey(context.Background(), kid, privatePEM); err != nil {
+		if err := vaultSrv.AddPrivateKey(ctx, kid, privatePEM); err != nil {
 			return fmt.Errorf("put: %w", err)
 		}
 
