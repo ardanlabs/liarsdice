@@ -100,7 +100,7 @@ func run(log *zap.SugaredLogger) error {
 			DebugHost       string        `conf:"default:0.0.0.0:4000"`
 		}
 		Vault struct {
-			Address   string `conf:"default:http://vaultConfig-service.liars-system.svc.cluster.local:8200"`
+			Address   string `conf:"default:http://vault-service.liars-system.svc.cluster.local:8200"`
 			MountPath string `conf:"default:secret"`
 			Token     string `conf:"default:mytoken,mask"`
 		}
