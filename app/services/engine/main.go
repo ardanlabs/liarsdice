@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/pem"
 	"errors"
 	"expvar"
 	"fmt"
@@ -205,7 +206,9 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("capture private key: %w", err)
 	}
 
-	ecdsaKey, err := crypto.ToECDSA([]byte(privateKey))
+	block, _ := pem.Decode([]byte(privateKey))
+
+	ecdsaKey, err := crypto.ToECDSA(block.Bytes)
 	if err != nil {
 		return fmt.Errorf("error converting PEM to ECDSA: %w", err)
 	}
