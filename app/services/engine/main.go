@@ -5,6 +5,7 @@ import (
 	"errors"
 	"expvar"
 	"fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 	"net/http"
 	"os"
 	"os/signal"
@@ -111,8 +112,7 @@ func run(log *zap.SugaredLogger) error {
 			ConnectTimeout time.Duration `conf:"default:60s"`
 		}
 		Bank struct {
-			KeyPath          string        `conf:"default:zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
-			PassPhrase       string        `conf:"default:123"`
+			KeyID            string        `conf:"default:6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
 			Network          string        `conf:"default:http://geth-service.liars-system.svc.cluster.local:8545"`
 			Timeout          time.Duration `conf:"default:10s"`
 			CoinMarketCapKey string        `conf:"default:a8cd12fb-d056-423f-877b-659046af0aa5"`
@@ -199,12 +199,17 @@ func run(log *zap.SugaredLogger) error {
 	}
 	defer backend.Close()
 
-	privateKey, err := ethereum.PrivateKeyByKeyFile(cfg.Bank.KeyPath, cfg.Bank.PassPhrase)
+	privateKey, err := vaultClient.PrivateKeyPEM(cfg.Bank.KeyID)
 	if err != nil {
 		return errors.New("capture private key")
 	}
 
-	bankClient, err := bank.New(ctx, log, backend, privateKey, common.HexToAddress(cfg.Game.ContractID))
+	ecdsaKey, err := crypto.ToECDSA([]byte(privateKey))
+	if err != nil {
+		return fmt.Errorf("error converting PEM to ECDSA: %w", err)
+	}
+
+	bankClient, err := bank.New(ctx, log, backend, ecdsaKey, common.HexToAddress(cfg.Game.ContractID))
 	if err != nil {
 		return fmt.Errorf("connecting to bankClient: %w", err)
 	}
