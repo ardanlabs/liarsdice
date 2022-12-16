@@ -153,7 +153,7 @@ func run(log *zap.SugaredLogger) error {
 
 	log.Infow("startup", "status", "initializing authentication support")
 
-	vaultConfig, err := vault.New(vault.Config{
+	vaultClient, err := vault.New(vault.Config{
 		Address:   cfg.Vault.Address,
 		Token:     cfg.Vault.Token,
 		MountPath: cfg.Vault.MountPath,
@@ -164,7 +164,7 @@ func run(log *zap.SugaredLogger) error {
 
 	authCfg := auth.Config{
 		Log:       log,
-		KeyLookup: vaultConfig,
+		KeyLookup: vaultClient,
 	}
 
 	authClient, err := auth.New(authCfg)
