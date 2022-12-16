@@ -173,7 +173,6 @@ game-engine:
 		-t liarsdice-game-engine:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		--load \
 		.
 
 ui:
@@ -182,7 +181,6 @@ ui:
 		-t liarsdice-game-ui:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		--load \
 		.
 
 # ==============================================================================
