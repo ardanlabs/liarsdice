@@ -173,7 +173,7 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	// =========================================================================
-	// Create the currency converter and bank needed for the game
+	// Create the currency converter and bankClient needed for the game
 
 	if cfg.Game.ContractID == "0x0" {
 		return errors.New("smart contract id not provided")
@@ -204,9 +204,9 @@ func run(log *zap.SugaredLogger) error {
 		return errors.New("capture private key")
 	}
 
-	bank, err := bank.New(ctx, log, backend, privateKey, common.HexToAddress(cfg.Game.ContractID))
+	bankClient, err := bank.New(ctx, log, backend, privateKey, common.HexToAddress(cfg.Game.ContractID))
 	if err != nil {
-		return fmt.Errorf("connecting to bank: %w", err)
+		return fmt.Errorf("connecting to bankClient: %w", err)
 	}
 
 	// =========================================================================
@@ -244,7 +244,7 @@ func run(log *zap.SugaredLogger) error {
 		Log:            log,
 		Auth:           authClient,
 		Converter:      converter,
-		Bank:           bank,
+		Bank:           bankClient,
 		Evts:           evts,
 		AnteUSD:        cfg.Game.AnteUSD,
 		ActiveKID:      cfg.Auth.ActiveKID,
