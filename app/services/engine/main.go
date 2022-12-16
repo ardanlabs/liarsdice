@@ -98,7 +98,7 @@ func run(log *zap.SugaredLogger) error {
 			DebugHost       string        `conf:"default:0.0.0.0:4000"`
 		}
 		Vault struct {
-			Address   string `conf:"default:http://vault-service.liars-system.svc.cluster.local:8200"`
+			Address   string `conf:"default:http://vaultConfig-service.liars-system.svc.cluster.local:8200"`
 			MountPath string `conf:"default:secret"`
 			Token     string `conf:"default:mytoken,mask"`
 		}
@@ -153,23 +153,23 @@ func run(log *zap.SugaredLogger) error {
 
 	log.Infow("startup", "status", "initializing authentication support")
 
-	vault, err := vault.New(vault.Config{
+	vaultConfig, err := vault.New(vault.Config{
 		Address:   cfg.Vault.Address,
 		Token:     cfg.Vault.Token,
 		MountPath: cfg.Vault.MountPath,
 	})
 	if err != nil {
-		return fmt.Errorf("constructing vault: %w", err)
+		return fmt.Errorf("constructing vaultConfig: %w", err)
 	}
 
 	authCfg := auth.Config{
 		Log:       log,
-		KeyLookup: vault,
+		KeyLookup: vaultConfig,
 	}
 
-	auth, err := auth.New(authCfg)
+	authClient, err := auth.New(authCfg)
 	if err != nil {
-		return fmt.Errorf("constructing auth: %w", err)
+		return fmt.Errorf("constructing authClient: %w", err)
 	}
 
 	// =========================================================================
@@ -242,7 +242,7 @@ func run(log *zap.SugaredLogger) error {
 	apiMux := handlers.APIMux(handlers.APIMuxConfig{
 		Shutdown:       shutdown,
 		Log:            log,
-		Auth:           auth,
+		Auth:           authClient,
 		Converter:      converter,
 		Bank:           bank,
 		Evts:           evts,
