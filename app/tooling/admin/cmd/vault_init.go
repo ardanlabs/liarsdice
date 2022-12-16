@@ -25,7 +25,7 @@ var vaultInitCmd = &cobra.Command{
 			return err
 		}
 
-		credentialsFile, err := cmd.Flags().GetString("credential-file")
+		credentialsFile, err := cmd.Flags().GetString(credentialFile)
 		if err != nil {
 			return err
 		}

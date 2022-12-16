@@ -39,17 +39,17 @@ func getVaultConfig(cmd *cobra.Command) (vault.Config, error) {
 	var vaultConfig vault.Config
 	var err error
 
-	vaultConfig.Address, err = cmd.Flags().GetString("vault-address")
+	vaultConfig.Address, err = cmd.Flags().GetString(vaultAddress)
 	if err != nil {
 		return vault.Config{}, err
 	}
 
-	vaultConfig.MountPath, err = cmd.Flags().GetString("mount-path")
+	vaultConfig.MountPath, err = cmd.Flags().GetString(mountPath)
 	if err != nil {
 		return vault.Config{}, err
 	}
 
-	vaultConfig.Token, err = cmd.Flags().GetString("token")
+	vaultConfig.Token, err = cmd.Flags().GetString(token)
 	if err != nil {
 		return vault.Config{}, err
 	}

@@ -24,12 +24,12 @@ var vaultAddKeysCmd = &cobra.Command{
 			return err
 		}
 
-		keysFolder, err := cmd.Flags().GetString("keys-folder")
+		kFolder, err := cmd.Flags().GetString(keysFolder)
 		if err != nil {
 			return err
 		}
 
-		return loadKeys(os.DirFS(keysFolder), vaultConfig)
+		return loadKeys(os.DirFS(kFolder), vaultConfig)
 	},
 }
 

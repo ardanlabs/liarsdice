@@ -27,17 +27,17 @@ var contractCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		performBalance, err := cmd.Flags().GetString("balance")
+		performBalance, err := cmd.Flags().GetString(balance)
 		if err != nil {
 			return nil
 		}
 
-		addMoney, err := cmd.Flags().GetString("add-money")
+		addMoney, err := cmd.Flags().GetString(addMoney)
 		if err != nil {
 			return nil
 		}
 
-		removeMoney, err := cmd.Flags().GetString("remove-money")
+		removeMoney, err := cmd.Flags().GetString(removeMoney)
 		if err != nil {
 			return nil
 		}
@@ -52,7 +52,7 @@ var contractCmd = &cobra.Command{
 		}
 
 		if len(addMoney) != 0 {
-			amountUSD, err := cmd.Flags().GetFloat64("money")
+			amountUSD, err := cmd.Flags().GetFloat64(money)
 			if err != nil {
 				return err
 			}

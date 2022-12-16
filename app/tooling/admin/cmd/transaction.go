@@ -21,7 +21,7 @@ var transactionCmd = &cobra.Command{
 	Short: "Examine transaction",
 	Long:  `Examine a transaction directly`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tranID, err := cmd.Flags().GetString("transaction")
+		tranID, err := cmd.Flags().GetString(transaction)
 		if err != nil {
 			return err
 		}

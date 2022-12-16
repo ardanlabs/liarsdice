@@ -16,7 +16,7 @@ var walletCmd = &cobra.Command{
 	Short: "Show the wallet balance",
 	Long:  `Show the wallet balance for the specified smart contract`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		address, err := cmd.Flags().GetString("wallet")
+		address, err := cmd.Flags().GetString(wallet)
 		if err != nil {
 			return err
 		}

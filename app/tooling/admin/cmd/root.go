@@ -59,17 +59,17 @@ func init() {
 }
 
 func getDependencies(ctx context.Context, cmd *cobra.Command, fileKeyKey string) (*currency.Converter, *ethereum.Client, *bank.Bank, error) {
-	coinMarketCapKey, err := cmd.Flags().GetString("key-coin")
+	coinMarketCapKey, err := cmd.Flags().GetString(keyCoin)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	bankNetwork, err := cmd.Flags().GetString("network")
+	bankNetwork, err := cmd.Flags().GetString(network)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	keyStorePath, err := cmd.Flags().GetString("key-store-path")
+	keyStorePath, err := cmd.Flags().GetString(keyStorePath)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -87,7 +87,7 @@ func getDependencies(ctx context.Context, cmd *cobra.Command, fileKeyKey string)
 		return nil, nil, nil, err
 	}
 
-	passPhrase, err := cmd.Flags().GetString("passphrase")
+	passPhrase, err := cmd.Flags().GetString(passPhrase)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -113,7 +113,7 @@ func getDependencies(ctx context.Context, cmd *cobra.Command, fileKeyKey string)
 		return nil, nil, nil, err
 	}
 
-	contractID, err := cmd.Flags().GetString("contract-id")
+	contractID, err := cmd.Flags().GetString(contractID)
 	if err != nil {
 		return nil, nil, nil, err
 	}
