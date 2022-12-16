@@ -13,7 +13,7 @@ get_pod_status () {
 }
 
 echo "Waiting for vault pod to enter the Running state"
-while [ $(get_pod_status) != "Running" ]; do
+while [ "$(get_pod_status)" != "Running" ]; do
   sleep 1
 done
 
