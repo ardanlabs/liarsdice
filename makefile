@@ -219,12 +219,12 @@ dev-deploy-force:
 dev-apply: admin-build
 	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
 
-	@zarf/k8s/dev/vault/initialize-vault
+	@zarf/k8s/dev/vault/initialize-vault.sh
 
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
 
-	@zarf/k8s/dev/geth/setup-contract-k8s
+	@zarf/k8s/dev/geth/setup-contract-k8s.sh
 
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
