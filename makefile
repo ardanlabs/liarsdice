@@ -15,9 +15,9 @@
 #
 # make geth-deposit
 # export GAME_CONTRACT_ID=0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
-# ./admin -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd -m 1000.00
-# ./admin -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
-# ./admin -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
+# ./admin contract -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd -m 1000.00
+# ./admin contract -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
+# ./admin contract -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
 #
 # Web3 API
 # https://web3js.readthedocs.io/en/v1.7.4/
@@ -33,7 +33,7 @@ ALPINE       := alpine:3.16
 CADDY        := caddy:2.6-alpine
 KIND         := kindest/node:v1.25.3
 GETH         := ethereum/client-go:stable
-TELEPRESENCE := docker.io/datawire/tel2:2.9.4
+TELEPRESENCE := docker.io/datawire/tel2:2.9.5
 
 dev.setup.mac.common:
 	brew update
@@ -85,8 +85,8 @@ geth-new-account:
 geth-deposit:
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' geth-service.liars-system.svc.cluster.local:8545:8545
 	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' geth-service.liars-system.svc.cluster.local:8545:8545
-	./admin -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
-	./admin -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
+	./admin contract -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
+	./admin contract -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
 
 # ==============================================================================
 # These commands build and deploy basic smart contract.
@@ -103,7 +103,7 @@ admin-build:
 	go build -o admin app/tooling/admin/main.go
 
 contract-deploy: contract-build admin-build
-	./admin -d
+	./admin deploy
 
 # ==============================================================================
 # Game Engine and UI
@@ -204,6 +204,7 @@ dev-up:
 dev-down:
 	telepresence quit -s
 	kind delete cluster --name $(KIND_CLUSTER)
+	rm -f /tmp/credentials.json
 
 dev-load:
 	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
@@ -215,19 +216,21 @@ dev-deploy:
 dev-deploy-force:
 	@zarf/k8s/dev/geth/setup-contract-k8s force
 
-dev-apply:
+dev-apply: admin-build
 	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
+
+	@zarf/k8s/dev/vault/initialize-vault.sh
 
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
 
-	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
-
-	@zarf/k8s/dev/geth/setup-contract-k8s
+	@zarf/k8s/dev/geth/setup-contract-k8s.sh
 
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
+
+	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
+	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
 
 dev-restart:
 	kubectl rollout restart deployment engine --namespace=liars-system
