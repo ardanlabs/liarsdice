@@ -97,15 +97,17 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play: Each player makes a bet and player1 calls liar.
 
-	if err := engine.Bet(ctx, player1Addr, 2, 3); err != nil {
+	winnerAcct := engine.Info(ctx).CurrentAcctID
+	if err := engine.Bet(ctx, winnerAcct, 2, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	if err := engine.Bet(ctx, player2Addr, 3, 4); err != nil {
+	loserAcct := engine.Info(ctx).CurrentAcctID
+	if err := engine.Bet(ctx, loserAcct, 3, 4); err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	winner, loser, err := engine.CallLiar(ctx, player1Addr)
+	winner, loser, err := engine.CallLiar(ctx, engine.Info(ctx).CurrentAcctID)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
@@ -113,17 +115,17 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Check winner and loser
 
-	if winner != player1Addr {
+	if winner != winnerAcct {
 		t.Fatalf("expecting 'player1' to be the winner; got '%s'", winner)
 	}
 
-	if loser != player2Addr {
+	if loser != loserAcct {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
 	status = engine.Info(ctx)
 
-	if status.Cups[player2Addr].Outs != 1 {
+	if status.Cups[loserAcct].Outs != 1 {
 		t.Fatalf("expecting 'player2' to have 1 out; got %d", status.Cups[player2Addr].Outs)
 	}
 
@@ -161,12 +163,12 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play : Player 2 places a bet and player 1 calls liar
 
-	err = engine.Bet(ctx, player2Addr, 5, 1)
+	err = engine.Bet(ctx, loserAcct, 5, 1)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	winner, loser, err = engine.CallLiar(ctx, player1Addr)
+	winner, loser, err = engine.CallLiar(ctx, winnerAcct)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player2: %s", err)
 	}
@@ -174,17 +176,17 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Check winner and loser
 
-	if winner != player1Addr {
+	if winner != winnerAcct {
 		t.Fatalf("expecting 'player1' to be the winner; got '%s'", winner)
 	}
 
-	if loser != player2Addr {
+	if loser != loserAcct {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
 	status = engine.Info(ctx)
 
-	if status.Cups[player2Addr].Outs != 2 {
+	if status.Cups[loserAcct].Outs != 2 {
 		t.Fatalf("expecting 'player2' to have 2 out; got %d", status.Cups[player2Addr].Outs)
 	}
 
@@ -222,12 +224,12 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Game Play : Player 2 makes a bet and player1 calls liar
 
-	err = engine.Bet(ctx, player2Addr, 4, 3)
+	err = engine.Bet(ctx, loserAcct, 4, 3)
 	if err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	winner, loser, err = engine.CallLiar(ctx, player1Addr)
+	winner, loser, err = engine.CallLiar(ctx, winnerAcct)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
@@ -235,17 +237,17 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// =========================================================================
 	// Check winner and loser.
 
-	if winner != player1Addr {
+	if winner != winnerAcct {
 		t.Fatalf("expecting 'player1' to be the winner; got '%s'", winner)
 	}
 
-	if loser != player2Addr {
+	if loser != loserAcct {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
 	status = engine.Info(ctx)
 
-	if status.Cups[player2Addr].Outs != 3 {
+	if status.Cups[loserAcct].Outs != 3 {
 		t.Fatalf("expecting 'player2' to have 3 out; got %d", status.Cups[player2Addr].Outs)
 	}
 
@@ -271,7 +273,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusGameOver, status.Status)
 	}
 
-	if status.LastWinAcctID != player1Addr {
+	if status.LastWinAcctID != winnerAcct {
 		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", status.LastWinAcctID)
 	}
 
@@ -290,12 +292,12 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected to retrieve the balance of the bank owner: %s", err)
 	}
 
-	player1Balance, err := bank.AccountBalance(ctx, player1Addr)
+	player1Balance, err := bank.AccountBalance(ctx, winnerAcct)
 	if err != nil {
 		t.Fatalf("unexpected to retrieve the balance of player 1: %s", err)
 	}
 
-	player2Balance, err := bank.AccountBalance(ctx, player2Addr)
+	player2Balance, err := bank.AccountBalance(ctx, loserAcct)
 	if err != nil {
 		t.Fatalf("unexpected to retrieve the balance of player 2: %s", err)
 	}
@@ -362,13 +364,13 @@ func Test_InvalidBet(t *testing.T) {
 	// =========================================================================
 	// Game Play : player 1 makes bet and player 2 makes invalid bet
 
-	if err := engine.Bet(ctx, player1Addr, 3, 3); err != nil {
+	if err := engine.Bet(ctx, engine.Info(ctx).CurrentAcctID, 3, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
 	engine.NextTurn(ctx)
 
-	if err := engine.Bet(ctx, player2Addr, 2, 6); err == nil {
+	if err := engine.Bet(ctx, engine.Info(ctx).CurrentAcctID, 2, 6); err == nil {
 		t.Fatal("expecting error making an invalid bet")
 	}
 }
@@ -379,6 +381,7 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 
 	_, engine := gameSetup(t)
 
+	player1Addr := player1Clt.Address()
 	player2Addr := player2Clt.Address()
 
 	// =========================================================================
@@ -394,7 +397,15 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	err = engine.Bet(ctx, player2Addr, 1, 1)
+	var wrongPlayer common.Address
+	switch engine.Info(ctx).CurrentAcctID {
+	case player1Addr:
+		wrongPlayer = player2Addr
+	case player2Addr:
+		wrongPlayer = player1Addr
+	}
+
+	err = engine.Bet(ctx, wrongPlayer, 1, 1)
 	if err == nil {
 		t.Fatal("expecting error making bet with a player not in the game")
 	}

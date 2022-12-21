@@ -189,6 +189,8 @@ func (g *Game) StartGame(ctx context.Context) error {
 		return errors.New("not enough players to start the game")
 	}
 
+	g.currentCup = rand.Intn(len(g.cups))
+
 	g.status = StatusPlaying
 
 	return nil

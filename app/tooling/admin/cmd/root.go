@@ -1,3 +1,4 @@
+// Package cmd implements all the functionality needed to manage liarsdice.
 package cmd
 
 import (

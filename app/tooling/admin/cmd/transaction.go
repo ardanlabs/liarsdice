@@ -13,8 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const defaultBankNetwork = "http://geth-service.liars-system.svc.cluster.local:8545"
-
 // transactionCmd represents the transaction command
 var transactionCmd = &cobra.Command{
 	Use:   "transaction",
