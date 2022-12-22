@@ -125,18 +125,21 @@ function useGame() {
       navigate('/mainroom')
     }
     if (window.sessionStorage.getItem('token')) {
+      window.localStorage.setItem('account', data.address)
       getAppConfig.then(getAppConfigFn)
     }
-    const axiosFn = (connectResponse: connectResponse) => {
+    const axiosConnectFn = (connectResponse: connectResponse) => {
       window.sessionStorage.setItem(
         'token',
         `Bearer ${connectResponse.data.token}`,
       )
 
+      window.localStorage.setItem('account', data.address)
+
       getAppConfig.then(getAppConfigFn)
     }
 
-    const axiosErrorFn = (error: AxiosError) => {
+    const axiosConnectErrorFn = (error: AxiosError) => {
       const errorMessage = (error as any).response.data.error.replace(
         / \[.+\]/gm,
         '',
@@ -149,8 +152,8 @@ function useGame() {
 
     axiosInstance
       .post(`http://${apiUrl}/connect`, { ...data })
-      .then(axiosFn)
-      .catch(axiosErrorFn)
+      .then(axiosConnectFn)
+      .catch(axiosConnectErrorFn)
   }
 
   // ===========================================================================

@@ -121,9 +121,9 @@ function App() {
           <ToastContainer />
           <GameContext.Provider value={getProviderGame}>
             <Routes>
-              {/* <Route path="/" element={<Login />}></Route> */}
+              <Route path="/" element={<Login />}></Route>
               {/* <Route path="/mainroom" element={<MainRoom />}></Route> */}
-              <Route path="/" element={<PhaserTest />}></Route>
+              <Route path="/mainRoom" element={<PhaserTest />}></Route>
               <Route path="/wrongNetwork" element={<WrongNetwork />}></Route>
             </Routes>
           </GameContext.Provider>

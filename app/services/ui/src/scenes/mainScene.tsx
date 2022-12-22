@@ -1,10 +1,10 @@
 import React from 'react'
 import Phaser from 'phaser'
-import { DEFAULT_HEIGHT, DEFAULT_WIDTH, DICE_SPACING } from '../utils/config'
+import { DEFAULT_HEIGHT, DEFAULT_WIDTH, DIE_PER_PLAYER } from '../utils/config'
 import { apiUrl, axiosConfig } from '../utils/axiosConfig'
 import { defaultApiError } from '../types/responses.d'
 import axios, { AxiosError, AxiosResponse } from 'axios'
-import { bet, dice, DiceConfigs, die, game, user } from '../types/index.d'
+import { bet, dice, die, game, user } from '../types/index.d'
 import assureGameType from '../utils/assureGameType'
 import getActivePlayersLength from '../utils/getActivePlayers'
 import { shortenIfAddress } from '../utils/address'
@@ -22,13 +22,18 @@ const axiosInstance = axios.create({
 // BackendGame Variables
 var playerDice = window.localStorage.getItem('playerDice')
 var localGame: game
-var account: string | null = window.sessionStorage.getItem('account')
+var account: string | null = window.localStorage.getItem('account')
 var player: user
+var currentBet: { number: number; suite: die } = { number: 1, suite: 1 }
 
 // UI Variables
 var pointer: Phaser.GameObjects.Image
 var table: Phaser.GameObjects.Image
-// var diceContainer2: Phaser.GameObjects.Container
+var currentDiceAmountText: Phaser.GameObjects.Text
+var diceBetButtonsGroup: Phaser.GameObjects.Group
+var diceBetButtons: Phaser.GameObjects.Sprite[] = []
+var showBetButtons: boolean
+
 // Details bar
 var statusText: Phaser.GameObjects.Text,
   roundText: Phaser.GameObjects.Text,
@@ -37,15 +42,18 @@ var statusText: Phaser.GameObjects.Text,
   lastlooserText: Phaser.GameObjects.Text,
   accountText: Phaser.GameObjects.Text,
   playerDiceText: Phaser.GameObjects.Text,
-  playerOutsText: Phaser.GameObjects.Text
+  playerOutsText: Phaser.GameObjects.Text,
+  resetGameButton: Phaser.GameObjects.Sprite,
+  phaserDice: {
+    [key: number]: {
+      dieNumber: number
+      die: Phaser.GameObjects.Sprite
+    }[]
+  }
 
 export default class MainScene extends Phaser.Scene {
   ws: WebSocket
-  dieConfig: Phaser.Types.GameObjects.Sprite.SpriteConfig
-  x: number
-  y: number
-  rotation: number
-  initialYPos: number
+  dieConfig
   center = { x: DEFAULT_WIDTH / 2, y: DEFAULT_HEIGHT / 2 }
   constructor() {
     super({ key: 'MainScene' })
@@ -65,22 +73,9 @@ export default class MainScene extends Phaser.Scene {
       anteUSD: 0,
     }
 
-    this.initialYPos = DEFAULT_HEIGHT / 2 + 310
-    this.x = this.center.x - DICE_SPACING * 2.5
-    this.y = this.initialYPos
-    this.rotation = 0.3
-
     this.dieConfig = {
       key: 'dice',
       scale: 0.8,
-      // anims: {
-      //   key: 'die',
-      //   repeat: -1,
-      //   repeatDelay: { randInt: [1000, 4000] },
-      //   delayedPlay: function () {
-      //     return Math.random() * 6000
-      //   },
-      // },
     }
   }
 
@@ -91,17 +86,32 @@ export default class MainScene extends Phaser.Scene {
     this.load.image('pointer', 'images/pointer.png')
     this.load.atlas('dice', 'animations/dice.png', 'animations/dice.json')
     this.load.image('die_0', 'images/die_0.png')
+    this.load.image('resetGame', 'images/resetGame.png')
+    this.load.image('placeBet', 'images/placeBet.png')
+    this.load.image('callLiar', 'images/callLiar.png')
   }
 
   create() {
     // We set the background
     this.add.image(this.center.x, this.center.y, 'background')
-    table = this.add.image(this.center.x, this.center.y, 'table').setScale(0.65)
-    // table = this.physics.add.staticGroup()
-    // table
-    //   .create(this.center.x, this.center.y, 'table')
-    //   .setScale(0.65)
-    //   .refreshBody()
+    // Set the table
+    table = this.add.image(this.center.x, this.center.y, 'table').setScale(0.4)
+
+    pointer = this.add
+      .image(this.center.x, this.center.y, 'pointer')
+      .setOrigin(0.5, 0.4)
+      .setScale(0.2)
+
+    this.anims.create({
+      key: 'dieAnimation',
+      frames: this.anims.generateFrameNames('dice', {
+        prefix: 'die_',
+        frames: [7, 8, 9, 10, 11],
+      }),
+      frameRate: 8,
+      repeat: -1,
+    })
+
     // Details bar
     if (ENV === 'DEV') {
       const textSpacing = 20
@@ -143,33 +153,96 @@ export default class MainScene extends Phaser.Scene {
       )
 
       playerOutsText = this.add.text(textSpacing, textSpacing * 8, `Outs: 0`)
+
+      resetGameButton = this.add
+        .sprite(textSpacing, textSpacing * 9, 'resetGame')
+        .setOrigin(0, 0)
+        .setInteractive()
+
+      const resetGameFn = () => {
+        this.createNewGame()
+      }
+
+      resetGameButton.on('pointerdown', resetGameFn)
     }
 
-    this.anims.create({
-      key: 'die',
-      frames: this.anims.generateFrameNames('dice', {
-        prefix: 'die_',
-        end: 6,
-        zeroPad: 4,
-      }),
-      repeat: -1,
-    })
+    // =========================================================================
+    diceBetButtonsGroup = this.add.group()
+    const firstDiceBetPosition = this.center.x - 234.5
+    const diceBetPosition = DEFAULT_HEIGHT - 80
 
-    // const die = this.physics.add.sprite(
-    //   this.center.x,
-    //   200,
-    //   'dice',
-    //   'die_6',
-    // )
-    // die.setCollideWorldBounds(true)
-    // this.physics.add.collider(die, table)
+    currentDiceAmountText = this.add.text(
+      firstDiceBetPosition - 100,
+      diceBetPosition - 25,
+      `${currentBet.number} X`,
+      {
+        fontSize: '50px',
+      },
+    )
+
+    diceBetButtonsGroup.add(currentDiceAmountText)
+
+    for (let i: die = 1; i < 7; i++) {
+      const diceBetButton = this.add
+        .sprite(
+          firstDiceBetPosition + 67 * i,
+          diceBetPosition,
+          'dice',
+          `die_${i}`,
+        )
+        .setInteractive()
+
+      diceBetButtonsGroup.add(diceBetButton)
+      diceBetButtons[i] = diceBetButton
+
+      const setCurrentBet = () => {
+        diceBetButtons.forEach((button) => {
+          button.clearTint()
+        })
+        diceBetButton.setTint(0xffff)
+        if (currentBet.suite === i) {
+          currentBet.number++
+          return
+        }
+        currentBet.suite = i
+        currentBet.number = localGame.bets[0] ? localGame.bets[0].number : 1
+      }
+
+      diceBetButton.on('pointerdown', setCurrentBet)
+    }
+
+    const placeBetButton = this.add
+      .sprite(firstDiceBetPosition + 550, diceBetPosition, 'placeBet')
+      .setInteractive()
+
+    const placeBet = () => {
+      this.sendBet(currentBet.number, currentBet.suite)
+      diceBetButtons.forEach((button) => {
+        button.clearTint()
+      })
+      currentBet.number = localGame.bets[0] ? localGame.bets[0].number : 1
+      currentBet.suite = 1
+    }
+
+    placeBetButton.on('pointerdown', placeBet)
+
+    diceBetButtonsGroup.add(placeBetButton)
+
+    const callLiarButton = this.add
+      .sprite(this.center.x, DEFAULT_HEIGHT - 25, 'callLiar')
+      .setInteractive()
+
+    const callLiarFn = () => {
+      this.callLiar()
+    }
+
+    callLiarButton.on('pointerdown', callLiarFn)
+
+    diceBetButtonsGroup.add(callLiarButton)
+
+    this.updateStatus()
 
     // =========================================================================
-    pointer = this.add
-      .image(this.center.x, this.center.y, 'pointer')
-      .setOrigin(0.5, 0.4)
-      .setScale(0.2)
-
     // ws.onopen binds an event listener that triggers with the "open" event.
     this.ws.onopen = (event: any) => {
       console.log(event)
@@ -181,13 +254,18 @@ export default class MainScene extends Phaser.Scene {
       if (evt.data) {
         let message = JSON.parse(evt.data)
         const messageAccount = shortenIfAddress(message.address)
-        console.log(message)
 
         // We force a switch in order to check for every type of message.
         switch (message.type) {
           // Message received when the game starts.
           case 'start':
             this.rolldice()
+            break
+          case 'rolldice':
+            this.renderDice(localGame)
+            break
+          case 'newgame':
+            this.joinGame()
             break
           // // Message received when bet is maded.
           // case 'bet':
@@ -210,10 +288,12 @@ export default class MainScene extends Phaser.Scene {
   }
 
   update() {
-    pointer.rotation += 0.011
     player = localGame.cups.filter((player: user) => {
       return player.account === localGame.currentID
     })[0]
+
+    diceBetButtonsGroup.setVisible(showBetButtons)
+    currentDiceAmountText.setText(`${currentBet.number} X`)
 
     if (ENV === 'DEV') {
       statusText.setText(`Status: ${localGame.status}`)
@@ -221,56 +301,107 @@ export default class MainScene extends Phaser.Scene {
       lastbetText.setText(`Last Bet: ${localGame.bets[0]}`)
       lastwinText.setText(`Last Win: ${localGame.lastWin}`)
       lastlooserText.setText(`Last Looser: ${localGame.lastOut}`)
-      accountText.setText(`Last Account:  ${account}`)
+      accountText.setText(`Account:  ${account}`)
       playerOutsText.setText(`Outs:  ${player?.outs}`)
       playerDiceText.setText(`Dice:  ${playerDice}`)
     }
   }
 
   renderDice(game: game) {
-    // Position dices and multiple them by amount of players.
-    // Figure out an algorithm to calculate the position of the players
-    // game.cups.forEach((user: user) => {
-    const userDice: dice = [
-      1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5,
-    ]
-    //
+    this.deleteDice().then(() => {
+      phaserDice = {}
+      const cups = game.cups.sort((a: user, b: user) => {
+        switch (true) {
+          case a.account === b.account:
+            return 0
+          case a.account === account?.toLowerCase():
+            return -1
+          default:
+            return 1
+        }
+      })
 
-    userDice.forEach((dieNumber: die, i: number) => {
-      const position = getDicePosition(
-        this.initialYPos,
-        this.x,
-        this.y,
-        this.rotation,
-        i,
-      )
+      // Position dices and multiple them by amount of players.
+      cups.forEach((user: user, p: number) => {
+        phaserDice[p] = []
+        const userDice: dice = user.dice || [0, 0, 0, 0, 0]
 
-      this.initialYPos = position.initialYPos
-      this.x = position.position.x
-      this.y = position.position.y
-      this.rotation = position.position.rotation
+        console.log(userDice)
 
-      if (dieNumber !== 0) {
-        const die = this.make.sprite({
-          ...this.dieConfig,
-          frame: `die_${dieNumber}`,
-          ...position.position,
+        // Angle in radians
+        let angle = 1.97
+        // Distance between dice
+        let angleStep = -1 / DIE_PER_PLAYER
+
+        // Circle to serve as container for the dice
+        const circle = new Phaser.Geom.Circle(
+          this.center.x,
+          this.center.y,
+          table.displayWidth / 2 - 70,
+        )
+
+        const angleOffset = 0.74
+
+        const angleEqualDistribution = 1.256638
+
+        angle = angleOffset + angleEqualDistribution * (p + 1)
+
+        userDice.forEach((dieNumber: die) => {
+          const position = getDicePosition(circle, angle, angleStep)
+
+          const { x, y, rotation } = position.position
+
+          if (dieNumber !== 0) {
+            const die = this.add.sprite(x, y, 'dice', `die_${dieNumber}`)
+            die.setAngle(rotation)
+            die.setScale(0.6)
+            phaserDice[p].push({ dieNumber, die })
+          }
+
+          if (dieNumber === 0) {
+            const die = this.add.sprite(x, y, 'die_0')
+            die.setAngle(rotation)
+            die.setScale(0.7)
+            phaserDice[p].push({ dieNumber, die })
+          }
+          angle = position.angle
+        })
+        // this.startDiceAnimation(p)
+      })
+    })
+  }
+
+  stopDiceAnimation() {
+    for (let i = 0; i < Object.keys(phaserDice).length; i++) {
+      const element = phaserDice[i]
+      element.forEach((die) => {
+        if (die.die.anims.isPlaying) {
+          die.die.stop()
+          die.die.setFrame(`die_${die.dieNumber}`)
+          return
+        }
+      })
+    }
+  }
+  startDiceAnimation(playerPosition: number) {
+    phaserDice[playerPosition].forEach((die) => {
+      die.die.play('dieAnimation')
+    })
+  }
+  async deleteDice() {
+    if (phaserDice) {
+      for (let i = 0; i < Object.keys(phaserDice).length; i++) {
+        const element = phaserDice[i]
+        element.forEach((die) => {
+          die.die.destroy()
         })
       }
-      // if (dieNumber === 0) {
-      //   const die = this.make
-      //     .sprite({ key: 'die_0', x: this.x, y: this.y })
-      //     .setRotation(this.rotation)
-      //   diceContainer.add(die)
-      // }
-    })
-    // })
+    }
   }
 
   // game functions
 
   initGame() {
-    this.renderDice(localGame)
     const initGameAxiosFn = (response: AxiosResponse) => {
       this.setNewGame(response.data)
       if (
@@ -339,7 +470,7 @@ export default class MainScene extends Phaser.Scene {
       // let errorMessage = error.response.data.error.replace(/\[[^\]]+\]/gm, '')
       // toast(capitalize(errorMessage))
       console.group()
-      console.error('Error:', error.response.data.error)
+      // console.error('Error:', error.response.data.error)
       console.groupEnd()
     }
 
@@ -353,10 +484,10 @@ export default class MainScene extends Phaser.Scene {
   // Also sets the player dice.
   setNewGame(data: game) {
     const newGame = assureGameType(data)
-    if (newGame.cups.length) {
+    if (newGame.cups.length && newGame.status === 'playing') {
       // We filter the connected player
       const player = newGame.cups.filter((cup) => {
-        return cup.account === account
+        return cup.account === account?.toLowerCase()
       })
       if (player.length) {
         this.setPlayerDice(player[0].dice)
@@ -367,7 +498,10 @@ export default class MainScene extends Phaser.Scene {
   }
 
   setPlayerDice(dice: dice) {
-    dice = dice
+    const parsedDice = JSON.stringify(dice)
+    window.localStorage.setItem('playerDice', parsedDice)
+    playerDice = parsedDice
+    this.stopDiceAnimation()
   }
 
   setGame(game: game) {
@@ -379,11 +513,13 @@ export default class MainScene extends Phaser.Scene {
     // updatesStatusAxiosFn handles the backend answer.
     const updateStatusAxiosFn = (response: AxiosResponse) => {
       if (response.data) {
+        this.update()
         const parsedGame = this.setNewGame(response.data)
-        this.renderDice(parsedGame)
+
         switch (parsedGame.status) {
           case 'newgame':
             window.localStorage.removeItem('playerDice')
+            this.deleteDice()
             if (getActivePlayersLength(parsedGame.cups) >= 2) {
               this.startGame()
             }
@@ -406,6 +542,11 @@ export default class MainScene extends Phaser.Scene {
             break
           case 'nogame':
             window.localStorage.removeItem('playerDice')
+            break
+          case 'playing':
+            // If it's player turn we show the betting section
+            showBetButtons = parsedGame.currentID === account?.toLowerCase()
+            this.renderDice(parsedGame)
             break
         }
       }
@@ -488,6 +629,7 @@ export default class MainScene extends Phaser.Scene {
 
   // rolldice rolls the player dice.
   rolldice(): void {
+    this.renderDice(localGame)
     axiosInstance
       .get(`http://${apiUrl}/rolldice`)
       .catch(function (error: AxiosError) {
