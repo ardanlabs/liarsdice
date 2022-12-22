@@ -32,20 +32,11 @@ import (
 
 /*
 	-- Game Engine
-	We could choose a random person to start a new game from those that join.
 	Add in-game chat support.
 	Add a Drain function to the smart contract.
-	Add a account fix function to adjust balances.
+	Add an account fix function to adjust balances.
 	Have engine sign all transactions to the smart contract.
-
-	-- Admin Tooling
-	Bring in Cobra to clean up the mess
-
-	-- Vault
-	Move ECDSA keys into vault and get them from vault.
-
-	-- Init Sequence
-	Add an init sequence to the admin tooling for geth and vault.
+	Add multi-table with max of 5 players.
 
 	-- Browser UI
 	Use Phaser as a new UI
