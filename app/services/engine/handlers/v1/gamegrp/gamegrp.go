@@ -137,11 +137,13 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 			}
 
 			if err := c.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-				return err
+				h.Log.Infow("websocket write", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
+				return nil
 			}
 
 		case <-pingSend.C:
 			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
+				h.Log.Infow("websocket ping", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
 				return nil
 			}
 		}
