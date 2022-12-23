@@ -32,6 +32,7 @@ import (
 
 /*
 	-- Game Engine
+	Once Liar is called, the status needs to share the dice for all players.
 	Add in-game chat support.
 	Add a Drain function to the smart contract.
 	Add an account fix function to adjust balances.
