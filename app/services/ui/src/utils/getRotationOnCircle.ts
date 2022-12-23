@@ -3,7 +3,7 @@ const DEFAULT_HEIGHT = document.documentElement.clientHeight ?? 720
 const DICE_SPACING = 51.6
 const center = { x: DEFAULT_WIDTH / 2, y: DEFAULT_HEIGHT / 2 }
 
-function PlaceOnACircle(
+function getRotationOnCircle(
   circle: Phaser.Geom.Circle,
   angle: number,
   angleStep: number,
@@ -22,4 +22,4 @@ function PlaceOnACircle(
   return { angle: angleVar, position: { rotation, x, y } }
 }
 
-export default PlaceOnACircle
+export default getRotationOnCircle
