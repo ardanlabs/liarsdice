@@ -11,7 +11,7 @@ import { shortenIfAddress } from '../utils/address'
 import getRotationOnCircle from '../utils/getRotationOnCircle'
 
 // Configs
-var ENV = 'PROD'
+var showDebugMenu: boolean = false
 // Create an axios instance to keep the token updated
 const axiosInstance = axios.create({
   headers: {
@@ -22,30 +22,37 @@ const axiosInstance = axios.create({
 // BackendGame Variables
 var playerDice = window.localStorage.getItem('playerDice')
 var localGame: game
-var account: string | null = window.localStorage.getItem('account')
+var account: string | undefined = window.localStorage
+  .getItem('account')
+  ?.toLowerCase()
 var player: user
 var currentBet: { number: number; suite: die } = { number: 1, suite: 1 }
 
 // UI Variables
-var pointer: Phaser.GameObjects.Image
-var table: Phaser.GameObjects.Image
-var currentDiceAmountText: Phaser.GameObjects.Text
-var diceBetButtonsGroup: Phaser.GameObjects.Group
-var playersGroup: Phaser.GameObjects.Group
-var diceBetButtons: Phaser.GameObjects.Sprite[] = []
-var showBetButtons: boolean
-var firstPlayerPosition: number
-const textSpacing = 20
+var pointer: Phaser.GameObjects.Image,
+  table: Phaser.GameObjects.Image,
+  currentDiceAmountText: Phaser.GameObjects.Text,
+  diceBetButtonsGroup: Phaser.GameObjects.Group,
+  playersGroup: Phaser.GameObjects.Group,
+  diceBetButtons: Phaser.GameObjects.Sprite[] = [],
+  showBetButtons: boolean,
+  firstPlayerPosition: number,
+  lastbetText: Phaser.GameObjects.Text,
+  statusText: Phaser.GameObjects.Text,
+  roundText: Phaser.GameObjects.Text
+const textSpacing = 25
 
 // Details bar
-var statusText: Phaser.GameObjects.Text,
-  roundText: Phaser.GameObjects.Text,
-  lastbetText: Phaser.GameObjects.Text,
-  lastwinText: Phaser.GameObjects.Text,
-  lastlooserText: Phaser.GameObjects.Text,
-  accountText: Phaser.GameObjects.Text,
-  playerDiceText: Phaser.GameObjects.Text,
-  playerOutsText: Phaser.GameObjects.Text,
+var debugMenuGroup: Phaser.GameObjects.Group
+var statusDebugText: Phaser.GameObjects.Text,
+  roundDebugText: Phaser.GameObjects.Text,
+  lastwinDebugText: Phaser.GameObjects.Text,
+  lastlooserDebugText: Phaser.GameObjects.Text,
+  accountDebugText: Phaser.GameObjects.Text,
+  playerDiceDebugText: Phaser.GameObjects.Text,
+  playerOutsDebugText: Phaser.GameObjects.Text,
+  anteUSDDebugText: Phaser.GameObjects.Text,
+  currentIDDebugText: Phaser.GameObjects.Text,
   resetGameButton: Phaser.GameObjects.Sprite,
   phaserDice: {
     [key: number]: {
@@ -107,6 +114,13 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
+    // We set a combo to activate de debug menu
+    var combo = this.input.keyboard.createCombo('debug', { resetOnMatch: true })
+
+    this.input.keyboard.on('keycombomatch', function () {
+      showDebugMenu = !showDebugMenu
+    })
+
     // We set the background
     this.add.image(this.center.x, this.center.y, 'background')
     // Set the table
@@ -156,45 +170,90 @@ export default class MainScene extends Phaser.Scene {
 
     firstPlayerPosition = this.center.x - 250
 
+    debugMenuGroup = this.add.group()
+
+    debugMenuGroup.setVisible(showDebugMenu)
+
     // Details bar
-    if (ENV === 'DEV') {
-      lastwinText = this.add.text(
-        textSpacing,
-        textSpacing * 4,
-        `Last Winner: ${localGame.lastWin}`,
-      )
 
-      lastlooserText = this.add.text(
-        textSpacing,
-        textSpacing * 5,
-        `Last Looser: ${localGame.lastOut}`,
-      )
+    roundDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 4,
+      `Round: ${localGame.round}`,
+    )
 
-      accountText = this.add.text(
-        textSpacing,
-        textSpacing * 6,
-        `Account: ${account}`,
-      )
+    statusDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 5,
+      `Status: ${localGame.status}`,
+    )
 
-      playerDiceText = this.add.text(
-        textSpacing,
-        textSpacing * 7,
-        `Dices: [0,0,0,0,0]`,
-      )
+    lastwinDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 6,
+      `Last Winner: ${localGame.lastWin}`,
+    )
 
-      playerOutsText = this.add.text(textSpacing, textSpacing * 8, `Outs: 0`)
+    lastlooserDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 7,
+      `Last Looser: ${localGame.lastOut}`,
+    )
 
-      resetGameButton = this.add
-        .sprite(textSpacing, textSpacing * 9, 'resetGame')
-        .setOrigin(0, 0)
-        .setInteractive()
+    accountDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 8,
+      `Account: ${account}`,
+    )
 
-      const resetGameFn = () => {
-        this.createNewGame()
-      }
+    currentIDDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 9,
+      `Last Winner: ${localGame.currentID}`,
+    )
 
-      resetGameButton.on('pointerdown', resetGameFn)
+    playerOutsDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 10,
+      `Outs: 0`,
+    )
+
+    anteUSDDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 11,
+      `Last Winner: ${localGame.anteUSD}`,
+    )
+
+    playerDiceDebugText = this.add.text(
+      textSpacing,
+      textSpacing * 12,
+      JSON.stringify(localGame),
+    )
+
+    resetGameButton = this.add
+      .sprite(textSpacing, textSpacing * 13, 'resetGame')
+      .setOrigin(0, 0)
+      .setScale(0.5)
+      .setInteractive()
+
+    const resetGameFn = () => {
+      this.createNewGame()
     }
+
+    resetGameButton.on('pointerdown', resetGameFn)
+
+    debugMenuGroup.addMultiple([
+      statusDebugText,
+      roundDebugText,
+      lastwinDebugText,
+      lastlooserDebugText,
+      accountDebugText,
+      playerDiceDebugText,
+      playerOutsDebugText,
+      anteUSDDebugText,
+      currentIDDebugText,
+      resetGameButton,
+    ])
 
     // =========================================================================
     diceBetButtonsGroup = this.add.group()
@@ -338,24 +397,31 @@ export default class MainScene extends Phaser.Scene {
       diceBetButtonsGroup.setVisible(showBetButtons)
     }
 
-    statusText.setText(`Status: ${localGame.status}`)
-    roundText.setText(`Round: ${localGame.round}`)
-    if (ENV === 'DEV') {
-      lastwinText.setText(`Last Win: ${localGame.lastWin}`)
-      lastlooserText.setText(`Last Looser: ${localGame.lastOut}`)
-      accountText.setText(`Account:  ${account}`)
-      playerOutsText.setText(`Outs:  ${player?.outs}`)
-      playerDiceText.setText(`Dice:  ${playerDice}`)
-    }
+    statusDebugText.setText(`Status: ${localGame.status}`)
+
+    roundDebugText.setText(`Round: ${localGame.round}`)
+
+    lastwinDebugText.setText(`Last Win: ${localGame.lastWin}`)
+
+    lastlooserDebugText.setText(`Last Looser: ${localGame.lastOut}`)
+
+    accountDebugText.setText(`Account:  ${account}`)
+
+    playerOutsDebugText.setText(`Outs:  ${player?.outs}`)
+
+    playerDiceDebugText.setText(`Dice: ${playerDice}`)
+
+    anteUSDDebugText.setText(`anteUSD: ${localGame.anteUSD}`)
+
+    currentIDDebugText.setText(`currentID: ${localGame.currentID}`)
+
+    debugMenuGroup.setVisible(showDebugMenu)
   }
 
   renderPlayers() {
     playersGroup = this.add.group()
 
-    playersOuts = {}
-
     localGame.cups?.forEach((player, i: number) => {
-      playersOuts[i] = []
       const playerSprite = this.add.sprite(
         firstPlayerPosition + 150 * i,
         60,
@@ -385,7 +451,7 @@ export default class MainScene extends Phaser.Scene {
       switch (true) {
         case a.account === b.account:
           return 0
-        case a.account === account?.toLowerCase():
+        case a.account === account:
           return -1
         default:
           return 1
@@ -435,18 +501,17 @@ export default class MainScene extends Phaser.Scene {
         }
         angle = position.angle
       })
-
-      console.log(playersOuts)
     })
   }
 
   renderOuts(game: game) {
     this.deleteStars()
+    playersOuts = {}
     const cups = game.cups.sort((a: user, b: user) => {
       switch (true) {
         case a.account === b.account:
           return 0
-        case a.account === account?.toLowerCase():
+        case a.account === account:
           return -1
         default:
           return 1
@@ -553,7 +618,7 @@ export default class MainScene extends Phaser.Scene {
           number: parsedGame.bets[localGame.bets.length - 1]?.number || 1,
           suite: parsedGame.bets[localGame.bets.length - 1]?.suite || 1,
         }
-        showBetButtons = parsedGame.currentID === account?.toLowerCase()
+        showBetButtons = parsedGame.currentID === account
         this.renderDice(response.data)
       }
     }
@@ -634,7 +699,7 @@ export default class MainScene extends Phaser.Scene {
     if (newGame.cups.length && newGame.status === 'playing') {
       // We filter the connected player
       const player = newGame.cups.filter((cup) => {
-        return cup.account === account?.toLowerCase()
+        return cup.account === account
       })
       if (player.length) {
         this.setPlayerDice(player[0].dice)
@@ -672,7 +737,7 @@ export default class MainScene extends Phaser.Scene {
           case 'gameover':
             if (
               getActivePlayersLength(parsedGame.cups) >= 1 &&
-              parsedGame.lastWin === account?.toLowerCase()
+              parsedGame.lastWin === account
             ) {
               axiosInstance
                 .get(`http://${apiUrl}/reconcile`)
@@ -696,8 +761,9 @@ export default class MainScene extends Phaser.Scene {
               suite: parsedGame.bets[localGame.bets.length - 1]?.suite || 1,
             }
             // If it's player turn we show the betting section
-            showBetButtons = parsedGame.currentID === account?.toLowerCase()
+            showBetButtons = parsedGame.currentID === account
             this.renderDice(parsedGame)
+            this.renderOuts(parsedGame)
             break
         }
       }
