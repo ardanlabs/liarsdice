@@ -42,6 +42,7 @@ dev.setup.mac.common:
 	brew list kustomize || brew install kustomize
 	brew list ethereum || brew install ethereum
 	brew list solidity || brew install solidity
+	brew list vault || brew install vault
 
 dev.setup.mac: dev.setup.mac.common
 	brew datawire/blackbird/telepresence || brew install datawire/blackbird/telepresence

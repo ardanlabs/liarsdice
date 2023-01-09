@@ -13,6 +13,7 @@ import LogOutIcon from './icons/logout'
 import CoinBaseLogo from './icons/coinbase'
 import WalletConnectLogo from './icons/walletconnect'
 import { Web3Provider } from '@ethersproject/providers'
+import Wallets from '../utils/wallets'
 
 // Login component.
 // Doesn't receives parameters
@@ -80,7 +81,7 @@ function Login() {
   // missing dependencies.
 
   // eslint-disable-next-line
-  useEffect(accountsChangeUEFn, [isConnected])
+  useEffect(accountsChangeUEFn, [])
 
   // ===========================================================================
 
@@ -99,7 +100,35 @@ function Login() {
   // Next line is disabled so eslint doens't complain about missing dependencies.
 
   // eslint-disable-next-line
-  useEffect(loggedUEFn, [account])
+  useEffect(loggedUEFn, [account, isConnected])
+
+  function connectPageOnLoadUEFn() {
+    const connectWalletOnPageLoad = async () => {
+      const connectedWallet: string | null =
+        localStorage.getItem('connectedWallet')
+      if (connectedWallet) {
+        const isWalletConnected =
+          JSON.parse(connectedWallet).name === `${Wallets.Metamask.name}` ||
+          JSON.parse(connectedWallet).name === `${Wallets.Coinbase.name}` ||
+          JSON.parse(connectedWallet).name === `${Wallets.WalletConnect.name}`
+
+        if (isWalletConnected) {
+          try {
+            await connect(
+              JSON.parse(localStorage.getItem('connectedWallet') as string),
+            ).then(() => {
+              init().then(() => setLoading(false))
+            })
+          } catch (ex) {
+            console.log(ex)
+          }
+        }
+      }
+    }
+    connectWalletOnPageLoad()
+  }
+
+  useEffect(connectPageOnLoadUEFn, [])
 
   // ===========================================================================
   //
@@ -110,7 +139,10 @@ function Login() {
   // handleConnectAccount takes care of the connection to the browser wallet.
   async function handleConnectAccount(wallet: { name: any; chainId: any }) {
     await connect(wallet).then(() => {
-      init().then(() => setLoading(false))
+      init().then(() => {
+        window.localStorage.setItem('connectedWallet', JSON.stringify(wallet))
+        setLoading(false)
+      })
     })
   }
 
@@ -174,8 +206,7 @@ function Login() {
               <Button
                 {...{
                   id: 'metamask__wrapper',
-                  clickHandler: () =>
-                    handleConnectAccount({ name: 'MetaMask', chainId: 1 }),
+                  clickHandler: () => handleConnectAccount(Wallets.Metamask),
                   classes: 'd-flex align-items-center',
                 }}
               >
@@ -185,8 +216,7 @@ function Login() {
               <Button
                 {...{
                   id: 'coinbase__wrapper',
-                  clickHandler: () =>
-                    handleConnectAccount({ name: 'Coinbase', chainId: 1337 }),
+                  clickHandler: () => handleConnectAccount(Wallets.Coinbase),
                   classes: 'd-flex align-items-center',
                 }}
               >
@@ -197,7 +227,7 @@ function Login() {
                 {...{
                   id: 'walletConnect__wrapper',
                   clickHandler: () =>
-                    handleConnectAccount({ name: 'WalletConnect', chainId: 1 }),
+                    handleConnectAccount(Wallets.WalletConnect),
                   classes: 'd-flex align-items-center',
                 }}
               >

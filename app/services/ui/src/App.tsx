@@ -6,7 +6,7 @@ import { appConfig, game } from './types/index.d'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/ReactToastify.min.css'
 import { Route, Routes, useNavigate } from 'react-router-dom'
-import MainRoom from './components/mainRoom'
+// import MainRoom from './components/mainRoom'
 import { getAppConfig } from '.'
 import { utils } from 'ethers'
 import {
@@ -18,6 +18,7 @@ import useEthersConnection from './components/hooks/useEthersConnection'
 import WrongNetwork from './components/wrongNetwork'
 import { Network } from '@ethersproject/networks'
 import { WalletProvider } from '@viaprotocol/web3-wallets'
+import PhaserTest from './components/PhaserTest'
 
 // =============================================================================
 
@@ -110,6 +111,7 @@ function App() {
   // Renders this final markup.
   return (
     <div
+      id="App"
       className="App"
       style={{ scrollSnapType: 'y mandatory' }}
       onClick={hideDropdowns}
@@ -120,7 +122,8 @@ function App() {
           <GameContext.Provider value={getProviderGame}>
             <Routes>
               <Route path="/" element={<Login />}></Route>
-              <Route path="/mainroom" element={<MainRoom />}></Route>
+              {/* <Route path="/mainroom" element={<MainRoom />}></Route> */}
+              <Route path="/mainRoom" element={<PhaserTest />}></Route>
               <Route path="/wrongNetwork" element={<WrongNetwork />}></Route>
             </Routes>
           </GameContext.Provider>

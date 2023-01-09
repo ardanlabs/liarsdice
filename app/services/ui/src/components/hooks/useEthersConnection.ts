@@ -28,6 +28,7 @@ function useEthersConnection() {
     const newContext = ethersConnection
     newContext.account = account
 
+    window.sessionStorage.setItem('account', `${account}`)
     setEthersConnection(newContext)
   }
   // Account getter.

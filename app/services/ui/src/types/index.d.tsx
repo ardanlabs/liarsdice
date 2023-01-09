@@ -63,3 +63,7 @@ export interface AddEthereumChainParameter {
   blockExplorerUrls?: string[]
   iconUrls?: string[] // Currently ignored.
 }
+
+export interface DiceConfigs {
+  [key: number]: Phaser.Types.GameObjects.Sprite.SpriteConfig
+}
