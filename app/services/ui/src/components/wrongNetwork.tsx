@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
 import { getAppConfig } from '..'
-import { appConfig } from '../types/index.d'
+import { AppConfig } from '../types/index.d'
 
 // Component that shows when your network doesn't match the backend config.
 const WrongNetwork = () => {
   // We set a state to trigger a re-render when the configuration is loaded.
   // React re-renders the UI when you have a state change inside of it.
-  const [appConfig, setAppConfig] = useState<appConfig>({} as appConfig)
+  const [appConfig, setAppConfig] = useState<AppConfig>({} as AppConfig)
 
-  const getAppConfigFn = (response: appConfig) => {
+  const getAppConfigFn = (response: AppConfig) => {
     setAppConfig(response)
   }
   // Gets the backend config and sets it to the state.

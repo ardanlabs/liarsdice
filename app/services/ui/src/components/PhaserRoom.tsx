@@ -1,14 +1,10 @@
-import React, { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useRef } from 'react'
 import { config } from '../utils/config'
 import AppHeader from './appHeader'
 import usePhaser from './hooks/usePhaser'
-export interface PhaserTestProps {}
+import { PhaserTestProps } from '../types/props.d'
 
 function PhaserTest(props: PhaserTestProps) {
-  // Extracts navigate from useNavigate Hook
-  const navigate = useNavigate()
-
   const parentEl = useRef<HTMLDivElement>(null)
   usePhaser(config, parentEl)
 

@@ -44,7 +44,7 @@ var pointer: Phaser.GameObjects.Image,
   timerText: Phaser.GameObjects.Text,
   timerNumber: number
 
-const ROUND_DURATION = 30
+const ROUND_DURATION = 10
 
 const textSpacing = 25
 
@@ -373,7 +373,9 @@ export default class MainScene extends Phaser.Scene {
 
     roundText.setText(`Round: ${localGame.round}`)
 
-    if ('children' in diceBetButtonsGroup && diceBetButtonsGroup.getLength()) {
+    if ('children' in diceBetButtonsGroup) {
+      console.log(showBetButtons)
+
       currentDiceAmountText.setText(`${currentBet.number} X`)
       diceBetButtonsGroup.setVisible(showBetButtons)
     }
@@ -433,6 +435,7 @@ export default class MainScene extends Phaser.Scene {
               timerNumber -= 1
               return
             }
+            timerText.destroy()
             timerEvent.destroy()
           }
           timerEvent = this.time.addEvent({
@@ -464,9 +467,9 @@ export default class MainScene extends Phaser.Scene {
           this.update()
           break
         // Message received when a player gets called a liar.
-        case 'reconcile':
-          this.deleteDice()
+        case 'reconciled':
           showBetButtons = false
+          this.deleteDice()
           break
       }
     }
@@ -474,7 +477,7 @@ export default class MainScene extends Phaser.Scene {
 
   // ========================== Game helper functions ==========================
   renderPlayers() {
-    playersGroup = this.add.group()
+    playersGroup = this.add.group() || {}
 
     localGame.cups?.forEach((player, i: number) => {
       const playerSprite = this.add.sprite(
@@ -794,6 +797,9 @@ export default class MainScene extends Phaser.Scene {
             }
             break
           case 'gameover':
+            this.deleteDice()
+            showBetButtons = false
+            window.localStorage.removeItem('playerDice')
             if (
               getActivePlayersLength(parsedGame.cups) >= 1 &&
               parsedGame.lastWin === account
@@ -801,9 +807,6 @@ export default class MainScene extends Phaser.Scene {
               axiosInstance
                 .get(`http://${apiUrl}/reconcile`)
                 .then(() => {
-                  this.deleteDice()
-                  showBetButtons = false
-                  window.localStorage.removeItem('playerDice')
                   this.updateStatus()
                 })
                 .catch((error: AxiosError) => {
@@ -866,22 +869,24 @@ export default class MainScene extends Phaser.Scene {
       return player.account === accountToOut
     })
 
-    const addOutAxiosFn = (response: AxiosResponse) => {
-      this.setNewGame(response.data)
-      // If the game didn't stop we call next-turn
-      if (response.data.status === 'playing') {
-        this.nextTurn()
+    if (player[0].account === account) {
+      const addOutAxiosFn = (response: AxiosResponse) => {
+        this.setNewGame(response.data)
+        // If the game didn't stop we call next-turn
+        if (response.data.status === 'playing') {
+          this.nextTurn()
+        }
       }
-    }
 
-    axiosInstance
-      .get(`http://${apiUrl}/out/${player[0].outs + 1}`)
-      .then(addOutAxiosFn)
-      .catch(function (error: AxiosError) {
-        console.group('Something went wrong, try again.')
-        console.error(error)
-        console.groupEnd()
-      })
+      axiosInstance
+        .get(`http://${apiUrl}/out/${player[0].outs + 1}`)
+        .then(addOutAxiosFn)
+        .catch(function (error: AxiosError) {
+          console.group('Something went wrong, try again.')
+          console.error(error)
+          console.groupEnd()
+        })
+    }
   }
 
   // sendBet sends the player bet to the backend.

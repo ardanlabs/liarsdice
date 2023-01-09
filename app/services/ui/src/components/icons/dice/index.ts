@@ -1,7 +1,0 @@
-export { default as Die1 } from './die-1'
-export { default as Die2 } from './die-2'
-export { default as Die3 } from './die-3'
-export { default as Die4 } from './die-4'
-export { default as Die5 } from './die-5'
-export { default as Die6 } from './die-6'
-export { default as DieQuestion } from './die-question'

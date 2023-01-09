@@ -43,7 +43,7 @@ export interface CupProps {
   playerDice: dice
 }
 
-export interface appConfig {
+export interface AppConfig {
   chainId: number
   contractId: string
   network: string

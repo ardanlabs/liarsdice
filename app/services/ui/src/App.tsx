@@ -1,12 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import './App.css'
 import Login from './components/login'
-import { GameContext, gameContextInterface } from './contexts/gameContext'
-import { appConfig, game } from './types/index.d'
+import { AppConfig } from './types/index.d'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/ReactToastify.min.css'
 import { Route, Routes, useNavigate } from 'react-router-dom'
-// import MainRoom from './components/mainRoom'
 import { getAppConfig } from '.'
 import { utils } from 'ethers'
 import {
@@ -18,27 +16,12 @@ import useEthersConnection from './components/hooks/useEthersConnection'
 import WrongNetwork from './components/wrongNetwork'
 import { Network } from '@ethersproject/networks'
 import { WalletProvider } from '@viaprotocol/web3-wallets'
-import PhaserTest from './components/PhaserTest'
+import PhaserRoom from './components/PhaserRoom'
 
 // =============================================================================
 
 // App component. First React component after Index.ts
 function App() {
-  const [game, setGame] = useState({
-    status: 'gameover',
-    lastOut: '',
-    lastWin: '',
-    currentPlayer: '',
-    currentCup: 0,
-    round: 1,
-    cups: [],
-    playerOrder: [],
-    bets: [],
-    anteUSD: 0,
-    currentID: '',
-    balances: [],
-  } as game)
-
   // Extracts provider from useEthersConnection hook
   const { provider, switchNetwork } = useEthersConnection()
 
@@ -48,13 +31,6 @@ function App() {
   // Sets state for the ethersConnection context
   const [ethersConnection, setEthersConnection] =
     useState<ethersConnectionInterface>({} as ethersConnectionInterface)
-
-  // getProviderGame returns a memoized instance of the game state. This is used
-  // to set the game provider context. The game provider context is used for
-  // creating a global instance of the game, accesible from all files wrap around
-  // that context.
-  const memoFn = (): gameContextInterface => ({ game, setGame })
-  const getProviderGame = useMemo(memoFn, [game, setGame])
 
   // ===========================================================================
 
@@ -81,7 +57,7 @@ function App() {
   // connection,it emits a "network" event with a null oldNetwork along with the
   // newNetwork. So, if the oldNetwork exists, it represents a changing network.
   function handleNetworkChange(newNetwork: Network): void {
-    const fn = async (getConfigResponse: appConfig) => {
+    const fn = async (getConfigResponse: AppConfig) => {
       if (newNetwork.chainId !== getConfigResponse.chainId) {
         window.sessionStorage.removeItem('token')
         // It navigates to the wrongNetwork component, and switches the network.
@@ -119,14 +95,11 @@ function App() {
       <WalletProvider>
         <EthersContext.Provider value={getEthersContextDefaultValue()}>
           <ToastContainer />
-          <GameContext.Provider value={getProviderGame}>
-            <Routes>
-              <Route path="/" element={<Login />}></Route>
-              {/* <Route path="/mainroom" element={<MainRoom />}></Route> */}
-              <Route path="/mainRoom" element={<PhaserTest />}></Route>
-              <Route path="/wrongNetwork" element={<WrongNetwork />}></Route>
-            </Routes>
-          </GameContext.Provider>
+          <Routes>
+            <Route path="/" element={<Login />}></Route>
+            <Route path="/mainRoom" element={<PhaserRoom />}></Route>
+            <Route path="/wrongNetwork" element={<WrongNetwork />}></Route>
+          </Routes>
         </EthersContext.Provider>
       </WalletProvider>
     </div>
