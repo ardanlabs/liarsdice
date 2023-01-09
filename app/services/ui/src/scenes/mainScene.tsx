@@ -39,7 +39,13 @@ var pointer: Phaser.GameObjects.Image,
   firstPlayerPosition: number,
   lastbetText: Phaser.GameObjects.Text,
   statusText: Phaser.GameObjects.Text,
-  roundText: Phaser.GameObjects.Text
+  roundText: Phaser.GameObjects.Text,
+  timerEvent: Phaser.Time.TimerEvent,
+  timerText: Phaser.GameObjects.Text,
+  timerNumber: number
+
+const ROUND_DURATION = 30
+
 const textSpacing = 25
 
 // Details bar
@@ -70,6 +76,8 @@ export default class MainScene extends Phaser.Scene {
   ws: WebSocket
   dieConfig
   center = { x: DEFAULT_WIDTH / 2, y: DEFAULT_HEIGHT / 2 }
+  // ========================= Phaser / class creation =========================
+  // Initialize init config
   constructor() {
     super({ key: 'MainScene' })
     this.ws = new WebSocket(`ws://${apiUrl}/events`)
@@ -94,6 +102,7 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
+  // Preload all game assets
   preload() {
     this.load.path = 'assets/'
     this.load.image('background', 'images/background.png')
@@ -114,7 +123,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create() {
-    // We set a combo to activate de debug menu
+    // We set a combo to activate the debug menu
     var combo = this.input.keyboard.createCombo('debug', { resetOnMatch: true })
 
     this.input.keyboard.on('keycombomatch', function () {
@@ -340,43 +349,7 @@ export default class MainScene extends Phaser.Scene {
     }
 
     // ws.onmessage binds an event listener that triggers with "message" event.
-    this.ws.onmessage = (evt: MessageEvent) => {
-      this.updateStatus()
-      if (evt.data) {
-        let message = JSON.parse(evt.data)
-        const messageAccount = shortenIfAddress(message.address)
-
-        // We force a switch in order to check for every type of message.
-        switch (message.type) {
-          // Message received when the game starts.
-          case 'start':
-            this.rolldice()
-            break
-          case 'rolldice':
-            this.renderDice(localGame)
-            break
-          case 'newgame':
-            this.joinGame()
-            break
-          // Message received when bet is maded.
-          case 'bet':
-            currentBet.number =
-              localGame.bets[localGame.bets.length - 1]?.number || 1
-            this.update()
-            break
-          // // Message received when next turn is started.
-          // case 'nextturn':
-          //   this.restart()
-          //   break
-          // Message received when a player gets called a liar.
-          case 'reconcile':
-            this.deleteDice()
-            showBetButtons = false
-            break
-        }
-      }
-      return
-    }
+    this.ws.onmessage = this.handleWsMessages.bind(this)
 
     this.initGame()
   }
@@ -386,11 +359,19 @@ export default class MainScene extends Phaser.Scene {
       return player.account === localGame.currentID
     })[0]
 
+    if (timerText) {
+      timerText.setText(`${timerNumber}`)
+    }
+
     lastbetText.setText(
       `${localGame.bets[localGame.bets.length - 1]?.number || '-'} X ${
         localGame.bets[localGame.bets.length - 1]?.suite || '-'
       }`,
     )
+
+    statusText.setText(`Status: ${localGame.status}`)
+
+    roundText.setText(`Round: ${localGame.round}`)
 
     if ('children' in diceBetButtonsGroup && diceBetButtonsGroup.getLength()) {
       currentDiceAmountText.setText(`${currentBet.number} X`)
@@ -418,6 +399,80 @@ export default class MainScene extends Phaser.Scene {
     debugMenuGroup.setVisible(showDebugMenu)
   }
 
+  // ====================== Websocket connection handler =======================
+  handleWsMessages(evt: MessageEvent) {
+    this.updateStatus()
+    if (evt.data) {
+      let message = JSON.parse(evt.data)
+
+      const messageAccount = shortenIfAddress(message.address)
+
+      // We force a switch in order to check for every type of message.
+      switch (message.type) {
+        // Message received when the game starts.
+        case 'start':
+          // ============================== Timer ==============================
+
+          timerNumber = ROUND_DURATION
+
+          timerText = this.add
+            .text(
+              this.center.x,
+              this.center.y - textSpacing * 2,
+              `${timerNumber}`,
+            )
+            .setOrigin(0.5, 0.5)
+
+          const timerEventCallbackFn = () => {
+            if (localGame.status === 'playing') {
+              if (timerNumber === 0) {
+                this.addOut()
+                timerNumber = ROUND_DURATION
+                return
+              }
+              timerNumber -= 1
+              return
+            }
+            timerEvent.destroy()
+          }
+          timerEvent = this.time.addEvent({
+            delay: 1000,
+            callback: timerEventCallbackFn,
+            callbackScope: this,
+            loop: true,
+          })
+          // ============================ End timer ============================
+
+          this.rolldice()
+          break
+        case 'rolldice':
+          this.renderDice(localGame)
+          break
+        case 'newgame':
+          this.joinGame()
+          break
+        case 'join':
+        case 'outs':
+        case 'nextturn':
+          timerNumber = ROUND_DURATION
+          break
+        // Message received when bet is maded.
+        case 'bet':
+          timerNumber = ROUND_DURATION
+          currentBet.number =
+            localGame.bets[localGame.bets.length - 1]?.number || 1
+          this.update()
+          break
+        // Message received when a player gets called a liar.
+        case 'reconcile':
+          this.deleteDice()
+          showBetButtons = false
+          break
+      }
+    }
+  }
+
+  // ========================== Game helper functions ==========================
   renderPlayers() {
     playersGroup = this.add.group()
 
@@ -447,16 +502,18 @@ export default class MainScene extends Phaser.Scene {
     this.deleteDice()
 
     phaserDice = {}
-    const cups = game.cups.sort((a: user, b: user) => {
-      switch (true) {
-        case a.account === b.account:
-          return 0
-        case a.account === account:
-          return -1
-        default:
-          return 1
-      }
-    })
+    const cups = game.cups
+      ? game.cups.sort((a: user, b: user) => {
+          switch (true) {
+            case a.account === b.account:
+              return 0
+            case a.account === account:
+              return -1
+            default:
+              return 1
+          }
+        })
+      : []
 
     // Position dices and multiple them by amount of players.
     cups.forEach((user: user, p: number) => {
@@ -507,16 +564,18 @@ export default class MainScene extends Phaser.Scene {
   renderOuts(game: game) {
     this.deleteStars()
     playersOuts = {}
-    const cups = game.cups.sort((a: user, b: user) => {
-      switch (true) {
-        case a.account === b.account:
-          return 0
-        case a.account === account:
-          return -1
-        default:
-          return 1
-      }
-    })
+    const cups = game.cups
+      ? game.cups.sort((a: user, b: user) => {
+          switch (true) {
+            case a.account === b.account:
+              return 0
+            case a.account === account:
+              return -1
+            default:
+              return 1
+          }
+        })
+      : []
     // Position dices and multiple them by amount of players.
     cups.forEach((user: user, p: number) => {
       playersOuts[p] = []
@@ -597,8 +656,35 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
-  // game functions
+  // SetNewGame updates the instance of the game in the local state.
+  // Also sets the player dice.
+  setNewGame(data: game) {
+    const newGame = assureGameType(data)
+    this.setGame(newGame)
+    this.update()
+    if (newGame.cups.length && newGame.status === 'playing') {
+      // We filter the connected player
+      const player = newGame.cups.filter((cup) => {
+        return cup.account === account
+      })
+      if (player.length) {
+        this.setPlayerDice(player[0].dice)
+      }
+    }
+    return newGame
+  }
 
+  setPlayerDice(dice: dice) {
+    const parsedDice = JSON.stringify(dice)
+    window.localStorage.setItem('playerDice', parsedDice)
+    playerDice = parsedDice
+  }
+
+  setGame(game: game) {
+    localGame = game
+  }
+
+  // ============================== Backend calls ==============================
   initGame() {
     const initGameAxiosFn = (response: AxiosResponse) => {
       const parsedGame = this.setNewGame(response.data)
@@ -657,6 +743,7 @@ export default class MainScene extends Phaser.Scene {
         },
       })
       .then(() => {
+        timerNumber = ROUND_DURATION
         console.log('welcome to the game')
         // toast.info('Welcome to the game')
       })
@@ -688,34 +775,6 @@ export default class MainScene extends Phaser.Scene {
       .get(`http://${apiUrl}/new`)
       .then(createGameFn)
       .catch(createGameCatchFn)
-  }
-
-  // SetNewGame updates the instance of the game in the local state.
-  // Also sets the player dice.
-  setNewGame(data: game) {
-    const newGame = assureGameType(data)
-    this.setGame(newGame)
-    this.update()
-    if (newGame.cups.length && newGame.status === 'playing') {
-      // We filter the connected player
-      const player = newGame.cups.filter((cup) => {
-        return cup.account === account
-      })
-      if (player.length) {
-        this.setPlayerDice(player[0].dice)
-      }
-    }
-    return newGame
-  }
-
-  setPlayerDice(dice: dice) {
-    const parsedDice = JSON.stringify(dice)
-    window.localStorage.setItem('playerDice', parsedDice)
-    playerDice = parsedDice
-  }
-
-  setGame(game: game) {
-    localGame = game
   }
 
   // updateStatus calls to the status endpoint and updates the local state.
@@ -781,7 +840,7 @@ export default class MainScene extends Phaser.Scene {
   startGame() {
     axiosInstance
       .get(`http://${apiUrl}/start`)
-      .then(function () {})
+      .then(() => {})
       .catch(function (error: AxiosError) {
         console.error(error)
       })
