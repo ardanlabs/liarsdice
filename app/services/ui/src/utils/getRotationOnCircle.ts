@@ -1,6 +1,5 @@
 const DEFAULT_WIDTH = document.documentElement.clientWidth ?? 1280
 const DEFAULT_HEIGHT = document.documentElement.clientHeight ?? 720
-const DICE_SPACING = 51.6
 const center = { x: DEFAULT_WIDTH / 2, y: DEFAULT_HEIGHT / 2 }
 
 function getRotationOnCircle(

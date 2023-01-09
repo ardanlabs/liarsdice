@@ -8,13 +8,13 @@ import { ethers, utils } from 'ethers'
 import { toast } from 'react-toastify'
 import { apiUrl } from '../utils/axiosConfig'
 import { useLocation } from 'react-router-dom'
-import { appConfig } from '../types/index.d'
+import { AppConfig } from '../types/index.d'
 import useEthersConnection from './hooks/useEthersConnection'
-import { transactionProps } from '../types/props.d'
+import { TransactionProps } from '../types/props.d'
 import { usd2weiResponse } from '../types/responses.d'
 
 // Transaction component.
-function Transaction(props: transactionProps) {
+function Transaction(props: TransactionProps) {
   // Extracts router state from useLocation hook.
   const { state } = useLocation()
 
@@ -39,7 +39,7 @@ function Transaction(props: transactionProps) {
     const contractInterface = new utils.Interface(contractAbi)
 
     // Gets the contract address from the state.
-    const contractAddress = (state as appConfig).contractId
+    const contractAddress = (state as AppConfig).contractId
 
     // Creates a new contract object and connects it to the signer
     const contract = new ethers.Contract(
