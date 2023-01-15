@@ -8,30 +8,6 @@
 # The coinbase address is the account to pay mining rewards to.
 # The coinbase address is given a LOT of money to start.
 #
-# These are examples of what you can do in the attach JS environment.
-# 	eth.getBalance("0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd") or eth.getBalance(eth.coinbase)
-# 	eth.getBalance("0x8e113078adf6888b7ba84967f299f29aece24c55")
-# 	eth.getBalance("0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7")
-#   eth.sendTransaction({from:eth.coinbase, to:"0x8e113078adf6888b7ba84967f299f29aece24c55", value: web3.toWei(0.05, "ether")})
-#   eth.sendTransaction({from:eth.coinbase, to:"0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7", value: web3.toWei(0.05, "ether")})
-#   eth.blockNumber
-#   eth.getBlockByNumber(8)
-#   eth.getTransaction("0xaea41e7c13a7ea627169c74ade4d5ea86664ff1f740cd90e499f3f842656d4ad")
-#
-# make geth-deposit
-# export GAME_CONTRACT_ID=0xeB380D740eC33ADf803abe0D6B14Ee29Ae6194a9
-# ./admin contract -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd -m 1000.00
-# ./admin contract -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
-# ./admin contract -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
-#
-# Web3 API
-# https://web3js.readthedocs.io/en/v1.7.4/
-
-
-# ==============================================================================
-# Install dependencies
-# https://geth.ethereum.org/docs/install-and-build/installing-geth
-# https://docs.soliditylang.org/en/v0.8.11/installing-solidity.html
 
 GOLANG       := golang:1.19
 NODE         := node:16
