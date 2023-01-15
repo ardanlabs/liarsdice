@@ -1,3 +1,8 @@
+# To start the system for the first time, run these two commands:
+#     make dev-up
+#     make dev-update-apply
+# Expect the building of the FE to take a wee bit of time :(
+#
 # The environment has three accounts all using this same passkey (123).
 # Geth is started with address 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd and is used as the coinbase address.
 # The coinbase address is the account to pay mining rewards to.
@@ -22,6 +27,7 @@
 # Web3 API
 # https://web3js.readthedocs.io/en/v1.7.4/
 
+
 # ==============================================================================
 # Install dependencies
 # https://geth.ethereum.org/docs/install-and-build/installing-geth
@@ -33,7 +39,7 @@ ALPINE       := alpine:3.16
 CADDY        := caddy:2.6-alpine
 KIND         := kindest/node:v1.25.3
 GETH         := ethereum/client-go:stable
-TELEPRESENCE := docker.io/datawire/tel2:2.9.5
+TELEPRESENCE := docker.io/datawire/tel2:2.10.1
 
 dev.setup.mac.common:
 	brew update
@@ -60,57 +66,7 @@ dev.docker:
 	docker pull $(TELEPRESENCE)
 
 # ==============================================================================
-# These commands start the Ethereum node and provide examples of attaching
-# directly with potential commands to try, and creating a new account if necessary.
-
-# This is start Ethereum in developer mode. Only when a transaction is pending will
-# Ethereum mine a block. It provides a minimal environment for development.
-geth-up:
-	geth --dev --ipcpath zarf/ethereum/geth.ipc --http.corsdomain '*' --http --allow-insecure-unlock --rpc.allow-unprotected-txs --http.vhosts=* --mine --miner.threads 1 --verbosity 5 --datadir "zarf/ethereum/" --unlock 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd --password zarf/ethereum/password
-
-# This will remove the local blockchain and let you start new.
-geth-reset:
-	rm -rf zarf/ethereum/geth/
-
-# This is a JS console environment for making geth related API calls.
-geth-attach:
-	geth attach --datadir zarf/ethereum/
-
-# This will add a new account to the keystore. The account will have a zero
-# balance until you give it some money.
-geth-new-account:
-	geth --datadir zarf/ethereum/ account new
-
-# This will deposit 1 ETH into the two extra accounts from the coinbase account.
-# Do this if you delete the geth folder and start over or if the accounts need money.
-geth-deposit:
-	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x8E113078ADF6888B7ba84967F299F29AeCe24c55", "value":"0x1000000000000000000"}], "id":1}' geth-service.liars-system.svc.cluster.local:8545:8545
-	curl -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","method":"eth_sendTransaction", "params": [{"from":"0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd", "to":"0x0070742FF6003c3E809E78D524F0Fe5dcc5BA7F7", "value":"0x1000000000000000000"}], "id":1}' geth-service.liars-system.svc.cluster.local:8545:8545
-	./admin contract -a 0x8e113078adf6888b7ba84967f299f29aece24c55 -m 1000.00
-	./admin contract -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7 -m 1000.00
-
-# ==============================================================================
-# These commands build and deploy basic smart contract.
-
-# This will compile the smart contract and produce the binary code. Then with the
-# abi and binary code, a Go source code file can be generated for Go API access.
-contract-build:
-	solc --abi business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
-	solc --bin business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
-	abigen --bin=business/contract/abi/bank/Bank.bin --abi=business/contract/abi/bank/Bank.abi --pkg=bank --out=business/contract/go/bank/bank.go
-
-# This will deploy the smart contract to the locally running Ethereum environment.
-admin-build:
-	go build -o admin app/tooling/admin/main.go
-
-contract-deploy: contract-build admin-build
-	./admin deploy
-
-# ==============================================================================
-# Game Engine and UI
-
-game-up:
-	go run app/services/engine/main.go | go run app/tooling/logfmt/main.go
+# Game UI
 
 game-tui1:
 	go run app/cli/liars/main.go -a 0x0070742ff6003c3e809e78d524f0fe5dcc5ba7f7
@@ -126,36 +82,6 @@ react-install:
 
 app-ui: react-install
 	yarn --cwd app/services/ui/ start
-
-# ==============================================================================
-# Running tests within the local computer
-# go install honnef.co/go/tools/cmd/staticcheck@latest
-# go install golang.org/x/vuln/cmd/govulncheck@latest
-
-test:
-	go test -count=1 ./...
-	go vet ./...
-	staticcheck -checks=all ./...
-	govulncheck ./...
-
-test-gui:
-	yarn --cwd app/services/game/ test
-
-# ==============================================================================
-# Modules support
-
-tidy:
-	go mod tidy
-	go mod vendor
-
-deps-upgrade:
-	# go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
-	go get -u -v ./...
-	go mod tidy
-	go mod vendor
-
-list:
-	go list -mod=mod all
 
 # ==============================================================================
 # Building containers
@@ -186,6 +112,11 @@ ui:
 
 # ==============================================================================
 # Running from within k8s/kind
+#
+# To start the system for the first time, run these two commands:
+#     make dev-up
+#     make dev-update-apply
+# Expect the building of the FE to take a wee bit of time :(
 
 KIND_CLUSTER := liars-game-cluster
 
@@ -215,9 +146,11 @@ dev-deploy:
 	@zarf/k8s/dev/geth/setup-contract-k8s
 
 dev-deploy-force:
-	@zarf/k8s/dev/geth/setup-contract-k8s force
+	@zarf/k8s/dev/geth/setup-contract-k8s force	
 
-dev-apply: admin-build
+dev-apply:
+	go build -o admin app/tooling/admin/main.go
+
 	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
 
 	@zarf/k8s/dev/vault/initialize-vault.sh
@@ -269,3 +202,33 @@ dev-describe-deployment-ui:
 
 dev-describe-ui:
 	kubectl describe pod --namespace=liars-system -l app=ui
+
+# ==============================================================================
+# Running tests within the local computer
+# go install honnef.co/go/tools/cmd/staticcheck@latest
+# go install golang.org/x/vuln/cmd/govulncheck@latest
+
+test:
+	go test -count=1 ./...
+	go vet ./...
+	staticcheck -checks=all ./...
+	govulncheck ./...
+
+test-gui:
+	yarn --cwd app/services/game/ test
+
+# ==============================================================================
+# Modules support
+
+tidy:
+	go mod tidy
+	go mod vendor
+
+deps-upgrade:
+	# go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
+	go get -u -v ./...
+	go mod tidy
+	go mod vendor
+
+list:
+	go list -mod=mod all
