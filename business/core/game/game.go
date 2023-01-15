@@ -64,9 +64,8 @@ type Bet struct {
 
 // Cup represents an individual cup being held by a player.
 type Cup struct {
-	OrderIdx int
 	Player   common.Address
-	LastBet  Bet
+	OrderIdx int
 	Outs     int
 	Dice     []int
 }
@@ -164,7 +163,6 @@ func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 	g.cups[player] = Cup{
 		OrderIdx: len(g.players),
 		Player:   player,
-		LastBet:  Bet{},
 		Outs:     0,
 		Dice:     make([]int, 5),
 	}
@@ -336,7 +334,6 @@ func (g *Game) Bet(ctx context.Context, player common.Address, number int, suite
 	g.bets = append(g.bets, bet)
 
 	// Add the last bet to the cup.
-	cup.LastBet = bet
 	g.cups[player] = cup
 
 	// Move the turn to the next player.
@@ -466,7 +463,6 @@ func (g *Game) NextRound(ctx context.Context) (int, error) {
 	// Reset the last bet value and dice.
 	var leftToPlay int
 	for player, cup := range g.cups {
-		cup.LastBet = Bet{}
 		cup.Dice = make([]int, 5)
 		g.cups[player] = cup
 

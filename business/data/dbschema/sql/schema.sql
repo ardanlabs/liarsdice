@@ -2,50 +2,68 @@
 -- Description: Create table games
 CREATE TABLE games
 (
-    game_id               VARCHAR    NOT NULL,
-    status                VARCHAR    NOT NULL,
-    round                 INT        NOT NULL,
-    ante_usd              MONEY      NOT NULL,
-    players               VARCHAR[],
-    existing_players      VARCHAR[],
-    player_balances_gwei  VARCHAR[],
-    player_turn           INT,
-    player_last_out       VARCHAR,
-    player_last_win       VARCHAR,
+    game_id              VARCHAR    NOT NULL,
+    status               VARCHAR    NOT NULL,
+    round                INT        NOT NULL,
+    ante_usd             MONEY      NOT NULL,
+    player_turn          INT,
+    player_last_out      VARCHAR,
+    player_last_win      VARCHAR,
 
     PRIMARY KEY (game_id)
 );
 
 -- Version: 1.02
--- Description: Create table bets
-CREATE TABLE bets
+-- Description: Create table game_players
+CREATE TABLE game_players
 (
-    bet_id     BIGSERIAL NOT NULL,
+    game_id VARCHAR NOT NULL,
+    player  VARCHAR NOT NULL,
+    order   INT     NOT NULL,
+
+    PRIMARY KEY (game_id, player)
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+)
+
+-- Version: 1.03
+-- Description: Create table game_player_bets
+CREATE TABLE game_player_bets
+(
     game_id    VARCHAR   NOT NULL,
-    account_id VARCHAR   NOT NULL,
+    player     VARCHAR   NOT NULL,
+    round      INT       NOT NULL,
+    bet_number INT       NOT NULL,
     number     INT       NOT NULL,
     suite      INT       NOT NULL,
 
-    PRIMARY KEY (bet_id),
+    PRIMARY KEY (game_id, player, round, bet_number)
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+    FOREIGN KEY (game_players) REFERENCES game_players(game_id, player) ON DELETE CASCADE
 );
 
--- Version: 1.03
--- Description: Create index on bets
-CREATE UNIQUE INDEX bets_idx1 ON bets (game_id, account_id);
-
 -- Version: 1.04
--- Description: Create table cups
-CREATE TABLE cups
+-- Description: Create table game_player_cups
+CREATE TABLE game_player_cups
 (
     game_id    VARCHAR NOT NULL,
-    account_id VARCHAR NOT NULL,
-    order_idx  INT     NOT NULL,
-    last_bet   BIGINT  NOT NULL,
-    outs       INT     NOT NULL,
+    player     VARCHAR NOT NULL,
+    round      INT     NOT NULL,
     dice       INT[]   NOT NULL,
 
-    PRIMARY KEY (game_id, account_id),
+    PRIMARY KEY (game_id, player, round),
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
-    FOREIGN KEY (last_bet) REFERENCES bets(bet_id) ON DELETE CASCADE
+    FOREIGN KEY (game_players) REFERENCES game_players(game_id, player) ON DELETE CASCADE
+);
+
+-- Version: 1.04
+-- Description: Create table game_player_outs
+CREATE TABLE game_player_outs
+(
+    game_id    VARCHAR NOT NULL,
+    player     VARCHAR NOT NULL,
+    outs       INT     NOT NULL,
+
+    PRIMARY KEY (game_id, player),
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+    FOREIGN KEY (game_players) REFERENCES game_players(game_id, player) ON DELETE CASCADE
 );

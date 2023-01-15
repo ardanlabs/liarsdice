@@ -211,7 +211,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		if accountID == address {
 			dice = cup.Dice
 		}
-		cups = append(cups, Cup{Player: cup.Player, Dice: dice, LastBet: Bet(cup.LastBet), Outs: cup.Outs})
+		cups = append(cups, Cup{Player: cup.Player, Dice: dice, Outs: cup.Outs})
 	}
 
 	var bets []Bet
