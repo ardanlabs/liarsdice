@@ -203,7 +203,7 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	status := g.Info(ctx)
 
 	var cups []Cup
-	for _, accountID := range status.CupsOrder {
+	for _, accountID := range status.ExistingPlayers {
 		cup := status.Cups[accountID]
 
 		// Don't share the dice information for other players.
@@ -211,25 +211,25 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 		if accountID == address {
 			dice = cup.Dice
 		}
-		cups = append(cups, Cup{AccountID: cup.AccountID, Dice: dice, LastBet: Bet(cup.LastBet), Outs: cup.Outs})
+		cups = append(cups, Cup{Player: cup.Player, Dice: dice, Outs: cup.Outs})
 	}
 
 	var bets []Bet
 	for _, bet := range status.Bets {
-		bets = append(bets, Bet{AccountID: bet.AccountID, Number: bet.Number, Suite: bet.Suite})
+		bets = append(bets, Bet{Player: bet.Player, Number: bet.Number, Suite: bet.Suite})
 	}
 
 	resp := Status{
-		Status:        status.Status,
-		AnteUSD:       h.AnteUSD,
-		LastOutAcctID: status.LastOutAcctID,
-		LastWinAcctID: status.LastWinAcctID,
-		CurrentAcctID: status.CurrentAcctID,
-		Round:         status.Round,
-		Cups:          cups,
-		CupsOrder:     status.CupsOrder,
-		Bets:          bets,
-		Balances:      status.Balances,
+		Status:          status.Status,
+		AnteUSD:         h.AnteUSD,
+		PlayerLastOut:   status.PlayerLastOut,
+		PlayerLastWin:   status.PlayerLastWin,
+		PlayerTurn:      status.PlayerTurn,
+		Round:           status.Round,
+		Cups:            cups,
+		ExistingPlayers: status.ExistingPlayers,
+		Bets:            bets,
+		Balances:        status.Balances,
 	}
 
 	return web.Respond(ctx, w, resp, http.StatusOK)
@@ -372,7 +372,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
-	if _, _, err := g.Reconcile(ctx, address); err != nil {
+	if _, _, err := g.Reconcile(ctx); err != nil {
 		return v1Web.NewRequestError(err, http.StatusInternalServerError)
 	}
 

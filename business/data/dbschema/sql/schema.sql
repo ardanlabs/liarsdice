@@ -2,41 +2,68 @@
 -- Description: Create table games
 CREATE TABLE games
 (
-    id               VARCHAR PRIMARY KEY,
-    status           VARCHAR,
-    current_cup      INT,
-    round            INT,
-    ante_usd         MONEY,
-    org_order        VARCHAR[],
-    balance_gwei     FLOAT8,
-    last_out_acct_id VARCHAR,
-    last_win_acct_id VARCHAR,
-    current_acct_id  VARCHAR,
-    cups_order       VARCHAR[],
-    balance          VARCHAR[]
+    game_id              VARCHAR    NOT NULL,
+    status               VARCHAR    NOT NULL,
+    round                INT        NOT NULL,
+    ante_usd             MONEY      NOT NULL,
+    player_turn          INT,
+    player_last_out      VARCHAR,
+    player_last_win      VARCHAR,
+
+    PRIMARY KEY (game_id)
 );
 
 -- Version: 1.02
--- Description: Create table bets
-CREATE TABLE bets
+-- Description: Create table game_players
+CREATE TABLE game_players
 (
-    id         BIGSERIAL UNIQUE NOT NULL,
-    game_id    VARCHAR,
-    account_id VARCHAR,
-    number     INT,
-    suite      INT,
-    PRIMARY KEY (game_id, account_id)
-);
+    game_id VARCHAR NOT NULL,
+    player  VARCHAR NOT NULL,
+    order   INT     NOT NULL,
+
+    PRIMARY KEY (game_id, player)
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+)
 
 -- Version: 1.03
--- Description: Create table cups
-CREATE TABLE cups
+-- Description: Create table game_player_bets
+CREATE TABLE game_player_bets
 (
-    game_id    VARCHAR REFERENCES games (id),
-    account_id VARCHAR,
-    order_idx  INT,
-    last_bet   BIGINT REFERENCES bets (id),
-    outs       INT,
-    dice       INT[],
-    PRIMARY KEY (game_id, account_id)
+    game_id    VARCHAR   NOT NULL,
+    player     VARCHAR   NOT NULL,
+    round      INT       NOT NULL,
+    bet_number INT       NOT NULL,
+    number     INT       NOT NULL,
+    suite      INT       NOT NULL,
+
+    PRIMARY KEY (game_id, player, round, bet_number)
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+    FOREIGN KEY (game_players) REFERENCES game_players(game_id, player) ON DELETE CASCADE
+);
+
+-- Version: 1.04
+-- Description: Create table game_player_cups
+CREATE TABLE game_player_cups
+(
+    game_id    VARCHAR NOT NULL,
+    player     VARCHAR NOT NULL,
+    round      INT     NOT NULL,
+    dice       INT[]   NOT NULL,
+
+    PRIMARY KEY (game_id, player, round),
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+    FOREIGN KEY (game_players) REFERENCES game_players(game_id, player) ON DELETE CASCADE
+);
+
+-- Version: 1.04
+-- Description: Create table game_player_outs
+CREATE TABLE game_player_outs
+(
+    game_id    VARCHAR NOT NULL,
+    player     VARCHAR NOT NULL,
+    outs       INT     NOT NULL,
+
+    PRIMARY KEY (game_id, player),
+    FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
+    FOREIGN KEY (game_players) REFERENCES game_players(game_id, player) ON DELETE CASCADE
 );
