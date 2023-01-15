@@ -36,88 +36,88 @@ const minNumberPlayers = 2
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
 type Banker interface {
-	AccountBalance(ctx context.Context, accountID common.Address) (GWei *big.Float, err error)
-	Reconcile(ctx context.Context, winningAccountID common.Address, losingAccountIDs []common.Address, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error)
+	AccountBalance(ctx context.Context, player common.Address) (GWei *big.Float, err error)
+	Reconcile(ctx context.Context, winningPlayer common.Address, losingPlayers []common.Address, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error)
 }
 
 // =============================================================================
 
 // Status represents a copy of the game status.
 type Status struct {
-	Status        string
-	LastOutAcctID common.Address
-	LastWinAcctID common.Address
-	CurrentAcctID common.Address
-	Round         int
-	Cups          map[common.Address]Cup
-	CupsOrder     []common.Address
-	Bets          []Bet
-	Balances      []string
+	Status          string
+	PlayerLastOut   common.Address
+	PlayerLastWin   common.Address
+	PlayerTurn      common.Address
+	Round           int
+	Cups            map[common.Address]Cup
+	ExistingPlayers []common.Address
+	Bets            []Bet
+	Balances        []string
 }
 
 // Bet represents a bet of dice made by a player.
 type Bet struct {
-	AccountID common.Address
-	Number    int
-	Suite     int
+	Player common.Address
+	Number int
+	Suite  int
 }
 
 // Cup represents an individual cup being held by a player.
 type Cup struct {
-	OrderIdx  int
-	AccountID common.Address
-	LastBet   Bet
-	Outs      int
-	Dice      []int
+	OrderIdx int
+	Player   common.Address
+	LastBet  Bet
+	Outs     int
+	Dice     []int
 }
 
 // Game represents a single game that is being played.
 type Game struct {
-	logger        *zap.SugaredLogger
-	id            string
-	converter     *currency.Converter
-	banker        Banker
-	mu            sync.RWMutex
-	status        string
-	lastOutAcctID common.Address
-	lastWinAcctID common.Address
-	currentCup    int
-	round         int
-	anteUSD       float64
-	cups          map[common.Address]Cup
-	orgOrder      []common.Address
-	cupsOrder     []common.Address
-	bets          []Bet
-	balancesGWei  []*big.Float
+	logger             *zap.SugaredLogger
+	converter          *currency.Converter
+	banker             Banker
+	mu                 sync.RWMutex
+	id                 string                 // Unique game id.
+	status             string                 // Current status of the game.
+	round              int                    // Current round of the game.
+	anteUSD            float64                // The ante for joining this game.
+	cups               map[common.Address]Cup // Game players with indexes cup access.
+	players            []common.Address       // Game players in the order they were added.
+	existingPlayers    []common.Address       // The set of players still in the game.
+	playerBalancesGWei []*big.Float           // The balances of the players when added.
+	playerTurn         int                    // The index of the player who's turn it is.
+	playerLastOut      common.Address         // The player who lost the last round.
+	playerLastWin      common.Address         // The player who won the last round.
+	bets               []Bet                  // History of bets for the current round.
 }
 
 // New creates a new game.
-func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Converter, banker Banker, accountID common.Address, anteUSD float64) (*Game, error) {
-	balance, err := banker.AccountBalance(ctx, accountID)
+func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Converter, banker Banker, player common.Address, anteUSD float64) (*Game, error) {
+	balance, err := banker.AccountBalance(ctx, player)
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve account[%s] balance", accountID)
+		return nil, fmt.Errorf("unable to retrieve account[%s] balance", player)
 	}
 
 	// If comparison is negative, the player has no balance.
 	anteGwei := converter.USD2GWei(big.NewFloat(anteUSD))
 	if balance.Cmp(anteGwei) < 0 {
-		return nil, fmt.Errorf("account [%s] does not have enough balance to play, balance[%v]", accountID, balance)
+		return nil, fmt.Errorf("account [%s] does not have enough balance to play, balance[%v]", player, balance)
 	}
 
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	g := Game{
 		logger:    log,
-		id:        uuid.NewString(),
 		converter: converter,
 		banker:    banker,
+		id:        uuid.NewString(),
 		status:    StatusNewGame,
 		round:     1,
 		anteUSD:   anteUSD,
 		cups:      make(map[common.Address]Cup),
 	}
 
-	if err := g.AddAccount(ctx, accountID); err != nil {
+	if err := g.AddAccount(ctx, player); err != nil {
 		return nil, errors.New("unable to add owner to the game")
 	}
 
@@ -126,52 +126,52 @@ func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Conver
 
 // AddAccount adds a player to the game. If the account already exists, the
 // function will return an error.
-func (g *Game) AddAccount(ctx context.Context, accountID common.Address) error {
+func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	var empty common.Address
-	if accountID == empty {
+	if player == empty {
 		return errors.New("account id provided is empty")
 	}
 
-	if _, exists := g.cups[accountID]; exists {
-		return fmt.Errorf("account id [%s] is already in the game", accountID)
+	if _, exists := g.cups[player]; exists {
+		return fmt.Errorf("account id [%s] is already in the game", player)
 	}
 
 	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
 	}
 
-	if _, exists := g.cups[accountID]; exists {
-		return fmt.Errorf("account id [%s] is already in the game", accountID)
+	if _, exists := g.cups[player]; exists {
+		return fmt.Errorf("account id [%s] is already in the game", player)
 	}
 
-	balanceGwei, err := g.banker.AccountBalance(ctx, accountID)
+	balanceGwei, err := g.banker.AccountBalance(ctx, player)
 	if err != nil {
-		return fmt.Errorf("unable to retrieve account id [%s] balance", accountID)
+		return fmt.Errorf("unable to retrieve account id [%s] balance", player)
 	}
 
 	anteGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
-	g.log(ctx, "game.addaccount", "accountid", accountID, "anteUSD", g.anteUSD, "anteGWei", anteGWei, "balanceGWei", balanceGwei)
+	g.log(ctx, "game.addaccount", "player", player, "anteUSD", g.anteUSD, "anteGWei", anteGWei, "balanceGWei", balanceGwei)
 
 	// If comparison is negative, the player has no balance.
 	if balanceGwei.Cmp(anteGWei) < 0 {
-		return fmt.Errorf("account [%s] does not have enough balance to play", accountID)
+		return fmt.Errorf("player [%s] does not have enough balance to play", player)
 	}
 
-	g.cups[accountID] = Cup{
-		OrderIdx:  len(g.orgOrder),
-		AccountID: accountID,
-		LastBet:   Bet{},
-		Outs:      0,
-		Dice:      make([]int, 5),
+	g.cups[player] = Cup{
+		OrderIdx: len(g.players),
+		Player:   player,
+		LastBet:  Bet{},
+		Outs:     0,
+		Dice:     make([]int, 5),
 	}
 
-	g.orgOrder = append(g.orgOrder, accountID)
-	g.cupsOrder = append(g.cupsOrder, accountID)
-	g.balancesGWei = append(g.balancesGWei, balanceGwei)
+	g.players = append(g.players, player)
+	g.existingPlayers = append(g.existingPlayers, player)
+	g.playerBalancesGWei = append(g.playerBalancesGWei, balanceGwei)
 
 	return nil
 }
@@ -189,7 +189,7 @@ func (g *Game) StartGame(ctx context.Context) error {
 		return errors.New("not enough players to start the game")
 	}
 
-	g.currentCup = rand.Intn(len(g.cups))
+	g.playerTurn = rand.Intn(len(g.cups))
 
 	g.status = StatusPlaying
 
@@ -199,18 +199,18 @@ func (g *Game) StartGame(ctx context.Context) error {
 // ApplyOut will apply the specified number of outs to the account.
 // If an account is out, it will check the number of active accounts, and end
 // the round if there is only 1 left.
-func (g *Game) ApplyOut(ctx context.Context, accountID common.Address, outs int) error {
+func (g *Game) ApplyOut(ctx context.Context, player common.Address, outs int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	var empty common.Address
-	if accountID == empty {
+	if player == empty {
 		return errors.New("account provided is empty")
 	}
 
-	cup, exists := g.cups[accountID]
+	cup, exists := g.cups[player]
 	if !exists {
-		return fmt.Errorf("account id [%s] does not exist in the game", accountID)
+		return fmt.Errorf("player [%s] does not exist in the game", player)
 	}
 
 	if outs < 0 || outs > 3 {
@@ -222,18 +222,18 @@ func (g *Game) ApplyOut(ctx context.Context, accountID common.Address, outs int)
 	}
 
 	cup.Outs = outs
-	g.cups[accountID] = cup
+	g.cups[player] = cup
 
 	// After 3 outs, an account is out of the game.
 	// We need to check if there is only 1 account left, end the round.
 	if outs == 3 {
 		var empty common.Address
-		g.cupsOrder[cup.OrderIdx] = empty
+		g.existingPlayers[cup.OrderIdx] = empty
 
 		// Look for active players.
 		var activePlayers int
 
-		for _, v := range g.cupsOrder {
+		for _, v := range g.existingPlayers {
 			if v != empty {
 				activePlayers++
 			}
@@ -249,28 +249,28 @@ func (g *Game) ApplyOut(ctx context.Context, accountID common.Address, outs int)
 
 // RollDice will generate 5 new random integers for the players cup. The caller
 // can specific the dice if they choose.
-func (g *Game) RollDice(ctx context.Context, accountID common.Address, manualRole ...int) error {
+func (g *Game) RollDice(ctx context.Context, player common.Address, manualRole ...int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	var empty common.Address
-	if accountID == empty {
-		return errors.New("account provided is empty")
+	if player == empty {
+		return errors.New("player provided is empty")
 	}
 
 	if g.status != StatusPlaying {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
 	}
 
-	return g.rollDice(ctx, accountID, manualRole...)
+	return g.rollDice(ctx, player, manualRole...)
 }
 
 // rollDice will generate 5 new random integers for the players cup. The caller
 // can specific the dice if they choose.
-func (g *Game) rollDice(ctx context.Context, accountID common.Address, manualRole ...int) error {
-	cup, exists := g.cups[accountID]
+func (g *Game) rollDice(ctx context.Context, player common.Address, manualRole ...int) error {
+	cup, exists := g.cups[player]
 	if !exists {
-		return fmt.Errorf("account id [%s] does not exist in the game", accountID)
+		return fmt.Errorf("player [%s] does not exist in the game", player)
 	}
 
 	if manualRole == nil || len(manualRole) < 5 {
@@ -289,18 +289,18 @@ func (g *Game) rollDice(ctx context.Context, accountID common.Address, manualRol
 // Bet accepts a bet from an account, but validates the bet is valid first.
 // If the bet is valid, it's added to the list of bets for the game. Then
 // the next player is determined and set.
-func (g *Game) Bet(ctx context.Context, accountID common.Address, number int, suite int) error {
+func (g *Game) Bet(ctx context.Context, player common.Address, number int, suite int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	var empty common.Address
-	if accountID == empty {
+	if player == empty {
 		return errors.New("account id provided is empty")
 	}
 
-	cup, exists := g.cups[accountID]
+	cup, exists := g.cups[player]
 	if !exists {
-		return fmt.Errorf("account [%s] does not exist in the game", accountID)
+		return fmt.Errorf("player [%s] does not exist in the game", player)
 	}
 
 	if g.status != StatusPlaying {
@@ -309,9 +309,9 @@ func (g *Game) Bet(ctx context.Context, accountID common.Address, number int, su
 
 	// Validate that the account who is making the bet is the account that
 	// should be making this bet.
-	currentAccountID := g.cupsOrder[g.currentCup]
-	if currentAccountID != accountID {
-		return fmt.Errorf("account id [%s] can't make a bet now", accountID)
+	currentPlayer := g.existingPlayers[g.playerTurn]
+	if currentPlayer != player {
+		return fmt.Errorf("player [%s] can't make a bet now", player)
 	}
 
 	// If this is not the first bet, we need to validate the bet is valid.
@@ -329,15 +329,15 @@ func (g *Game) Bet(ctx context.Context, accountID common.Address, number int, su
 
 	// Add the bet to the list.
 	bet := Bet{
-		AccountID: accountID,
-		Number:    number,
-		Suite:     suite,
+		Player: player,
+		Number: number,
+		Suite:  suite,
 	}
 	g.bets = append(g.bets, bet)
 
 	// Add the last bet to the cup.
 	cup.LastBet = bet
-	g.cups[accountID] = cup
+	g.cups[player] = cup
 
 	// Move the turn to the next player.
 	g.nextTurn()
@@ -361,20 +361,20 @@ func (g *Game) NextTurn(ctx context.Context) error {
 
 // nextTurn determines which account makes the next move.
 func (g *Game) nextTurn() {
-	l := len(g.cupsOrder)
+	l := len(g.existingPlayers)
 
 	for i := 0; i < l; i++ {
 
 		// Circle back to the beginning of the slice if we reached the end.
-		g.currentCup++
-		if g.currentCup == l {
-			g.currentCup = 0
+		g.playerTurn++
+		if g.playerTurn == l {
+			g.playerTurn = 0
 		}
 
 		// If the account information for this index is not empty, this
 		// player is still in the game and the next player to make a bet.
 		var empty common.Address
-		if g.cupsOrder[g.currentCup] != empty {
+		if g.existingPlayers[g.playerTurn] != empty {
 			break
 		}
 	}
@@ -382,18 +382,18 @@ func (g *Game) nextTurn() {
 
 // CallLiar checks the last bet that was made and determines the winner and
 // loser of the current round.
-func (g *Game) CallLiar(ctx context.Context, accountID common.Address) (winningAcct common.Address, losingAcct common.Address, err error) {
+func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlayer common.Address, losingPlayer common.Address, err error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
 	var empty common.Address
 
-	if accountID == empty {
+	if player == empty {
 		return empty, empty, errors.New("account provided is empty")
 	}
 
-	if _, exists := g.cups[accountID]; !exists {
-		return empty, empty, fmt.Errorf("account [%s] does not exist in the game", accountID)
+	if _, exists := g.cups[player]; !exists {
+		return empty, empty, fmt.Errorf("player [%s] does not exist in the game", player)
 	}
 
 	if g.status != StatusPlaying {
@@ -406,9 +406,9 @@ func (g *Game) CallLiar(ctx context.Context, accountID common.Address) (winningA
 
 	// Validate that the account who is making the bet is the account that
 	// should be making this bet.
-	currentAccountID := g.cupsOrder[g.currentCup]
-	if currentAccountID != accountID {
-		return empty, empty, fmt.Errorf("account [%s] can't call liar now", accountID)
+	currentPlayer := g.existingPlayers[g.playerTurn]
+	if currentPlayer != player {
+		return empty, empty, fmt.Errorf("player [%s] can't call liar now", currentPlayer)
 	}
 
 	// This call ends the round, not allowing any more bets to be made.
@@ -430,25 +430,25 @@ func (g *Game) CallLiar(ctx context.Context, accountID common.Address) (winningA
 	case dice[lastBet.Suite] < lastBet.Number:
 
 		// The account who made the last bet lost.
-		cup := g.cups[lastBet.AccountID]
+		cup := g.cups[lastBet.Player]
 		cup.Outs++
-		g.cups[lastBet.AccountID] = cup
+		g.cups[lastBet.Player] = cup
 
-		g.lastOutAcctID = cup.AccountID
-		g.lastWinAcctID = accountID
+		g.playerLastOut = cup.Player
+		g.playerLastWin = player
 
 	default:
 
 		// The account who called liar lost.
-		cup := g.cups[accountID]
+		cup := g.cups[player]
 		cup.Outs++
-		g.cups[accountID] = cup
+		g.cups[player] = cup
 
-		g.lastOutAcctID = accountID
-		g.lastWinAcctID = lastBet.AccountID
+		g.playerLastOut = player
+		g.playerLastWin = lastBet.Player
 	}
 
-	return g.lastWinAcctID, g.lastOutAcctID, nil
+	return g.playerLastWin, g.playerLastOut, nil
 }
 
 // NextRound updates the game state for players who are out and determining
@@ -465,10 +465,10 @@ func (g *Game) NextRound(ctx context.Context) (int, error) {
 	// If an account has three outs, remove their account from game play.
 	// Reset the last bet value and dice.
 	var leftToPlay int
-	for accountID, cup := range g.cups {
+	for player, cup := range g.cups {
 		cup.LastBet = Bet{}
 		cup.Dice = make([]int, 5)
-		g.cups[accountID] = cup
+		g.cups[player] = cup
 
 		for i := range cup.Dice {
 			cup.Dice[i] = 0
@@ -476,11 +476,11 @@ func (g *Game) NextRound(ctx context.Context) (int, error) {
 
 		if cup.Outs == 3 {
 			var empty common.Address
-			g.cupsOrder[cup.OrderIdx] = empty
+			g.existingPlayers[cup.OrderIdx] = empty
 			continue
 		}
 
-		g.rollDice(ctx, accountID)
+		g.rollDice(ctx, player)
 
 		leftToPlay++
 	}
@@ -490,16 +490,16 @@ func (g *Game) NextRound(ctx context.Context) (int, error) {
 	if leftToPlay == 1 {
 		g.bets = []Bet{}
 		g.status = StatusGameOver
-		g.rollDice(ctx, g.lastWinAcctID, 0, 0, 0, 0, 0)
+		g.rollDice(ctx, g.playerLastWin, 0, 0, 0, 0, 0)
 		return 1, nil
 	}
 
 	// Figure out who starts the next round.
 	// The person who was last out should start the round unless they are out.
-	if g.cups[g.lastOutAcctID].Outs != 3 {
-		g.currentCup = g.cups[g.lastOutAcctID].OrderIdx
+	if g.cups[g.playerLastOut].Outs != 3 {
+		g.playerTurn = g.cups[g.playerLastOut].OrderIdx
 	} else {
-		g.currentCup = g.cups[g.lastWinAcctID].OrderIdx
+		g.playerTurn = g.cups[g.playerLastWin].OrderIdx
 	}
 
 	// Reset the game state.
@@ -512,7 +512,7 @@ func (g *Game) NextRound(ctx context.Context) (int, error) {
 }
 
 // Reconcile calculates the game pot and make the transfer to the winner.
-func (g *Game) Reconcile(ctx context.Context, winningAccountID common.Address) (*types.Transaction, *types.Receipt, error) {
+func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receipt, error) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
@@ -521,10 +521,10 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID common.Address) (
 	}
 
 	// Find the losers.
-	var loserIDs []common.Address
+	var losingPlayers []common.Address
 	for _, cup := range g.cups {
-		if g.lastWinAcctID != cup.AccountID {
-			loserIDs = append(loserIDs, cup.AccountID)
+		if g.playerLastWin != cup.Player {
+			losingPlayers = append(losingPlayers, cup.Player)
 		}
 	}
 
@@ -533,13 +533,13 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID common.Address) (
 	gameFeeGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
 	// Log the winner and losers.
-	g.log(ctx, "game.reconcole", "winner", g.lastWinAcctID)
-	for _, accountID := range loserIDs {
-		g.log(ctx, "game.reconcole", "loser", accountID)
+	g.log(ctx, "game.reconcole", "winner", g.playerLastWin)
+	for _, player := range losingPlayers {
+		g.log(ctx, "game.reconcole", "loser", player)
 	}
 
 	// Perform the reconcile against the bank.
-	tx, receipt, err := g.banker.Reconcile(ctx, g.lastWinAcctID, loserIDs, antiGWei, gameFeeGWei)
+	tx, receipt, err := g.banker.Reconcile(ctx, g.playerLastWin, losingPlayers, antiGWei, gameFeeGWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
 	}
@@ -549,15 +549,15 @@ func (g *Game) Reconcile(ctx context.Context, winningAccountID common.Address) (
 
 	// Update the player balances.
 	g.log(ctx, "game.reconcole.fees", "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
-	for i, accountID := range g.orgOrder {
-		balanceGwei, err := g.banker.AccountBalance(ctx, accountID)
+	for i, player := range g.players {
+		balanceGwei, err := g.banker.AccountBalance(ctx, player)
 		if err != nil {
 			g.log(ctx, "game.reconcole.updatebalance", "ERROR", err)
 			continue
 		}
-		oldBalanceGWei := g.balancesGWei[i]
-		g.balancesGWei[i] = balanceGwei
-		g.log(ctx, "game.reconcole.updatebalance", "accountid", accountID, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
+		oldBalanceGWei := g.playerBalancesGWei[i]
+		g.playerBalancesGWei[i] = balanceGwei
+		g.log(ctx, "game.reconcole.updatebalance", "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
 	}
 
 	return tx, receipt, nil
@@ -573,27 +573,27 @@ func (g *Game) Info(ctx context.Context) Status {
 		cups[k] = v
 	}
 
-	cupsOrder := make([]common.Address, len(g.orgOrder))
-	copy(cupsOrder, g.orgOrder)
+	existingPlayers := make([]common.Address, len(g.players))
+	copy(existingPlayers, g.players)
 
 	bets := make([]Bet, len(g.bets))
 	copy(bets, g.bets)
 
-	balances := make([]string, len(g.balancesGWei))
-	for i, bal := range g.balancesGWei {
+	balances := make([]string, len(g.playerBalancesGWei))
+	for i, bal := range g.playerBalancesGWei {
 		balances[i] = g.converter.GWei2USD(bal)
 	}
 
 	return Status{
-		Status:        g.status,
-		LastOutAcctID: g.lastOutAcctID,
-		LastWinAcctID: g.lastWinAcctID,
-		CurrentAcctID: g.cupsOrder[g.currentCup],
-		Round:         g.round,
-		Cups:          cups,
-		CupsOrder:     cupsOrder,
-		Bets:          bets,
-		Balances:      balances,
+		Status:          g.status,
+		PlayerLastOut:   g.playerLastOut,
+		PlayerLastWin:   g.playerLastWin,
+		PlayerTurn:      g.existingPlayers[g.playerTurn],
+		Round:           g.round,
+		Cups:            cups,
+		ExistingPlayers: existingPlayers,
+		Bets:            bets,
+		Balances:        balances,
 	}
 }
 
