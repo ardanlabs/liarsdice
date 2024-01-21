@@ -188,12 +188,12 @@ func (ks *KeyStore) PublicKey(kid string) (string, error) {
 // accepts a PEM encoding of a RSA private key and converts to a PEM encoded
 // public key.
 func toPublicPEM(privateKeyPEM []byte) (string, error) {
-	var block *pem.Block
-	if block, _ = pem.Decode(privateKeyPEM); block == nil {
+	block, _ := pem.Decode(privateKeyPEM)
+	if block == nil {
 		return "", errors.New("invalid key: Key must be a PEM encoded PKCS1 or PKCS8 key")
 	}
 
-	var parsedKey interface{}
+	var parsedKey any
 	parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
