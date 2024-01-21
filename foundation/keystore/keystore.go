@@ -46,13 +46,6 @@ func New(log *zap.SugaredLogger) *KeyStore {
 	}
 }
 
-// NewMap constructs a KeyStore with an initial set of keys.
-func NewMap(store map[string]privateKey) *KeyStore {
-	return &KeyStore{
-		store: store,
-	}
-}
-
 // LoadAuthKeys loads a set of RSA PEM files rooted inside of a directory. The
 // name of each PEM file will be used as the key id.
 func (ks *KeyStore) LoadAuthKeys(folder string) error {
