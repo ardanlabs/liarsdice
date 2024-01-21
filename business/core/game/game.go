@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"math/rand"
 	"sync"
-	"time"
 
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/foundation/web"
@@ -102,8 +101,6 @@ func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Conver
 	if balance.Cmp(anteGwei) < 0 {
 		return nil, fmt.Errorf("account [%s] does not have enough balance to play, balance[%v]", player, balance)
 	}
-
-	rand.Seed(time.Now().UTC().UnixNano())
 
 	g := Game{
 		logger:    log,

@@ -183,19 +183,17 @@ func IntPointer(i int) *int {
 
 type keyStore struct{}
 
-func (ks *keyStore) PrivateKeyPEM(kid string) (string, error) {
+func (ks *keyStore) PrivateKey(kid string) (string, error) {
 	return privateKeyPEM, nil
 }
 
-func (ks *keyStore) PublicKeyPEM(kid string) (string, error) {
+func (ks *keyStore) PublicKey(kid string) (string, error) {
 	return publicKeyPEM, nil
 }
 
 // =============================================================================
 
 const (
-	kid = "s4sKIjD9kIRjxs2tulPqGLdxSfgPErRN1Mu3Hd9k9NQ"
-
 	privateKeyPEM = `-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEAvMAHb0IoLvoYuW2kA+LTmnk+hfnBq1eYIh4CT/rMPCxgtzjq
 U0guQOMnLg69ydyA5uu37v6rbS1+stuBTEiMQl/bxAhgLkGrUhgpZ10Bt6GzSEgw

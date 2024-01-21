@@ -7,11 +7,10 @@ package topdown
 import (
 	"encoding/json"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/internal/providers"
+	"github.com/open-policy-agent/opa/internal/providers/aws"
 	"github.com/open-policy-agent/opa/topdown/builtins"
 )
 
@@ -54,7 +53,7 @@ func getReqBodyBytes(body, rawBody *ast.Term) ([]byte, error) {
 }
 
 func objectToMap(o ast.Object) map[string][]string {
-	var out map[string][]string
+	out := make(map[string][]string, o.Len())
 	o.Foreach(func(k, v *ast.Term) {
 		ks := stringFromTerm(k)
 		vs := stringFromTerm(v)
@@ -105,7 +104,7 @@ func builtinAWSSigV4SignReq(ctx BuiltinContext, operands []*ast.Term, iter func(
 		return err
 	}
 	service := stringFromTerm(awsConfigObj.Get(ast.StringTerm("aws_service")))
-	awsCreds := providers.AWSCredentialsFromObject(awsConfigObj)
+	awsCreds := aws.CredentialsFromObject(awsConfigObj)
 
 	// Timestamp for signing.
 	var signingTimestamp time.Time
@@ -173,10 +172,22 @@ func builtinAWSSigV4SignReq(ctx BuiltinContext, operands []*ast.Term, iter func(
 	}
 
 	// Sign the request object's headers, and reconstruct the headers map.
-	signedHeadersMap := providers.AWSSignV4(objectToMap(headers), method, theURL, body, service, awsCreds, signingTimestamp)
+	headersMap := objectToMap(headers)
+	authHeader, awsHeadersMap := aws.SignV4(headersMap, method, theURL, body, service, awsCreds, signingTimestamp)
 	signedHeadersObj := ast.NewObject()
-	for k, v := range signedHeadersMap {
-		signedHeadersObj.Insert(ast.StringTerm(k), ast.StringTerm(strings.Join(v, ",")))
+	// Restore original headers
+	for k, v := range headersMap {
+		// objectToMap doesn't support arrays
+		if len(v) == 1 {
+			signedHeadersObj.Insert(ast.StringTerm(k), ast.StringTerm(v[0]))
+		}
+	}
+	// Set authorization header
+	signedHeadersObj.Insert(ast.StringTerm("Authorization"), ast.StringTerm(authHeader))
+
+	// set aws signature headers
+	for k, v := range awsHeadersMap {
+		signedHeadersObj.Insert(ast.StringTerm(k), ast.StringTerm(v))
 	}
 
 	// Create new request object with updated headers.

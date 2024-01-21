@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -10,19 +9,14 @@ import (
 	"time"
 
 	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-)
-
-// Success and failure markers.
-const (
-	success = "\u2713"
-	failed  = "\u2717"
 )
 
 func Test_Auth(t *testing.T) {
-	log, teardown := newUnit(t)
+	log, db, teardown := newUnit(t)
 	defer func() {
 		if r := recover(); r != nil {
 			t.Log(r)
@@ -31,84 +25,63 @@ func Test_Auth(t *testing.T) {
 		teardown()
 	}()
 
-	t.Log("Given the need to be able to authenticate and authorize access.")
-	{
-		testID := 0
-		t.Logf("\tTest %d:\tWhen handling a single user.", testID)
-		{
-			cfg := auth.Config{
-				Log:       log,
-				KeyLookup: &keyStore{},
-			}
-			a, err := auth.New(cfg)
-			if err != nil {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to create an authenticator: %v", failed, testID, err)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to create an authenticator.", success, testID)
+	cfg := auth.Config{
+		Log:       log,
+		DB:        db,
+		KeyLookup: &keyStore{},
+		Issuer:    "liar's project",
+	}
+	a, err := auth.New(cfg)
+	if err != nil {
+		t.Fatalf("Should be able to create an authenticator: %s", err)
+	}
 
-			claims := auth.Claims{
-				RegisteredClaims: jwt.RegisteredClaims{
-					Issuer:    "liar's project",
-					Subject:   "5cf37266-3473-4006-984f-9325122678b7",
-					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
-					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
-				},
-			}
+	claims := auth.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "liar's project",
+			Subject:   "5cf37266-3473-4006-984f-9325122678b7",
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+		},
+	}
 
-			token, err := a.GenerateToken(kid, claims)
-			if err != nil {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to generate a JWT: %v", failed, testID, err)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to generate a JWT.", success, testID)
+	token, err := a.GenerateToken(kid, claims)
+	if err != nil {
+		t.Fatalf("Should be able to generate a JWT : %s", err)
+	}
 
-			if _, err := a.Authenticate(context.Background(), "Bearer "+token); err != nil {
-				t.Fatalf("\t%s\tTest %d:\tShould be able to authenticate the claims: %v", failed, testID, err)
-			}
-			t.Logf("\t%s\tTest %d:\tShould be able to authenticate the claims.", success, testID)
-		}
+	_, err = a.Authenticate(context.Background(), "Bearer "+token)
+	if err != nil {
+		t.Fatalf("Should be able to authenticate the claims : %s", err)
 	}
 }
 
-// =============================================================================
-
-func newUnit(t *testing.T) (*zap.SugaredLogger, func()) {
+func newUnit(t *testing.T) (*zap.SugaredLogger, *sqlx.DB, func()) {
 	var buf bytes.Buffer
-	encoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
-	writer := bufio.NewWriter(&buf)
-	log := zap.New(
-		zapcore.NewCore(encoder, zapcore.AddSync(writer), zapcore.DebugLevel),
-		zap.WithCaller(true),
-	).Sugar()
+	log, _ := logger.New("TEST")
 
 	// teardown is the function that should be invoked when the caller is done
 	// with the database.
 	teardown := func() {
 		t.Helper()
 
-		log.Sync()
-
-		writer.Flush()
 		fmt.Println("******************** LOGS ********************")
 		fmt.Print(buf.String())
 		fmt.Println("******************** LOGS ********************")
 	}
 
-	return log, teardown
+	return log, nil, teardown
 }
-
-// =============================================================================
 
 type keyStore struct{}
 
-func (ks *keyStore) PrivateKeyPEM(kid string) (string, error) {
+func (ks *keyStore) PrivateKey(kid string) (string, error) {
 	return privateKeyPEM, nil
 }
 
-func (ks *keyStore) PublicKeyPEM(kid string) (string, error) {
+func (ks *keyStore) PublicKey(kid string) (string, error) {
 	return publicKeyPEM, nil
 }
-
-// =============================================================================
 
 const (
 	kid = "s4sKIjD9kIRjxs2tulPqGLdxSfgPErRN1Mu3Hd9k9NQ"

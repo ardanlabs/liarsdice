@@ -87,15 +87,7 @@ func String(v interface{}) (string, error) {
 
 		switch {
 		case fld.Options.Mask:
-			if u, err := url.Parse(v); err == nil {
-				userPass := u.User.String()
-				if userPass != "" {
-					v = strings.Replace(v, userPass, "xxxxxx:xxxxxx", 1)
-					s.WriteString(v)
-					break
-				}
-			}
-			s.WriteString("xxxxxx")
+			s.WriteString(maskVal(v))
 
 		default:
 			s.WriteString(v)
@@ -107,6 +99,18 @@ func String(v interface{}) (string, error) {
 	}
 
 	return s.String(), nil
+}
+
+// maskVal masks an entire string or the user:password pair of a URL.
+func maskVal(v string) string {
+	mask := "xxxxxx"
+	if u, err := url.Parse(v); err == nil {
+		userPass := u.User.String()
+		if userPass != "" {
+			mask = strings.Replace(v, userPass, "xxxxxx:xxxxxx", 1)
+		}
+	}
+	return mask
 }
 
 // UsageInfo provides output to display the config usage on the command line.
@@ -189,14 +193,17 @@ func parse(args []string, namespace string, cfgStruct interface{}) error {
 			}
 		}
 
+		// Flag to check if any value is provided.
+		provided := false
+
 		// Process each field against all sources.
 		for _, sourcer := range sources {
 			if sourcer == nil {
 				continue
 			}
 
-			value, provided := sourcer.Source(field)
-			if !provided {
+			value, ok := sourcer.Source(field)
+			if !ok {
 				continue
 			}
 
@@ -209,11 +216,12 @@ func parse(args []string, namespace string, cfgStruct interface{}) error {
 					err:       err,
 				}
 			}
+
+			provided = true
 		}
 
-		// If this key is not provided by any source, check if it was
-		// required to be provided.
-		if field.Options.Required && field.Field.IsZero() {
+		// If the field is marked 'required', check if no value was provided.
+		if field.Options.Required && !provided {
 			return fmt.Errorf("required field %s is missing value", field.Name)
 		}
 	}

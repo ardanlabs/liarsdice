@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GETH_ADDRESS=http://geth-service.liars-system.svc.cluster.local:8545
+GETH_ADDRESS=http://localhost:8545
 
 if [ "${1}" = "force" ]; then
   kubectl -n liars-system delete secret contract-id

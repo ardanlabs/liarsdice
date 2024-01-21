@@ -13,8 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
@@ -23,9 +21,10 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
-	"github.com/ardanlabs/liarsdice/foundation/vault"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -98,7 +97,8 @@ func run(log *zap.SugaredLogger) error {
 			Token     string `conf:"default:mytoken,mask"`
 		}
 		Auth struct {
-			ActiveKID string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
+			KeysFolder string `conf:"default:zarf/keys/"`
+			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
 		Game struct {
 			ContractID     string        `conf:"default:0x0"`
@@ -106,6 +106,8 @@ func run(log *zap.SugaredLogger) error {
 			ConnectTimeout time.Duration `conf:"default:60s"`
 		}
 		Bank struct {
+			KeysFolder       string        `conf:"default:zarf/ethereum/keystore/"`
+			PassPhrase       string        `conf:"default:123,noprint"`
 			KeyID            string        `conf:"default:6327a38415c53ffb36c11db55ea74cc9cb4976fd"`
 			Network          string        `conf:"default:http://geth-service.liars-system.svc.cluster.local:8545"`
 			Timeout          time.Duration `conf:"default:10s"`
@@ -143,22 +145,28 @@ func run(log *zap.SugaredLogger) error {
 	expvar.NewString("build").Set(build)
 
 	// =========================================================================
+	// Initialize keystore
+
+	log.Infow("startup", "status", "initializing keystore")
+
+	ks := keystore.New(log)
+
+	if err := ks.LoadAuthKeys(cfg.Auth.KeysFolder); err != nil {
+		return fmt.Errorf("reading keys: %w", err)
+	}
+
+	if err := ks.LoadBankKeys(cfg.Bank.KeysFolder, cfg.Bank.PassPhrase); err != nil {
+		return fmt.Errorf("reading keys: %w", err)
+	}
+
+	// =========================================================================
 	// Initialize authentication support
 
 	log.Infow("startup", "status", "initializing authentication support")
 
-	vaultClient, err := vault.New(vault.Config{
-		Address:   cfg.Vault.Address,
-		Token:     cfg.Vault.Token,
-		MountPath: cfg.Vault.MountPath,
-	})
-	if err != nil {
-		return fmt.Errorf("constructing vaultConfig: %w", err)
-	}
-
 	authCfg := auth.Config{
 		Log:       log,
-		KeyLookup: vaultClient,
+		KeyLookup: ks,
 	}
 
 	authClient, err := auth.New(authCfg)
@@ -193,12 +201,12 @@ func run(log *zap.SugaredLogger) error {
 	}
 	defer backend.Close()
 
-	privateKey, err := vaultClient.PrivateKeyPEM(cfg.Bank.KeyID)
+	privateKeyPEM, err := ks.PrivateKey(cfg.Bank.KeyID)
 	if err != nil {
 		return fmt.Errorf("capture private key: %w", err)
 	}
 
-	block, _ := pem.Decode([]byte(privateKey))
+	block, _ := pem.Decode([]byte(privateKeyPEM))
 	ecdsaKey, err := crypto.ToECDSA(block.Bytes)
 	if err != nil {
 		return fmt.Errorf("error converting PEM to ECDSA: %w", err)

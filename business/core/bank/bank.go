@@ -105,7 +105,7 @@ func (b *Bank) AccountBalance(ctx context.Context, accountID common.Address) (GW
 // Reconcile will apply with ante to the winner and loser accounts, plus provide
 // the house the game fee.
 func (b *Bank) Reconcile(ctx context.Context, winningAccountID common.Address, losingAccountIDs []common.Address, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewFloat(0))
+	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewInt(0), big.NewFloat(0))
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
@@ -135,7 +135,7 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccountID common.Address, l
 
 // Deposit will add the given amount to the account's contract balance.
 func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, amountGWei)
+	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewInt(0), amountGWei)
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}
@@ -159,7 +159,7 @@ func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Trans
 
 // Withdraw will move all the account's balance in the contract, to the account's wallet.
 func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt, error) {
-	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewFloat(0))
+	tranOpts, err := b.ethereum.NewTransactOpts(ctx, 0, big.NewInt(0), big.NewFloat(0))
 	if err != nil {
 		return nil, nil, fmt.Errorf("new trans opts: %w", err)
 	}

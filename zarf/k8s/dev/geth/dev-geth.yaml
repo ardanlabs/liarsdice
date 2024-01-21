@@ -67,11 +67,10 @@ spec:
             - --allow-insecure-unlock
             - --rpc.allow-unprotected-txs
             - --mine
-            - --miner.threads=1
             - --verbosity=5
             - --datadir=/ethereum
-            - --unlock=0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
             - --password=/secrets/password
+            - --unlock=0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
           ports:
             - name: geth
               containerPort: 8545
@@ -93,7 +92,6 @@ spec:
         - name: geth-keystore
           secret:
             secretName: "geth-keystore"
-
 ---
 apiVersion: v1
 kind: Service

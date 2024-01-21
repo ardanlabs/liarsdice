@@ -321,7 +321,7 @@ func deployContract() (common.Address, error) {
 func smartContract(ctx context.Context) (common.Address, error) {
 	var empty common.Address
 
-	tranOpts, err := ownerClt.NewTransactOpts(ctx, 10_000_000, big.NewFloat(0))
+	tranOpts, err := ownerClt.NewTransactOpts(ctx, 10_000_000, big.NewInt(0), big.NewFloat(0))
 	if err != nil {
 		return empty, err
 	}

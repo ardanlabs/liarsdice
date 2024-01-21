@@ -9,37 +9,34 @@
 # The coinbase address is given a LOT of money to start.
 #
 
-GOLANG       := golang:1.19
+GOLANG       := golang:1.21.6
 NODE         := node:16
-ALPINE       := alpine:3.16
+ALPINE       := alpine:3.19
 CADDY        := caddy:2.6-alpine
-KIND         := kindest/node:v1.25.3
+KIND         := kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
 GETH         := ethereum/client-go:stable
-TELEPRESENCE := docker.io/datawire/tel2:2.10.1
 
-dev.setup.mac.common:
+KIND_CLUSTER := liars-game-cluster
+VERSION      := 1.0
+
+# ==============================================================================
+# Install dependencies
+
+dev-setup:
 	brew update
 	brew list kind || brew install kind
 	brew list kubectl || brew install kubectl
 	brew list kustomize || brew install kustomize
 	brew list ethereum || brew install ethereum
 	brew list solidity || brew install solidity
-	brew list vault || brew install vault
 
-dev.setup.mac: dev.setup.mac.common
-	brew datawire/blackbird/telepresence || brew install datawire/blackbird/telepresence
-
-dev.setup.mac.arm64: dev.setup.mac.common
-	brew datawire/blackbird/telepresence-arm64 || brew install datawire/blackbird/telepresence-arm64
-
-dev.docker:
+dev-docker:
 	docker pull $(GOLANG)
 	docker pull $(NODE)
 	docker pull $(ALPINE)
 	docker pull $(CADDY)
 	docker pull $(KIND)
 	docker pull $(GETH)
-	docker pull $(TELEPRESENCE)
 
 # ==============================================================================
 # Game UI
@@ -65,10 +62,8 @@ app-ui: react-install
 # The new docker buildx build system is required for these docker build commands On systems other than Docker Desktop
 # buildx is not the default build system. You will need to enable it with: docker buildx install
 
-# $(shell git rev-parse --short HEAD)
-VERSION := 1.0
-
-all: game-engine ui
+# all: game-engine ui
+all: game-engine
 
 game-engine:
 	docker build \
@@ -94,29 +89,22 @@ ui:
 #     make dev-update-apply
 # Expect the building of the FE to take a wee bit of time :(
 
-KIND_CLUSTER := liars-game-cluster
-
 dev-up:
 	kind create cluster \
-		--image kindest/node:v1.25.3@sha256:f52781bc0d7a19fb6c405c2af83abfeb311f130707a0e219175677e366cc45d1 \
+		--image $(KIND) \
 		--name $(KIND_CLUSTER) \
 		--config zarf/k8s/dev/kind-config.yaml
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 	
-	kind load docker-image $(TELEPRESENCE) --name $(KIND_CLUSTER)
 	kind load docker-image $(GETH) --name $(KIND_CLUSTER)
-	
-	telepresence --context=kind-$(KIND_CLUSTER) helm install
-	telepresence --context=kind-$(KIND_CLUSTER) connect
 
 dev-down:
-	telepresence quit -s
 	kind delete cluster --name $(KIND_CLUSTER)
 	rm -f /tmp/credentials.json
 
 dev-load:
 	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
-	kind load docker-image liarsdice-game-ui:$(VERSION) --name $(KIND_CLUSTER)
+#	kind load docker-image liarsdice-game-ui:$(VERSION) --name $(KIND_CLUSTER)
 
 dev-deploy:
 	@zarf/k8s/dev/geth/setup-contract-k8s
@@ -127,10 +115,6 @@ dev-deploy-force:
 dev-apply:
 	go build -o admin app/tooling/admin/main.go
 
-	kustomize build zarf/k8s/dev/vault | kubectl apply -f -
-
-	@zarf/k8s/dev/vault/initialize-vault.sh
-
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
 
@@ -139,8 +123,8 @@ dev-apply:
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
 
-	kustomize build zarf/k8s/dev/ui | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
+# kustomize build zarf/k8s/dev/ui | kubectl apply -f -
+# kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
 
 dev-restart:
 	kubectl rollout restart deployment engine --namespace=liars-system
@@ -157,6 +141,9 @@ dev-logs-engine:
 
 dev-logs-ui:
 	kubectl logs --namespace=liars-system -l app=ui --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+
+dev-logs-geth:
+	kubectl logs --namespace=liars-system -l app=geth --all-containers=true -f --tail=1000
 
 dev-status:
 	kubectl get nodes -o wide

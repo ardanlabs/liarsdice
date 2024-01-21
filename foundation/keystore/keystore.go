@@ -3,45 +3,60 @@
 package keystore
 
 import (
+	"bytes"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
+	"os"
 	"path"
 	"strings"
-	"sync"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/ardanlabs/ethereum"
+	"github.com/ethereum/go-ethereum/crypto"
+	"go.uber.org/zap"
 )
+
+const (
+	keyTypeRSA   = "rsa"
+	keyTypeECDSA = "ecdsa"
+)
+
+// PrivateKey represents key information.
+type privateKey struct {
+	keyType string
+	pem     []byte
+}
 
 // KeyStore represents an in memory store implementation of the
 // KeyLookup interface for use with the auth package.
 type KeyStore struct {
-	mu    sync.RWMutex
-	store map[string]*rsa.PrivateKey
+	log   *zap.SugaredLogger
+	store map[string]privateKey
 }
 
 // New constructs an empty KeyStore ready for use.
-func New() *KeyStore {
+func New(log *zap.SugaredLogger) *KeyStore {
 	return &KeyStore{
-		store: make(map[string]*rsa.PrivateKey),
+		log:   log,
+		store: make(map[string]privateKey),
 	}
 }
 
 // NewMap constructs a KeyStore with an initial set of keys.
-func NewMap(store map[string]*rsa.PrivateKey) *KeyStore {
+func NewMap(store map[string]privateKey) *KeyStore {
 	return &KeyStore{
 		store: store,
 	}
 }
 
-// NewFS constructs a KeyStore based on a set of PEM files rooted inside
-// of a directory. The name of each PEM file will be used as the key id.
-// Example: keystore.NewFS(os.DirFS("/zarf/keys/"))
-// Example: /zarf/keys/54bb2165-71e1-41a6-af3e-7da4a0e1e2c1.pem
-func NewFS(fsys fs.FS) (*KeyStore, error) {
-	ks := New()
+// LoadAuthKeys loads a set of RSA PEM files rooted inside of a directory. The
+// name of each PEM file will be used as the key id.
+func (ks *KeyStore) LoadAuthKeys(folder string) error {
+	fsys := os.DirFS(folder)
 
 	fn := func(fileName string, dirEntry fs.DirEntry, err error) error {
 		if err != nil {
@@ -65,65 +80,147 @@ func NewFS(fsys fs.FS) (*KeyStore, error) {
 		// limit PEM file size to 1 megabyte. This should be reasonable for
 		// almost any PEM file and prevents shenanigans like linking the file
 		// to /dev/random or something like that.
-		privatePEM, err := io.ReadAll(io.LimitReader(file, 1024*1024))
+		pem, err := io.ReadAll(io.LimitReader(file, 1024*1024))
 		if err != nil {
 			return fmt.Errorf("reading auth private key: %w", err)
 		}
 
-		privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privatePEM)
-		if err != nil {
-			return fmt.Errorf("parsing auth private key: %w", err)
+		key := privateKey{
+			keyType: keyTypeRSA,
+			pem:     pem,
 		}
 
-		ks.store[strings.TrimSuffix(dirEntry.Name(), ".pem")] = privateKey
+		kid := strings.TrimSuffix(dirEntry.Name(), ".pem")
+		ks.store[kid] = key
+
+		ks.log.Infow("Loading Auth Keys", "KID", kid)
+
 		return nil
 	}
 
 	if err := fs.WalkDir(fsys, ".", fn); err != nil {
-		return nil, fmt.Errorf("walking directory: %w", err)
+		return fmt.Errorf("walking directory: %w", err)
 	}
 
-	return ks, nil
+	return nil
 }
 
-// Add adds a private key and combination kid to the store.
-func (ks *KeyStore) Add(privateKey *rsa.PrivateKey, kid string) {
-	ks.mu.Lock()
-	defer ks.mu.Unlock()
+// LoadBankKeys loads a set of password protected ECDSA key files rooted inside
+// of a directory. The last section of the name for each file will be used as
+// the key id.
+func (ks *KeyStore) LoadBankKeys(folder string, passPhrase string) error {
+	fsys := os.DirFS(folder)
 
-	ks.store[kid] = privateKey
+	fn := func(fileName string, dirEntry fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("walkdir failure: %w", err)
+		}
+
+		if dirEntry.IsDir() {
+			return nil
+		}
+
+		fileName = fmt.Sprintf("%s/%s", folder, fileName)
+
+		pk, err := ethereum.PrivateKeyByKeyFile(fileName, passPhrase)
+		if err != nil {
+			return fmt.Errorf("capture private key: %s", err)
+		}
+
+		kid := strings.Split(dirEntry.Name(), "Z--")
+		if len(kid) != 2 {
+			return fmt.Errorf("misformed file name: %s", dirEntry.Name())
+		}
+
+		pem := pem.EncodeToMemory(&pem.Block{
+			Type:  "PRIVATE KEY",
+			Bytes: crypto.FromECDSA(pk),
+		})
+
+		key := privateKey{
+			keyType: keyTypeECDSA,
+			pem:     pem,
+		}
+
+		ks.store[kid[1]] = key
+
+		ks.log.Infow("Loading Bank Keys", "KID", kid[1])
+
+		return nil
+	}
+
+	if err := fs.WalkDir(fsys, ".", fn); err != nil {
+		return fmt.Errorf("walking directory: %w", err)
+	}
+
+	return nil
 }
 
-// Remove removes a private key and combination kid to the store.
-func (ks *KeyStore) Remove(kid string) {
-	ks.mu.Lock()
-	defer ks.mu.Unlock()
-
-	delete(ks.store, kid)
-}
-
-// PrivateKey searches the key store for a given kid and returns
-// the private key.
-func (ks *KeyStore) PrivateKey(kid string) (*rsa.PrivateKey, error) {
-	ks.mu.RLock()
-	defer ks.mu.RUnlock()
-
+// PrivateKey searches the key store for a given kid and returns the private key.
+func (ks *KeyStore) PrivateKey(kid string) (string, error) {
 	privateKey, found := ks.store[kid]
 	if !found {
-		return nil, errors.New("kid lookup failed")
+		return "", errors.New("kid lookup failed")
 	}
-	return privateKey, nil
+
+	return string(privateKey.pem), nil
 }
 
-// PublicKey searches the key store for a given kid and returns
-// the public key.
-func (ks *KeyStore) PublicKey(kid string) (*rsa.PublicKey, error) {
-	ks.mu.RLock()
-	defer ks.mu.RUnlock()
-
+// PublicKey searches the key store for a given kid and returns the public key.
+func (ks *KeyStore) PublicKey(kid string) (string, error) {
 	privateKey, found := ks.store[kid]
 	if !found {
-		return nil, errors.New("kid lookup failed")
+		return "", errors.New("kid lookup failed")
 	}
-	return &privateKey.PublicKey, nil
+
+	switch privateKey.keyType {
+	case keyTypeRSA:
+		return toPublicPEM(privateKey.pem)
+
+	case keyTypeECDSA:
+		return "", errors.New("Unsupported")
+	}
+
+	return "", errors.New("Unsupported")
+}
+
+// toPublicPEM was taken from the JWT package to reduce the dependency. It
+// accepts a PEM encoding of a RSA private key and converts to a PEM encoded
+// public key.
+func toPublicPEM(privateKeyPEM []byte) (string, error) {
+	var block *pem.Block
+	if block, _ = pem.Decode(privateKeyPEM); block == nil {
+		return "", errors.New("invalid key: Key must be a PEM encoded PKCS1 or PKCS8 key")
+	}
+
+	var parsedKey interface{}
+	parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	privateKey, ok := parsedKey.(*rsa.PrivateKey)
+	if !ok {
+		return "", errors.New("key is not a valid RSA private key")
+	}
+
+	asn1Bytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return "", fmt.Errorf("marshaling public key: %w", err)
+	}
+
+	publicBlock := pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: asn1Bytes,
+	}
+
+	var buf bytes.Buffer
+	if err := pem.Encode(&buf, &publicBlock); err != nil {
+		return "", fmt.Errorf("encoding to public PEM: %w", err)
+	}
+
+	return buf.String(), nil
 }
