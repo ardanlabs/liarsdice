@@ -10,11 +10,10 @@ import (
 	"sync"
 
 	"github.com/ardanlabs/ethereum/currency"
-	"github.com/ardanlabs/liarsdice/foundation/web"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
 // Represents the different game status.
@@ -30,16 +29,12 @@ const (
 // to play a game.
 const minNumberPlayers = 2
 
-// =============================================================================
-
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
 type Banker interface {
 	AccountBalance(ctx context.Context, player common.Address) (GWei *big.Float, err error)
 	Reconcile(ctx context.Context, winningPlayer common.Address, losingPlayers []common.Address, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error)
 }
-
-// =============================================================================
 
 // Status represents a copy of the game status.
 type Status struct {
@@ -71,7 +66,7 @@ type Cup struct {
 
 // Game represents a single game that is being played.
 type Game struct {
-	logger             *zap.SugaredLogger
+	log                *logger.Logger
 	converter          *currency.Converter
 	banker             Banker
 	mu                 sync.RWMutex
@@ -90,7 +85,7 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Converter, banker Banker, player common.Address, anteUSD float64) (*Game, error) {
+func New(ctx context.Context, log *logger.Logger, converter *currency.Converter, banker Banker, player common.Address, anteUSD float64) (*Game, error) {
 	balance, err := banker.AccountBalance(ctx, player)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", player)
@@ -103,7 +98,7 @@ func New(ctx context.Context, log *zap.SugaredLogger, converter *currency.Conver
 	}
 
 	g := Game{
-		logger:    log,
+		log:       log,
 		converter: converter,
 		banker:    banker,
 		id:        uuid.NewString(),
@@ -150,7 +145,7 @@ func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 
 	anteGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
-	g.log(ctx, "game.addaccount", "player", player, "anteUSD", g.anteUSD, "anteGWei", anteGWei, "balanceGWei", balanceGwei)
+	g.log.Info(ctx, "game.addaccount", "player", player, "anteUSD", g.anteUSD, "anteGWei", anteGWei, "balanceGWei", balanceGwei)
 
 	// If comparison is negative, the player has no balance.
 	if balanceGwei.Cmp(anteGWei) < 0 {
@@ -526,9 +521,9 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 	gameFeeGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
 	// Log the winner and losers.
-	g.log(ctx, "game.reconcole", "winner", g.playerLastWin)
+	g.log.Info(ctx, "game.reconcole", "winner", g.playerLastWin)
 	for _, player := range losingPlayers {
-		g.log(ctx, "game.reconcole", "loser", player)
+		g.log.Info(ctx, "game.reconcole", "loser", player)
 	}
 
 	// Perform the reconcile against the bank.
@@ -536,21 +531,21 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
 	}
-	g.log(ctx, "game.reconcole.contract", "tx", g.converter.CalculateTransactionDetails(tx), "receipt", g.converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
+	g.log.Info(ctx, "game.reconcole.contract", "tx", g.converter.CalculateTransactionDetails(tx), "receipt", g.converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
 	g.status = StatusReconciled
 
 	// Update the player balances.
-	g.log(ctx, "game.reconcole.fees", "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
+	g.log.Info(ctx, "game.reconcole.fees", "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
 	for i, player := range g.players {
 		balanceGwei, err := g.banker.AccountBalance(ctx, player)
 		if err != nil {
-			g.log(ctx, "game.reconcole.updatebalance", "ERROR", err)
+			g.log.Info(ctx, "game.reconcole.updatebalance", "ERROR", err)
 			continue
 		}
 		oldBalanceGWei := g.playerBalancesGWei[i]
 		g.playerBalancesGWei[i] = balanceGwei
-		g.log(ctx, "game.reconcole.updatebalance", "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
+		g.log.Info(ctx, "game.reconcole.updatebalance", "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
 	}
 
 	return tx, receipt, nil
@@ -588,16 +583,4 @@ func (g *Game) Info(ctx context.Context) Status {
 		Bets:            bets,
 		Balances:        balances,
 	}
-}
-
-// =============================================================================
-
-// log will write to the configured log if a traceid exists in the context.
-func (g *Game) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
-	if g.logger == nil {
-		return
-	}
-
-	keysAndvalues = append(keysAndvalues, "traceid", web.GetTraceID(ctx))
-	g.logger.Infow(msg, keysAndvalues...)
 }

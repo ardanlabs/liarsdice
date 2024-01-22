@@ -23,8 +23,6 @@ func PrintUsage() {
 	fmt.Print(usage)
 }
 
-// =============================================================================
-
 // Flags represents the flags that were provided.
 type Flags map[string]struct{}
 

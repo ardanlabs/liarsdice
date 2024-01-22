@@ -1,6 +1,7 @@
 package game_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -13,6 +14,8 @@ import (
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -53,8 +56,6 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-// =============================================================================
-
 func Test_SuccessGamePlay(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -66,13 +67,13 @@ func Test_SuccessGamePlay(t *testing.T) {
 	player1Addr := player1Clt.Address()
 	player2Addr := player2Clt.Address()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Define the ante for each player
 
 	anteUSD := float64(5.0)
 	anteWei := converter.USD2Wei(big.NewFloat(anteUSD))
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start first round
 
 	err := engine.StartGame(ctx)
@@ -85,7 +86,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Mocked roll dice so we can validate the winner and loser
 
 	dice := []int{6, 5, 3, 3, 3}
@@ -94,7 +95,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	dice = []int{1, 1, 4, 4, 2}
 	engine.RollDice(ctx, player2Addr, dice...)
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Game Play: Each player makes a bet and player1 calls liar.
 
 	winnerAcct := engine.Info(ctx).PlayerTurn
@@ -112,7 +113,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Check winner and loser
 
 	if winner != winnerAcct {
@@ -133,7 +134,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start second round
 
 	leftToPlay, err := engine.NextRound(ctx)
@@ -151,7 +152,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Mocked roll dice so we can validate the winner and loser
 
 	dice = []int{1, 2, 3, 1, 6}
@@ -160,7 +161,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	dice = []int{3, 2, 6, 5, 6}
 	engine.RollDice(ctx, player2Addr, dice...)
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Game Play : Player 2 places a bet and player 1 calls liar
 
 	err = engine.Bet(ctx, loserAcct, 5, 1)
@@ -173,7 +174,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error calling liar for player2: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Check winner and loser
 
 	if winner != winnerAcct {
@@ -194,7 +195,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start third round
 
 	leftToPlay, err = engine.NextRound(ctx)
@@ -212,7 +213,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Mocked roll dice so we can validate the winner and loser
 
 	dice = []int{1, 1, 6, 1, 1}
@@ -221,7 +222,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	dice = []int{3, 3, 3, 5, 6}
 	engine.RollDice(ctx, player2Clt.Address(), dice...)
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Game Play : Player 2 makes a bet and player1 calls liar
 
 	err = engine.Bet(ctx, loserAcct, 4, 3)
@@ -234,7 +235,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Check winner and loser.
 
 	if winner != winnerAcct {
@@ -255,7 +256,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// There should be only one player left, player1
 
 	leftToPlay, err = engine.NextRound(ctx)
@@ -277,14 +278,14 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", status.PlayerLastWin)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Reconcile the game
 
 	if _, _, err := engine.Reconcile(ctx); err != nil {
 		t.Fatalf("unexpected error reconciling the game: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Check balances
 
 	engineBalance, err := bank.Balance(ctx)
@@ -320,7 +321,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Errorf("expecting 'player2' to have a balance of %d WEI; got %d WEI", exp, got)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Validate final game state
 
 	status = engine.Info(ctx)
@@ -339,7 +340,7 @@ func Test_InvalidBet(t *testing.T) {
 	player1Addr := player1Clt.Address()
 	player2Addr := player2Clt.Address()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start first round
 
 	err := engine.StartGame(ctx)
@@ -352,7 +353,7 @@ func Test_InvalidBet(t *testing.T) {
 		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Mocked roll dice so we can validate the winner and loser.
 
 	dice := []int{6, 5, 3, 3, 3}
@@ -361,7 +362,7 @@ func Test_InvalidBet(t *testing.T) {
 	dice = []int{1, 1, 4, 4, 2}
 	engine.RollDice(ctx, player2Addr, dice...)
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Game Play : player 1 makes bet and player 2 makes invalid bet
 
 	if err := engine.Bet(ctx, engine.Info(ctx).PlayerTurn, 3, 3); err != nil {
@@ -384,7 +385,7 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 	player1Addr := player1Clt.Address()
 	player2Addr := player2Clt.Address()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start first round
 
 	err := engine.StartGame(ctx)
@@ -422,10 +423,13 @@ func Test_GameWithoutEnoughPlayers(t *testing.T) {
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
-	// =========================================================================
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
+	// -------------------------------------------------------------------------
 	// Players need to deposit money into their accounts
 
-	player1Bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	player1Bank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("creating new bank for player 1: %s", err)
 	}
@@ -436,21 +440,21 @@ func Test_GameWithoutEnoughPlayers(t *testing.T) {
 		t.Fatalf("depositing money into bank for player1: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Create game and add players
 
-	bank, err := bank.New(ctx, nil, backend, ownerClt.PrivateKey(), contractID)
+	bank, err := bank.New(ctx, log, backend, ownerClt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("creating new bank for the engine: %s", err)
 	}
 
 	const anteUSD = 5.0
-	game, err := game.New(ctx, nil, converter, bank, player1Clt.Address(), anteUSD)
+	game, err := game.New(ctx, log, converter, bank, player1Clt.Address(), anteUSD)
 	if err != nil {
 		t.Fatalf("unexpected error creating game: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start the game with only 1 player
 
 	err = game.StartGame(ctx)
@@ -470,22 +474,23 @@ func Test_NewGameNotEnoughBalance(t *testing.T) {
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
-	// =========================================================================
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
+	// -------------------------------------------------------------------------
 	// Players need to deposit money into their accounts
 
-	bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	bank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("creating new bank for player 1: %s", err)
 	}
 
 	const anteUSD = 5.0
-	_, err = game.New(ctx, nil, converter, bank, player1Clt.Address(), anteUSD)
+	_, err = game.New(ctx, log, converter, bank, player1Clt.Address(), anteUSD)
 	if err == nil {
 		t.Fatalf("expecting an error creating a game: %s", err)
 	}
 }
-
-// =============================================================================
 
 func deployContract() (common.Address, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -536,15 +541,18 @@ func gameSetup(t *testing.T) (*bank.Bank, *game.Game) {
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
-	// =========================================================================
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
+	// -------------------------------------------------------------------------
 	// Players need to deposit money into their accounts
 
-	player1Bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	player1Bank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("creating new bank for player 1: %s", err)
 	}
 
-	player2Bank, err := bank.New(ctx, nil, backend, player2Clt.PrivateKey(), contractID)
+	player2Bank, err := bank.New(ctx, log, backend, player2Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("creating new bank for player 2: %s", err)
 	}
@@ -560,17 +568,17 @@ func gameSetup(t *testing.T) (*bank.Bank, *game.Game) {
 		t.Fatalf("depositing money into bank for player2: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Create game and add players
 
-	bank, err := bank.New(ctx, nil, backend, ownerClt.PrivateKey(), contractID)
+	bank, err := bank.New(ctx, log, backend, ownerClt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("creating new bank for the engine: %s", err)
 	}
 
 	// Create a game and add player1 as first player in the game.
 	const anteUSD = 5.0
-	game, err := game.New(ctx, nil, converter, bank, player1Clt.Address(), anteUSD)
+	game, err := game.New(ctx, log, converter, bank, player1Clt.Address(), anteUSD)
 	if err != nil {
 		t.Fatalf("unexpected error creating game: %s", err)
 	}

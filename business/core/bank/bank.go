@@ -10,23 +10,22 @@ import (
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/contract/go/bank"
-	"github.com/ardanlabs/liarsdice/foundation/web"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"go.uber.org/zap"
 )
 
 // Bank represents a bank that allows for the reconciling of a game and
 // information about account balances.
 type Bank struct {
-	logger     *zap.SugaredLogger
+	log        *logger.Logger
 	contractID common.Address
 	ethereum   *ethereum.Client
 	contract   *bank.Bank
 }
 
 // New returns a new bank with the ability to manage the game money.
-func New(ctx context.Context, logger *zap.SugaredLogger, backend ethereum.Backend, privateKey *ecdsa.PrivateKey, contractID common.Address) (*Bank, error) {
+func New(ctx context.Context, log *logger.Logger, backend ethereum.Backend, privateKey *ecdsa.PrivateKey, contractID common.Address) (*Bank, error) {
 	clt, err := ethereum.NewClient(backend, privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("client: %w", err)
@@ -38,7 +37,7 @@ func New(ctx context.Context, logger *zap.SugaredLogger, backend ethereum.Backen
 	}
 
 	b := Bank{
-		logger:     logger,
+		log:        log,
 		contractID: contractID,
 		ethereum:   clt,
 		contract:   contract,
@@ -79,7 +78,7 @@ func (b *Bank) Balance(ctx context.Context) (GWei *big.Float, err error) {
 		return nil, fmt.Errorf("account balance: %w", err)
 	}
 
-	b.log(ctx, "balance", "accountid", b.ethereum.Address().String(), "wei", wei)
+	b.log.Info(ctx, "balance", "accountid", b.ethereum.Address().String(), "wei", wei)
 
 	return currency.Wei2GWei(wei), nil
 }
@@ -97,7 +96,7 @@ func (b *Bank) AccountBalance(ctx context.Context, accountID common.Address) (GW
 		return nil, fmt.Errorf("account balance: %w", err)
 	}
 
-	b.log(ctx, "account balance", "accountid", accountID, "wei", wei)
+	b.log.Info(ctx, "account balance", "accountid", accountID, "wei", wei)
 
 	return currency.Wei2GWei(wei), nil
 }
@@ -121,14 +120,14 @@ func (b *Bank) Reconcile(ctx context.Context, winningAccountID common.Address, l
 		return nil, nil, fmt.Errorf("reconcile: %w", err)
 	}
 
-	b.log(ctx, "reconcile started", "anteWei", anteWei, "gameFeeWei", gameFeeWei)
+	b.log.Info(ctx, "reconcile started", "anteWei", anteWei, "gameFeeWei", gameFeeWei)
 
 	receipt, err := b.ethereum.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
-	b.log(ctx, "reconcile completed")
+	b.log.Info(ctx, "reconcile completed")
 
 	return tx, receipt, nil
 }
@@ -145,14 +144,14 @@ func (b *Bank) Deposit(ctx context.Context, amountGWei *big.Float) (*types.Trans
 		return nil, nil, fmt.Errorf("deposit: %w", err)
 	}
 
-	b.log(ctx, "deposit started", "accountid", b.ethereum.Address().String(), "amountGWei", amountGWei)
+	b.log.Info(ctx, "deposit started", "accountid", b.ethereum.Address().String(), "amountGWei", amountGWei)
 
 	receipt, err := b.ethereum.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
-	b.log(ctx, "deposit completed")
+	b.log.Info(ctx, "deposit completed")
 
 	return tx, receipt, nil
 }
@@ -169,26 +168,14 @@ func (b *Bank) Withdraw(ctx context.Context) (*types.Transaction, *types.Receipt
 		return nil, nil, fmt.Errorf("withdraw: %w", err)
 	}
 
-	b.log(ctx, "withdraw started", "accountid", b.ethereum.Address().String())
+	b.log.Info(ctx, "withdraw started", "accountid", b.ethereum.Address().String())
 
 	receipt, err := b.ethereum.WaitMined(ctx, tx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("wait mined: %w", err)
 	}
 
-	b.log(ctx, "withdraw completed")
+	b.log.Info(ctx, "withdraw completed")
 
 	return tx, receipt, nil
-}
-
-// =============================================================================
-
-// log will write to the configured log if a traceid exists in the context.
-func (b *Bank) log(ctx context.Context, msg string, keysAndvalues ...interface{}) {
-	if b.logger == nil {
-		return
-	}
-
-	keysAndvalues = append(keysAndvalues, "trace_id", web.GetTraceID(ctx))
-	b.logger.Infow(msg, keysAndvalues...)
 }

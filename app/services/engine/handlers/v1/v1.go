@@ -9,17 +9,17 @@ import (
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1/gamegrp"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 )
 
 // Config contains all the mandatory systems required by handlers.
 type Config struct {
-	Log            *zap.SugaredLogger
+	Log            *logger.Logger
 	Auth           *auth.Auth
 	Converter      *currency.Converter
 	Bank           *bank.Bank

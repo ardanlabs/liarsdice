@@ -4,48 +4,52 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ardanlabs/liarsdice/business/sys/validate"
-	"github.com/ardanlabs/liarsdice/business/web/auth"
-	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
+	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
+	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/validate"
 	"github.com/ardanlabs/liarsdice/foundation/web"
-	"go.uber.org/zap"
 )
 
 // Errors handles errors coming out of the call chain. It detects normal
 // application errors which are used to respond to the client in a uniform way.
 // Unexpected errors (status >= 500) are logged.
-func Errors(log *zap.SugaredLogger) web.Middleware {
+func Errors(log *logger.Logger) web.Middleware {
 	m := func(handler web.Handler) web.Handler {
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			if err := handler(ctx, w, r); err != nil {
-				log.Errorw("ERROR", "trace_id", web.GetTraceID(ctx), "message", err)
+				log.Error(ctx, "message", "msg", err)
 
-				var er v1Web.ErrorResponse
+				var er v1.ErrorResponse
 				var status int
-				switch {
-				case validate.IsFieldErrors(err):
-					fieldErrors := validate.GetFieldErrors(err)
-					er = v1Web.ErrorResponse{
-						Error:  "data validation error",
-						Fields: fieldErrors.Fields(),
-					}
-					status = http.StatusBadRequest
 
-				case v1Web.IsRequestError(err):
-					reqErr := v1Web.GetRequestError(err)
-					er = v1Web.ErrorResponse{
-						Error: reqErr.Error(),
+				switch {
+				case v1.IsTrustedError(err):
+					trsErr := v1.GetTrustedError(err)
+
+					if validate.IsFieldErrors(trsErr.Err) {
+						fieldErrors := validate.GetFieldErrors(trsErr.Err)
+						er = v1.ErrorResponse{
+							Error:  "data validation error",
+							Fields: fieldErrors.Fields(),
+						}
+						status = trsErr.Status
+						break
 					}
-					status = reqErr.Status
+
+					er = v1.ErrorResponse{
+						Error: trsErr.Error(),
+					}
+					status = trsErr.Status
 
 				case auth.IsAuthError(err):
-					er = v1Web.ErrorResponse{
+					er = v1.ErrorResponse{
 						Error: http.StatusText(http.StatusUnauthorized),
 					}
 					status = http.StatusUnauthorized
 
 				default:
-					er = v1Web.ErrorResponse{
+					er = v1.ErrorResponse{
 						Error: http.StatusText(http.StatusInternalServerError),
 					}
 					status = http.StatusInternalServerError

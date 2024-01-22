@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
@@ -17,7 +17,7 @@ func Authenticate(a *auth.Auth) web.Middleware {
 				return auth.NewAuthError("authenticate: failed: %s", err)
 			}
 
-			ctx = auth.SetClaims(ctx, claims)
+			ctx = setClaims(ctx, claims)
 
 			return handler(ctx, w, r)
 		}

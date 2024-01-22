@@ -18,10 +18,11 @@ type Container struct {
 }
 
 // StartContainer starts the specified container for running tests.
-func StartContainer(image string, port string, args ...string) (*Container, error) {
+func StartContainer(image string, port string, dockerArgs []string, appArgs []string) (*Container, error) {
 	arg := []string{"run", "-P", "-d"}
-	arg = append(arg, args...)
+	arg = append(arg, dockerArgs...)
 	arg = append(arg, image)
+	arg = append(arg, appArgs...)
 
 	cmd := exec.Command("docker", arg...)
 	var out bytes.Buffer
@@ -33,6 +34,7 @@ func StartContainer(image string, port string, args ...string) (*Container, erro
 	id := out.String()[:12]
 	hostIP, hostPort, err := extractIPPort(id, port)
 	if err != nil {
+		StopContainer(id)
 		return nil, fmt.Errorf("could not extract ip/port: %w", err)
 	}
 

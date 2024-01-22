@@ -1,6 +1,7 @@
 package bank_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/big"
@@ -12,6 +13,8 @@ import (
 	"github.com/ardanlabs/ethereum/currency"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -63,8 +66,11 @@ func Test_PlayerBalance(t *testing.T) {
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
 	// Connect player 1 to the smart contract.
-	playerBank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	playerBank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player: %s", err)
 	}
@@ -118,13 +124,16 @@ func Test_Withdraw(t *testing.T) {
 
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
 	// Connect player 1 to the smart contract.
-	playerBank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	playerBank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Deposit process
 
 	// Get the starting balance.
@@ -158,7 +167,7 @@ func Test_Withdraw(t *testing.T) {
 		t.Fatalf("expecting final balance to be %d; got %d", expectedBalance, currentBalance)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Withdraw process
 
 	// Perform a withdraw to the player's wallet.
@@ -194,8 +203,11 @@ func Test_WithdrawWithoutBalance(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
 	// Connect player 1 to the smart contract.
-	playerBank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	playerBank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
@@ -218,20 +230,23 @@ func Test_Reconcile(t *testing.T) {
 	// Need a converter for handling ETH to USD to ETH conversions.
 	converter := currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
 	// Connect owner to the smart contract.
-	ownerBank, err := bank.New(ctx, nil, backend, ownerClt.PrivateKey(), contractID)
+	ownerBank, err := bank.New(ctx, log, backend, ownerClt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for owner: %s", err)
 	}
 
 	// Connect player 1 to the smart contract.
-	player1Bank, err := bank.New(ctx, nil, backend, player1Clt.PrivateKey(), contractID)
+	player1Bank, err := bank.New(ctx, log, backend, player1Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 1: %s", err)
 	}
 
 	// Connect player 2 to the smart contract.
-	player2Bank, err := bank.New(ctx, nil, backend, player2Clt.PrivateKey(), contractID)
+	player2Bank, err := bank.New(ctx, log, backend, player2Clt.PrivateKey(), contractID)
 	if err != nil {
 		t.Fatalf("error creating new bank for player 2: %s", err)
 	}
@@ -297,8 +312,6 @@ func Test_Reconcile(t *testing.T) {
 		t.Fatalf("expecting owner balance to be %f; got %f", exp, got)
 	}
 }
-
-// =============================================================================
 
 func deployContract() (common.Address, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

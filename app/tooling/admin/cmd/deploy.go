@@ -50,7 +50,7 @@ func deploy(ctx context.Context, converter *currency.Converter, ethClient *ether
 		fmt.Print(converter.FmtBalanceSheet(startingBalance, endingBalance))
 	}()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 
 	const gasLimit = 1700000
 	const valueGwei = 0.0
@@ -59,7 +59,7 @@ func deploy(ctx context.Context, converter *currency.Converter, ethClient *ether
 		return err
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 
 	address, tx, _, err := scBank.DeployBank(tranOpts, ethClient.Backend)
 	if err != nil {
@@ -72,7 +72,7 @@ func deploy(ctx context.Context, converter *currency.Converter, ethClient *ether
 	fmt.Println("contract id     :", address.Hex())
 	fmt.Printf("export GAME_CONTRACT_ID=%s\n", address.Hex())
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 
 	fmt.Println("\nWaiting Logs")
 	fmt.Println("----------------------------------------------------")

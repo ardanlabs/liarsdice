@@ -17,7 +17,7 @@ contract Bank {
     // EventLog provides support for external logging.
     event EventLog(string value);
 
-    // =========================================================================
+    // -------------------------------------------------------------------------
 
     // constructor is called when the contract is deployed.
     constructor() {
@@ -25,7 +25,7 @@ contract Bank {
         Version = "0.1.0";
     }
 
-    // =========================================================================
+    // -------------------------------------------------------------------------
     // Owner Only Calls
 
     // onlyOwner can be used to restrict access to a function for only the owner.
@@ -80,7 +80,7 @@ contract Bank {
         return accountBalances[account];
     }
 
-    // =========================================================================
+    // -------------------------------------------------------------------------
     // Account Only Calls
 
     // Balance returns the balance of the caller.

@@ -240,8 +240,6 @@ func (*Board) fmtAddress(address common.Address) string {
 	return fmt.Sprintf("%s..%s", address.Hex()[:5], address.Hex()[39:])
 }
 
-// =============================================================================
-
 // drawGameBox draws the game box.
 func (b *Board) drawGameBox(white bool) {
 	x := 1

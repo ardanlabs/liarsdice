@@ -4,6 +4,7 @@ package keystore
 
 import (
 	"bytes"
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -16,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/ardanlabs/ethereum"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ethereum/go-ethereum/crypto"
-	"go.uber.org/zap"
 )
 
 const (
@@ -25,24 +26,24 @@ const (
 	keyTypeECDSA = "ecdsa"
 )
 
-// PrivateKey represents key information.
-type privateKey struct {
-	keyType string
-	pem     []byte
+type key struct {
+	keyType    string
+	privatePEM string
+	publicPEM  string
 }
 
 // KeyStore represents an in memory store implementation of the
 // KeyLookup interface for use with the auth package.
 type KeyStore struct {
-	log   *zap.SugaredLogger
-	store map[string]privateKey
+	log   *logger.Logger
+	store map[string]key
 }
 
 // New constructs an empty KeyStore ready for use.
-func New(log *zap.SugaredLogger) *KeyStore {
+func New(log *logger.Logger) *KeyStore {
 	return &KeyStore{
 		log:   log,
-		store: make(map[string]privateKey),
+		store: make(map[string]key),
 	}
 }
 
@@ -78,15 +79,22 @@ func (ks *KeyStore) LoadAuthKeys(folder string) error {
 			return fmt.Errorf("reading auth private key: %w", err)
 		}
 
-		key := privateKey{
-			keyType: keyTypeRSA,
-			pem:     pem,
+		privatePEM := string(pem)
+		publicPEM, err := toPublicPEM(privatePEM)
+		if err != nil {
+			return fmt.Errorf("reading auth private key: %w", err)
+		}
+
+		key := key{
+			keyType:    keyTypeRSA,
+			privatePEM: privatePEM,
+			publicPEM:  publicPEM,
 		}
 
 		kid := strings.TrimSuffix(dirEntry.Name(), ".pem")
 		ks.store[kid] = key
 
-		ks.log.Infow("Loading Auth Keys", "KID", kid)
+		ks.log.Info(context.Background(), "Loading Auth Keys", "KID", kid)
 
 		return nil
 	}
@@ -130,14 +138,14 @@ func (ks *KeyStore) LoadBankKeys(folder string, passPhrase string) error {
 			Bytes: crypto.FromECDSA(pk),
 		})
 
-		key := privateKey{
-			keyType: keyTypeECDSA,
-			pem:     pem,
+		key := key{
+			keyType:    keyTypeECDSA,
+			privatePEM: string(pem),
 		}
 
 		ks.store[kid[1]] = key
 
-		ks.log.Infow("Loading Bank Keys", "KID", kid[1])
+		ks.log.Info(context.Background(), "Loading Bank Keys", "KID", kid[1])
 
 		return nil
 	}
@@ -156,19 +164,19 @@ func (ks *KeyStore) PrivateKey(kid string) (string, error) {
 		return "", errors.New("kid lookup failed")
 	}
 
-	return string(privateKey.pem), nil
+	return string(privateKey.privatePEM), nil
 }
 
 // PublicKey searches the key store for a given kid and returns the public key.
 func (ks *KeyStore) PublicKey(kid string) (string, error) {
-	privateKey, found := ks.store[kid]
+	key, found := ks.store[kid]
 	if !found {
 		return "", errors.New("kid lookup failed")
 	}
 
-	switch privateKey.keyType {
+	switch key.keyType {
 	case keyTypeRSA:
-		return toPublicPEM(privateKey.pem)
+		return key.publicPEM, nil
 
 	case keyTypeECDSA:
 		return "", errors.New("Unsupported")
@@ -180,8 +188,8 @@ func (ks *KeyStore) PublicKey(kid string) (string, error) {
 // toPublicPEM was taken from the JWT package to reduce the dependency. It
 // accepts a PEM encoding of a RSA private key and converts to a PEM encoded
 // public key.
-func toPublicPEM(privateKeyPEM []byte) (string, error) {
-	block, _ := pem.Decode(privateKeyPEM)
+func toPublicPEM(privateKeyPEM string) (string, error) {
+	block, _ := pem.Decode([]byte(privateKeyPEM))
 	if block == nil {
 		return "", errors.New("invalid key: Key must be a PEM encoded PKCS1 or PKCS8 key")
 	}

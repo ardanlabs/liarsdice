@@ -16,21 +16,22 @@ import (
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
-	"github.com/ardanlabs/liarsdice/business/web/auth"
-	v1Web "github.com/ardanlabs/liarsdice/business/web/v1"
+	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
+	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/websocket"
-	"go.uber.org/zap"
 )
 
 // Handlers manages the set of user endpoints.
 type Handlers struct {
 	Converter      *currency.Converter
 	Bank           *bank.Bank
-	Log            *zap.SugaredLogger
+	Log            *logger.Logger
 	WS             websocket.Upgrader
 	Evts           *events.Events
 	ActiveKID      string
@@ -47,12 +48,12 @@ type Handlers struct {
 func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	address, err := validateSignature(r, h.ConnectTimeout)
 	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	token, err := generateToken(h.Auth, h.ActiveKID, address)
 	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	data := struct {
@@ -79,7 +80,7 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	h.Log.Infow("websocket open", "path", "/v1/game/events", "traceid", v.TraceID)
+	h.Log.Info(ctx, "websocket open", "path", "/v1/game/events", "traceid", v.TraceID)
 
 	// Set the timeouts for the ping to identify if a web socket
 	// connection is broken.
@@ -116,13 +117,13 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 			if err != nil {
 				return
 			}
-			h.Log.Infow("*********> socket read", "path", "/v1/game/events", "message", message, "p", string(p))
+			h.Log.Info(ctx, "*********> socket read", "path", "/v1/game/events", "message", message, "p", string(p))
 		}
 	}()
 
 	defer func() {
 		wg.Wait()
-		h.Log.Infow("websocket closed", "path", "/v1/game/events", "traceid", v.TraceID)
+		h.Log.Info(ctx, "websocket closed", "path", "/v1/game/events", "traceid", v.TraceID)
 	}()
 	defer c.Close()
 
@@ -137,13 +138,13 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 			}
 
 			if err := c.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-				h.Log.Infow("websocket write", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
+				h.Log.Info(ctx, "websocket write", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
 				return nil
 			}
 
 		case <-pingSend.C:
 			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
-				h.Log.Infow("websocket ping", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
+				h.Log.Info(ctx, "websocket ping", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
 				return nil
 			}
 		}
@@ -170,7 +171,7 @@ func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *
 func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	usd, err := strconv.ParseFloat(web.Param(r, "usd"), 64)
 	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
+		return v1.NewTrustedError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
 	}
 
 	wei := h.Converter.USD2Wei(big.NewFloat(usd))
@@ -188,7 +189,7 @@ func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // Status will return information about the game.
 func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	g, err := h.getGame()
@@ -238,11 +239,11 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 // NewGame creates a new game if there is no game or the status of the current game
 // is GameOver.
 func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := claims.Subject
 
 	if err := h.createGame(ctx, address); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"newgame","address":%q}`, address))
@@ -257,11 +258,11 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if err := g.AddAccount(ctx, address); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"join","address":%q}`, address))
@@ -276,11 +277,11 @@ func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := claims.Subject
 
 	if err := g.StartGame(ctx); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"start","address":%q}`, address))
@@ -295,11 +296,11 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if err := g.RollDice(ctx, address); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"rolldice","address":%q}`, address))
@@ -314,21 +315,21 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	number, err := strconv.Atoi(web.Param(r, "number"))
 	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
+		return v1.NewTrustedError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
 	}
 
 	suite, err := strconv.Atoi(web.Param(r, "suite"))
 	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("converting suite: %s", err), http.StatusBadRequest)
+		return v1.NewTrustedError(fmt.Errorf("converting suite: %s", err), http.StatusBadRequest)
 	}
 
 	if err := g.Bet(ctx, address, number, suite); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info(ctx).Cups[address].OrderIdx))
@@ -343,15 +344,15 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if _, _, err := g.CallLiar(ctx, address); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	if _, err := g.NextRound(ctx); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"callliar","address":%q}`, address))
@@ -366,14 +367,14 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
 	defer cancel()
 
 	if _, _, err := g.Reconcile(ctx); err != nil {
-		return v1Web.NewRequestError(err, http.StatusInternalServerError)
+		return v1.NewTrustedError(err, http.StatusInternalServerError)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"reconcile","address":%q}`, address))
@@ -383,7 +384,7 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 // Balance returns the player balance from the smart contract.
 func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := claims.Subject
 
 	ctx, cancel := context.WithTimeout(ctx, h.BankTimeout)
@@ -391,7 +392,7 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	balanceGWei, err := h.Bank.AccountBalance(ctx, common.HexToAddress(address))
 	if err != nil {
-		return v1Web.NewRequestError(err, http.StatusInternalServerError)
+		return v1.NewTrustedError(err, http.StatusInternalServerError)
 	}
 
 	resp := struct {
@@ -410,11 +411,11 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	if err := g.NextTurn(ctx); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"nextturn","address":%q}`, address))
@@ -431,24 +432,22 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims := auth.GetClaims(ctx)
+	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
 	outs, err := strconv.Atoi(web.Param(r, "outs"))
 	if err != nil {
-		return v1Web.NewRequestError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
+		return v1.NewTrustedError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
 	}
 
 	if err := g.ApplyOut(ctx, address, outs); err != nil {
-		return v1Web.NewRequestError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"outs","address":%q}`, address))
 
 	return h.Status(ctx, w, r)
 }
-
-// =============================================================================
 
 // SetGame resets the existing game. At this time we let this happen at any
 // time regardless of game state.
@@ -472,13 +471,11 @@ func (h *Handlers) getGame() (*game.Game, error) {
 	defer h.mu.RUnlock()
 
 	if h.game == nil {
-		return nil, v1Web.NewRequestError(errors.New("no game exists"), http.StatusBadRequest)
+		return nil, v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	return h.game, nil
 }
-
-// =============================================================================
 
 func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
 	var dt struct {

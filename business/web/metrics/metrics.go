@@ -13,8 +13,6 @@ import (
 // isn't much choice here.
 var m *metrics
 
-// =============================================================================
-
 // metrics represents the set of metrics we gather. These fields are
 // safe to be accessed concurrently thanks to expvar. No extra abstraction is required.
 type metrics struct {
@@ -37,8 +35,6 @@ func init() {
 	}
 }
 
-// =============================================================================
-
 // Metrics will be supported through the context.
 
 // ctxKeyMetric represents the type of value for the context key.
@@ -46,8 +42,6 @@ type ctxKey int
 
 // key is how metric values are stored/retrieved.
 const key ctxKey = 1
-
-// =============================================================================
 
 // Set sets the metrics data into the context.
 func Set(ctx context.Context) context.Context {

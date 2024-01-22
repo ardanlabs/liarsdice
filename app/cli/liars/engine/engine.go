@@ -239,10 +239,8 @@ func (e *Engine) Reconcile() (Status, error) {
 	return status, nil
 }
 
-// =============================================================================
-
 // do makes the actual http call to the engine.
-func (e Engine) do(url string, result interface{}, input []byte) error {
+func (e *Engine) do(url string, result interface{}, input []byte) error {
 	var req *http.Request
 	var err error
 

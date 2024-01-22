@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/ardanlabs/ethereum/currency"
-	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/debug/checkgrp"
 	v1 "github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1"
+	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/v1/checkgrp"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/events"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
-	"go.uber.org/zap"
 )
 
 // Options represent optional parameters.
@@ -35,7 +35,7 @@ func WithCORS(origin string) func(opts *Options) {
 // APIMuxConfig contains all the mandatory systems required by handlers.
 type APIMuxConfig struct {
 	Shutdown       chan os.Signal
-	Log            *zap.SugaredLogger
+	Log            *logger.Logger
 	Auth           *auth.Auth
 	Converter      *currency.Converter
 	Bank           *bank.Bank
@@ -124,7 +124,7 @@ func DebugStandardLibraryMux() *http.ServeMux {
 // debug application routes for the service. This bypassing the use of the
 // DefaultServerMux. Using the DefaultServerMux would be a security risk since
 // a dependency could inject a handler into our service without us knowing it.
-func DebugMux(build string, log *zap.SugaredLogger) http.Handler {
+func DebugMux(build string, log *logger.Logger) http.Handler {
 	mux := DebugStandardLibraryMux()
 
 	// Register debug check endpoints.

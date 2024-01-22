@@ -48,8 +48,6 @@ const (
 
 var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's"}
 
-// =============================================================================
-
 // Board represents the game board and all its state.
 type Board struct {
 	accountID  common.Address

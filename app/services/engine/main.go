@@ -19,14 +19,13 @@ import (
 	"github.com/ardanlabs/liarsdice/app/services/engine/handlers"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"go.uber.org/automaxprocs/maxprocs"
-	"go.uber.org/zap"
 )
 
 /*
@@ -46,39 +45,38 @@ import (
 var build = "develop"
 
 func main() {
+	var log *logger.Logger
 
-	// Construct the application logger.
-	log, err := logger.New("ENGINE")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	events := logger.Events{
+		Error: func(ctx context.Context, r logger.Record) {
+			log.Info(ctx, "******* SEND ALERT ******")
+		},
 	}
-	defer log.Sync()
 
-	// Perform the startup and shutdown sequence.
-	if err := run(log); err != nil {
-		log.Errorw("startup", "ERROR", err)
-		log.Sync()
+	traceIDFunc := func(ctx context.Context) string {
+		return web.GetTraceID(ctx)
+	}
+
+	log = logger.NewWithEvents(os.Stdout, logger.LevelInfo, "SALES-API", traceIDFunc, events)
+
+	// -------------------------------------------------------------------------
+
+	ctx := context.Background()
+
+	if err := run(ctx, log); err != nil {
+		log.Error(ctx, "startup", "msg", err)
 		os.Exit(1)
 	}
 }
 
-func run(log *zap.SugaredLogger) error {
+func run(ctx context.Context, log *logger.Logger) error {
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// GOMAXPROCS
 
-	// Want to see what maxprocs reports.
-	opt := maxprocs.Logger(log.Infof)
+	log.Info(ctx, "startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
 
-	// Set the correct number of threads for the service
-	// based on what is available either by the machine or quotas.
-	if _, err := maxprocs.Set(opt); err != nil {
-		return fmt.Errorf("maxprocs: %w", err)
-	}
-	log.Infow("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
-
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Configuration
 
 	cfg := struct {
@@ -130,24 +128,24 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("parsing config: %w", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// App Starting
 
-	log.Infow("starting service", "version", build)
-	defer log.Infow("shutdown complete")
+	log.Info(ctx, "starting service", "version", build)
+	defer log.Info(ctx, "shutdown complete")
 
 	out, err := conf.String(&cfg)
 	if err != nil {
 		return fmt.Errorf("generating config for output: %w", err)
 	}
-	log.Infow("startup", "config", out)
+	log.Info(ctx, "startup", "config", out)
 
 	expvar.NewString("build").Set(build)
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Initialize keystore
 
-	log.Infow("startup", "status", "initializing keystore")
+	log.Info(ctx, "startup", "status", "initializing keystore")
 
 	ks := keystore.New(log)
 
@@ -159,13 +157,12 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("reading keys: %w", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Initialize authentication support
 
-	log.Infow("startup", "status", "initializing authentication support")
+	log.Info(ctx, "startup", "status", "initializing authentication support")
 
 	authCfg := auth.Config{
-		Log:       log,
 		KeyLookup: ks,
 	}
 
@@ -174,7 +171,7 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("constructing authClient: %w", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Create the currency converter and bankClient needed for the game
 
 	if cfg.Game.ContractID == "0x0" {
@@ -183,12 +180,12 @@ func run(log *zap.SugaredLogger) error {
 
 	converter, err := currency.NewConverter(scbank.BankMetaData.ABI, cfg.Bank.CoinMarketCapKey)
 	if err != nil {
-		log.Infow("unable to create converter, using default", "ERROR", err)
+		log.Info(ctx, "unable to create converter, using default", "ERROR", err)
 		converter = currency.NewDefaultConverter(scbank.BankMetaData.ABI)
 	}
 
 	oneETHToUSD, oneUSDToETH := converter.Values()
-	log.Infow("currency values", "oneETHToUSD", oneETHToUSD, "oneUSDToETH", oneUSDToETH)
+	log.Info(ctx, "currency values", "oneETHToUSD", oneETHToUSD, "oneUSDToETH", oneUSDToETH)
 
 	evts := events.New()
 
@@ -217,10 +214,10 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("connecting to bankClient: %w", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start Debug Service
 
-	log.Infow("startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
+	log.Info(ctx, "startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
 
 	// The Debug function returns a mux to listen and serve on for all the debug
 	// related endpoints. This includes the standard library endpoints.
@@ -232,14 +229,14 @@ func run(log *zap.SugaredLogger) error {
 	// Not concerned with shutting this down with load shedding.
 	go func() {
 		if err := http.ListenAndServe(cfg.Web.DebugHost, debugMux); err != nil {
-			log.Errorw("shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "ERROR", err)
+			log.Error(ctx, "shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "ERROR", err)
 		}
 	}()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start API Service
 
-	log.Infow("startup", "status", "initializing V1 API support")
+	log.Info(ctx, "startup", "status", "initializing V1 API support")
 
 	// Make a channel to listen for an interrupt or terminate signal from the OS.
 	// Use a buffered channel because the signal package requires it.
@@ -267,7 +264,7 @@ func run(log *zap.SugaredLogger) error {
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
-		ErrorLog:     zap.NewStdLog(log.Desugar()),
+		ErrorLog:     logger.NewStdLogger(log, logger.LevelError),
 	}
 
 	// Make a channel to listen for errors coming from the listener. Use a
@@ -276,11 +273,11 @@ func run(log *zap.SugaredLogger) error {
 
 	// Start the service listening for api requests.
 	go func() {
-		log.Infow("startup", "status", "api router started", "host", api.Addr)
+		log.Info(ctx, "startup", "status", "api router started", "host", api.Addr)
 		serverErrors <- api.ListenAndServe()
 	}()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Shutdown
 
 	// Blocking main and waiting for shutdown.
@@ -289,11 +286,11 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("server error: %w", err)
 
 	case sig := <-shutdown:
-		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
-		defer log.Infow("shutdown", "status", "shutdown complete", "signal", sig)
+		log.Info(ctx, "shutdown", "status", "shutdown started", "signal", sig)
+		defer log.Info(ctx, "shutdown", "status", "shutdown complete", "signal", sig)
 
 		// Release any web sockets that are currently active.
-		log.Infow("shutdown", "status", "shutdown web socket channels")
+		log.Info(ctx, "shutdown", "status", "shutdown web socket channels")
 		evts.Shutdown()
 
 		// Give outstanding requests a deadline for completion.

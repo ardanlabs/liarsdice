@@ -24,7 +24,7 @@ func main() {
 
 func run() error {
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Parse flags for settings.
 
 	flags, args, err := settings.Parse()
@@ -37,7 +37,7 @@ func run() error {
 		return nil
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Establish a client connection to the game engine.
 
 	eng := engine.New(args.Engine)
@@ -46,7 +46,7 @@ func run() error {
 		return fmt.Errorf("connect to game engine: %w", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Create the board and initialize the display.
 
 	board, err := board.New(eng, token.Address)
@@ -55,7 +55,7 @@ func run() error {
 	}
 	defer board.Shutdown()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Establish a websocket connection to capture the game events.
 
 	teardown, err := eng.Events(board.Events)
@@ -64,7 +64,7 @@ func run() error {
 	}
 	defer teardown()
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Start handling board input.
 
 	<-board.Run()

@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,6 +17,8 @@ import (
 
 	scBank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/foundation/logger"
+	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -119,12 +122,15 @@ func getDependencies(ctx context.Context, cmd *cobra.Command, fileKeyKey string)
 		return nil, nil, nil, err
 	}
 
-	bankClient, err := bank.New(ctx, nil, backend, privateKey, common.HexToAddress(contractID))
+	var buf bytes.Buffer
+	log := logger.New(&buf, logger.LevelInfo, "TEST", func(context.Context) string { return web.GetTraceID(ctx) })
+
+	bankClient, err := bank.New(ctx, log, backend, privateKey, common.HexToAddress(contractID))
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("connecting to bankClient: %w", err)
 	}
 
-	// =========================================================================
+	// -------------------------------------------------------------------------
 	// Display the settings and execute the specified command.
 
 	oneETHToUSD, oneUSDToETH := converter.Values()
