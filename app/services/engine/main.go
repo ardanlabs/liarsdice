@@ -16,10 +16,12 @@ import (
 	"github.com/ardanlabs/conf/v3"
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
-	"github.com/ardanlabs/liarsdice/app/services/engine/handlers"
+	"github.com/ardanlabs/liarsdice/app/services/engine/v1/build/all"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ardanlabs/liarsdice/business/web/v1/debug"
+	"github.com/ardanlabs/liarsdice/business/web/v1/mux"
 	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
@@ -82,12 +84,13 @@ func run(ctx context.Context, log *logger.Logger) error {
 	cfg := struct {
 		conf.Version
 		Web struct {
-			ReadTimeout     time.Duration `conf:"default:5s"`
-			WriteTimeout    time.Duration `conf:"default:10s"`
-			IdleTimeout     time.Duration `conf:"default:120s"`
-			ShutdownTimeout time.Duration `conf:"default:20s"`
-			APIHost         string        `conf:"default:0.0.0.0:3000"`
-			DebugHost       string        `conf:"default:0.0.0.0:4000"`
+			ReadTimeout        time.Duration `conf:"default:5s"`
+			WriteTimeout       time.Duration `conf:"default:10s"`
+			IdleTimeout        time.Duration `conf:"default:120s"`
+			ShutdownTimeout    time.Duration `conf:"default:20s"`
+			APIHost            string        `conf:"default:0.0.0.0:3000"`
+			DebugHost          string        `conf:"default:0.0.0.0:4000"`
+			CORSAllowedOrigins []string      `conf:"default:*"`
 		}
 		Vault struct {
 			Address   string `conf:"default:http://vault-service.liars-system.svc.cluster.local:8200"`
@@ -219,16 +222,8 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	log.Info(ctx, "startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
 
-	// The Debug function returns a mux to listen and serve on for all the debug
-	// related endpoints. This includes the standard library endpoints.
-
-	// Construct the mux for the debug calls.
-	debugMux := handlers.DebugMux(build, log)
-
-	// Start the service listening for debug requests.
-	// Not concerned with shutting this down with load shedding.
 	go func() {
-		if err := http.ListenAndServe(cfg.Web.DebugHost, debugMux); err != nil {
+		if err := http.ListenAndServe(cfg.Web.DebugHost, debug.Mux()); err != nil {
 			log.Error(ctx, "shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "ERROR", err)
 		}
 	}()
@@ -238,13 +233,10 @@ func run(ctx context.Context, log *logger.Logger) error {
 
 	log.Info(ctx, "startup", "status", "initializing V1 API support")
 
-	// Make a channel to listen for an interrupt or terminate signal from the OS.
-	// Use a buffered channel because the signal package requires it.
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
-	// Construct the mux for the API calls.
-	apiMux := handlers.APIMux(handlers.APIMuxConfig{
+	cfgMux := mux.Config{
 		Shutdown:       shutdown,
 		Log:            log,
 		Auth:           authClient,
@@ -255,23 +247,19 @@ func run(ctx context.Context, log *logger.Logger) error {
 		ActiveKID:      cfg.Auth.ActiveKID,
 		BankTimeout:    cfg.Bank.Timeout,
 		ConnectTimeout: cfg.Game.ConnectTimeout,
-	}, handlers.WithCORS("*"))
+	}
 
-	// Construct a server to service the requests against the mux.
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
-		Handler:      apiMux,
+		Handler:      mux.WebAPI(cfgMux, all.Routes(), mux.WithCORS(cfg.Web.CORSAllowedOrigins)),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 		IdleTimeout:  cfg.Web.IdleTimeout,
 		ErrorLog:     logger.NewStdLogger(log, logger.LevelError),
 	}
 
-	// Make a channel to listen for errors coming from the listener. Use a
-	// buffered channel so the goroutine can exit if we don't collect this error.
 	serverErrors := make(chan error, 1)
 
-	// Start the service listening for api requests.
 	go func() {
 		log.Info(ctx, "startup", "status", "api router started", "host", api.Addr)
 		serverErrors <- api.ListenAndServe()
@@ -280,7 +268,6 @@ func run(ctx context.Context, log *logger.Logger) error {
 	// -------------------------------------------------------------------------
 	// Shutdown
 
-	// Blocking main and waiting for shutdown.
 	select {
 	case err := <-serverErrors:
 		return fmt.Errorf("server error: %w", err)
@@ -293,11 +280,9 @@ func run(ctx context.Context, log *logger.Logger) error {
 		log.Info(ctx, "shutdown", "status", "shutdown web socket channels")
 		evts.Shutdown()
 
-		// Give outstanding requests a deadline for completion.
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
 		defer cancel()
 
-		// Asking listener to shut down and shed load.
 		if err := api.Shutdown(ctx); err != nil {
 			api.Close()
 			return fmt.Errorf("could not stop server gracefully: %w", err)

@@ -24,6 +24,8 @@ type Parsers interface {
 	Process(prefix string, cfg interface{}) error
 }
 
+// =============================================================================
+
 // Parse parses the specified config struct. This function will
 // apply the defaults first and then apply environment variables and
 // command line argument overrides to the struct. ErrHelpWanted is
@@ -146,6 +148,8 @@ func VersionInfo(namespace string, v interface{}) (string, error) {
 	return str.String(), nil
 }
 
+// =============================================================================
+
 // parse parses configuration into the provided struct.
 func parse(args []string, namespace string, cfgStruct interface{}) error {
 	// Create the flag and env sources.
@@ -231,6 +235,8 @@ func parse(args []string, namespace string, cfgStruct interface{}) error {
 
 	return nil
 }
+
+// =============================================================================
 
 // Args holds command line arguments after flags have been parsed.
 type Args []string

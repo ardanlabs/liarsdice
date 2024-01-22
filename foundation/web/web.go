@@ -41,33 +41,41 @@ func (a *App) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
 
-// Handle sets a handler function for a given HTTP method and path pair
-// to the application server mux.
-func (a *App) Handle(method string, group string, path string, handler Handler, mw ...Middleware) {
+// EnableCORS enables CORS preflight requests to work in the middleware. It
+// prevents the MethodNotAllowedHandler from being called. This must be enabled
+// for the CORS middleware to work.
+func (a *App) EnableCORS(mw Middleware) {
+	a.mw = append(a.mw, mw)
 
-	// First wrap handler specific middleware around this handler.
-	handler = wrapMiddleware(mw, handler)
-
-	// Add the application's general middleware to the handler chain.
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return Respond(ctx, w, "OK", http.StatusOK)
+	}
 	handler = wrapMiddleware(a.mw, handler)
 
-	// The function to execute for each request.
-	h := func(w http.ResponseWriter, r *http.Request) {
-
-		// Set the context with the required values to
-		// process the request.
+	a.ContextMux.OptionsHandler = func(w http.ResponseWriter, r *http.Request, params map[string]string) {
 		v := Values{
 			TraceID: uuid.NewString(),
 			Now:     time.Now().UTC(),
 		}
-		ctx := context.WithValue(r.Context(), key, &v)
+		ctx := setValues(r.Context(), &v)
 
-		// Call the wrapped handler functions.
+		handler(ctx, w, r)
+	}
+}
+
+// HandleNoMiddleware sets a handler function for a given HTTP method and path pair
+// to the application server mux. Does not include the application middleware or
+// OTEL tracing.
+func (a *App) HandleNoMiddleware(method string, group string, path string, handler Handler) {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		v := Values{
+			TraceID: uuid.NewString(),
+			Now:     time.Now().UTC(),
+		}
+		ctx := setValues(r.Context(), &v)
+
 		if err := handler(ctx, w, r); err != nil {
-
-			// Since there was an error, validate the condition of this
-			// error and determine if we need to actually shutdown or not.
-			if validateShutdown(err) {
+			if validateError(err) {
 				a.SignalShutdown()
 				return
 			}
@@ -78,12 +86,42 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 	if group != "" {
 		finalPath = "/" + group + path
 	}
+
 	a.ContextMux.Handle(method, finalPath, h)
 }
 
-// validateShutdown validates the error for special conditions that do not
+// Handle sets a handler function for a given HTTP method and path pair
+// to the application server mux.
+func (a *App) Handle(method string, group string, path string, handler Handler, mw ...Middleware) {
+	handler = wrapMiddleware(mw, handler)
+	handler = wrapMiddleware(a.mw, handler)
+
+	h := func(w http.ResponseWriter, r *http.Request) {
+		v := Values{
+			TraceID: uuid.NewString(),
+			Now:     time.Now().UTC(),
+		}
+		ctx := setValues(r.Context(), &v)
+
+		if err := handler(ctx, w, r); err != nil {
+			if validateError(err) {
+				a.SignalShutdown()
+				return
+			}
+		}
+	}
+
+	finalPath := path
+	if group != "" {
+		finalPath = "/" + group + path
+	}
+
+	a.ContextMux.Handle(method, finalPath, h)
+}
+
+// validateError validates the error for special conditions that do not
 // warrant an actual shutdown by the system.
-func validateShutdown(err error) bool {
+func validateError(err error) bool {
 
 	// Ignore syscall.EPIPE and syscall.ECONNRESET errors which occurs
 	// when a write operation happens on the http.ResponseWriter that

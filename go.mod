@@ -6,6 +6,7 @@ require (
 	github.com/ardanlabs/conf/v3 v3.1.7
 	github.com/ardanlabs/darwin/v2 v2.0.0
 	github.com/ardanlabs/ethereum v0.17.0
+	github.com/arl/statsviz v0.6.0
 	github.com/dimfeld/httptreemux/v5 v5.5.0
 	github.com/ethereum/go-ethereum v1.13.10
 	github.com/gdamore/tcell/v2 v2.7.0

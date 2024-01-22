@@ -30,6 +30,11 @@ github.com/ardanlabs/darwin/v2
 ## explicit; go 1.18
 github.com/ardanlabs/ethereum
 github.com/ardanlabs/ethereum/currency
+# github.com/arl/statsviz v0.6.0
+## explicit; go 1.20
+github.com/arl/statsviz
+github.com/arl/statsviz/internal/plot
+github.com/arl/statsviz/internal/static
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile

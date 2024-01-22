@@ -56,3 +56,7 @@ func SetStatusCode(ctx context.Context, statusCode int) {
 
 	v.StatusCode = statusCode
 }
+
+func setValues(ctx context.Context, v *Values) context.Context {
+	return context.WithValue(ctx, key, v)
+}

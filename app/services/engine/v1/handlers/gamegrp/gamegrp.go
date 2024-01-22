@@ -27,8 +27,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Handlers manages the set of user endpoints.
-type Handlers struct {
+type handlers struct {
 	Converter      *currency.Converter
 	Bank           *bank.Bank
 	Log            *logger.Logger
@@ -44,8 +43,8 @@ type Handlers struct {
 	mu   sync.RWMutex
 }
 
-// Connect is used to return a game token for API usage.
-func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// connect is used to return a game token for API usage.
+func (h *handlers) connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	address, err := validateSignature(r, h.ConnectTimeout)
 	if err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
@@ -67,8 +66,8 @@ func (h *Handlers) Connect(ctx context.Context, w http.ResponseWriter, r *http.R
 	return web.Respond(ctx, w, data, http.StatusOK)
 }
 
-// Events handles a web socket to provide events to a client.
-func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// events handles a web socket to provide events to a client.
+func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	v := web.GetValues(ctx)
 
 	// Need this to handle CORS on the websocket.
@@ -151,8 +150,8 @@ func (h *Handlers) Events(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 }
 
-// Configuration returns the basic configuration the front end needs to use.
-func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// configuration returns the basic configuration the front end needs to use.
+func (h *handlers) configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	info := struct {
 		Network    string         `json:"network"`
 		ChainID    int            `json:"chainId"`
@@ -166,9 +165,9 @@ func (h *Handlers) Configuration(ctx context.Context, w http.ResponseWriter, r *
 	return web.Respond(ctx, w, info, http.StatusOK)
 }
 
-// USD2Wei converts the us dollar amount to wei based on the game engine's
+// usd2Wei converts the us dollar amount to wei based on the game engine's
 // conversion rate.
-func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *handlers) usd2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	usd, err := strconv.ParseFloat(web.Param(r, "usd"), 64)
 	if err != nil {
 		return v1.NewTrustedError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
@@ -187,8 +186,8 @@ func (h *Handlers) USD2Wei(ctx context.Context, w http.ResponseWriter, r *http.R
 	return web.Respond(ctx, w, data, http.StatusOK)
 }
 
-// Status will return information about the game.
-func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// status will return information about the game.
+func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
@@ -236,9 +235,9 @@ func (h *Handlers) Status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
-// NewGame creates a new game if there is no game or the status of the current game
+// newGame creates a new game if there is no game or the status of the current game
 // is GameOver.
-func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims := mid.GetClaims(ctx)
 	address := claims.Subject
 
@@ -248,11 +247,11 @@ func (h *Handlers) NewGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"newgame","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// Join adds the given player to the game.
-func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// join adds the given player to the game.
+func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -267,11 +266,11 @@ func (h *Handlers) Join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"join","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// StartGame changes the status of the game so players can begin to play.
-func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// startGame changes the status of the game so players can begin to play.
+func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -286,11 +285,11 @@ func (h *Handlers) StartGame(ctx context.Context, w http.ResponseWriter, r *http
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"start","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// RollDice will roll 5 dice for the given player and game.
-func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// rollDice will roll 5 dice for the given player and game.
+func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -305,11 +304,11 @@ func (h *Handlers) RollDice(ctx context.Context, w http.ResponseWriter, r *http.
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"rolldice","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// Bet processes a bet made by a player in a game.
-func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// bet processes a bet made by a player in a game.
+func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -334,11 +333,11 @@ func (h *Handlers) Bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info(ctx).Cups[address].OrderIdx))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// CallLiar processes the claims and defines a winner and a loser for the round.
-func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// callLiar processes the claims and defines a winner and a loser for the round.
+func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -357,11 +356,11 @@ func (h *Handlers) CallLiar(ctx context.Context, w http.ResponseWriter, r *http.
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"callliar","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// Reconcile calls the smart contract reconcile method.
-func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// reconcile calls the smart contract reconcile method.
+func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -379,11 +378,11 @@ func (h *Handlers) Reconcile(ctx context.Context, w http.ResponseWriter, r *http
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"reconcile","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// Balance returns the player balance from the smart contract.
-func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// balance returns the player balance from the smart contract.
+func (h *handlers) balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims := mid.GetClaims(ctx)
 	address := claims.Subject
 
@@ -404,8 +403,8 @@ func (h *Handlers) Balance(ctx context.Context, w http.ResponseWriter, r *http.R
 	return web.Respond(ctx, w, resp, http.StatusOK)
 }
 
-// NextTurn changes the account that will make the next move.
-func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// nextTurn changes the account that will make the next move.
+func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -420,13 +419,13 @@ func (h *Handlers) NextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"nextturn","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// UpdateOut replaces the current out amount of the player. This call is not
+// updateOut replaces the current out amount of the player. This call is not
 // part of the game flow, it is used to control when a player should be removed
 // from the game.
-func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := h.getGame()
 	if err != nil {
 		return err
@@ -446,12 +445,12 @@ func (h *Handlers) UpdateOut(ctx context.Context, w http.ResponseWriter, r *http
 
 	h.Evts.Send(fmt.Sprintf(`{"type":"outs","address":%q}`, address))
 
-	return h.Status(ctx, w, r)
+	return h.status(ctx, w, r)
 }
 
-// SetGame resets the existing game. At this time we let this happen at any
+// createGame resets the existing game. At this time we let this happen at any
 // time regardless of game state.
-func (h *Handlers) createGame(ctx context.Context, address string) error {
+func (h *handlers) createGame(ctx context.Context, address string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -465,8 +464,8 @@ func (h *Handlers) createGame(ctx context.Context, address string) error {
 	return nil
 }
 
-// GetGame safely returns a copy of the game pointer.
-func (h *Handlers) getGame() (*game.Game, error) {
+// getGame safely returns a copy of the game pointer.
+func (h *handlers) getGame() (*game.Game, error) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 

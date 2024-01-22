@@ -15,7 +15,6 @@ type Events struct {
 
 // New constructs an events for registering and receiving events.
 func New() *Events {
-
 	return &Events{
 		m: make(map[string]chan string),
 	}
@@ -66,6 +65,7 @@ func (evt *Events) Release(id string) error {
 
 	delete(evt.m, id)
 	close(ch)
+
 	return nil
 }
 
