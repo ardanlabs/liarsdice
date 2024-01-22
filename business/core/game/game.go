@@ -16,52 +16,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// Represents the different game status.
-const (
-	StatusNewGame    = "newgame"
-	StatusPlaying    = "playing"
-	StatusRoundOver  = "roundover"
-	StatusGameOver   = "gameover"
-	StatusReconciled = "reconciled"
-)
-
-// minNumberPlayers represents the minimum number of players required
-// to play a game.
-const minNumberPlayers = 2
-
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
 type Banker interface {
 	AccountBalance(ctx context.Context, player common.Address) (GWei *big.Float, err error)
 	Reconcile(ctx context.Context, winningPlayer common.Address, losingPlayers []common.Address, anteGWei *big.Float, gameFeeGWei *big.Float) (*types.Transaction, *types.Receipt, error)
-}
-
-// Status represents a copy of the game status.
-type Status struct {
-	Status          string
-	PlayerLastOut   common.Address
-	PlayerLastWin   common.Address
-	PlayerTurn      common.Address
-	Round           int
-	Cups            map[common.Address]Cup
-	ExistingPlayers []common.Address
-	Bets            []Bet
-	Balances        []string
-}
-
-// Bet represents a bet of dice made by a player.
-type Bet struct {
-	Player common.Address
-	Number int
-	Suite  int
-}
-
-// Cup represents an individual cup being held by a player.
-type Cup struct {
-	Player   common.Address
-	OrderIdx int
-	Outs     int
-	Dice     []int
 }
 
 // Game represents a single game that is being played.
@@ -279,7 +238,7 @@ func (g *Game) rollDice(ctx context.Context, player common.Address, manualRole .
 // Bet accepts a bet from an account, but validates the bet is valid first.
 // If the bet is valid, it's added to the list of bets for the game. Then
 // the next player is determined and set.
-func (g *Game) Bet(ctx context.Context, player common.Address, number int, suite int) error {
+func (g *Game) Bet(ctx context.Context, player common.Address, number int, suit int) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -312,8 +271,8 @@ func (g *Game) Bet(ctx context.Context, player common.Address, number int, suite
 			return fmt.Errorf("bet number must be greater or equal to the last bet number: number[%d] last[%d]", number, lastBet.Number)
 		}
 
-		if number == lastBet.Number && suite <= lastBet.Suite {
-			return fmt.Errorf("bet suite must be greater than the last bet suite: suite[%d] last[%d]", suite, lastBet.Suite)
+		if number == lastBet.Number && suit <= lastBet.Suit {
+			return fmt.Errorf("bet suit must be greater than the last bet suit: suit[%d] last[%d]", suit, lastBet.Suit)
 		}
 	}
 
@@ -321,7 +280,7 @@ func (g *Game) Bet(ctx context.Context, player common.Address, number int, suite
 	bet := Bet{
 		Player: player,
 		Number: number,
-		Suite:  suite,
+		Suit:   suit,
 	}
 	g.bets = append(g.bets, bet)
 
@@ -406,8 +365,8 @@ func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlay
 	// Hold the sum of all the dice values.
 	dice := make([]int, 7)
 	for _, player := range g.cups {
-		for _, suite := range player.Dice {
-			dice[suite]++
+		for _, suit := range player.Dice {
+			dice[suit]++
 		}
 	}
 
@@ -416,7 +375,7 @@ func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlay
 
 	// Identify the winner and the loser.
 	switch {
-	case dice[lastBet.Suite] < lastBet.Number:
+	case dice[lastBet.Suit] < lastBet.Number:
 
 		// The account who made the last bet lost.
 		cup := g.cups[lastBet.Player]

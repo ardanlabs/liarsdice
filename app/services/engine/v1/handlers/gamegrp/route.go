@@ -55,7 +55,7 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/join", hdl.join, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/start", hdl.startGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/rolldice", hdl.rollDice, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/bet/:number/:suite", hdl.bet, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/bet/:number/:suit", hdl.bet, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/liar", hdl.callLiar, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/reconcile", hdl.reconcile, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/balance", hdl.balance, mid.Authenticate(cfg.Auth))

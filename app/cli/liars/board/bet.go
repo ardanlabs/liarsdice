@@ -24,12 +24,12 @@ func (b *Board) addBet(r rune) error {
 	b.screen.ShowCursor(x+1, betRowY)
 	b.print(x, betRowY, string(r))
 
-	suite, err := strconv.Atoi(string(b.bets[0]))
+	suit, err := strconv.Atoi(string(b.bets[0]))
 	if err != nil {
 		return err
 	}
 
-	bet := fmt.Sprintf("%d %-10s", len(b.bets), words[suite])
+	bet := fmt.Sprintf("%d %-10s", len(b.bets), words[suit])
 	b.print(potX, potY+1, bet)
 
 	return nil
@@ -54,12 +54,12 @@ func (b *Board) subBet() error {
 
 	bet := "                 "
 	if len(b.bets) > 0 {
-		suite, err := strconv.Atoi(string(b.bets[0]))
+		suit, err := strconv.Atoi(string(b.bets[0]))
 		if err != nil {
 			return err
 		}
 
-		bet = fmt.Sprintf("%d %-10s", len(b.bets), words[suite])
+		bet = fmt.Sprintf("%d %-10s", len(b.bets), words[suit])
 	}
 	b.print(potX, potY+1, bet)
 

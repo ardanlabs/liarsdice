@@ -40,7 +40,7 @@ func Execute() {
 }
 
 const (
-	defaultNetwork          = "http://geth-service.liars-system.svc.cluster.local:8545"
+	defaultNetwork          = "http://localhost:8545"
 	defaultCoinMarketCapKey = "a8cd12fb-d056-423f-877b-659046af0aa5"
 	defaultKeyPath          = "zarf/ethereum/keystore/UTC--2022-05-12T14-47-50.112225000Z--6327a38415c53ffb36c11db55ea74cc9cb4976fd"
 	defaultPassPhrase       = "123"

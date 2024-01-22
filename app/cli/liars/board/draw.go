@@ -72,7 +72,7 @@ func (b *Board) drawBoard(status engine.Status) {
 	// Show the last bet.
 	if len(status.Bets) > 0 {
 		bet := status.Bets[len(status.Bets)-1]
-		betStr := fmt.Sprintf("%d %-10s", bet.Number, words[bet.Suite])
+		betStr := fmt.Sprintf("%d %-10s", bet.Number, words[bet.Suit])
 		b.print(helpX+11, statusY-4, betStr)
 	} else {
 		b.print(helpX+11, statusY-4, "                 ")
@@ -112,7 +112,7 @@ func (b *Board) drawBoard(status engine.Status) {
 
 		// Last Bets.
 		if cup.LastBet.Number != 0 {
-			bet := fmt.Sprintf("%d %-10s", cup.LastBet.Number, words[cup.LastBet.Suite])
+			bet := fmt.Sprintf("%d %-10s", cup.LastBet.Number, words[cup.LastBet.Suit])
 			b.print(betX, addrY, bet)
 		} else {
 			b.print(betX, addrY, "                 ")

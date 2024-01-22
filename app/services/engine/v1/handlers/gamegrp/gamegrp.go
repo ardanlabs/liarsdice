@@ -216,7 +216,7 @@ func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	var bets []Bet
 	for _, bet := range status.Bets {
-		bets = append(bets, Bet{Player: bet.Player, Number: bet.Number, Suite: bet.Suite})
+		bets = append(bets, Bet{Player: bet.Player, Number: bet.Number, Suit: bet.Suit})
 	}
 
 	resp := Status{
@@ -322,12 +322,12 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1.NewTrustedError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
 	}
 
-	suite, err := strconv.Atoi(web.Param(r, "suite"))
+	suit, err := strconv.Atoi(web.Param(r, "suit"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("converting suite: %s", err), http.StatusBadRequest)
+		return v1.NewTrustedError(fmt.Errorf("converting suit: %s", err), http.StatusBadRequest)
 	}
 
-	if err := g.Bet(ctx, address, number, suite); err != nil {
+	if err := g.Bet(ctx, address, number, suit); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 

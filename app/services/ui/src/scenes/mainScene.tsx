@@ -26,7 +26,7 @@ var account: string | undefined = window.localStorage
   .getItem('account')
   ?.toLowerCase()
 var player: user
-var currentBet: { number: number; suite: die } = { number: 1, suite: 1 }
+var currentBet: { number: number; suit: die } = { number: 1, suit: 1 }
 
 // UI Variables
 var pointer: Phaser.GameObjects.Image,
@@ -155,7 +155,7 @@ export default class MainScene extends Phaser.Scene {
         this.center.x,
         this.center.y,
         `${localGame.bets[localGame.bets.length - 1]?.number || '-'} X ${
-          localGame.bets[localGame.bets.length - 1]?.suite || '-'
+          localGame.bets[localGame.bets.length - 1]?.suit || '-'
         }`,
         { fontSize: '50px' },
       )
@@ -298,11 +298,11 @@ export default class MainScene extends Phaser.Scene {
           button.clearTint()
         })
         diceBetButton.setTint(0xffff)
-        if (currentBet.suite === i) {
+        if (currentBet.suit === i) {
           currentBet.number++
           return
         }
-        currentBet.suite = i
+        currentBet.suit = i
         currentBet.number = localGame.bets[localGame.bets.length - 1]
           ? localGame.bets[localGame.bets.length - 1].number
           : 1
@@ -316,14 +316,14 @@ export default class MainScene extends Phaser.Scene {
       .setInteractive()
 
     const placeBet = () => {
-      this.sendBet(currentBet.number, currentBet.suite)
+      this.sendBet(currentBet.number, currentBet.suit)
       diceBetButtons.forEach((button) => {
         button.clearTint()
       })
       currentBet.number = localGame.bets[localGame.bets.length - 1]
         ? localGame.bets[localGame.bets.length - 1].number
         : 1
-      currentBet.suite = 1
+      currentBet.suit = 1
     }
 
     placeBetButton.on('pointerdown', placeBet)
@@ -365,7 +365,7 @@ export default class MainScene extends Phaser.Scene {
 
     lastbetText.setText(
       `${localGame.bets[localGame.bets.length - 1]?.number || '-'} X ${
-        localGame.bets[localGame.bets.length - 1]?.suite || '-'
+        localGame.bets[localGame.bets.length - 1]?.suit || '-'
       }`,
     )
 
@@ -705,7 +705,7 @@ export default class MainScene extends Phaser.Scene {
       if (parsedGame.status === 'playing') {
         currentBet = {
           number: parsedGame.bets[localGame.bets.length - 1]?.number || 1,
-          suite: parsedGame.bets[localGame.bets.length - 1]?.suite || 1,
+          suit: parsedGame.bets[localGame.bets.length - 1]?.suit || 1,
         }
         showBetButtons = parsedGame.currentID === account
         this.renderDice(response.data)
@@ -820,7 +820,7 @@ export default class MainScene extends Phaser.Scene {
           case 'playing':
             currentBet = {
               number: parsedGame.bets[localGame.bets.length - 1]?.number || 1,
-              suite: parsedGame.bets[localGame.bets.length - 1]?.suite || 1,
+              suit: parsedGame.bets[localGame.bets.length - 1]?.suit || 1,
             }
             // If it's player turn we show the betting section
             showBetButtons = parsedGame.currentID === account
@@ -890,9 +890,9 @@ export default class MainScene extends Phaser.Scene {
   }
 
   // sendBet sends the player bet to the backend.
-  sendBet(number: number, suite: die) {
+  sendBet(number: number, suit: die) {
     axiosInstance
-      .get(`http://${apiUrl}/bet/${number}/${suite}`)
+      .get(`http://${apiUrl}/bet/${number}/${suit}`)
       .then()
       .catch(function (error: AxiosError) {
         console.error(error)

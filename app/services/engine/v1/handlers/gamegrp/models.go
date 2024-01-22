@@ -20,7 +20,7 @@ type Status struct {
 type Bet struct {
 	Player common.Address `json:"account"`
 	Number int            `json:"number"`
-	Suite  int            `json:"suite"`
+	Suit   int            `json:"suit"`
 }
 
 // Cup represents the cup response.

@@ -13,7 +13,7 @@ export interface user {
 export interface bet {
   account: string
   number: number
-  suite: die
+  suit: die
 }
 
 export interface game {

@@ -28,8 +28,8 @@ spec:
           containerPort: 4000
         readinessProbe:
           httpGet:
-            path: /debug/readiness
-            port: 4000
+            path: /v1/readiness
+            port: 3000
           initialDelaySeconds: 2
           periodSeconds: 15
           timeoutSeconds: 5
@@ -37,8 +37,8 @@ spec:
           failureThreshold: 2
         livenessProbe:
           httpGet:
-            path: /debug/liveness
-            port: 4000
+            path: /v1/liveness
+            port: 3000
           initialDelaySeconds: 2
           periodSeconds: 30
           timeoutSeconds: 5
