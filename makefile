@@ -50,33 +50,18 @@ game-tui2:
 game-tuio:
 	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
 
-react-install:
-	yarn --cwd app/services/ui/ install
-
-app-ui: react-install
-	yarn --cwd app/services/ui/ start
-
 # ==============================================================================
 # Building containers
 #
 # The new docker buildx build system is required for these docker build commands On systems other than Docker Desktop
 # buildx is not the default build system. You will need to enable it with: docker buildx install
 
-# all: game-engine ui
 all: game-engine
 
 game-engine:
 	docker build \
 		-f zarf/docker/dockerfile.engine \
 		-t liarsdice-game-engine:$(VERSION) \
-		--build-arg BUILD_REF=$(VERSION) \
-		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
-		.
-
-ui:
-	docker build \
-		-f zarf/docker/dockerfile.ui \
-		-t liarsdice-game-ui:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
@@ -104,7 +89,6 @@ dev-down:
 
 dev-load:
 	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
-#	kind load docker-image liarsdice-game-ui:$(VERSION) --name $(KIND_CLUSTER)
 
 dev-deploy:
 	@zarf/k8s/dev/geth/setup-contract-k8s
@@ -123,9 +107,6 @@ dev-apply:
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
 	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
 
-# kustomize build zarf/k8s/dev/ui | kubectl apply -f -
-# kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/ui
-
 dev-restart:
 	kubectl rollout restart deployment engine --namespace=liars-system
 
@@ -135,9 +116,6 @@ dev-update-apply: all dev-load dev-apply
 
 dev-logs:
 	kubectl logs --namespace=liars-system -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
-
-dev-logs-ui:
-	kubectl logs --namespace=liars-system -l app=ui --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
 
 dev-logs-geth:
 	kubectl logs --namespace=liars-system -l app=geth --all-containers=true -f --tail=1000
@@ -157,12 +135,6 @@ dev-describe-deployment-engine:
 dev-describe-engine:
 	kubectl describe pod --namespace=liars-system -l app=engine
 
-dev-describe-deployment-ui:
-	kubectl describe deployment --namespace=liars-system ui
-
-dev-describe-ui:
-	kubectl describe pod --namespace=liars-system -l app=ui
-
 # ==============================================================================
 # Running tests within the local computer
 # go install honnef.co/go/tools/cmd/staticcheck@latest
@@ -173,9 +145,6 @@ test:
 	go vet ./...
 	staticcheck -checks=all ./...
 	govulncheck ./...
-
-test-gui:
-	yarn --cwd app/services/game/ test
 
 # ==============================================================================
 # Modules support
