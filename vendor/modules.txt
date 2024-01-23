@@ -23,13 +23,21 @@ github.com/agnivade/levenshtein
 # github.com/ardanlabs/conf/v3 v3.1.7
 ## explicit; go 1.13
 github.com/ardanlabs/conf/v3
-# github.com/ardanlabs/darwin/v2 v2.0.0
+# github.com/ardanlabs/darwin/v3 v3.3.1
 ## explicit; go 1.16
-github.com/ardanlabs/darwin/v2
+github.com/ardanlabs/darwin/v3
+github.com/ardanlabs/darwin/v3/dialects/postgres
+github.com/ardanlabs/darwin/v3/drivers/generic
 # github.com/ardanlabs/ethereum v0.17.0
 ## explicit; go 1.18
 github.com/ardanlabs/ethereum
 github.com/ardanlabs/ethereum/currency
+# github.com/ardanlabs/service v0.0.0-20240122161358-70178f6b6006
+## explicit; go 1.21
+github.com/ardanlabs/service/business/data/sqldb
+github.com/ardanlabs/service/business/data/transaction
+github.com/ardanlabs/service/foundation/logger
+github.com/ardanlabs/service/foundation/web
 # github.com/arl/statsviz v0.6.0
 ## explicit; go 1.20
 github.com/arl/statsviz
@@ -277,6 +285,9 @@ github.com/ethereum/go-ethereum/trie/triedb/pathdb
 github.com/ethereum/go-ethereum/trie/trienode
 github.com/ethereum/go-ethereum/trie/triestate
 github.com/ethereum/go-ethereum/trie/utils
+# github.com/felixge/httpsnoop v1.0.4
+## explicit; go 1.13
+github.com/felixge/httpsnoop
 # github.com/fjl/memsize v0.0.2
 ## explicit
 github.com/fjl/memsize
@@ -437,7 +448,7 @@ github.com/inconshreveable/mousetrap
 # github.com/jackc/pgpassfile v1.0.0
 ## explicit; go 1.12
 github.com/jackc/pgpassfile
-# github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a
+# github.com/jackc/pgservicefile v0.0.0-20231201235250-de7065d80cb9
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
 # github.com/jackc/pgx/v5 v5.5.2
@@ -484,8 +495,6 @@ github.com/kr/text
 # github.com/leodido/go-urn v1.2.4
 ## explicit; go 1.16
 github.com/leodido/go-urn
-# github.com/lib/pq v1.10.9
-## explicit; go 1.13
 # github.com/lucasb-eyer/go-colorful v1.2.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful
@@ -720,6 +729,10 @@ github.com/yashtewari/glob-intersection
 # github.com/yusufpapurcu/wmi v1.2.3
 ## explicit; go 1.16
 github.com/yusufpapurcu/wmi
+# go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0
+## explicit; go 1.20
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconvutil
 # go.opentelemetry.io/otel v1.22.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel
@@ -731,6 +744,7 @@ go.opentelemetry.io/otel/internal/attribute
 go.opentelemetry.io/otel/internal/baggage
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
+go.opentelemetry.io/otel/semconv/v1.20.0
 go.opentelemetry.io/otel/semconv/v1.24.0
 # go.opentelemetry.io/otel/metric v1.22.0
 ## explicit; go 1.20
@@ -829,9 +843,9 @@ golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/genproto/googleapis/api v0.0.0-20231002182017-d307bd883b97
+# google.golang.org/genproto/googleapis/api v0.0.0-20240116215550-a9fa1716bcac
 ## explicit; go 1.19
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240116215550-a9fa1716bcac
 ## explicit; go 1.19
 # google.golang.org/protobuf v1.32.0
 ## explicit; go 1.17

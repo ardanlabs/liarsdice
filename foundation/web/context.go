@@ -35,6 +35,7 @@ func GetTraceID(ctx context.Context) string {
 	if !ok {
 		return "00000000-0000-0000-0000-000000000000"
 	}
+
 	return v.TraceID
 }
 
@@ -44,11 +45,11 @@ func GetTime(ctx context.Context) time.Time {
 	if !ok {
 		return time.Now()
 	}
+
 	return v.Now
 }
 
-// SetStatusCode sets the status code back into the context.
-func SetStatusCode(ctx context.Context, statusCode int) {
+func setStatusCode(ctx context.Context, statusCode int) {
 	v, ok := ctx.Value(key).(*Values)
 	if !ok {
 		return

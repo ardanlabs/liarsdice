@@ -11,7 +11,7 @@ import (
 
 // Logger writes some information about the request to the logs in the
 // format: TraceID : (200) GET /foo -> IP ADDR (latency)
-func Logger(log *logger.Logger) web.Middleware {
+func Logger(log *logger.Logger) web.MidHandler {
 	m := func(handler web.Handler) web.Handler {
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			v := web.GetValues(ctx)

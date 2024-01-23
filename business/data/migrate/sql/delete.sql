@@ -1,3 +1,0 @@
-DELETE FROM games;
-DELETE FROM bets;
-DELETE FROM cups;
