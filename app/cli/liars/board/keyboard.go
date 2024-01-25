@@ -2,6 +2,9 @@ package board
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
+	"unicode/utf8"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -31,8 +34,12 @@ func (b *Board) pollEvents() chan struct{} {
 				return
 			}
 
-			// If the modal is up, ignore the keystroke.
+			// If the modal is up, process input through an event function.
 			if b.modalUp {
+				if b.modalFn != nil {
+					b.modalFn(ev.Rune())
+					continue
+				}
 				b.screen.Beep()
 				continue
 			}
@@ -99,34 +106,77 @@ func (b *Board) value(r rune) error {
 
 // newGame starts a new game.
 func (b *Board) newGame() error {
-	if _, err := b.engine.NewGame(); err != nil {
+	status, err := b.engine.NewGame()
+	if err != nil {
 		return err
 	}
+
+	b.lastStatus = status
 
 	return nil
 }
 
 // joinGame adds the account to the game.
 func (b *Board) joinGame() error {
-	status, err := b.engine.QueryStatus()
+	tables, err := b.engine.Tables(b.lastStatus.GameID)
 	if err != nil {
 		return err
 	}
 
-	if status.Status != "newgame" {
-		return errors.New("invalid status state: " + status.Status)
+	fn := func(r rune) {
+		buf := make([]byte, 1)
+		_ = utf8.EncodeRune(buf, r)
+		sel, _ := strconv.Atoi(string(buf))
+
+		l := len(tables.GameIDs)
+
+		if sel <= 0 || sel > l {
+			b.screen.Beep()
+			return
+		}
+
+		gameID := tables.GameIDs[sel-1]
+
+		status, err := b.engine.QueryStatus(gameID)
+		if err != nil {
+			b.closeModal()
+			b.showModal(err.Error())
+			return
+		}
+
+		for _, acct := range status.CupsOrder {
+			if acct.Cmp(b.accountID) == 0 {
+				b.closeModal()
+				b.lastStatus = status
+				b.drawInit(true)
+				return
+			}
+		}
+
+		if status.Status != "newgame" {
+			b.closeModal()
+			b.showModal(fmt.Sprintf("invalid status state: " + status.Status))
+			return
+		}
+
+		status, err = b.engine.JoinGame(gameID)
+		if err != nil {
+			b.closeModal()
+			b.showModal(err.Error())
+			return
+		}
+
+		b.lastStatus = status
 	}
 
-	if _, err = b.engine.JoinGame(); err != nil {
-		return err
-	}
+	b.showModalList(tables.GameIDs, fn)
 
 	return nil
 }
 
 // startGame start the game so it can be played.
 func (b *Board) startGame() error {
-	status, err := b.engine.QueryStatus()
+	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
 	if err != nil {
 		return err
 	}
@@ -135,7 +185,7 @@ func (b *Board) startGame() error {
 		return errors.New("invalid status state: " + status.Status)
 	}
 
-	if _, err := b.engine.StartGame(); err != nil {
+	if _, err := b.engine.StartGame(b.lastStatus.GameID); err != nil {
 		return err
 	}
 
@@ -144,7 +194,7 @@ func (b *Board) startGame() error {
 
 // callLiar calls the last bet a lie.
 func (b *Board) callLiar() error {
-	status, err := b.engine.QueryStatus()
+	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
 	if err != nil {
 		return err
 	}
@@ -157,7 +207,7 @@ func (b *Board) callLiar() error {
 		return errors.New("not your turn")
 	}
 
-	if _, err := b.engine.Liar(); err != nil {
+	if _, err := b.engine.Liar(b.lastStatus.GameID); err != nil {
 		return err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
@@ -41,6 +42,7 @@ type Game struct {
 	playerLastOut      common.Address         // The player who lost the last round.
 	playerLastWin      common.Address         // The player who won the last round.
 	bets               []Bet                  // History of bets for the current round.
+	createdDate        time.Time              // The time the game was created. Used to help with caching.
 }
 
 // New creates a new game.
@@ -57,14 +59,15 @@ func New(ctx context.Context, log *logger.Logger, converter *currency.Converter,
 	}
 
 	g := Game{
-		log:       log,
-		converter: converter,
-		banker:    banker,
-		id:        uuid.NewString(),
-		status:    StatusNewGame,
-		round:     1,
-		anteUSD:   anteUSD,
-		cups:      make(map[common.Address]Cup),
+		log:         log,
+		converter:   converter,
+		banker:      banker,
+		id:          uuid.NewString(),
+		status:      StatusNewGame,
+		round:       1,
+		anteUSD:     anteUSD,
+		cups:        make(map[common.Address]Cup),
+		createdDate: time.Now().UTC(),
 	}
 
 	if err := g.AddAccount(ctx, player); err != nil {
@@ -72,6 +75,30 @@ func New(ctx context.Context, log *logger.Logger, converter *currency.Converter,
 	}
 
 	return &g, nil
+}
+
+// ID returns the game id.
+func (g *Game) ID() string {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	return g.id
+}
+
+// Status returns the current status of the game.
+func (g *Game) Status() string {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	return g.status
+}
+
+// CreatedDate returns the date/time the game was created.
+func (g *Game) CreatedDate() time.Time {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	return g.createdDate
 }
 
 // AddAccount adds a player to the game. If the account already exists, the
@@ -532,6 +559,7 @@ func (g *Game) Info(ctx context.Context) Status {
 	}
 
 	return Status{
+		GameID:          g.id,
 		Status:          g.status,
 		PlayerLastOut:   g.playerLastOut,
 		PlayerLastWin:   g.playerLastWin,

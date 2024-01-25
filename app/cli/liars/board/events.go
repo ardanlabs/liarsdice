@@ -20,7 +20,7 @@ func (b *Board) webEvents(event string, address common.Address) {
 
 	switch event {
 	case "start":
-		status, err = b.engine.RollDice()
+		status, err = b.engine.RollDice(b.lastStatus.GameID)
 		if err != nil {
 			b.printMessage("error rolling dice", true)
 		}
@@ -50,7 +50,7 @@ func (b *Board) webEvents(event string, address common.Address) {
 
 	// If we don't have a new status, retrieve the latest.
 	if status.Status == "" {
-		status, err = b.engine.QueryStatus()
+		status, err = b.engine.QueryStatus(b.lastStatus.GameID)
 		if err != nil {
 			return
 		}
@@ -70,7 +70,7 @@ func (b *Board) reconcile(status engine.Status) (engine.Status, error) {
 		return status, nil
 	}
 
-	newStatus, err := b.engine.Reconcile()
+	newStatus, err := b.engine.Reconcile(status.GameID)
 	if err != nil {
 		return engine.Status{}, err
 	}

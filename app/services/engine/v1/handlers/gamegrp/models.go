@@ -4,6 +4,7 @@ import "github.com/ethereum/go-ethereum/common"
 
 // Status represents the game status.
 type Status struct {
+	GameID          string           `json:"gameID"`
 	Status          string           `json:"status"`
 	AnteUSD         float64          `json:"anteUSD"`
 	PlayerLastOut   common.Address   `json:"lastOut"`

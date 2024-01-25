@@ -23,6 +23,7 @@ type Token struct {
 
 // Status represents the game status.
 type Status struct {
+	GameID        string           `json:"gameID"`
 	Status        string           `json:"status"`
 	AnteUSD       float64          `json:"anteUSD"`
 	LastOutAcctID common.Address   `json:"lastOut"`
@@ -48,4 +49,9 @@ type Cup struct {
 	Dice      []int          `json:"dice"`
 	LastBet   Bet            `json:"lastBet"`
 	Outs      int            `json:"outs"`
+}
+
+// Tables represents the current set of tables.
+type Tables struct {
+	GameIDs []string `json:"gameIDs"`
 }

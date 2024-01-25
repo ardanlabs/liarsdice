@@ -1,6 +1,7 @@
 package board
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ardanlabs/liarsdice/app/cli/liars/engine"
@@ -8,7 +9,7 @@ import (
 
 // modalWinnerLoser shows the user if they won or lost.
 func (b *Board) modalWinnerLoser(win string, los string) (engine.Status, error) {
-	status, err := b.engine.QueryStatus()
+	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
 	if err != nil {
 		return engine.Status{}, err
 	}
@@ -23,7 +24,7 @@ func (b *Board) modalWinnerLoser(win string, los string) (engine.Status, error) 
 }
 
 // showModal displays a modal dialog box.
-func (b *Board) showModal(message string) error {
+func (b *Board) showModal(message string) {
 	b.modalUp = true
 	b.modalMsg = message
 
@@ -46,21 +47,33 @@ func (b *Board) showModal(message string) error {
 	l := len(msg)
 	x := 32 - (l / 2)
 	b.print(x, h, msg)
+}
 
-	return nil
+// showModalList displays a modal dialog box for a list of items.
+func (b *Board) showModalList(list []string, fn func(r rune)) {
+	b.modalUp = true
+	b.modalFn = fn
+
+	b.screen.HideCursor()
+	b.drawBox(9, 3, 55, len(list)+7)
+
+	h := 5
+	for i, l := range list {
+		b.print(12, h, fmt.Sprintf("%d: %s", i+1, l))
+		h++
+	}
 }
 
 // closeModal closes the modal dialog box.
 func (b *Board) closeModal() {
 	b.modalUp = false
 	b.modalMsg = ""
+	b.modalFn = nil
 
 	active := false
 	if b.lastStatus.CurrentAcctID == b.accountID {
 		active = true
 	}
 
-	b.drawGameBox(active)
-	b.drawLables()
-	b.drawBoard(b.lastStatus)
+	b.drawInit(active)
 }

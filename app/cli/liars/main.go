@@ -51,7 +51,7 @@ func run() error {
 
 	board, err := board.New(eng, token.Address)
 	if err != nil {
-		return err
+		return fmt.Errorf("new board: %w", err)
 	}
 	defer board.Shutdown()
 
@@ -60,7 +60,7 @@ func run() error {
 
 	teardown, err := eng.Events(board.Events)
 	if err != nil {
-		return err
+		return fmt.Errorf("engine events: %w", err)
 	}
 	defer teardown()
 

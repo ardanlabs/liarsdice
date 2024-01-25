@@ -1,5 +1,5 @@
 -- Version: 1.01
--- Description: Create table games
+-- Description: Create initial game tables
 CREATE TABLE games
 (
     game_id VARCHAR    NOT NULL,
@@ -8,8 +8,6 @@ CREATE TABLE games
     PRIMARY KEY (game_id)
 );
 
--- Version: 1.02
--- Description: Create table game_status
 CREATE TABLE game_status
 (
     game_id         VARCHAR NOT NULL,
@@ -24,8 +22,6 @@ CREATE TABLE game_status
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
 )
 
--- Version: 1.03
--- Description: Create table game_cups
 CREATE TABLE game_cups
 (
     game_id   VARCHAR NOT NULL,
@@ -38,8 +34,6 @@ CREATE TABLE game_cups
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
 )
 
--- Version: 1.04
--- Description: Create table game_dice
 CREATE TABLE game_dice
 (
     game_id   VARCHAR NOT NULL,
@@ -51,8 +45,6 @@ CREATE TABLE game_dice
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
 )
 
--- Version: 1.04
--- Description: Create table game_existing_players
 CREATE TABLE game_existing_players
 (
     game_id   VARCHAR NOT NULL,
@@ -63,8 +55,6 @@ CREATE TABLE game_existing_players
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
 )
 
--- Version: 1.05
--- Description: Create table game_bets
 CREATE TABLE game_bets
 (
     game_id   VARCHAR NOT NULL,
@@ -77,8 +67,6 @@ CREATE TABLE game_bets
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
 )
 
--- Version: 1.06
--- Description: Create table game_balances
 CREATE TABLE game_balances
 (
     game_id   VARCHAR NOT NULL,

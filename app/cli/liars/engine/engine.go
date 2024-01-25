@@ -144,8 +144,8 @@ func (e *Engine) Configuration() (Config, error) {
 }
 
 // QueryStatus starts a new game on the game engine.
-func (e *Engine) QueryStatus() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/status", e.url)
+func (e *Engine) QueryStatus(gameID string) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/status", e.url, gameID)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {
@@ -153,6 +153,18 @@ func (e *Engine) QueryStatus() (Status, error) {
 	}
 
 	return status, nil
+}
+
+// Tables returns the current set of tables.
+func (e *Engine) Tables(gameID string) (Tables, error) {
+	url := fmt.Sprintf("%s/v1/game/tables", e.url)
+
+	var tables Tables
+	if err := e.do(url, &tables, nil); err != nil {
+		return Tables{}, err
+	}
+
+	return tables, nil
 }
 
 // NewGame starts a new game on the game engine.
@@ -168,8 +180,8 @@ func (e *Engine) NewGame() (Status, error) {
 }
 
 // StartGame generates the five dice for the player.
-func (e *Engine) StartGame() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/start", e.url)
+func (e *Engine) StartGame(gameID string) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/start", e.url, gameID)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {
@@ -180,8 +192,8 @@ func (e *Engine) StartGame() (Status, error) {
 }
 
 // RollDice generates the five dice for the player.
-func (e *Engine) RollDice() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/rolldice", e.url)
+func (e *Engine) RollDice(gameID string) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/rolldice", e.url, gameID)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {
@@ -192,8 +204,8 @@ func (e *Engine) RollDice() (Status, error) {
 }
 
 // JoinGame adds a player to the current game.
-func (e *Engine) JoinGame() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/join", e.url)
+func (e *Engine) JoinGame(gameID string) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/join", e.url, gameID)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {
@@ -204,8 +216,8 @@ func (e *Engine) JoinGame() (Status, error) {
 }
 
 // Bet submits a bet to the game engine.
-func (e *Engine) Bet(number int, suit rune) (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/bet/%d/%c", e.url, number, suit)
+func (e *Engine) Bet(gameID string, number int, suit rune) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/bet/%d/%c", e.url, gameID, number, suit)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {
@@ -216,8 +228,8 @@ func (e *Engine) Bet(number int, suit rune) (Status, error) {
 }
 
 // Liar submits a liar call to the game engine.
-func (e *Engine) Liar() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/liar", e.url)
+func (e *Engine) Liar(gameID string) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/liar", e.url, gameID)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {
@@ -228,8 +240,8 @@ func (e *Engine) Liar() (Status, error) {
 }
 
 // Reconcile submits a reconcile call when the game is over.
-func (e *Engine) Reconcile() (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/reconcile", e.url)
+func (e *Engine) Reconcile(gameID string) (Status, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/reconcile", e.url, gameID)
 
 	var status Status
 	if err := e.do(url, &status, nil); err != nil {

@@ -68,7 +68,7 @@ func (b *Board) subBet() error {
 
 // enterBet is called to submit a bet.
 func (b *Board) enterBet() error {
-	status, err := b.engine.QueryStatus()
+	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (b *Board) enterBet() error {
 		return errors.New("missing bet information")
 	}
 
-	if _, err = b.engine.Bet(len(b.bets), b.bets[0]); err != nil {
+	if _, err = b.engine.Bet(b.lastStatus.GameID, len(b.bets), b.bets[0]); err != nil {
 		return err
 	}
 

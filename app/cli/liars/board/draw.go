@@ -11,15 +11,19 @@ import (
 )
 
 // drawInit generates the initial game board and starts the event loop.
-func (b *Board) drawInit() error {
-	status, err := b.engine.QueryStatus()
-	if err != nil {
-		return err
+func (b *Board) drawInit(active bool) error {
+	var status engine.Status
+	if b.lastStatus.GameID != "" {
+		var err error
+		status, err = b.engine.QueryStatus(b.lastStatus.GameID)
+		if err != nil {
+			return err
+		}
 	}
 
 	b.screen.Clear()
 
-	b.drawGameBox(false)
+	b.drawGameBox(active)
 	b.drawLables()
 	b.drawSettings()
 
@@ -54,12 +58,15 @@ func (b *Board) drawInit() error {
 
 // drawBoard display the status information.
 func (b *Board) drawBoard(status engine.Status) {
+	if status.GameID == "" {
+		return
+	}
 
 	// Save this status for modal support.
 	b.lastStatus = status
 
 	// Print the current game status and round.
-	b.print(helpX+11, statusY-6, fmt.Sprintf("%-10s", status.Status))
+	b.print(helpX+11, statusY-6, fmt.Sprintf("%-10s / %s", status.Status, status.GameID))
 	b.print(helpX+11, statusY-5, fmt.Sprintf("%d   ", status.Round))
 
 	// Show the account who last won and lost.

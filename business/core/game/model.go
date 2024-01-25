@@ -1,6 +1,8 @@
 package game
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"github.com/ethereum/go-ethereum/common"
+)
 
 // Represents the different game status.
 const (
@@ -17,6 +19,7 @@ const minNumberPlayers = 2
 
 // Status represents a copy of the game status.
 type Status struct {
+	GameID          string
 	Status          string
 	PlayerLastOut   common.Address
 	PlayerLastWin   common.Address

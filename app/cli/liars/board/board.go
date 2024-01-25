@@ -60,6 +60,7 @@ type Board struct {
 	lastStatus engine.Status
 	modalUp    bool
 	modalMsg   string
+	modalFn    func(r rune)
 }
 
 // New contructs a game board and renders the board.
@@ -77,7 +78,7 @@ func New(engine *engine.Engine, accountID common.Address) (*Board, error) {
 	}
 
 	if err := screen.Init(); err != nil {
-		return nil, fmt.Errorf("init: %w", err)
+		return nil, fmt.Errorf("screen init: %w", err)
 	}
 
 	style := tcell.StyleDefault
@@ -92,8 +93,8 @@ func New(engine *engine.Engine, accountID common.Address) (*Board, error) {
 		messages:  make([]string, 5),
 	}
 
-	if err := board.drawInit(); err != nil {
-		return nil, fmt.Errorf("init: %w", err)
+	if err := board.drawInit(false); err != nil {
+		return nil, fmt.Errorf("board init: %w", err)
 	}
 
 	return &board, nil
