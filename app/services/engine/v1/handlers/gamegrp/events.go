@@ -68,6 +68,20 @@ func (evt *events) release(pID string) error {
 	return nil
 }
 
+func (evt *events) numberOfPlayers(gID string) (int, error) {
+	evt.mu.RLock()
+	defer evt.mu.RUnlock()
+
+	gameID := gameID(gID)
+
+	playerMap, exists := evt.games[gameID]
+	if !exists {
+		return 0, fmt.Errorf("game id %q does not exist", gID)
+	}
+
+	return len(playerMap), nil
+}
+
 func (evt *events) addPlayerToGame(gID string, pID string) error {
 	evt.mu.Lock()
 	defer evt.mu.Unlock()

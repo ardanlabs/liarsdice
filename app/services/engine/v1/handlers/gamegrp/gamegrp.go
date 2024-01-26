@@ -206,7 +206,7 @@ func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	gameID := web.Param(ctx, "id")
 
-	g, err := h.getGame(gameID)
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		resp := Status{
 			Status:  "nogame",
@@ -273,9 +273,18 @@ func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // join adds the given player to the game.
 func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+	}
+
+	n, err := evts.numberOfPlayers(g.ID())
+	if err != nil {
+		return fmt.Errorf("unable to determine number of players: %w", err)
+	}
+
+	if n == 5 {
+		return v1.NewTrustedError(errors.New("max players sitting"), http.StatusBadRequest)
 	}
 
 	subjectID := mid.GetSubject(ctx)
@@ -296,9 +305,9 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 // startGame changes the status of the game so players can begin to play.
 func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if err := g.StartGame(ctx); err != nil {
@@ -312,9 +321,9 @@ func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http
 
 // rollDice will roll 5 dice for the given player and game.
 func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if err := g.RollDice(ctx, mid.GetSubject(ctx)); err != nil {
@@ -328,9 +337,9 @@ func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.
 
 // bet processes a bet made by a player in a game.
 func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	number, err := strconv.Atoi(web.Param(ctx, "number"))
@@ -356,9 +365,9 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 // callLiar processes the claims and defines a winner and a loser for the round.
 func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if _, _, err := g.CallLiar(ctx, mid.GetSubject(ctx)); err != nil {
@@ -376,9 +385,9 @@ func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.
 
 // reconcile calls the smart contract reconcile method.
 func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, h.bankTimeout)
@@ -416,9 +425,9 @@ func (h *handlers) balance(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // nextTurn changes the account that will make the next move.
 func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if err := g.NextTurn(ctx); err != nil {
@@ -434,9 +443,9 @@ func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 // part of the game flow, it is used to control when a player should be removed
 // from the game.
 func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := h.getGame(web.Param(ctx, "id"))
+	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
 	if err != nil {
-		return err
+		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	outs, err := strconv.Atoi(web.Param(ctx, "outs"))
@@ -453,16 +462,6 @@ func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http
 	evts.send(g.ID(), fmt.Sprintf(`{"type":"outs","address":%q}`, address))
 
 	return h.status(ctx, w, r)
-}
-
-// getGame safely returns a copy of the game pointer.
-func (h *handlers) getGame(gameID string) (*game.Game, error) {
-	g, err := game.Tables.Retrieve(gameID)
-	if err != nil {
-		return nil, v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
-	}
-
-	return g, nil
 }
 
 func validateSignature(r *http.Request, timeout time.Duration) (string, error) {

@@ -36,7 +36,6 @@ import (
 	Add a Drain function to the smart contract.
 	Add an account fix function to adjust balances.
 	Have engine sign all transactions to the smart contract.
-	Add multi-table with max of 5 players.
 
 	-- Browser UI
 	Use Phaser as a new UI
