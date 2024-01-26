@@ -11,7 +11,6 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
-	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
@@ -36,7 +35,6 @@ type Config struct {
 	Auth           *auth.Auth
 	Converter      *currency.Converter
 	Bank           *bank.Bank
-	Evts           *events.Events
 	AnteUSD        float64
 	ActiveKID      string
 	BankTimeout    time.Duration

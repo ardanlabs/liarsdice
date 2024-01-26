@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type ctxKey int
@@ -22,4 +23,9 @@ func GetClaims(ctx context.Context) auth.Claims {
 		return auth.Claims{}
 	}
 	return v
+}
+
+// GetSubject provides access to the subject from the claims.
+func GetSubject(ctx context.Context) common.Address {
+	return common.HexToAddress(GetClaims(ctx).Subject)
 }

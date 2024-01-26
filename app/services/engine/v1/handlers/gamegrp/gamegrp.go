@@ -19,7 +19,6 @@ import (
 	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
-	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
@@ -32,13 +31,11 @@ type handlers struct {
 	bank           *bank.Bank
 	log            *logger.Logger
 	ws             websocket.Upgrader
-	evts           *events.Events
 	activeKID      string
 	auth           *auth.Auth
 	anteUSD        float64
 	bankTimeout    time.Duration
 	connectTimeout time.Duration
-	games          *games
 }
 
 // connect is used to return a game token for API usage.
@@ -66,7 +63,6 @@ func (h *handlers) connect(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // events handles a web socket to provide events to a client.
 func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	v := web.GetValues(ctx)
 
 	// Need this to handle CORS on the websocket.
 	h.ws.CheckOrigin = func(r *http.Request) bool { return true }
@@ -77,7 +73,7 @@ func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Re
 		return err
 	}
 
-	h.log.Info(ctx, "websocket open", "path", "/v1/game/events", "traceid", v.TraceID)
+	h.log.Info(ctx, "websocket open", "path", "/v1/game/events")
 
 	// Set the timeouts for the ping to identify if a web socket
 	// connection is broken.
@@ -94,8 +90,14 @@ func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Re
 	c.SetPongHandler(f)
 
 	// This provides a channel for receiving events from the blockchain.
-	ch := h.evts.Acquire(v.TraceID)
-	defer h.evts.Release(v.TraceID)
+	subjectID := mid.GetSubject(ctx).String()
+	ch := evts.acquire(subjectID)
+	defer func() {
+		evts.release(subjectID)
+		h.log.Info(ctx, "evts.release", "account", subjectID)
+	}()
+
+	h.log.Info(ctx, "evts.acquire", "account", subjectID)
 
 	// Starting a ticker to send a ping message over the websocket.
 	pingSend := time.NewTicker(pingPeriod)
@@ -120,7 +122,7 @@ func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	defer func() {
 		wg.Wait()
-		h.log.Info(ctx, "websocket closed", "path", "/v1/game/events", "traceid", v.TraceID)
+		h.log.Info(ctx, "websocket closed", "path", "/v1/game/events")
 	}()
 	defer c.Close()
 
@@ -135,13 +137,15 @@ func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Re
 			}
 
 			if err := c.WriteMessage(websocket.TextMessage, []byte(msg)); err != nil {
-				h.log.Info(ctx, "websocket write", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
+				h.log.Info(ctx, "websocket write", "path", "/v1/game/events", "ERROR", err)
 				return nil
 			}
 
+			h.log.Info(ctx, "evts.send", "msg", msg)
+
 		case <-pingSend.C:
 			if err := c.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
-				h.log.Info(ctx, "websocket ping", "path", "/v1/game/events", "traceid", v.TraceID, "ERROR", err)
+				h.log.Info(ctx, "websocket ping", "path", "/v1/game/events", "ERROR", err)
 				return nil
 			}
 		}
@@ -189,7 +193,7 @@ func (h *handlers) tables(ctx context.Context, w http.ResponseWriter, r *http.Re
 	info := struct {
 		GameIDs []string `json:"gameIDs"`
 	}{
-		GameIDs: h.games.active(),
+		GameIDs: game.Tables.Active(),
 	}
 
 	return web.Respond(ctx, w, info, http.StatusOK)
@@ -201,7 +205,6 @@ func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Re
 	address := common.HexToAddress(claims.Subject)
 
 	gameID := web.Param(ctx, "id")
-	h.log.Info(ctx, "******************* GETTING GAME ID", "ID", gameID)
 
 	g, err := h.getGame(gameID)
 	if err != nil {
@@ -251,17 +254,19 @@ func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Re
 // newGame creates a new game if there is no game or the status of the current game
 // is GameOver.
 func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims := mid.GetClaims(ctx)
-	address := claims.Subject
-
-	game, err := h.createGame(ctx, address)
+	g, err := game.New(ctx, h.log, h.converter, h.bank, mid.GetSubject(ctx), h.anteUSD)
 	if err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return v1.NewTrustedError(fmt.Errorf("unable to create game: %w", err), http.StatusBadRequest)
 	}
 
-	gameID := game.ID()
-	h.games.add(gameID, game)
-	ctx = web.SetParam(ctx, "id", gameID)
+	subjectID := mid.GetSubject(ctx).String()
+
+	h.log.Info(ctx, "evts.addPlayerToGame", "gameID", g.ID(), "account", subjectID)
+	if err := evts.addPlayerToGame(g.ID(), subjectID); err != nil {
+		h.log.Info(ctx, "evts.addPlayerToGame", "ERROR", err, "account", subjectID)
+	}
+
+	ctx = web.SetParam(ctx, "id", g.ID())
 
 	return h.status(ctx, w, r)
 }
@@ -273,14 +278,18 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
+	subjectID := mid.GetSubject(ctx)
 
-	if err := g.AddAccount(ctx, address); err != nil {
+	if err := g.AddAccount(ctx, subjectID); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"join","address":%q}`, address))
+	h.log.Info(ctx, "evts.addPlayerToGame", "gameID", g.ID(), "account", subjectID)
+	if err := evts.addPlayerToGame(g.ID(), subjectID.String()); err != nil {
+		h.log.Info(ctx, "evts.addPlayerToGame", "ERROR", err, "account", subjectID)
+	}
+
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"join","address":%q}`, subjectID))
 
 	return h.status(ctx, w, r)
 }
@@ -292,14 +301,11 @@ func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := claims.Subject
-
 	if err := g.StartGame(ctx); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"start","address":%q}`, address))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"start","address":%q}`, mid.GetSubject(ctx)))
 
 	return h.status(ctx, w, r)
 }
@@ -311,14 +317,11 @@ func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
-	if err := g.RollDice(ctx, address); err != nil {
+	if err := g.RollDice(ctx, mid.GetSubject(ctx)); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"rolldice","address":%q}`, address))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"rolldice","address":%q}`, mid.GetSubject(ctx)))
 
 	return h.status(ctx, w, r)
 }
@@ -330,9 +333,6 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
 	number, err := strconv.Atoi(web.Param(ctx, "number"))
 	if err != nil {
 		return v1.NewTrustedError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
@@ -343,11 +343,13 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1.NewTrustedError(fmt.Errorf("converting suit: %s", err), http.StatusBadRequest)
 	}
 
+	address := mid.GetSubject(ctx)
+
 	if err := g.Bet(ctx, address, number, suit); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info(ctx).Cups[address].OrderIdx))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info(ctx).Cups[address].OrderIdx))
 
 	return h.status(ctx, w, r)
 }
@@ -359,10 +361,7 @@ func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
-	if _, _, err := g.CallLiar(ctx, address); err != nil {
+	if _, _, err := g.CallLiar(ctx, mid.GetSubject(ctx)); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
@@ -370,7 +369,7 @@ func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"callliar","address":%q}`, address))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"callliar","address":%q}`, mid.GetSubject(ctx)))
 
 	return h.status(ctx, w, r)
 }
@@ -382,9 +381,6 @@ func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
 	ctx, cancel := context.WithTimeout(ctx, h.bankTimeout)
 	defer cancel()
 
@@ -392,20 +388,19 @@ func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return v1.NewTrustedError(err, http.StatusInternalServerError)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"reconcile","address":%q}`, address))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"reconcile","address":%q}`, mid.GetSubject(ctx)))
+
+	evts.removePlayersFromGame(g.ID())
 
 	return h.status(ctx, w, r)
 }
 
 // balance returns the player balance from the smart contract.
 func (h *handlers) balance(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	claims := mid.GetClaims(ctx)
-	address := claims.Subject
-
 	ctx, cancel := context.WithTimeout(ctx, h.bankTimeout)
 	defer cancel()
 
-	balanceGWei, err := h.bank.AccountBalance(ctx, common.HexToAddress(address))
+	balanceGWei, err := h.bank.AccountBalance(ctx, mid.GetSubject(ctx))
 	if err != nil {
 		return v1.NewTrustedError(err, http.StatusInternalServerError)
 	}
@@ -426,14 +421,11 @@ func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
 	if err := g.NextTurn(ctx); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"nextturn","address":%q}`, address))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"nextturn","address":%q}`, mid.GetSubject(ctx)))
 
 	return h.status(ctx, w, r)
 }
@@ -447,37 +439,25 @@ func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http
 		return err
 	}
 
-	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
 	outs, err := strconv.Atoi(web.Param(ctx, "outs"))
 	if err != nil {
 		return v1.NewTrustedError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
 	}
 
+	address := mid.GetSubject(ctx)
+
 	if err := g.ApplyOut(ctx, address, outs); err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.evts.Send(fmt.Sprintf(`{"type":"outs","address":%q}`, address))
+	evts.send(g.ID(), fmt.Sprintf(`{"type":"outs","address":%q}`, address))
 
 	return h.status(ctx, w, r)
 }
 
-// createGame resets the existing game. At this time we let this happen at any
-// time regardless of game state.
-func (h *handlers) createGame(ctx context.Context, address string) (*game.Game, error) {
-	g, err := game.New(ctx, h.log, h.converter, h.bank, common.HexToAddress(address), h.anteUSD)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create game: %w", err)
-	}
-
-	return g, nil
-}
-
 // getGame safely returns a copy of the game pointer.
 func (h *handlers) getGame(gameID string) (*game.Game, error) {
-	g, err := h.games.retrieve(gameID)
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return nil, v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}

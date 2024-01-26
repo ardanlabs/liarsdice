@@ -22,7 +22,6 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/debug"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mux"
-	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/keystore"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
@@ -190,8 +189,6 @@ func run(ctx context.Context, log *logger.Logger) error {
 	oneETHToUSD, oneUSDToETH := converter.Values()
 	log.Info(ctx, "currency values", "oneETHToUSD", oneETHToUSD, "oneUSDToETH", oneUSDToETH)
 
-	evts := events.New()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -242,7 +239,6 @@ func run(ctx context.Context, log *logger.Logger) error {
 		Auth:           authClient,
 		Converter:      converter,
 		Bank:           bankClient,
-		Evts:           evts,
 		AnteUSD:        cfg.Game.AnteUSD,
 		ActiveKID:      cfg.Auth.ActiveKID,
 		BankTimeout:    cfg.Bank.Timeout,
@@ -275,10 +271,6 @@ func run(ctx context.Context, log *logger.Logger) error {
 	case sig := <-shutdown:
 		log.Info(ctx, "shutdown", "status", "shutdown started", "signal", sig)
 		defer log.Info(ctx, "shutdown", "status", "shutdown complete", "signal", sig)
-
-		// Release any web sockets that are currently active.
-		log.Info(ctx, "shutdown", "status", "shutdown web socket channels")
-		evts.Shutdown()
 
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
 		defer cancel()

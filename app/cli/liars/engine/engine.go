@@ -94,7 +94,10 @@ func (e *Engine) Events(f func(event string, address common.Address)) (func(), e
 	url := strings.Replace(e.url, "http", "ws", 1)
 	url = fmt.Sprintf("%s/v1/game/events", url)
 
-	socket, _, err := websocket.DefaultDialer.Dial(url, nil)
+	req := make(http.Header)
+	req.Add("authorization", fmt.Sprintf("Bearer %s", e.token))
+
+	socket, _, err := websocket.DefaultDialer.Dial(url, req)
 	if err != nil {
 		return nil, fmt.Errorf("dial: %w", err)
 	}

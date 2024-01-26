@@ -74,6 +74,8 @@ func New(ctx context.Context, log *logger.Logger, converter *currency.Converter,
 		return nil, errors.New("unable to add owner to the game")
 	}
 
+	Tables.add(&g)
+
 	return &g, nil
 }
 

@@ -113,6 +113,8 @@ func (b *Board) newGame() error {
 
 	b.lastStatus = status
 
+	b.drawInit(true)
+
 	return nil
 }
 

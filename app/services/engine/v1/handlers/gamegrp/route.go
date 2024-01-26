@@ -8,7 +8,6 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
-	"github.com/ardanlabs/liarsdice/foundation/events"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/gorilla/websocket"
@@ -20,7 +19,7 @@ type Config struct {
 	Auth           *auth.Auth
 	Converter      *currency.Converter
 	Bank           *bank.Bank
-	Evts           *events.Events
+	Evts           *events
 	AnteUSD        float64
 	ActiveKID      string
 	BankTimeout    time.Duration
@@ -35,19 +34,17 @@ func Routes(app *web.App, cfg Config) {
 		converter:      cfg.Converter,
 		bank:           cfg.Bank,
 		log:            cfg.Log,
-		evts:           cfg.Evts,
 		ws:             websocket.Upgrader{},
 		auth:           cfg.Auth,
 		activeKID:      cfg.ActiveKID,
 		anteUSD:        cfg.AnteUSD,
 		bankTimeout:    cfg.BankTimeout,
 		connectTimeout: cfg.ConnectTimeout,
-		games:          initGames(),
 	}
 
 	app.Handle(http.MethodPost, version, "/game/connect", hdl.connect)
 
-	app.Handle(http.MethodGet, version, "/game/events", hdl.events)
+	app.Handle(http.MethodGet, version, "/game/events", hdl.events, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/config", hdl.configuration)
 	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", hdl.usd2Wei)
 	app.Handle(http.MethodGet, version, "/game/new", hdl.newGame, mid.Authenticate(cfg.Auth))
