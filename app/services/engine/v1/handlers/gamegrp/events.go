@@ -141,8 +141,8 @@ func (evt *events) send(ctx context.Context, gID string, typ string, v ...any) {
 	}
 
 	var msg string
-	switch {
-	case v == nil:
+	switch v {
+	case nil:
 		msg = fmt.Sprintf(`{"type":"%s","address":"%s"}`, typ, mid.GetSubject(ctx))
 
 	default:
