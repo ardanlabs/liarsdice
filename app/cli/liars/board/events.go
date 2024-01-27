@@ -15,12 +15,12 @@ func (b *Board) webEvents(event string, address common.Address) {
 		b.printMessage(message, true)
 	}
 
-	var status engine.Status
+	var state engine.State
 	var err error
 
 	switch event {
 	case "start":
-		status, err = b.engine.RollDice(b.lastStatus.GameID)
+		state, err = b.engine.RollDice(b.lastState.GameID)
 		if err != nil {
 			b.printMessage("error rolling dice", true)
 		}
@@ -34,12 +34,12 @@ func (b *Board) webEvents(event string, address common.Address) {
 		}
 
 	case "callliar":
-		status, err = b.modalWinnerLoser("*** WON ROUND ***", "*** LOST ROUND ***")
+		state, err = b.modalWinnerLoser("*** WON ROUND ***", "*** LOST ROUND ***")
 		if err != nil {
 			b.printMessage("winner/loser", true)
 		}
 
-		status, err = b.reconcile(status)
+		state, err = b.reconcile(state)
 		if err != nil {
 			b.printMessage(err.Error(), true)
 		}
@@ -49,19 +49,19 @@ func (b *Board) webEvents(event string, address common.Address) {
 	}
 
 	// If we don't have a new status, retrieve the latest.
-	if status.Status == "" {
-		status, err = b.engine.QueryStatus(b.lastStatus.GameID)
+	if state.Status == "" {
+		state, err = b.engine.QueryState(b.lastState.GameID)
 		if err != nil {
 			return
 		}
 	}
 
 	// Redraw the screen on any event to keep it up to date.
-	b.drawBoard(status)
+	b.drawBoard(state)
 }
 
 // reconcile the game the winner gets paid.
-func (b *Board) reconcile(status engine.Status) (engine.Status, error) {
+func (b *Board) reconcile(status engine.State) (engine.State, error) {
 	if status.Status != "gameover" {
 		return status, nil
 	}
@@ -70,10 +70,10 @@ func (b *Board) reconcile(status engine.Status) (engine.Status, error) {
 		return status, nil
 	}
 
-	newStatus, err := b.engine.Reconcile(status.GameID)
+	newState, err := b.engine.Reconcile(status.GameID)
 	if err != nil {
-		return engine.Status{}, err
+		return engine.State{}, err
 	}
 
-	return newStatus, nil
+	return newState, nil
 }

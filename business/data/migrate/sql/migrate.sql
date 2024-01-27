@@ -24,11 +24,11 @@ CREATE TABLE game_status
 
 CREATE TABLE game_cups
 (
-    game_id   VARCHAR NOT NULL,
-    iteration INT     NOT NULL,
-    player    VARCHAR NOT NULL,
-    OrderIdx  INT     NOT NULL,
-	Outs      INT     NOT NULL,
+    game_id    VARCHAR NOT NULL,
+    iteration  INT     NOT NULL,
+    player     VARCHAR NOT NULL,
+    order_idx  INT     NOT NULL,
+	outs       INT     NOT NULL,
 
     PRIMARY KEY (game_id, iteration, player)
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE
@@ -39,7 +39,7 @@ CREATE TABLE game_dice
     game_id   VARCHAR NOT NULL,
     iteration INT     NOT NULL,
     player    VARCHAR NOT NULL,
-    Dice      INT     NOT NULL,
+    dice      INT     NOT NULL,
 
     PRIMARY KEY (game_id, iteration, player)
     FOREIGN KEY (game_id) REFERENCES games(game_id) ON DELETE CASCADE

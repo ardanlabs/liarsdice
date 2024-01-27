@@ -146,16 +146,16 @@ func (e *Engine) Configuration() (Config, error) {
 	return config, nil
 }
 
-// QueryStatus starts a new game on the game engine.
-func (e *Engine) QueryStatus(gameID string) (Status, error) {
-	url := fmt.Sprintf("%s/v1/game/%s/status", e.url, gameID)
+// QueryState returns the current state of the specified game.
+func (e *Engine) QueryState(gameID string) (State, error) {
+	url := fmt.Sprintf("%s/v1/game/%s/state", e.url, gameID)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // Tables returns the current set of tables.
@@ -171,87 +171,87 @@ func (e *Engine) Tables(gameID string) (Tables, error) {
 }
 
 // NewGame starts a new game on the game engine.
-func (e *Engine) NewGame() (Status, error) {
+func (e *Engine) NewGame() (State, error) {
 	url := fmt.Sprintf("%s/v1/game/new", e.url)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // StartGame generates the five dice for the player.
-func (e *Engine) StartGame(gameID string) (Status, error) {
+func (e *Engine) StartGame(gameID string) (State, error) {
 	url := fmt.Sprintf("%s/v1/game/%s/start", e.url, gameID)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // RollDice generates the five dice for the player.
-func (e *Engine) RollDice(gameID string) (Status, error) {
+func (e *Engine) RollDice(gameID string) (State, error) {
 	url := fmt.Sprintf("%s/v1/game/%s/rolldice", e.url, gameID)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // JoinGame adds a player to the current game.
-func (e *Engine) JoinGame(gameID string) (Status, error) {
+func (e *Engine) JoinGame(gameID string) (State, error) {
 	url := fmt.Sprintf("%s/v1/game/%s/join", e.url, gameID)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // Bet submits a bet to the game engine.
-func (e *Engine) Bet(gameID string, number int, suit rune) (Status, error) {
+func (e *Engine) Bet(gameID string, number int, suit rune) (State, error) {
 	url := fmt.Sprintf("%s/v1/game/%s/bet/%d/%c", e.url, gameID, number, suit)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // Liar submits a liar call to the game engine.
-func (e *Engine) Liar(gameID string) (Status, error) {
+func (e *Engine) Liar(gameID string) (State, error) {
 	url := fmt.Sprintf("%s/v1/game/%s/liar", e.url, gameID)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // Reconcile submits a reconcile call when the game is over.
-func (e *Engine) Reconcile(gameID string) (Status, error) {
+func (e *Engine) Reconcile(gameID string) (State, error) {
 	url := fmt.Sprintf("%s/v1/game/%s/reconcile", e.url, gameID)
 
-	var status Status
-	if err := e.do(url, &status, nil); err != nil {
-		return Status{}, err
+	var state State
+	if err := e.do(url, &state, nil); err != nil {
+		return State{}, err
 	}
 
-	return status, nil
+	return state, nil
 }
 
 // do makes the actual http call to the engine.

@@ -539,8 +539,8 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 	return tx, receipt, nil
 }
 
-// Info returns a copy of the game status.
-func (g *Game) Info(ctx context.Context) Status {
+// State returns a copy of the game state.
+func (g *Game) State(ctx context.Context) State {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
@@ -560,7 +560,7 @@ func (g *Game) Info(ctx context.Context) Status {
 		balances[i] = g.converter.GWei2USD(bal)
 	}
 
-	return Status{
+	return State{
 		GameID:          g.id,
 		Status:          g.status,
 		PlayerLastOut:   g.playerLastOut,

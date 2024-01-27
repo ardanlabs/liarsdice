@@ -12,10 +12,10 @@ import (
 
 // drawInit generates the initial game board and starts the event loop.
 func (b *Board) drawInit(active bool) error {
-	var status engine.Status
-	if b.lastStatus.GameID != "" {
+	var state engine.State
+	if b.lastState.GameID != "" {
 		var err error
-		status, err = b.engine.QueryStatus(b.lastStatus.GameID)
+		state, err = b.engine.QueryState(b.lastState.GameID)
 		if err != nil {
 			return err
 		}
@@ -51,19 +51,19 @@ func (b *Board) drawInit(active bool) error {
 	b.screen.SetCursorStyle(tcell.CursorStyleBlinkingBlock)
 	b.print(betRowX, betRowY, "                 ")
 
-	b.drawBoard(status)
+	b.drawBoard(state)
 
 	return nil
 }
 
 // drawBoard display the status information.
-func (b *Board) drawBoard(status engine.Status) {
+func (b *Board) drawBoard(status engine.State) {
 	if status.GameID == "" {
 		return
 	}
 
-	// Save this status for modal support.
-	b.lastStatus = status
+	// Save this state for modal support.
+	b.lastState = status
 
 	// Print the current game status and round.
 	b.print(helpX+11, statusY-6, fmt.Sprintf("%-10s / %s", status.Status, status.GameID))
@@ -86,13 +86,6 @@ func (b *Board) drawBoard(status engine.Status) {
 	}
 
 	var pot float64
-
-	// Clear the player lines.
-	for i := 0; i < 5; i++ {
-		addrY := columnHeight + 1 + i
-		b.print(playersX, addrY, fmt.Sprintf("%-*s", boardWidth-4, " "))
-		b.print(myDiceX, myDiceY, fmt.Sprintf("%-20s", " "))
-	}
 
 	// Print the player lines.
 	for i, cup := range status.Cups {
@@ -156,6 +149,13 @@ func (b *Board) drawBoard(status engine.Status) {
 			b.drawGameBox(false)
 		}
 	}
+
+	// Print any existing messages.
+	b.print(3, messageHeight+1, b.messages[0])
+	b.print(3, messageHeight+2, b.messages[1])
+	b.print(3, messageHeight+3, b.messages[2])
+	b.print(3, messageHeight+4, b.messages[3])
+	b.print(3, messageHeight+5, b.messages[4])
 
 	// Hide the cursor to show the game is over.
 	if status.Status == "gameover" {

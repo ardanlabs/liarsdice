@@ -81,9 +81,9 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status := engine.Info(ctx)
-	if status.Status != game.StatusPlaying {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
+	state := engine.State(ctx)
+	if state.Status != game.StatusPlaying {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -98,17 +98,17 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Game Play: Each player makes a bet and player1 calls liar.
 
-	winnerAcct := engine.Info(ctx).PlayerTurn
+	winnerAcct := engine.State(ctx).PlayerTurn
 	if err := engine.Bet(ctx, winnerAcct, 2, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
-	loserAcct := engine.Info(ctx).PlayerTurn
+	loserAcct := engine.State(ctx).PlayerTurn
 	if err := engine.Bet(ctx, loserAcct, 3, 4); err != nil {
 		t.Fatalf("unexpected error making bet for player2: %s", err)
 	}
 
-	winner, loser, err := engine.CallLiar(ctx, engine.Info(ctx).PlayerTurn)
+	winner, loser, err := engine.CallLiar(ctx, engine.State(ctx).PlayerTurn)
 	if err != nil {
 		t.Fatalf("unexpected error calling liar for player1: %s", err)
 	}
@@ -124,14 +124,14 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Cups[loserAcct].Outs != 1 {
-		t.Fatalf("expecting 'player2' to have 1 out; got %d", status.Cups[player2Addr].Outs)
+	if state.Cups[loserAcct].Outs != 1 {
+		t.Fatalf("expecting 'player2' to have 1 out; got %d", state.Cups[player2Addr].Outs)
 	}
 
-	if status.Status != game.StatusRoundOver {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, status.Status)
+	if state.Status != game.StatusRoundOver {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -146,10 +146,10 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 2 players; got %d", leftToPlay)
 	}
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Status != game.StatusPlaying {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
+	if state.Status != game.StatusPlaying {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -185,14 +185,14 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Cups[loserAcct].Outs != 2 {
-		t.Fatalf("expecting 'player2' to have 2 out; got %d", status.Cups[player2Addr].Outs)
+	if state.Cups[loserAcct].Outs != 2 {
+		t.Fatalf("expecting 'player2' to have 2 out; got %d", state.Cups[player2Addr].Outs)
 	}
 
-	if status.Status != game.StatusRoundOver {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, status.Status)
+	if state.Status != game.StatusRoundOver {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -207,10 +207,10 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 2 players; got %d", leftToPlay)
 	}
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Status != game.StatusPlaying {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
+	if state.Status != game.StatusPlaying {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -246,14 +246,14 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 'player2' to be the loser; got '%s'", loser)
 	}
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Cups[loserAcct].Outs != 3 {
-		t.Fatalf("expecting 'player2' to have 3 out; got %d", status.Cups[player2Addr].Outs)
+	if state.Cups[loserAcct].Outs != 3 {
+		t.Fatalf("expecting 'player2' to have 3 out; got %d", state.Cups[player2Addr].Outs)
 	}
 
-	if status.Status != game.StatusRoundOver {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, status.Status)
+	if state.Status != game.StatusRoundOver {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusRoundOver, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -268,14 +268,14 @@ func Test_SuccessGamePlay(t *testing.T) {
 		t.Fatalf("expecting 1 player; got %d", leftToPlay)
 	}
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Status != game.StatusGameOver {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusGameOver, status.Status)
+	if state.Status != game.StatusGameOver {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusGameOver, state.Status)
 	}
 
-	if status.PlayerLastWin != winnerAcct {
-		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", status.PlayerLastWin)
+	if state.PlayerLastWin != winnerAcct {
+		t.Fatalf("expecting 'player1' to be the LastWinAcct; got '%s'", state.PlayerLastWin)
 	}
 
 	// -------------------------------------------------------------------------
@@ -324,10 +324,10 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Validate final game state
 
-	status = engine.Info(ctx)
+	state = engine.State(ctx)
 
-	if status.Status != game.StatusReconciled {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusReconciled, status.Status)
+	if state.Status != game.StatusReconciled {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusReconciled, state.Status)
 	}
 }
 
@@ -348,9 +348,10 @@ func Test_InvalidBet(t *testing.T) {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status := engine.Info(ctx)
-	if status.Status != game.StatusPlaying {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
+	state := engine.State(ctx)
+
+	if state.Status != game.StatusPlaying {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, state.Status)
 	}
 
 	// -------------------------------------------------------------------------
@@ -365,13 +366,13 @@ func Test_InvalidBet(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Game Play : player 1 makes bet and player 2 makes invalid bet
 
-	if err := engine.Bet(ctx, engine.Info(ctx).PlayerTurn, 3, 3); err != nil {
+	if err := engine.Bet(ctx, engine.State(ctx).PlayerTurn, 3, 3); err != nil {
 		t.Fatalf("unexpected error making bet for player1: %s", err)
 	}
 
 	engine.NextTurn(ctx)
 
-	if err := engine.Bet(ctx, engine.Info(ctx).PlayerTurn, 2, 6); err == nil {
+	if err := engine.Bet(ctx, engine.State(ctx).PlayerTurn, 2, 6); err == nil {
 		t.Fatal("expecting error making an invalid bet")
 	}
 }
@@ -393,13 +394,14 @@ func Test_WrongPlayerTryingToPlay(t *testing.T) {
 		t.Fatalf("unexpected error starting the game: %s", err)
 	}
 
-	status := engine.Info(ctx)
-	if status.Status != game.StatusPlaying {
-		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, status.Status)
+	state := engine.State(ctx)
+
+	if state.Status != game.StatusPlaying {
+		t.Fatalf("expecting game status to be %s; got %s", game.StatusPlaying, state.Status)
 	}
 
 	var wrongPlayer common.Address
-	switch engine.Info(ctx).PlayerTurn {
+	switch engine.State(ctx).PlayerTurn {
 	case player1Addr:
 		wrongPlayer = player2Addr
 	case player2Addr:
@@ -589,10 +591,10 @@ func gameSetup(t *testing.T) (*bank.Bank, *game.Game) {
 		t.Fatalf("unexpected error adding player 2: %s", err)
 	}
 
-	status := game.Info(ctx)
+	state := game.State(ctx)
 
-	if len(status.Cups) != 2 {
-		t.Fatalf("expecting 2 players; got %d", len(status.Cups))
+	if len(state.Cups) != 2 {
+		t.Fatalf("expecting 2 players; got %d", len(state.Cups))
 	}
 
 	return bank, game

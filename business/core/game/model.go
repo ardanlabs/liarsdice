@@ -17,8 +17,8 @@ const (
 // to play a game.
 const minNumberPlayers = 2
 
-// Status represents a copy of the game status.
-type Status struct {
+// State represents a copy of the game state.
+type State struct {
 	GameID          string
 	Status          string
 	PlayerLastOut   common.Address

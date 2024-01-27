@@ -199,8 +199,8 @@ func (h *handlers) tables(ctx context.Context, w http.ResponseWriter, r *http.Re
 	return web.Respond(ctx, w, info, http.StatusOK)
 }
 
-// status will return information about the game.
-func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+// state will return information about the game.
+func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims := mid.GetClaims(ctx)
 	address := common.HexToAddress(claims.Subject)
 
@@ -208,47 +208,33 @@ func (h *handlers) status(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		resp := Status{
+		resp := appState{
 			Status:  "nogame",
 			AnteUSD: h.anteUSD,
 		}
 		return web.Respond(ctx, w, resp, http.StatusOK)
 	}
 
-	status := g.Info(ctx)
+	state := g.State(ctx)
 
-	var cups []Cup
-	for _, accountID := range status.ExistingPlayers {
-		cup := status.Cups[accountID]
+	var cups []appCup
+	for _, accountID := range state.ExistingPlayers {
+		cup := state.Cups[accountID]
 
 		// Don't share the dice information for other players.
 		dice := []int{0, 0, 0, 0, 0}
 		if accountID == address {
 			dice = cup.Dice
 		}
-		cups = append(cups, Cup{Player: cup.Player, Dice: dice, Outs: cup.Outs})
+		cups = append(cups, toAppCup(cup, dice))
 	}
 
-	var bets []Bet
-	for _, bet := range status.Bets {
-		bets = append(bets, Bet{Player: bet.Player, Number: bet.Number, Suit: bet.Suit})
+	var bets []appBet
+	for _, bet := range state.Bets {
+		bets = append(bets, toAppBet(bet))
 	}
 
-	resp := Status{
-		GameID:          status.GameID,
-		Status:          status.Status,
-		AnteUSD:         h.anteUSD,
-		PlayerLastOut:   status.PlayerLastOut,
-		PlayerLastWin:   status.PlayerLastWin,
-		PlayerTurn:      status.PlayerTurn,
-		Round:           status.Round,
-		Cups:            cups,
-		ExistingPlayers: status.ExistingPlayers,
-		Bets:            bets,
-		Balances:        status.Balances,
-	}
-
-	return web.Respond(ctx, w, resp, http.StatusOK)
+	return web.Respond(ctx, w, toAppState(state, h.anteUSD, cups, bets), http.StatusOK)
 }
 
 // newGame creates a new game if there is no game or the status of the current game
@@ -268,7 +254,7 @@ func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	ctx = web.SetParam(ctx, "id", g.ID())
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // join adds the given player to the game.
@@ -298,9 +284,9 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		h.log.Info(ctx, "evts.addPlayerToGame", "ERROR", err, "account", subjectID)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"join","address":%q}`, subjectID))
+	evts.send(ctx, g.ID(), "join")
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // startGame changes the status of the game so players can begin to play.
@@ -314,9 +300,9 @@ func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"start","address":%q}`, mid.GetSubject(ctx)))
+	evts.send(ctx, g.ID(), "start")
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // rollDice will roll 5 dice for the given player and game.
@@ -330,9 +316,9 @@ func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"rolldice","address":%q}`, mid.GetSubject(ctx)))
+	evts.send(ctx, g.ID(), "rolldice")
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // bet processes a bet made by a player in a game.
@@ -358,9 +344,9 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"bet","address":%q,"index":%d}`, address, g.Info(ctx).Cups[address].OrderIdx))
+	evts.send(ctx, g.ID(), "bet", "index", g.State(ctx).Cups[address].OrderIdx)
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // callLiar processes the claims and defines a winner and a loser for the round.
@@ -378,9 +364,9 @@ func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"callliar","address":%q}`, mid.GetSubject(ctx)))
+	evts.send(ctx, g.ID(), "callliar")
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // reconcile calls the smart contract reconcile method.
@@ -397,11 +383,11 @@ func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http
 		return v1.NewTrustedError(err, http.StatusInternalServerError)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"reconcile","address":%q}`, mid.GetSubject(ctx)))
+	evts.send(ctx, g.ID(), "reconcile")
 
 	evts.removePlayersFromGame(g.ID())
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // balance returns the player balance from the smart contract.
@@ -434,9 +420,9 @@ func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"nextturn","address":%q}`, mid.GetSubject(ctx)))
+	evts.send(ctx, g.ID(), "nextturn")
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 // updateOut replaces the current out amount of the player. This call is not
@@ -459,9 +445,9 @@ func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(g.ID(), fmt.Sprintf(`{"type":"outs","address":%q}`, address))
+	evts.send(ctx, g.ID(), "outs")
 
-	return h.status(ctx, w, r)
+	return h.state(ctx, w, r)
 }
 
 func validateSignature(r *http.Request, timeout time.Duration) (string, error) {

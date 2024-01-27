@@ -1,9 +1,11 @@
 package gamegrp
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"github.com/ardanlabs/liarsdice/business/core/game"
+	"github.com/ethereum/go-ethereum/common"
+)
 
-// Status represents the game status.
-type Status struct {
+type appState struct {
 	GameID          string           `json:"gameID"`
 	Status          string           `json:"status"`
 	AnteUSD         float64          `json:"anteUSD"`
@@ -11,23 +13,53 @@ type Status struct {
 	PlayerLastWin   common.Address   `json:"lastWin"`
 	PlayerTurn      common.Address   `json:"currentID"`
 	Round           int              `json:"round"`
-	Cups            []Cup            `json:"cups"`
+	Cups            []appCup         `json:"cups"`
 	ExistingPlayers []common.Address `json:"playerOrder"`
-	Bets            []Bet            `json:"bets"`
+	Bets            []appBet         `json:"bets"`
 	Balances        []string         `json:"balances"`
 }
 
-// Bet represents the bet response.
-type Bet struct {
+func toAppState(state game.State, anteUSD float64, cups []appCup, bets []appBet) appState {
+	return appState{
+		GameID:          state.GameID,
+		Status:          state.Status,
+		AnteUSD:         anteUSD,
+		PlayerLastOut:   state.PlayerLastOut,
+		PlayerLastWin:   state.PlayerLastWin,
+		PlayerTurn:      state.PlayerTurn,
+		Round:           state.Round,
+		Cups:            cups,
+		ExistingPlayers: state.ExistingPlayers,
+		Bets:            bets,
+		Balances:        state.Balances,
+	}
+}
+
+type appBet struct {
 	Player common.Address `json:"account"`
 	Number int            `json:"number"`
 	Suit   int            `json:"suit"`
 }
 
-// Cup represents the cup response.
-type Cup struct {
+func toAppBet(bet game.Bet) appBet {
+	return appBet{
+		Player: bet.Player,
+		Number: bet.Number,
+		Suit:   bet.Suit,
+	}
+}
+
+type appCup struct {
 	Player  common.Address `json:"account"`
 	Dice    []int          `json:"dice"`
-	LastBet Bet            `json:"lastBet"`
+	LastBet appBet         `json:"lastBet"`
 	Outs    int            `json:"outs"`
+}
+
+func toAppCup(cup game.Cup, dice []int) appCup {
+	return appCup{
+		Player: cup.Player,
+		Dice:   dice,
+		Outs:   cup.Outs,
+	}
 }

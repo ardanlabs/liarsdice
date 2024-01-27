@@ -8,19 +8,19 @@ import (
 )
 
 // modalWinnerLoser shows the user if they won or lost.
-func (b *Board) modalWinnerLoser(win string, los string) (engine.Status, error) {
-	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
+func (b *Board) modalWinnerLoser(win string, los string) (engine.State, error) {
+	state, err := b.engine.QueryState(b.lastState.GameID)
 	if err != nil {
-		return engine.Status{}, err
+		return engine.State{}, err
 	}
 
-	if status.LastWinAcctID == b.accountID {
+	if state.LastWinAcctID == b.accountID {
 		b.showModal(win)
-		return status, nil
+		return state, nil
 	}
 	b.showModal(los)
 
-	return status, nil
+	return state, nil
 }
 
 // showModal displays a modal dialog box.
@@ -71,7 +71,7 @@ func (b *Board) closeModal() {
 	b.modalFn = nil
 
 	active := false
-	if b.lastStatus.CurrentAcctID == b.accountID {
+	if b.lastState.CurrentAcctID == b.accountID {
 		active = true
 	}
 

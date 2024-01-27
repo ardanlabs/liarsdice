@@ -1,8 +1,12 @@
 package gamegrp
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
+
+	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 )
 
 // These types exist for documentation purposes. The API will
@@ -125,7 +129,7 @@ func (evt *events) removePlayersFromGame(gID string) error {
 
 // send signals a message to every registered channel for the specified
 // game. Send will not block waiting for a receiver on any given channel.
-func (evt *events) send(gID string, s string) {
+func (evt *events) send(ctx context.Context, gID string, typ string, v ...any) {
 	evt.mu.RLock()
 	defer evt.mu.RUnlock()
 
@@ -136,6 +140,31 @@ func (evt *events) send(gID string, s string) {
 		return
 	}
 
+	var msg string
+	switch {
+	case v == nil:
+		msg = fmt.Sprintf(`{"type":"%s","address":"%s"}`, typ, mid.GetSubject(ctx))
+
+	default:
+		m := map[string]any{
+			"type":    typ,
+			"address": mid.GetSubject(ctx),
+		}
+
+		for i := 0; i < len(v); i = i + 2 {
+			if vs, ok := v[i].(string); ok {
+				m[vs] = v[i+1]
+			}
+		}
+
+		data, err := json.Marshal(m)
+		if err != nil {
+			return
+		}
+
+		msg = string(data)
+	}
+
 	for playID := range playerMap {
 		ch, exists := evt.players[playID]
 		if !exists {
@@ -143,7 +172,7 @@ func (evt *events) send(gID string, s string) {
 		}
 
 		select {
-		case ch <- s:
+		case ch <- msg:
 		default:
 		}
 	}

@@ -50,17 +50,17 @@ var words = []string{"", "one's", "two's", "three's", "four's", "five's", "six's
 
 // Board represents the game board and all its state.
 type Board struct {
-	accountID  common.Address
-	engine     *engine.Engine
-	config     engine.Config
-	screen     tcell.Screen
-	style      tcell.Style
-	bets       []rune
-	messages   []string
-	lastStatus engine.Status
-	modalUp    bool
-	modalMsg   string
-	modalFn    func(r rune)
+	accountID common.Address
+	engine    *engine.Engine
+	config    engine.Config
+	screen    tcell.Screen
+	style     tcell.Style
+	bets      []rune
+	messages  []string
+	lastState engine.State
+	modalUp   bool
+	modalMsg  string
+	modalFn   func(r rune)
 }
 
 // New contructs a game board and renders the board.

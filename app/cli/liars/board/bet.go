@@ -9,7 +9,7 @@ import (
 // addBet takes the value selected on the keyboard and adds it to the
 // bet slice and screen.
 func (b *Board) addBet(r rune) error {
-	if b.lastStatus.CurrentAcctID != b.accountID {
+	if b.lastState.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 
@@ -37,7 +37,7 @@ func (b *Board) addBet(r rune) error {
 
 // subBet removes a value from the bet slice and screen.
 func (b *Board) subBet() error {
-	if b.lastStatus.CurrentAcctID != b.accountID {
+	if b.lastState.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 
@@ -68,16 +68,16 @@ func (b *Board) subBet() error {
 
 // enterBet is called to submit a bet.
 func (b *Board) enterBet() error {
-	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
+	state, err := b.engine.QueryState(b.lastState.GameID)
 	if err != nil {
 		return err
 	}
 
-	if status.Status != "playing" {
-		return errors.New("invalid status state: " + status.Status)
+	if state.Status != "playing" {
+		return errors.New("invalid status state: " + state.Status)
 	}
 
-	if status.CurrentAcctID != b.accountID {
+	if state.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 
@@ -85,7 +85,7 @@ func (b *Board) enterBet() error {
 		return errors.New("missing bet information")
 	}
 
-	if _, err = b.engine.Bet(b.lastStatus.GameID, len(b.bets), b.bets[0]); err != nil {
+	if _, err = b.engine.Bet(b.lastState.GameID, len(b.bets), b.bets[0]); err != nil {
 		return err
 	}
 

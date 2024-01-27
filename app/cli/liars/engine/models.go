@@ -21,8 +21,8 @@ type Token struct {
 	Address common.Address `json:"address"`
 }
 
-// Status represents the game status.
-type Status struct {
+// State represents the game state.
+type State struct {
 	GameID        string           `json:"gameID"`
 	Status        string           `json:"status"`
 	AnteUSD       float64          `json:"anteUSD"`

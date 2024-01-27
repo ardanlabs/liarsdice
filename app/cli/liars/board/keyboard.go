@@ -106,12 +106,12 @@ func (b *Board) value(r rune) error {
 
 // newGame starts a new game.
 func (b *Board) newGame() error {
-	status, err := b.engine.NewGame()
+	state, err := b.engine.NewGame()
 	if err != nil {
 		return err
 	}
 
-	b.lastStatus = status
+	b.lastState = state
 
 	b.drawInit(true)
 
@@ -120,7 +120,7 @@ func (b *Board) newGame() error {
 
 // joinGame adds the account to the game.
 func (b *Board) joinGame() error {
-	tables, err := b.engine.Tables(b.lastStatus.GameID)
+	tables, err := b.engine.Tables(b.lastState.GameID)
 	if err != nil {
 		return err
 	}
@@ -139,36 +139,36 @@ func (b *Board) joinGame() error {
 
 		gameID := tables.GameIDs[sel-1]
 
-		status, err := b.engine.QueryStatus(gameID)
+		state, err := b.engine.QueryState(gameID)
 		if err != nil {
 			b.closeModal()
 			b.showModal(err.Error())
 			return
 		}
 
-		for _, acct := range status.CupsOrder {
+		for _, acct := range state.CupsOrder {
 			if acct.Cmp(b.accountID) == 0 {
 				b.closeModal()
-				b.lastStatus = status
+				b.lastState = state
 				b.drawInit(true)
 				return
 			}
 		}
 
-		if status.Status != "newgame" {
+		if state.Status != "newgame" {
 			b.closeModal()
-			b.showModal(fmt.Sprintf("invalid status state: " + status.Status))
+			b.showModal(fmt.Sprintf("invalid status state: " + state.Status))
 			return
 		}
 
-		status, err = b.engine.JoinGame(gameID)
+		state, err = b.engine.JoinGame(gameID)
 		if err != nil {
 			b.closeModal()
 			b.showModal(err.Error())
 			return
 		}
 
-		b.lastStatus = status
+		b.lastState = state
 	}
 
 	b.showModalList(tables.GameIDs, fn)
@@ -178,16 +178,16 @@ func (b *Board) joinGame() error {
 
 // startGame start the game so it can be played.
 func (b *Board) startGame() error {
-	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
+	state, err := b.engine.QueryState(b.lastState.GameID)
 	if err != nil {
 		return err
 	}
 
-	if status.Status != "newgame" {
-		return errors.New("invalid status state: " + status.Status)
+	if state.Status != "newgame" {
+		return errors.New("invalid status state: " + state.Status)
 	}
 
-	if _, err := b.engine.StartGame(b.lastStatus.GameID); err != nil {
+	if _, err := b.engine.StartGame(b.lastState.GameID); err != nil {
 		return err
 	}
 
@@ -196,20 +196,20 @@ func (b *Board) startGame() error {
 
 // callLiar calls the last bet a lie.
 func (b *Board) callLiar() error {
-	status, err := b.engine.QueryStatus(b.lastStatus.GameID)
+	state, err := b.engine.QueryState(b.lastState.GameID)
 	if err != nil {
 		return err
 	}
 
-	if status.Status != "playing" {
-		return errors.New("invalid status state: " + status.Status)
+	if state.Status != "playing" {
+		return errors.New("invalid status state: " + state.Status)
 	}
 
-	if status.CurrentAcctID != b.accountID {
+	if state.CurrentAcctID != b.accountID {
 		return errors.New("not your turn")
 	}
 
-	if _, err := b.engine.Liar(b.lastStatus.GameID); err != nil {
+	if _, err := b.engine.Liar(b.lastState.GameID); err != nil {
 		return err
 	}
 
