@@ -26,23 +26,23 @@ type Banker interface {
 
 // Game represents a single game that is being played.
 type Game struct {
-	log                *logger.Logger
-	converter          *currency.Converter
-	banker             Banker
-	mu                 sync.RWMutex
-	id                 string                 // Unique game id.
-	status             string                 // Current status of the game.
-	round              int                    // Current round of the game.
-	anteUSD            float64                // The ante for joining this game.
-	cups               map[common.Address]Cup // Game players with indexes cup access.
-	players            []common.Address       // Game players in the order they were added.
-	existingPlayers    []common.Address       // The set of players still in the game.
-	playerBalancesGWei []*big.Float           // The balances of the players when added.
-	playerTurn         int                    // The index of the player who's turn it is.
-	playerLastOut      common.Address         // The player who lost the last round.
-	playerLastWin      common.Address         // The player who won the last round.
-	bets               []Bet                  // History of bets for the current round.
-	createdDate        time.Time              // The time the game was created. Used to help with caching.
+	log             *logger.Logger
+	converter       *currency.Converter
+	banker          Banker
+	mu              sync.RWMutex
+	id              string                 // Unique game id.
+	createdDate     time.Time              // The time the game was created. Used to help with caching.
+	round           int                    // Current round of the game.
+	status          string                 // Current status of the game.
+	anteUSD         float64                // The ante for joining this game.
+	playerLastOut   common.Address         // The player who lost the last round.
+	playerLastWin   common.Address         // The player who won the last round.
+	playerTurn      int                    // The index of the player who's turn it is.
+	players         []common.Address       // Game players in the order they were added.
+	existingPlayers []common.Address       // The set of players still in the game.
+	cups            map[common.Address]Cup // Game players with indexes cup access.
+	bets            []Bet                  // History of bets for the current round.
+	balancesGWei    []Balance              // The balances of the players when added.
 }
 
 // New creates a new game.
@@ -149,7 +149,11 @@ func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 
 	g.players = append(g.players, player)
 	g.existingPlayers = append(g.existingPlayers, player)
-	g.playerBalancesGWei = append(g.playerBalancesGWei, balanceGwei)
+
+	g.balancesGWei = append(g.balancesGWei, Balance{
+		Player: player,
+		Amount: balanceGwei,
+	})
 
 	return nil
 }
@@ -531,8 +535,14 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 			g.log.Info(ctx, "game.reconcole.updatebalance", "ERROR", err)
 			continue
 		}
-		oldBalanceGWei := g.playerBalancesGWei[i]
-		g.playerBalancesGWei[i] = balanceGwei
+
+		oldBalanceGWei := g.balancesGWei[i]
+
+		g.balancesGWei[i] = Balance{
+			Player: player,
+			Amount: balanceGwei,
+		}
+
 		g.log.Info(ctx, "game.reconcole.updatebalance", "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
 	}
 
@@ -555,20 +565,23 @@ func (g *Game) State(ctx context.Context) State {
 	bets := make([]Bet, len(g.bets))
 	copy(bets, g.bets)
 
-	balances := make([]string, len(g.playerBalancesGWei))
-	for i, bal := range g.playerBalancesGWei {
-		balances[i] = g.converter.GWei2USD(bal)
+	balances := make([]BalanceFmt, len(g.balancesGWei))
+	for i, balance := range g.balancesGWei {
+		balances[i] = BalanceFmt{
+			Player: balance.Player,
+			Amount: g.converter.GWei2USD(balance.Amount),
+		}
 	}
 
 	return State{
 		GameID:          g.id,
+		Round:           g.round,
 		Status:          g.status,
 		PlayerLastOut:   g.playerLastOut,
 		PlayerLastWin:   g.playerLastWin,
 		PlayerTurn:      g.existingPlayers[g.playerTurn],
-		Round:           g.round,
-		Cups:            cups,
 		ExistingPlayers: existingPlayers,
+		Cups:            cups,
 		Bets:            bets,
 		Balances:        balances,
 	}

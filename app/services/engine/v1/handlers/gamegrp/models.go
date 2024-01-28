@@ -19,7 +19,29 @@ type appState struct {
 	Balances        []string         `json:"balances"`
 }
 
-func toAppState(state game.State, anteUSD float64, cups []appCup, bets []appBet) appState {
+func toAppState(state game.State, anteUSD float64, address common.Address) appState {
+	var cups []appCup
+	for _, accountID := range state.ExistingPlayers {
+		cup := state.Cups[accountID]
+
+		// Don't share the dice information for other players.
+		dice := []int{0, 0, 0, 0, 0}
+		if accountID == address {
+			dice = cup.Dice
+		}
+		cups = append(cups, toAppCup(cup, dice))
+	}
+
+	var bets []appBet
+	for _, bet := range state.Bets {
+		bets = append(bets, toAppBet(bet))
+	}
+
+	var balances []string
+	for _, balance := range state.Balances {
+		balances = append(balances, balance.Amount)
+	}
+
 	return appState{
 		GameID:          state.GameID,
 		Status:          state.Status,
@@ -31,7 +53,7 @@ func toAppState(state game.State, anteUSD float64, cups []appCup, bets []appBet)
 		Cups:            cups,
 		ExistingPlayers: state.ExistingPlayers,
 		Bets:            bets,
-		Balances:        state.Balances,
+		Balances:        balances,
 	}
 }
 

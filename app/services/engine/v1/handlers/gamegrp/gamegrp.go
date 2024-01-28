@@ -202,8 +202,6 @@ func (h *handlers) tables(ctx context.Context, w http.ResponseWriter, r *http.Re
 // state will return information about the game.
 func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims := mid.GetClaims(ctx)
-	address := common.HexToAddress(claims.Subject)
-
 	gameID := web.Param(ctx, "id")
 
 	g, err := game.Tables.Retrieve(gameID)
@@ -215,26 +213,7 @@ func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return web.Respond(ctx, w, resp, http.StatusOK)
 	}
 
-	state := g.State(ctx)
-
-	var cups []appCup
-	for _, accountID := range state.ExistingPlayers {
-		cup := state.Cups[accountID]
-
-		// Don't share the dice information for other players.
-		dice := []int{0, 0, 0, 0, 0}
-		if accountID == address {
-			dice = cup.Dice
-		}
-		cups = append(cups, toAppCup(cup, dice))
-	}
-
-	var bets []appBet
-	for _, bet := range state.Bets {
-		bets = append(bets, toAppBet(bet))
-	}
-
-	return web.Respond(ctx, w, toAppState(state, h.anteUSD, cups, bets), http.StatusOK)
+	return web.Respond(ctx, w, toAppState(g.State(ctx), h.anteUSD, common.HexToAddress(claims.Subject)), http.StatusOK)
 }
 
 // newGame creates a new game if there is no game or the status of the current game
