@@ -23,12 +23,14 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type handlers struct {
 	converter      *currency.Converter
 	bank           *bank.Bank
+	storer         game.Storer
 	log            *logger.Logger
 	ws             websocket.Upgrader
 	activeKID      string
@@ -191,7 +193,7 @@ func (h *handlers) usd2Wei(ctx context.Context, w http.ResponseWriter, r *http.R
 // tables returns current set of existing tables.
 func (h *handlers) tables(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	info := struct {
-		GameIDs []string `json:"gameIDs"`
+		GameIDs []uuid.UUID `json:"gameIDs"`
 	}{
 		GameIDs: game.Tables.Active(),
 	}
@@ -202,7 +204,11 @@ func (h *handlers) tables(ctx context.Context, w http.ResponseWriter, r *http.Re
 // state will return information about the game.
 func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	claims := mid.GetClaims(ctx)
-	gameID := web.Param(ctx, "id")
+
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
@@ -213,13 +219,13 @@ func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return web.Respond(ctx, w, resp, http.StatusOK)
 	}
 
-	return web.Respond(ctx, w, toAppState(g.State(ctx), h.anteUSD, common.HexToAddress(claims.Subject)), http.StatusOK)
+	return web.Respond(ctx, w, toAppState(g.State(), h.anteUSD, common.HexToAddress(claims.Subject)), http.StatusOK)
 }
 
 // newGame creates a new game if there is no game or the status of the current game
 // is GameOver.
 func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.New(ctx, h.log, h.converter, h.bank, mid.GetSubject(ctx), h.anteUSD)
+	g, err := game.New(ctx, h.log, h.converter, h.storer, h.bank, mid.GetSubject(ctx), h.anteUSD)
 	if err != nil {
 		return v1.NewTrustedError(fmt.Errorf("unable to create game: %w", err), http.StatusBadRequest)
 	}
@@ -231,14 +237,19 @@ func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.R
 		h.log.Info(ctx, "evts.addPlayerToGame", "ERROR", err, "account", subjectID)
 	}
 
-	ctx = web.SetParam(ctx, "id", g.ID())
+	ctx = web.SetParam(ctx, "id", g.ID().String())
 
 	return h.state(ctx, w, r)
 }
 
 // join adds the given player to the game.
 func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -270,7 +281,12 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 // startGame changes the status of the game so players can begin to play.
 func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -286,7 +302,12 @@ func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http
 
 // rollDice will roll 5 dice for the given player and game.
 func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -302,7 +323,12 @@ func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.
 
 // bet processes a bet made by a player in a game.
 func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -323,14 +349,19 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	evts.send(ctx, g.ID(), "bet", "index", g.State(ctx).Cups[address].OrderIdx)
+	evts.send(ctx, g.ID(), "bet", "index", g.State().Cups[address].OrderIdx)
 
 	return h.state(ctx, w, r)
 }
 
 // callLiar processes the claims and defines a winner and a loser for the round.
 func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -350,7 +381,12 @@ func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.
 
 // reconcile calls the smart contract reconcile method.
 func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -390,7 +426,12 @@ func (h *handlers) balance(ctx context.Context, w http.ResponseWriter, r *http.R
 
 // nextTurn changes the account that will make the next move.
 func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
@@ -408,7 +449,12 @@ func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 // part of the game flow, it is used to control when a player should be removed
 // from the game.
 func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	g, err := game.Tables.Retrieve(web.Param(ctx, "id"))
+	gameID, err := uuid.Parse(web.Param(ctx, "id"))
+	if err != nil {
+		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+	}
+
+	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
 		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}

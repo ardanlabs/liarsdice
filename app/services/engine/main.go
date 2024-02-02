@@ -19,6 +19,7 @@ import (
 	"github.com/ardanlabs/liarsdice/app/services/engine/v1/build/all"
 	scbank "github.com/ardanlabs/liarsdice/business/contract/go/bank"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/business/data/sqldb"
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/debug"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mux"
@@ -31,6 +32,7 @@ import (
 
 /*
 	-- Game Engine
+	Now that a player can be in multiple games, we need to better control their available balance.
 	Once Liar is called, the status needs to share the dice for all players.
 	Add in-game chat support.
 	Add a Drain function to the smart contract.
@@ -99,6 +101,15 @@ func run(ctx context.Context, log *logger.Logger) error {
 			KeysFolder string `conf:"default:zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
+		DB struct {
+			User         string `conf:"default:postgres"`
+			Password     string `conf:"default:postgres,mask"`
+			HostPort     string `conf:"default:database-service.sales-system.svc.cluster.local"`
+			Name         string `conf:"default:postgres"`
+			MaxIdleConns int    `conf:"default:2"`
+			MaxOpenConns int    `conf:"default:0"`
+			DisableTLS   bool   `conf:"default:true"`
+		}
 		Game struct {
 			ContractID     string        `conf:"default:0x0"`
 			AnteUSD        float64       `conf:"default:5"`
@@ -157,6 +168,28 @@ func run(ctx context.Context, log *logger.Logger) error {
 	if err := ks.LoadBankKeys(cfg.Bank.KeysFolder, cfg.Bank.PassPhrase); err != nil {
 		return fmt.Errorf("reading keys: %w", err)
 	}
+
+	// -------------------------------------------------------------------------
+	// Database Support
+
+	log.Info(ctx, "startup", "status", "initializing database support", "hostport", cfg.DB.HostPort)
+
+	db, err := sqldb.Open(sqldb.Config{
+		User:         cfg.DB.User,
+		Password:     cfg.DB.Password,
+		HostPort:     cfg.DB.HostPort,
+		Name:         cfg.DB.Name,
+		MaxIdleConns: cfg.DB.MaxIdleConns,
+		MaxOpenConns: cfg.DB.MaxOpenConns,
+		DisableTLS:   cfg.DB.DisableTLS,
+	})
+	if err != nil {
+		return fmt.Errorf("connecting to db: %w", err)
+	}
+	defer func() {
+		log.Info(ctx, "shutdown", "status", "stopping database support", "hostport", cfg.DB.HostPort)
+		db.Close()
+	}()
 
 	// -------------------------------------------------------------------------
 	// Initialize authentication support
@@ -238,6 +271,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		Auth:           authClient,
 		Converter:      converter,
 		Bank:           bankClient,
+		DB:             db,
 		AnteUSD:        cfg.Game.AnteUSD,
 		ActiveKID:      cfg.Auth.ActiveKID,
 		BankTimeout:    cfg.Bank.Timeout,

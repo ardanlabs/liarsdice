@@ -2,8 +2,10 @@ package game
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 )
 
 // Represents the different game status.
@@ -21,7 +23,9 @@ const minNumberPlayers = 2
 
 // State represents a copy of the game state.
 type State struct {
-	GameID          string
+	GameID          uuid.UUID
+	GameName        string
+	DateCreated     time.Time
 	Round           int
 	Status          string
 	PlayerLastOut   common.Address

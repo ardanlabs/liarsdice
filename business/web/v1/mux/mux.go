@@ -13,6 +13,7 @@ import (
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
+	"github.com/jmoiron/sqlx"
 )
 
 // Options represent optional parameters.
@@ -35,6 +36,7 @@ type Config struct {
 	Auth           *auth.Auth
 	Converter      *currency.Converter
 	Bank           *bank.Bank
+	DB             *sqlx.DB
 	AnteUSD        float64
 	ActiveKID      string
 	BankTimeout    time.Duration

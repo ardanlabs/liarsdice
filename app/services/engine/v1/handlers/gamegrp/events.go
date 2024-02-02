@@ -7,12 +7,13 @@ import (
 	"sync"
 
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/google/uuid"
 )
 
 // These types exist for documentation purposes. The API will
 // will accept a string.
 type (
-	gameID   string
+	gameID   uuid.UUID
 	playerID string
 )
 
@@ -72,7 +73,7 @@ func (evt *events) release(pID string) error {
 	return nil
 }
 
-func (evt *events) numberOfPlayers(gID string) (int, error) {
+func (evt *events) numberOfPlayers(gID uuid.UUID) (int, error) {
 	evt.mu.RLock()
 	defer evt.mu.RUnlock()
 
@@ -86,7 +87,7 @@ func (evt *events) numberOfPlayers(gID string) (int, error) {
 	return len(playerMap), nil
 }
 
-func (evt *events) addPlayerToGame(gID string, pID string) error {
+func (evt *events) addPlayerToGame(gID uuid.UUID, pID string) error {
 	evt.mu.Lock()
 	defer evt.mu.Unlock()
 
@@ -108,7 +109,7 @@ func (evt *events) addPlayerToGame(gID string, pID string) error {
 	return nil
 }
 
-func (evt *events) removePlayersFromGame(gID string) error {
+func (evt *events) removePlayersFromGame(gID uuid.UUID) error {
 	evt.mu.Lock()
 	defer evt.mu.Unlock()
 
@@ -129,7 +130,7 @@ func (evt *events) removePlayersFromGame(gID string) error {
 
 // send signals a message to every registered channel for the specified
 // game. Send will not block waiting for a receiver on any given channel.
-func (evt *events) send(ctx context.Context, gID string, typ string, v ...any) {
+func (evt *events) send(ctx context.Context, gID uuid.UUID, typ string, v ...any) {
 	evt.mu.RLock()
 	defer evt.mu.RUnlock()
 

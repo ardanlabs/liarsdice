@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Tables maintains the set of games in the system.
@@ -13,13 +15,13 @@ var Tables = newTables()
 // of these tables can be of any state. The Add API will remove tables that are
 // older than an hour.
 type tables struct {
-	games map[string]*Game
+	games map[uuid.UUID]*Game
 	mu    sync.RWMutex
 }
 
 func newTables() *tables {
 	return &tables{
-		games: make(map[string]*Game),
+		games: make(map[uuid.UUID]*Game),
 	}
 }
 
@@ -34,14 +36,14 @@ func (t *tables) add(game *Game) {
 	// remove them from the cache.
 	hour := time.Now().Add(time.Hour)
 	for k, v := range t.games {
-		if v.CreatedDate().After(hour) {
+		if v.DateCreated().After(hour) {
 			delete(t.games, k)
 		}
 	}
 }
 
 // Retrieve returns the specified game from the table management system.
-func (t *tables) Retrieve(key string) (*Game, error) {
+func (t *tables) Retrieve(key uuid.UUID) (*Game, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
@@ -54,11 +56,11 @@ func (t *tables) Retrieve(key string) (*Game, error) {
 }
 
 // Active returns the IDs for all the active games in the system.
-func (t *tables) Active() []string {
+func (t *tables) Active() []uuid.UUID {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	var ids []string
+	var ids []uuid.UUID
 
 	for k, v := range t.games {
 		switch v.Status() {

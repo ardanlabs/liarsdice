@@ -1,14 +1,19 @@
 package gamegrp
 
 import (
+	"time"
+
 	"github.com/ardanlabs/liarsdice/business/core/game"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/uuid"
 )
 
 type appState struct {
-	GameID          string           `json:"gameID"`
-	Status          string           `json:"status"`
+	GameID          uuid.UUID        `json:"gameID"`
+	GameName        string           `json:"gameName"`
+	DateCreated     string           `json:"dateCreated"`
 	AnteUSD         float64          `json:"anteUSD"`
+	Status          string           `json:"status"`
 	PlayerLastOut   common.Address   `json:"lastOut"`
 	PlayerLastWin   common.Address   `json:"lastWin"`
 	PlayerTurn      common.Address   `json:"currentID"`
@@ -44,8 +49,10 @@ func toAppState(state game.State, anteUSD float64, address common.Address) appSt
 
 	return appState{
 		GameID:          state.GameID,
-		Status:          state.Status,
+		GameName:        state.GameName,
+		DateCreated:     state.DateCreated.Format(time.RFC3339),
 		AnteUSD:         anteUSD,
+		Status:          state.Status,
 		PlayerLastOut:   state.PlayerLastOut,
 		PlayerLastWin:   state.PlayerLastWin,
 		PlayerTurn:      state.PlayerTurn,

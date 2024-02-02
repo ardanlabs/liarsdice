@@ -17,6 +17,16 @@ import (
 	"github.com/google/uuid"
 )
 
+var ErrNotFound = errors.New("game not found")
+
+// Storer interface declares the behaviour this package needs to persist and
+// retrieve data.
+type Storer interface {
+	Create(ctx context.Context, g *Game) error
+	InsertRound(ctx context.Context, state State) error
+	QueryStateByID(ctx context.Context, gameID uuid.UUID, round int) (State, error)
+}
+
 // Banker represents the ability to manage money for the game. Deposits and
 // Withdrawls happen outside of game play.
 type Banker interface {
@@ -28,10 +38,11 @@ type Banker interface {
 type Game struct {
 	log             *logger.Logger
 	converter       *currency.Converter
+	storer          Storer
 	banker          Banker
 	mu              sync.RWMutex
-	id              string                 // Unique game id.
-	createdDate     time.Time              // The time the game was created. Used to help with caching.
+	id              uuid.UUID              // Unique game id.
+	dateCreated     time.Time              // The time the game was created. Used to help with caching.
 	round           int                    // Current round of the game.
 	status          string                 // Current status of the game.
 	anteUSD         float64                // The ante for joining this game.
@@ -46,45 +57,54 @@ type Game struct {
 }
 
 // New creates a new game.
-func New(ctx context.Context, log *logger.Logger, converter *currency.Converter, banker Banker, player common.Address, anteUSD float64) (*Game, error) {
+func New(ctx context.Context, log *logger.Logger, converter *currency.Converter, storer Storer, banker Banker, player common.Address, anteUSD float64) (*Game, error) {
 	balance, err := banker.AccountBalance(ctx, player)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve account[%s] balance", player)
 	}
 
 	// If comparison is negative, the player has no balance.
-	anteGwei := converter.USD2GWei(big.NewFloat(anteUSD))
-	if balance.Cmp(anteGwei) < 0 {
+	anteGWei := converter.USD2GWei(big.NewFloat(anteUSD))
+	if balance.Cmp(anteGWei) < 0 {
 		return nil, fmt.Errorf("account [%s] does not have enough balance to play, balance[%v]", player, balance)
 	}
 
 	g := Game{
 		log:         log,
 		converter:   converter,
+		storer:      storer,
 		banker:      banker,
-		id:          uuid.NewString(),
+		id:          uuid.New(),
 		status:      StatusNewGame,
-		round:       1,
+		round:       0,
 		anteUSD:     anteUSD,
 		cups:        make(map[common.Address]Cup),
-		createdDate: time.Now().UTC(),
+		dateCreated: time.Now().UTC(),
 	}
 
 	if err := g.AddAccount(ctx, player); err != nil {
 		return nil, errors.New("unable to add owner to the game")
 	}
 
+	if err := g.storer.Create(ctx, &g); err != nil {
+		return nil, errors.New("unable to add the game to the db")
+	}
+
 	Tables.add(&g)
+
+	g.log.Info(ctx, "game.new", "id", g.id, "player", player, "anteUSD", g.anteUSD, "anteGWei", anteGWei)
 
 	return &g, nil
 }
 
 // ID returns the game id.
-func (g *Game) ID() string {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
+func (g *Game) ID() uuid.UUID {
 	return g.id
+}
+
+// DateCreated returns the date/time the game was created.
+func (g *Game) DateCreated() time.Time {
+	return g.dateCreated
 }
 
 // Status returns the current status of the game.
@@ -95,19 +115,14 @@ func (g *Game) Status() string {
 	return g.status
 }
 
-// CreatedDate returns the date/time the game was created.
-func (g *Game) CreatedDate() time.Time {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
-	return g.createdDate
-}
-
 // AddAccount adds a player to the game. If the account already exists, the
 // function will return an error.
 func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.addaccount", "id", g.id, "player", player, "anteUSD", g.anteUSD)
+	}()
 
 	var empty common.Address
 	if player == empty {
@@ -132,8 +147,6 @@ func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 	}
 
 	anteGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
-
-	g.log.Info(ctx, "game.addaccount", "player", player, "anteUSD", g.anteUSD, "anteGWei", anteGWei, "balanceGWei", balanceGwei)
 
 	// If comparison is negative, the player has no balance.
 	if balanceGwei.Cmp(anteGWei) < 0 {
@@ -161,7 +174,10 @@ func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 // StartGame changes the status to Playing to allow the game to begin.
 func (g *Game) StartGame(ctx context.Context) error {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.startgame", "id", g.id)
+	}()
 
 	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
@@ -172,8 +188,8 @@ func (g *Game) StartGame(ctx context.Context) error {
 	}
 
 	g.playerTurn = rand.Intn(len(g.cups))
-
 	g.status = StatusPlaying
+	g.round = 1
 
 	return nil
 }
@@ -183,7 +199,10 @@ func (g *Game) StartGame(ctx context.Context) error {
 // the round if there is only 1 left.
 func (g *Game) ApplyOut(ctx context.Context, player common.Address, outs int) error {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.applyout", "id", g.id, "player", player)
+	}()
 
 	var empty common.Address
 	if player == empty {
@@ -265,6 +284,8 @@ func (g *Game) rollDice(ctx context.Context, player common.Address, manualRole .
 		}
 	}
 
+	g.log.Info(ctx, "game.rolldice", "id", g.id, "player", player, "dice", cup.Dice)
+
 	return nil
 }
 
@@ -273,7 +294,10 @@ func (g *Game) rollDice(ctx context.Context, player common.Address, manualRole .
 // the next player is determined and set.
 func (g *Game) Bet(ctx context.Context, player common.Address, number int, suit int) error {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.bet", "id", g.id, "player", player, "number", number, "suit", suit)
+	}()
 
 	var empty common.Address
 	if player == empty {
@@ -329,7 +353,10 @@ func (g *Game) Bet(ctx context.Context, player common.Address, number int, suit 
 // NextTurn determines which account makes the next move.
 func (g *Game) NextTurn(ctx context.Context) error {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.nextturn", "id", g.id, "playerturn", g.playerTurn)
+	}()
 
 	if g.status != StatusPlaying {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
@@ -365,7 +392,10 @@ func (g *Game) nextTurn() {
 // loser of the current round.
 func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlayer common.Address, losingPlayer common.Address, err error) {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.callliar", "id", g.id, "player", player)
+	}()
 
 	var empty common.Address
 
@@ -429,6 +459,14 @@ func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlay
 		g.playerLastWin = lastBet.Player
 	}
 
+	// Not sure I want to return an error if I can't save this round
+	// to the database. It just means we can't recover this game properly.
+	// Since nothing happens to the bank, no one is losing money nor is
+	// money held hostage.
+	if err := g.storer.InsertRound(ctx, g.state()); err != nil {
+		g.log.Error(ctx, "liar.store.insertRound", "ERROR", err)
+	}
+
 	return g.playerLastWin, g.playerLastOut, nil
 }
 
@@ -437,7 +475,10 @@ func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlay
 // in the game.
 func (g *Game) NextRound(ctx context.Context) (int, error) {
 	g.mu.Lock()
-	defer g.mu.Unlock()
+	defer func() {
+		g.mu.Unlock()
+		g.log.Info(ctx, "game.callliar", "id", g.id, "round", g.round)
+	}()
 
 	if g.status != StatusRoundOver {
 		return 0, errors.New("current round is not over")
@@ -526,6 +567,7 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 	g.log.Info(ctx, "game.reconcole.contract", "tx", g.converter.CalculateTransactionDetails(tx), "receipt", g.converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
 	g.status = StatusReconciled
+	g.round++
 
 	// Update the player balances.
 	g.log.Info(ctx, "game.reconcole.fees", "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
@@ -546,14 +588,22 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 		g.log.Info(ctx, "game.reconcole.updatebalance", "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
 	}
 
+	if err := g.storer.InsertRound(ctx, g.state()); err != nil {
+		g.log.Error(ctx, "reconcile.store.insertRound", "ERROR", err)
+	}
+
 	return tx, receipt, nil
 }
 
 // State returns a copy of the game state.
-func (g *Game) State(ctx context.Context) State {
+func (g *Game) State() State {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
+	return g.state()
+}
+
+func (g *Game) state() State {
 	cups := make(map[common.Address]Cup)
 	for k, v := range g.cups {
 		cups[k] = v
@@ -573,16 +623,43 @@ func (g *Game) State(ctx context.Context) State {
 		}
 	}
 
+	var playerTurn common.Address
+	if len(g.existingPlayers) > 0 {
+		playerTurn = g.existingPlayers[g.playerTurn]
+	}
+
 	return State{
 		GameID:          g.id,
+		GameName:        g.id.String(),
+		DateCreated:     g.dateCreated,
 		Round:           g.round,
 		Status:          g.status,
 		PlayerLastOut:   g.playerLastOut,
 		PlayerLastWin:   g.playerLastWin,
-		PlayerTurn:      g.existingPlayers[g.playerTurn],
+		PlayerTurn:      playerTurn,
 		ExistingPlayers: existingPlayers,
 		Cups:            cups,
 		Bets:            bets,
 		Balances:        balances,
 	}
+}
+
+// QueryState retrieves the state for the current round of this game.
+func (g *Game) QueryState(ctx context.Context) (State, error) {
+	state, err := g.storer.QueryStateByID(ctx, g.id, g.round)
+	if err != nil {
+		return State{}, fmt.Errorf("query: %w", err)
+	}
+
+	return state, nil
+}
+
+// QueryStateByRound retrieves the state for the specified round of this game.
+func (g *Game) QueryStateByRound(ctx context.Context, round int) (State, error) {
+	state, err := g.storer.QueryStateByID(ctx, g.id, round)
+	if err != nil {
+		return State{}, fmt.Errorf("query: %w", err)
+	}
+
+	return state, nil
 }

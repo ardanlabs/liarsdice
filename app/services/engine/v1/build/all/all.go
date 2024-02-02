@@ -28,6 +28,7 @@ func (add) Add(app *web.App, cfg mux.Config) {
 		Auth:           cfg.Auth,
 		Converter:      cfg.Converter,
 		Bank:           cfg.Bank,
+		DB:             cfg.DB,
 		AnteUSD:        cfg.AnteUSD,
 		ActiveKID:      cfg.ActiveKID,
 		BankTimeout:    cfg.BankTimeout,

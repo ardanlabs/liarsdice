@@ -6,11 +6,13 @@ import (
 
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
+	"github.com/ardanlabs/liarsdice/business/core/game/stores/gamedb"
 	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
 	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/gorilla/websocket"
+	"github.com/jmoiron/sqlx"
 )
 
 // Config contains all the mandatory systems required by handlers.
@@ -19,6 +21,7 @@ type Config struct {
 	Auth           *auth.Auth
 	Converter      *currency.Converter
 	Bank           *bank.Bank
+	DB             *sqlx.DB
 	Evts           *events
 	AnteUSD        float64
 	ActiveKID      string
@@ -33,6 +36,7 @@ func Routes(app *web.App, cfg Config) {
 	hdl := handlers{
 		converter:      cfg.Converter,
 		bank:           cfg.Bank,
+		storer:         gamedb.NewStore(cfg.Log, cfg.DB),
 		log:            cfg.Log,
 		ws:             websocket.Upgrader{},
 		auth:           cfg.Auth,
