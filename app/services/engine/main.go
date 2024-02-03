@@ -32,6 +32,12 @@ import (
 
 /*
 	-- Game Engine
+	Deprecated: please use simulated.Backend from package : github.com/ethereum/go-ethereum/ethclient/simulated instead.
+	Fixing logging with GameID
+	Fix CheckDatabase function to test more fields
+	Add flags to migrate command
+	Finish dbGame package to handle all tables on to functions.
+
 	Now that a player can be in multiple games, we need to better control their available balance.
 	Once Liar is called, the status needs to share the dice for all players.
 	Add in-game chat support.
