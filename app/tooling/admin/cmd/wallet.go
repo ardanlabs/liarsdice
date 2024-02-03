@@ -3,14 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
-	"time"
 )
 
-// walletCmd represents the wallet command
 var walletCmd = &cobra.Command{
 	Use:   "wallet",
 	Short: "Show the wallet balance",

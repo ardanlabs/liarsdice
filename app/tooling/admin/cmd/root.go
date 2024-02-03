@@ -21,7 +21,7 @@ import (
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "admin",
 	Short: "A small tool to manage liars dice",

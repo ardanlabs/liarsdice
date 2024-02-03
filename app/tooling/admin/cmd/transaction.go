@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/ardanlabs/ethereum"
 	"github.com/ardanlabs/ethereum/currency"
-	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// transactionCmd represents the transaction command
 var transactionCmd = &cobra.Command{
 	Use:   "transaction",
 	Short: "Examine transaction",

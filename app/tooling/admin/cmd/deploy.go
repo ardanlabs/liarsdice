@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// keyCmd represents the key command
 var deployCmd = &cobra.Command{
 	Use:   "deploy",
 	Short: "Deploy the bank contract",

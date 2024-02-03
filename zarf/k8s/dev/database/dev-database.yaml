@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: liars-system
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-data
+  namespace: liars-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: database
+  namespace: liars-system
+spec:
+  selector:
+    matchLabels:
+      app: database
+  serviceName: database-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: database
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: database-data
+        - name: config
+          configMap:
+            name: pghbaconf
+              #defaultMode: 0400
+            items:
+              - key: "pg_hba.conf"
+                path: "pg_hba.conf"
+      containers:
+      - name: postgres
+        image: postgres:16.1
+        volumeMounts:
+          - name: data
+            mountPath: /var/lib/postgresql/data
+          - name: config
+            readOnly: false
+            mountPath: "/etc/pg_hba.conf"
+            subPath: "pg_hba.conf"
+        args: ['-c', 'hba_file=/etc/pg_hba.conf']
+        resources:
+          requests:
+            cpu: 100m
+          limits:
+            cpu: 3750m
+        env:
+        - name: POSTGRES_PASSWORD
+          value: postgres
+        ports:
+        - name: postgres
+          containerPort: 5432
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -h
+            - localhost
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-service
+  namespace: liars-system
+spec:
+  type: ClusterIP
+  selector:
+    app: database
+  ports:
+  - name: postgres
+    port: 5432
+    targetPort: postgres
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pghbaconf
+  namespace: liars-system
+data:
+  # file-like keys
+  pg_hba.conf: |
+    local   all             all                                     trust
+    # IPv4 local connections:
+    host    all             all             0.0.0.0/0               trust
+    # IPv6 local connections:
+    host    all             all             ::1/128                 trust
+    # Allow replication connections from localhost, by a user with the
+    # replication privilege.
+    local   replication     all                                     trust
+    host    replication     all             0.0.0.0/0               trust
+    host    replication     all             ::1/128                 trust

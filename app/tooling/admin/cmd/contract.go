@@ -14,7 +14,6 @@ import (
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 )
 
-// contractCmd represents the contract command
 var contractCmd = &cobra.Command{
 	Use:   "contract",
 	Short: "Manage contract related items",

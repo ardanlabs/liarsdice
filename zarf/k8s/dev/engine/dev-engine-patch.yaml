@@ -3,20 +3,25 @@ kind: Deployment
 metadata:
   name: engine
   namespace: liars-system
+
 spec:
   selector:
     matchLabels:
       app: engine
+
   replicas: 1
   strategy:
     type: Recreate
+
   template:
     metadata:
       labels:
         app: engine
+
     spec:
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
+
       containers:
       - name: game-engine
         resources:
@@ -24,20 +29,25 @@ spec:
             cpu: "2000m" # Up to 2 full cores
           requests:
             cpu: "1000m" # Use 1 full cores
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
   name: engine-service
   namespace: liars-system
+
 spec:
   selector:
     app: engine
+
   type: ClusterIP
+
   ports:
   - name: game-engine
     port: 3000
     targetPort: game-engine
-  - name: game-engine-debug
+  - name: game-engine-dbg
     port: 4000
-    targetPort: ge-debug
+    targetPort: game-engine-dbg

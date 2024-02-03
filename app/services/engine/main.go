@@ -104,7 +104,7 @@ func run(ctx context.Context, log *logger.Logger) error {
 		DB struct {
 			User         string `conf:"default:postgres"`
 			Password     string `conf:"default:postgres,mask"`
-			HostPort     string `conf:"default:database-service.sales-system.svc.cluster.local"`
+			HostPort     string `conf:"default:database-service.liars-system.svc.cluster.local"`
 			Name         string `conf:"default:postgres"`
 			MaxIdleConns int    `conf:"default:2"`
 			MaxOpenConns int    `conf:"default:0"`

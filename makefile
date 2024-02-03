@@ -9,15 +9,22 @@
 # The coinbase address is given a LOT of money to start.
 #
 
-GOLANG       := golang:1.21.6
-NODE         := node:16
-ALPINE       := alpine:3.19
-CADDY        := caddy:2.6-alpine
-KIND         := kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
-GETH         := ethereum/client-go:stable
+GOLANG          := golang:1.22rc
+NODE            := node:16
+ALPINE          := alpine:3.19
+CADDY           := caddy:2.6-alpine
+KIND            := kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
+BUSYBOX         := busybox:stable
+GETH            := ethereum/client-go:stable
+POSTGRES        := postgres:16.1
 
-KIND_CLUSTER := liars-game-cluster
-VERSION      := 1.0
+KIND_CLUSTER    := liars-game-cluster
+NAMESPACE       := liars-system
+APP             := engine
+BASE_IMAGE_NAME := ardanlabs/liars
+SERVICE_NAME    := engine
+VERSION         := 0.0.1
+SERVICE_IMAGE   := $(BASE_IMAGE_NAME)/$(SERVICE_NAME):$(VERSION)
 
 # ==============================================================================
 # Install dependencies
@@ -29,6 +36,7 @@ dev-setup:
 	brew list kustomize || brew install kustomize
 	brew list ethereum || brew install ethereum
 	brew list solidity || brew install solidity
+	brew list pgcli || brew install pgcli
 
 dev-docker:
 	docker pull $(GOLANG)
@@ -36,7 +44,9 @@ dev-docker:
 	docker pull $(ALPINE)
 	docker pull $(CADDY)
 	docker pull $(KIND)
+	docker pull $(BUSYBOX)
 	docker pull $(GETH)
+	docker pull $(POSTGRES)
 
 # ==============================================================================
 # Game UI
@@ -52,16 +62,13 @@ game-tuio:
 
 # ==============================================================================
 # Building containers
-#
-# The new docker buildx build system is required for these docker build commands On systems other than Docker Desktop
-# buildx is not the default build system. You will need to enable it with: docker buildx install
 
 all: game-engine
 
 game-engine:
 	docker build \
 		-f zarf/docker/dockerfile.engine \
-		-t liarsdice-game-engine:$(VERSION) \
+		-t $(SERVICE_IMAGE) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
@@ -72,7 +79,6 @@ game-engine:
 # To start the system for the first time, run these two commands:
 #     make dev-up
 #     make dev-update-apply
-# Expect the building of the FE to take a wee bit of time :(
 
 dev-up:
 	kind create cluster \
@@ -81,14 +87,16 @@ dev-up:
 		--config zarf/k8s/dev/kind-config.yaml
 	kubectl wait --timeout=120s --namespace=local-path-storage --for=condition=Available deployment/local-path-provisioner
 	
+	kind load docker-image $(BUSYBOX) --name $(KIND_CLUSTER)
 	kind load docker-image $(GETH) --name $(KIND_CLUSTER)
+	kind load docker-image $(POSTGRES) --name $(KIND_CLUSTER)
 
 dev-down:
 	kind delete cluster --name $(KIND_CLUSTER)
 	rm -f /tmp/credentials.json
 
 dev-load:
-	kind load docker-image liarsdice-game-engine:$(VERSION) --name $(KIND_CLUSTER)
+	kind load docker-image $(SERVICE_IMAGE) --name $(KIND_CLUSTER)
 
 dev-deploy:
 	@zarf/k8s/dev/geth/setup-contract-k8s
@@ -98,14 +106,17 @@ dev-deploy-force:
 
 dev-apply:
 	go build -o admin app/tooling/admin/main.go
-
+ 	
 	kustomize build zarf/k8s/dev/geth | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/geth
+	kubectl wait --timeout=120s --namespace=$(NAMESPACE) --for=condition=Available deployment/geth
 
 	@zarf/k8s/dev/geth/setup-contract-k8s.sh
 
+	kustomize build zarf/k8s/dev/database | kubectl apply -f -
+	kubectl rollout status --namespace=$(NAMESPACE) --watch --timeout=120s sts/database
+
 	kustomize build zarf/k8s/dev/engine | kubectl apply -f -
-	kubectl wait --timeout=120s --namespace=liars-system --for=condition=Available deployment/engine
+	kubectl wait --timeout=120s --namespace=$(NAMESPACE) --for=condition=Available deployment/engine
 
 dev-restart:
 	kubectl rollout restart deployment engine --namespace=liars-system
@@ -114,11 +125,14 @@ dev-update: all dev-load dev-restart
 
 dev-update-apply: all dev-load dev-apply
 
+dev-logs-init:
+	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) -f --tail=100 -c init-ge-migrate
+
 dev-logs:
-	kubectl logs --namespace=liars-system -l app=engine --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
 
 dev-logs-geth:
-	kubectl logs --namespace=liars-system -l app=geth --all-containers=true -f --tail=1000
+	kubectl logs --namespace=$(NAMESPACE) -l app=geth --all-containers=true -f --tail=1000
 
 dev-status:
 	kubectl get nodes -o wide
@@ -130,10 +144,19 @@ dev-describe:
 	kubectl describe svc
 
 dev-describe-deployment-engine:
-	kubectl describe deployment --namespace=liars-system engine
+	kubectl describe deployment --namespace=$(NAMESPACE) $(APP)
 
 dev-describe-engine:
-	kubectl describe pod --namespace=liars-system -l app=engine
+	kubectl describe pod --namespace=$(NAMESPACE) -l app=$(APP)
+
+# ==============================================================================
+# Administration
+
+migrate:
+	export SALES_DB_HOST=localhost; go run app/tooling/sales-admin/main.go migrate
+
+pgcli:
+	pgcli postgresql://postgres:postgres@localhost
 
 # ==============================================================================
 # Running tests within the local computer

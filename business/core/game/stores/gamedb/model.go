@@ -26,12 +26,12 @@ type dbState struct {
 }
 
 type dbCup struct {
-	ID       uuid.UUID `db:"game_id"`
-	Round    int       `db:"round"`
-	Player   string    `db:"player"`
-	OrderIdx int       `db:"order_idx"`
-	Outs     int       `db:"outs"`
-	Dice     any       `db:"dice"`
+	ID       uuid.UUID     `db:"game_id"`
+	Round    int           `db:"round"`
+	Player   string        `db:"player"`
+	OrderIdx int           `db:"order_idx"`
+	Outs     int           `db:"outs"`
+	Dice     dbarray.Int64 `db:"dice"`
 }
 
 type dbBet struct {
@@ -53,13 +53,18 @@ type dbBalance struct {
 func toDBState(state game.State) dbState {
 	cups := make([]dbCup, 0, len(state.Cups))
 	for _, cup := range state.Cups {
+		dice := make([]int64, len(cup.Dice))
+		for i, d := range cup.Dice {
+			dice[i] = int64(d)
+		}
+
 		cups = append(cups, dbCup{
 			ID:       state.GameID,
 			Round:    state.Round,
 			Player:   cup.Player.String(),
 			OrderIdx: cup.OrderIdx,
 			Outs:     cup.Outs,
-			Dice:     dbarray.Array(cup.Dice),
+			Dice:     dice,
 		})
 	}
 

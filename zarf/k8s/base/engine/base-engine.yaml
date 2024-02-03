@@ -8,24 +8,35 @@ kind: Deployment
 metadata:
   name: engine
   namespace: liars-system
+
 spec:
   selector:
     matchLabels:
       app: engine
+
   template:
     metadata:
       labels:
         app: engine
+
     spec:
       terminationGracePeriodSeconds: 60
+
+      initContainers:
+      - name: init-ge-migrate
+        image: engine-image
+        command: ['./admin', 'migrate']
+
       containers:
       - name: game-engine
-        image: game-engine-image
+        image: engine-image
+
         ports:
         - name: game-engine
           containerPort: 3000
-        - name: ge-debug
+        - name: game-engine-dbg
           containerPort: 4000
+
         readinessProbe:
           httpGet:
             path: /v1/readiness
@@ -35,6 +46,7 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 2
+
         livenessProbe:
           httpGet:
             path: /v1/liveness
@@ -44,6 +56,7 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 2
+
         env:
         - name: GAME_CONTRACT_ID
           valueFrom:
@@ -66,7 +79,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:

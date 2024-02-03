@@ -5,6 +5,6 @@ resources:
 patches:
   - path: ./dev-engine-patch.yaml
 images:
-  - name: game-engine-image
-    newName: liarsdice-game-engine
-    newTag: "1.0"
+  - name: engine-image
+    newName: ardanlabs/liars/engine
+    newTag: 0.0.1

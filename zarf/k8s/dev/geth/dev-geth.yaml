@@ -48,7 +48,7 @@ spec:
       terminationGracePeriodSeconds: 60
       initContainers:
         - name: copy-keystore
-          image: busybox
+          image: busybox:stable
           command: ["sh", "-c", "mkdir -p /ethereum/keystore; cp /secrets/keystore/* /ethereum/keystore"]
           volumeMounts:
             - name: vol-ethereum
