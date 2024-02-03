@@ -32,7 +32,6 @@ import (
 
 /*
 	-- Game Engine
-	Deprecated: please use simulated.Backend from package : github.com/ethereum/go-ethereum/ethclient/simulated instead.
 	Fixing logging with GameID
 	Fix CheckDatabase function to test more fields
 	Add flags to migrate command

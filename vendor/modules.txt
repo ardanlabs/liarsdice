@@ -28,16 +28,10 @@ github.com/ardanlabs/conf/v3
 github.com/ardanlabs/darwin/v3
 github.com/ardanlabs/darwin/v3/dialects/postgres
 github.com/ardanlabs/darwin/v3/drivers/generic
-# github.com/ardanlabs/ethereum v0.17.0
-## explicit; go 1.18
+# github.com/ardanlabs/ethereum v0.18.0
+## explicit; go 1.20
 github.com/ardanlabs/ethereum
 github.com/ardanlabs/ethereum/currency
-# github.com/ardanlabs/service v0.0.0-20240122161358-70178f6b6006
-## explicit; go 1.21
-github.com/ardanlabs/service/business/data/sqldb
-github.com/ardanlabs/service/business/data/transaction
-github.com/ardanlabs/service/foundation/logger
-github.com/ardanlabs/service/foundation/web
 # github.com/arl/statsviz v0.6.0
 ## explicit; go 1.20
 github.com/arl/statsviz
@@ -182,13 +176,12 @@ github.com/dimfeld/httptreemux/v5
 # github.com/ethereum/c-kzg-4844 v0.4.0
 ## explicit; go 1.19
 github.com/ethereum/c-kzg-4844/bindings/go
-# github.com/ethereum/go-ethereum v1.13.10
+# github.com/ethereum/go-ethereum v1.13.11
 ## explicit; go 1.20
 github.com/ethereum/go-ethereum
 github.com/ethereum/go-ethereum/accounts
 github.com/ethereum/go-ethereum/accounts/abi
 github.com/ethereum/go-ethereum/accounts/abi/bind
-github.com/ethereum/go-ethereum/accounts/abi/bind/backends
 github.com/ethereum/go-ethereum/accounts/external
 github.com/ethereum/go-ethereum/accounts/keystore
 github.com/ethereum/go-ethereum/accounts/scwallet
@@ -275,6 +268,7 @@ github.com/ethereum/go-ethereum/p2p/netutil
 github.com/ethereum/go-ethereum/p2p/rlpx
 github.com/ethereum/go-ethereum/p2p/tracker
 github.com/ethereum/go-ethereum/params
+github.com/ethereum/go-ethereum/params/forks
 github.com/ethereum/go-ethereum/rlp
 github.com/ethereum/go-ethereum/rlp/internal/rlpstruct
 github.com/ethereum/go-ethereum/rpc
@@ -285,9 +279,6 @@ github.com/ethereum/go-ethereum/trie/triedb/pathdb
 github.com/ethereum/go-ethereum/trie/trienode
 github.com/ethereum/go-ethereum/trie/triestate
 github.com/ethereum/go-ethereum/trie/utils
-# github.com/felixge/httpsnoop v1.0.4
-## explicit; go 1.13
-github.com/felixge/httpsnoop
 # github.com/fjl/memsize v0.0.2
 ## explicit
 github.com/fjl/memsize
@@ -411,7 +402,7 @@ github.com/golang-jwt/jwt/v4
 # github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb
 ## explicit
 github.com/golang/snappy
-# github.com/google/uuid v1.5.0
+# github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
 # github.com/gorilla/mux v1.8.1
@@ -477,7 +468,7 @@ github.com/jackpal/go-nat-pmp
 ## explicit; go 1.10
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
-# github.com/klauspost/compress v1.17.4
+# github.com/klauspost/compress v1.17.5
 ## explicit; go 1.19
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
@@ -492,9 +483,10 @@ github.com/kr/pretty
 # github.com/kr/text v0.2.0
 ## explicit
 github.com/kr/text
-# github.com/leodido/go-urn v1.2.4
-## explicit; go 1.16
+# github.com/leodido/go-urn v1.4.0
+## explicit; go 1.18
 github.com/leodido/go-urn
+github.com/leodido/go-urn/scim/schema
 # github.com/lucasb-eyer/go-colorful v1.2.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful
@@ -540,7 +532,7 @@ github.com/mmcloughlin/addchain/meta
 # github.com/olekukonko/tablewriter v0.0.5
 ## explicit; go 1.12
 github.com/olekukonko/tablewriter
-# github.com/open-policy-agent/opa v0.60.0
+# github.com/open-policy-agent/opa v0.61.0
 ## explicit; go 1.19
 github.com/open-policy-agent/opa/ast
 github.com/open-policy-agent/opa/ast/internal/scanner
@@ -653,7 +645,7 @@ github.com/prometheus/procfs/internal/util
 # github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 ## explicit
 github.com/rcrowley/go-metrics
-# github.com/rivo/uniseg v0.4.4
+# github.com/rivo/uniseg v0.4.6
 ## explicit; go 1.18
 github.com/rivo/uniseg
 # github.com/rogpeppe/go-internal v1.12.0
@@ -726,13 +718,11 @@ github.com/xrash/smetrics
 # github.com/yashtewari/glob-intersection v0.2.0
 ## explicit; go 1.17
 github.com/yashtewari/glob-intersection
-# github.com/yusufpapurcu/wmi v1.2.3
+# github.com/yusufpapurcu/wmi v1.2.4
 ## explicit; go 1.16
 github.com/yusufpapurcu/wmi
 # go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.47.0
 ## explicit; go 1.20
-go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
-go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp/internal/semconvutil
 # go.opentelemetry.io/otel v1.22.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel
@@ -744,7 +734,6 @@ go.opentelemetry.io/otel/internal/attribute
 go.opentelemetry.io/otel/internal/baggage
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
-go.opentelemetry.io/otel/semconv/v1.20.0
 go.opentelemetry.io/otel/semconv/v1.24.0
 # go.opentelemetry.io/otel/metric v1.22.0
 ## explicit; go 1.20
