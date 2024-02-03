@@ -21,8 +21,8 @@ github.com/ardanlabs/conf/v3 v3.1.7 h1:p232cF68TafoA5U9ZlbxUIhGJtGNdKHBXF80Fdqb5
 github.com/ardanlabs/conf/v3 v3.1.7/go.mod h1:zclexWKe0NVj6LHQ8NgDDZ7bQ1spE0KeKPFficdtAjU=
 github.com/ardanlabs/darwin/v3 v3.3.1 h1:tU4nutFgKNH7fFJ98wSj0Zyrsh9a2XltlPz/1AGkIRE=
 github.com/ardanlabs/darwin/v3 v3.3.1/go.mod h1:dnfiwJYj15gfm/2XltdAmLxhK/7h1eFs7rc4yaaXC0A=
-github.com/ardanlabs/ethereum v0.18.0 h1:uuoYm8sQWoHyUjJ6YLBaJK7jODSk65vrv7AKENPnkk0=
-github.com/ardanlabs/ethereum v0.18.0/go.mod h1:Nx+0sicqKkeSw2p883cWxXhlF90tUffSSLrLV2MP8k0=
+github.com/ardanlabs/ethereum v0.18.1 h1:byUcbDTBeH+wg95QdGwuZ/8/WLwdj/Hg88vwRMQ8z6E=
+github.com/ardanlabs/ethereum v0.18.1/go.mod h1:14shCGpZhCHHGyNhidy49bSovQ4bLEGl1L65DiWA1F0=
 github.com/arl/statsviz v0.6.0 h1:jbW1QJkEYQkufd//4NDYRSNBpwJNrdzPahF7ZmoGdyE=
 github.com/arl/statsviz v0.6.0/go.mod h1:0toboo+YGSUXDaS4g1D5TVS4dXs7S7YYT5J/qnW2h8s=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
