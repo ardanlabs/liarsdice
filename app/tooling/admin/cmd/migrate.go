@@ -15,11 +15,31 @@ var migrateCmd = &cobra.Command{
 	Short: "Migrate the database",
 	Long:  `Migrates the database to its most current schema.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		dbUser, err := cmd.Flags().GetString(dbUser)
+		if err != nil {
+			return fmt.Errorf("retrieve dbUser: %w", err)
+		}
+
+		dbPass, err := cmd.Flags().GetString(dbPass)
+		if err != nil {
+			return fmt.Errorf("retrieve dbPass: %w", err)
+		}
+
+		dbHost, err := cmd.Flags().GetString(dbHost)
+		if err != nil {
+			return fmt.Errorf("retrieve dbHost: %w", err)
+		}
+
+		dbName, err := cmd.Flags().GetString(dbName)
+		if err != nil {
+			return fmt.Errorf("retrieve dbName: %w", err)
+		}
+
 		dbConfig := sqldb.Config{
-			User:         "postgres",
-			Password:     "postgres",
-			HostPort:     "database-service.liars-system.svc.cluster.local",
-			Name:         "postgres",
+			User:         dbUser,
+			Password:     dbPass,
+			HostPort:     dbHost,
+			Name:         dbName,
 			MaxIdleConns: 2,
 			MaxOpenConns: 0,
 			DisableTLS:   true,
@@ -31,6 +51,11 @@ var migrateCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(migrateCmd)
+
+	migrateCmd.Flags().String(dbUser, "postgres", "user for access to the db")
+	migrateCmd.Flags().String(dbPass, "postgres", "password for access to the db")
+	migrateCmd.Flags().String(dbHost, "database-service.liars-system.svc.cluster.local", "host and port to db")
+	migrateCmd.Flags().String(dbName, "postgres", "name of the db to access")
 }
 
 func performMigrate(cfg sqldb.Config) error {

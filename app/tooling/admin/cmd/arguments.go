@@ -18,6 +18,10 @@ const (
 	token          = "token"
 	keysFolder     = "keys-folder"
 	credentialFile = "credential-file"
+	dbUser         = "db-user"
+	dbPass         = "db-pass"
+	dbHost         = "db-host"
+	dbName         = "db-name"
 )
 
 var shortName = map[string]string{
