@@ -32,7 +32,6 @@ import (
 
 /*
 	-- Game Engine
-	Fixing logging with GameID
 	Fix CheckDatabase function to test more fields
 	Add flags to migrate command
 	Finish dbGame package to handle all tables on to functions.

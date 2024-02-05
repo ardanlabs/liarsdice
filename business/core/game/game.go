@@ -119,10 +119,7 @@ func (g *Game) Status() string {
 // function will return an error.
 func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.addaccount", "id", g.id, "player", player, "anteUSD", g.anteUSD)
-	}()
+	defer g.mu.Unlock()
 
 	var empty common.Address
 	if player == empty {
@@ -174,10 +171,7 @@ func (g *Game) AddAccount(ctx context.Context, player common.Address) error {
 // StartGame changes the status to Playing to allow the game to begin.
 func (g *Game) StartGame(ctx context.Context) error {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.startgame", "id", g.id)
-	}()
+	defer g.mu.Unlock()
 
 	if g.status != StatusNewGame {
 		return fmt.Errorf("game status is required to be over: status[%s]", g.status)
@@ -199,10 +193,7 @@ func (g *Game) StartGame(ctx context.Context) error {
 // the round if there is only 1 left.
 func (g *Game) ApplyOut(ctx context.Context, player common.Address, outs int) error {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.applyout", "id", g.id, "player", player)
-	}()
+	defer g.mu.Unlock()
 
 	var empty common.Address
 	if player == empty {
@@ -294,10 +285,7 @@ func (g *Game) rollDice(ctx context.Context, player common.Address, manualRole .
 // the next player is determined and set.
 func (g *Game) Bet(ctx context.Context, player common.Address, number int, suit int) error {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.bet", "id", g.id, "player", player, "number", number, "suit", suit)
-	}()
+	defer g.mu.Unlock()
 
 	var empty common.Address
 	if player == empty {
@@ -353,10 +341,7 @@ func (g *Game) Bet(ctx context.Context, player common.Address, number int, suit 
 // NextTurn determines which account makes the next move.
 func (g *Game) NextTurn(ctx context.Context) error {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.nextturn", "id", g.id, "playerturn", g.playerTurn)
-	}()
+	defer g.mu.Unlock()
 
 	if g.status != StatusPlaying {
 		return fmt.Errorf("game status is required to be playing: status[%s]", g.status)
@@ -392,10 +377,7 @@ func (g *Game) nextTurn() {
 // loser of the current round.
 func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlayer common.Address, losingPlayer common.Address, err error) {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.callliar", "id", g.id, "player", player)
-	}()
+	defer g.mu.Unlock()
 
 	var empty common.Address
 
@@ -464,7 +446,7 @@ func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlay
 	// Since nothing happens to the bank, no one is losing money nor is
 	// money held hostage.
 	if err := g.storer.InsertRound(ctx, g.state()); err != nil {
-		g.log.Error(ctx, "liar.store.insertRound", "ERROR", err)
+		g.log.Error(ctx, "liar.store.insertRound", "id", g.id, "ERROR", err)
 	}
 
 	return g.playerLastWin, g.playerLastOut, nil
@@ -475,10 +457,7 @@ func (g *Game) CallLiar(ctx context.Context, player common.Address) (winningPlay
 // in the game.
 func (g *Game) NextRound(ctx context.Context) (int, error) {
 	g.mu.Lock()
-	defer func() {
-		g.mu.Unlock()
-		g.log.Info(ctx, "game.callliar", "id", g.id, "round", g.round)
-	}()
+	defer g.mu.Unlock()
 
 	if g.status != StatusRoundOver {
 		return 0, errors.New("current round is not over")
@@ -534,8 +513,8 @@ func (g *Game) NextRound(ctx context.Context) (int, error) {
 
 // Reconcile calculates the game pot and make the transfer to the winner.
 func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receipt, error) {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	if g.status != StatusGameOver {
 		return nil, nil, fmt.Errorf("game status is required to be gameover: status[%s]", g.status)
@@ -554,9 +533,9 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 	gameFeeGWei := g.converter.USD2GWei(big.NewFloat(g.anteUSD))
 
 	// Log the winner and losers.
-	g.log.Info(ctx, "game.reconcole", "winner", g.playerLastWin)
+	g.log.Info(ctx, "game.reconcole", "id", g.id, "winner", g.playerLastWin)
 	for _, player := range losingPlayers {
-		g.log.Info(ctx, "game.reconcole", "loser", player)
+		g.log.Info(ctx, "game.reconcole", "id", g.id, "loser", player)
 	}
 
 	// Perform the reconcile against the bank.
@@ -564,13 +543,14 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to reconcile the game: %w", err)
 	}
-	g.log.Info(ctx, "game.reconcole.contract", "tx", g.converter.CalculateTransactionDetails(tx), "receipt", g.converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
+
+	g.log.Info(ctx, "game.reconcole.contract", "id", g.id, "tx", g.converter.CalculateTransactionDetails(tx), "receipt", g.converter.CalculateReceiptDetails(receipt, tx.GasPrice()))
 
 	g.status = StatusReconciled
 	g.round++
 
 	// Update the player balances.
-	g.log.Info(ctx, "game.reconcole.fees", "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
+	g.log.Info(ctx, "game.reconcole.fees", "id", g.id, "anteUSD", g.anteUSD, "antiGWei", antiGWei, "gameFeeGWei", gameFeeGWei)
 	for i, player := range g.players {
 		balanceGwei, err := g.banker.AccountBalance(ctx, player)
 		if err != nil {
@@ -585,11 +565,11 @@ func (g *Game) Reconcile(ctx context.Context) (*types.Transaction, *types.Receip
 			Amount: balanceGwei,
 		}
 
-		g.log.Info(ctx, "game.reconcole.updatebalance", "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
+		g.log.Info(ctx, "game.reconcole.updatebalance", "id", g.id, "player", player, "oldBlanceGWei", oldBalanceGWei, "balanceGWei", balanceGwei)
 	}
 
 	if err := g.storer.InsertRound(ctx, g.state()); err != nil {
-		g.log.Error(ctx, "reconcile.store.insertRound", "ERROR", err)
+		g.log.Error(ctx, "reconcile.store.insertRound", "id", g.id, "ERROR", err)
 	}
 
 	return tx, receipt, nil

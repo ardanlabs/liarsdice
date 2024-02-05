@@ -232,9 +232,8 @@ func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	subjectID := mid.GetSubject(ctx).String()
 
-	h.log.Info(ctx, "evts.addPlayerToGame", "gameID", g.ID(), "account", subjectID)
 	if err := evts.addPlayerToGame(g.ID(), subjectID); err != nil {
-		h.log.Info(ctx, "evts.addPlayerToGame", "ERROR", err, "account", subjectID)
+		return v1.NewTrustedError(fmt.Errorf("unable to add player %q to game: %w", subjectID, err), http.StatusBadRequest)
 	}
 
 	ctx = web.SetParam(ctx, "id", g.ID().String())
@@ -269,9 +268,8 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
 
-	h.log.Info(ctx, "evts.addPlayerToGame", "gameID", g.ID(), "account", subjectID)
 	if err := evts.addPlayerToGame(g.ID(), subjectID.String()); err != nil {
-		h.log.Info(ctx, "evts.addPlayerToGame", "ERROR", err, "account", subjectID)
+		return v1.NewTrustedError(fmt.Errorf("unable to add player %q to game: %w", subjectID, err), http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "join")
