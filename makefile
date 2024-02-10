@@ -9,11 +9,11 @@
 # The coinbase address is given a LOT of money to start.
 #
 
-GOLANG          := golang:1.22rc
+GOLANG          := golang:1.22
 NODE            := node:16
 ALPINE          := alpine:3.19
 CADDY           := caddy:2.6-alpine
-KIND            := kindest/node:v1.29.0@sha256:eaa1450915475849a73a9227b8f201df25e55e268e5d619312131292e324d570
+KIND            := kindest/node:v1.29.1@sha256:a0cc28af37cf39b019e2b448c54d1a3f789de32536cb5a5db61a49623e527144
 BUSYBOX         := busybox:stable
 GETH            := ethereum/client-go:stable
 POSTGRES        := postgres:16.1
@@ -134,10 +134,13 @@ dev-logs:
 dev-logs-geth:
 	kubectl logs --namespace=$(NAMESPACE) -l app=geth --all-containers=true -f --tail=1000
 
-dev-status:
+dev-status-all:
 	kubectl get nodes -o wide
 	kubectl get svc -o wide
 	kubectl get pods -o wide --watch --all-namespaces
+
+dev-status:
+	watch -n 2 kubectl get pods -o wide --all-namespaces
 
 dev-describe:
 	kubectl describe nodes
