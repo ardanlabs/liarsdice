@@ -13,10 +13,10 @@ GOLANG          := golang:1.22
 NODE            := node:16
 ALPINE          := alpine:3.19
 CADDY           := caddy:2.6-alpine
-KIND            := kindest/node:v1.29.1@sha256:a0cc28af37cf39b019e2b448c54d1a3f789de32536cb5a5db61a49623e527144
+KIND            := kindest/node:v1.29.2
 BUSYBOX         := busybox:stable
 GETH            := ethereum/client-go:stable
-POSTGRES        := postgres:16.1
+POSTGRES        := postgres:16.2
 
 KIND_CLUSTER    := liars-game-cluster
 NAMESPACE       := liars-system
