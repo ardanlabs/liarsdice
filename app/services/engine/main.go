@@ -32,9 +32,6 @@ import (
 
 /*
 	-- Game Engine
-	Fix CheckDatabase function to test more fields
-	Finish dbGame package to handle all tables on to functions.
-
 	Now that a player can be in multiple games, we need to better control their available balance.
 	Once Liar is called, the status needs to share the dice for all players.
 	Add in-game chat support.

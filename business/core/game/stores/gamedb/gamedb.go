@@ -131,7 +131,7 @@ func (s *Store) QueryStateByID(ctx context.Context, gameID uuid.UUID, round int)
 		Round: round,
 	}
 
-	const q = `
+	q := `
 	SELECT
         g.game_id,
 		g.name,
@@ -152,6 +152,67 @@ func (s *Store) QueryStateByID(ctx context.Context, gameID uuid.UUID, round int)
 
 	var dbState dbState
 	if err := sqldb.NamedQueryStruct(ctx, s.log, s.db, q, data, &dbState); err != nil {
+		if errors.Is(err, sqldb.ErrDBNotFound) {
+			return game.State{}, fmt.Errorf("namedquerystruct: %w", game.ErrNotFound)
+		}
+		return game.State{}, fmt.Errorf("namedquerystruct: %w", err)
+	}
+
+	q = `
+	SELECT
+		game_id,
+		round,
+		player,
+		order_idx,
+		outs,
+		dice
+	FROM
+		game_cups
+	WHERE
+		game_id = :game_id AND
+		round = :round`
+
+	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, q, data, &dbState.Cups); err != nil {
+		if errors.Is(err, sqldb.ErrDBNotFound) {
+			return game.State{}, fmt.Errorf("namedquerystruct: %w", game.ErrNotFound)
+		}
+		return game.State{}, fmt.Errorf("namedquerystruct: %w", err)
+	}
+
+	q = `
+	SELECT
+		game_id,
+		round,
+		bet_order,
+		player,
+		number,
+		suit 
+	FROM
+		game_bets
+	WHERE
+		game_id = :game_id AND
+		round = :round`
+
+	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, q, data, &dbState.Bets); err != nil {
+		if errors.Is(err, sqldb.ErrDBNotFound) {
+			return game.State{}, fmt.Errorf("namedquerystruct: %w", game.ErrNotFound)
+		}
+		return game.State{}, fmt.Errorf("namedquerystruct: %w", err)
+	}
+
+	q = `
+	SELECT
+		game_id,
+		round,
+		player,
+		amount
+	FROM
+		game_balances
+	WHERE
+		game_id = :game_id AND
+		round = :round`
+
+	if err := sqldb.NamedQuerySlice(ctx, s.log, s.db, q, data, &dbState.Balances); err != nil {
 		if errors.Is(err, sqldb.ErrDBNotFound) {
 			return game.State{}, fmt.Errorf("namedquerystruct: %w", game.ErrNotFound)
 		}

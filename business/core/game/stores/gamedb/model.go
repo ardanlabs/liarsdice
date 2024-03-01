@@ -129,6 +129,40 @@ func toCoreState(dbState dbState) (game.State, error) {
 		existingPlayers[i] = common.HexToAddress(player)
 	}
 
+	cups := make(map[common.Address]game.Cup)
+	for _, cup := range dbState.Cups {
+		player := common.HexToAddress(cup.Player)
+
+		dice := make([]int, len(cup.Dice))
+		for i, d := range cup.Dice {
+			dice[i] = int(d)
+		}
+
+		cups[player] = game.Cup{
+			Player:   player,
+			OrderIdx: cup.OrderIdx,
+			Outs:     cup.Outs,
+			Dice:     dice,
+		}
+	}
+
+	bets := make([]game.Bet, len(dbState.Bets))
+	for i, bet := range dbState.Bets {
+		bets[i] = game.Bet{
+			Player: common.HexToAddress(bet.Player),
+			Number: bet.Number,
+			Suit:   bet.Suit,
+		}
+	}
+
+	balances := make([]game.BalanceFmt, len(dbState.Balances))
+	for i, balance := range dbState.Balances {
+		balances[i] = game.BalanceFmt{
+			Player: common.HexToAddress(balance.Player),
+			Amount: balance.Amount,
+		}
+	}
+
 	state := game.State{
 		GameID:          dbState.ID,
 		GameName:        dbState.Name,
@@ -139,6 +173,9 @@ func toCoreState(dbState dbState) (game.State, error) {
 		PlayerLastWin:   common.HexToAddress(dbState.PlayerLastWin),
 		PlayerTurn:      common.HexToAddress(dbState.PlayerTurn),
 		ExistingPlayers: existingPlayers,
+		Cups:            cups,
+		Bets:            bets,
+		Balances:        balances,
 	}
 
 	return state, nil

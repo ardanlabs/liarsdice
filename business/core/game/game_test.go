@@ -173,7 +173,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Check database
 
-	checkDatabase(ctx, t, "first round ended", engine)
+	checkDatabase(ctx, t, "First round ended", engine)
 
 	// -------------------------------------------------------------------------
 	// Start second round
@@ -247,7 +247,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Check database
 
-	checkDatabase(ctx, t, "second round ended", engine)
+	checkDatabase(ctx, t, "Second round ended", engine)
 
 	// -------------------------------------------------------------------------
 	// Start third round
@@ -321,7 +321,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Check database
 
-	checkDatabase(ctx, t, "third round ended", engine)
+	checkDatabase(ctx, t, "Third round ended", engine)
 
 	// -------------------------------------------------------------------------
 	// There should be only one player left, player1
@@ -408,7 +408,7 @@ func Test_SuccessGamePlay(t *testing.T) {
 	// -------------------------------------------------------------------------
 	// Check database
 
-	checkDatabase(ctx, t, "vaildate game", engine)
+	checkDatabase(ctx, t, "Vaildate game", engine)
 }
 
 func Test_InvalidBet(t *testing.T) {
@@ -697,7 +697,7 @@ func smartContract(ctx context.Context, t *testing.T) common.Address {
 }
 
 func checkDatabase(ctx context.Context, t *testing.T, label string, engine *game.Game) {
-	t.Logf("%s: Check Database", label)
+	t.Logf("Check Database: %s", label)
 
 	qState, err := engine.QueryState(ctx)
 	if err != nil {
@@ -726,7 +726,60 @@ func checkDatabase(ctx context.Context, t *testing.T, label string, engine *game
 		t.Fatalf("%s: expecting game player turn in storage to be %s; got %s", label, eState.PlayerTurn, qState.PlayerTurn)
 	}
 
-	// if qState.ExistingPlayers != eState.PlayerTurn {
-	// 	t.Fatalf("expecting game player turn in storage to be %s; got %s", label, eState.PlayerTurn, qState.PlayerTurn)
-	// }
+	for i, player := range qState.ExistingPlayers {
+		if player != eState.ExistingPlayers[i] {
+			t.Fatalf("%s: expecting game existing player turn in storage to be %s; got %s", label, eState.ExistingPlayers[i], player)
+		}
+	}
+
+	if eState.Status == game.StatusNewGame {
+		return
+	}
+
+	t.Log("Check Database: Checking full game state")
+
+	for player, eCup := range eState.Cups {
+		qCup, exists := qState.Cups[player]
+		if !exists {
+			t.Fatalf("%s: expecting game player %s to exist in cups", label, player)
+		}
+
+		if eCup.OrderIdx != qCup.OrderIdx {
+			t.Fatalf("%s: expecting cup order idx in storage to be %d; got %d for player %s", label, eCup.OrderIdx, qCup.OrderIdx, player)
+		}
+
+		if eCup.Outs != qCup.Outs {
+			t.Fatalf("%s: expecting cup outs in storage to be %d; got %d for player %s", label, eCup.Outs, qCup.Outs, player)
+		}
+
+		for i, eNumber := range eCup.Dice {
+			if eNumber != qCup.Dice[i] {
+				t.Fatalf("%s: expecting cup dice in storage to be %d; got %d for player %s", label, eNumber, qCup.Dice[i], player)
+			}
+		}
+	}
+
+	for i, eBet := range eState.Bets {
+		if qState.Bets[i].Player != eBet.Player {
+			t.Fatalf("%s: expecting bet player in storage to be %d; got %d", label, qState.Bets[i].Player, eBet.Player)
+		}
+
+		if qState.Bets[i].Number != eBet.Number {
+			t.Fatalf("%s: expecting bet number in storage to be %d; got %d for player %s", label, qState.Bets[i].Number, eBet.Number, eBet.Player)
+		}
+
+		if qState.Bets[i].Suit != eBet.Suit {
+			t.Fatalf("%s: expecting bet suit in storage to be %d; got %d for player %s", label, qState.Bets[i].Suit, eBet.Suit, eBet.Player)
+		}
+	}
+
+	for i, eBal := range eState.Balances {
+		if eState.Balances[i].Player != eBal.Player {
+			t.Fatalf("%s: expecting balance player in storage to be %d; got %d", label, eState.Bets[i].Player, eBal.Player)
+		}
+
+		if eState.Balances[i].Amount != eBal.Amount {
+			t.Fatalf("%s: expecting balance amount in storage to be %s; got %s for player %s", label, eState.Balances[i].Amount, eBal.Amount, eBal.Player)
+		}
+	}
 }
