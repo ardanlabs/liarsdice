@@ -60,6 +60,9 @@ game-tui2:
 game-tuio:
 	go run app/cli/liars/main.go -a 0x6327A38415C53FFb36c11db55Ea74cc9cB4976Fd
 
+game-ui:
+	go run app/services/ui/main.go
+
 # ==============================================================================
 # Building containers
 
