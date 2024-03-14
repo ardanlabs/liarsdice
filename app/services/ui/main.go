@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"html/template"
 	"net/http"
 	"os"
 	"os/signal"
@@ -54,13 +53,21 @@ func main() {
 var documents embed.FS
 
 func show(w http.ResponseWriter, r *http.Request) {
-	tmpl, err := template.New("").ParseFS(documents, "assets/html/index.html")
+	// tmpl, err := template.New("").ParseFS(documents, "assets/html/index.html")
+	// if err != nil {
+	// 	http.Error(w, "Parse: "+err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
+	// 	http.Error(w, "Exec:"+err.Error(), http.StatusInternalServerError)
+	// }
+
+	d, err := os.ReadFile("app/services/ui/assets/html/index.html")
 	if err != nil {
-		http.Error(w, "Parse: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Read: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
-		http.Error(w, "Exec:"+err.Error(), http.StatusInternalServerError)
-	}
+	w.Write(d)
 }

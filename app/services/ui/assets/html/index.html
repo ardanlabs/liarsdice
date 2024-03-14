@@ -24,29 +24,98 @@
                 .then((res) => console.log('request accounts', res))
                 .catch((e) => console.log('request accounts ERR', e));
             }
-          
-            function addEthereumChain() {
+
+            function accounts() {
               ethereum
                 .request({
-                  method: 'wallet_addEthereumChain',
-                  params: [
-                    {
-                      chainId: '0x89',
-                      chainName: 'Polygon',
-                      blockExplorerUrls: ['https://polygonscan.com'],
-                      nativeCurrency: { symbol: 'MATIC', decimals: 18 },
-                      rpcUrls: ['https://polygon-rpc.com/'],
-                    },
-                  ],
+                  method: 'eth_accounts',
+                  params: [],
                 })
-                .then((res) => console.log('add', res))
-                .catch((e) => console.log('ADD ERR', e));
+                .then((res) => console.log('accounts', res))
+                .catch((e) => console.log('accounts ERR', e));
+            }
+          
+            function personalSign() {
+              ethereum
+                .request({
+                  method: 'eth_signTypedData_v4',
+                  params: [
+                    "0x6327a38415c53ffb36c11db55ea74cc9cb4976fd",
+                    {
+                    "types": {
+                        "EIP712Domain": [
+                        {
+                            "name": "name",
+                            "type": "string"
+                        },
+                        {
+                            "name": "version",
+                            "type": "string"
+                        },
+                        {
+                            "name": "chainId",
+                            "type": "uint256"
+                        },
+                        {
+                            "name": "verifyingContract",
+                            "type": "address"
+                        }
+                        ],
+                        "Person": [
+                        {
+                            "name": "name",
+                            "type": "string"
+                        },
+                        {
+                            "name": "wallet",
+                            "type": "address"
+                        }
+                        ],
+                        "Mail": [
+                        {
+                            "name": "from",
+                            "type": "Person"
+                        },
+                        {
+                            "name": "to",
+                            "type": "Person"
+                        },
+                        {
+                            "name": "contents",
+                            "type": "string"
+                        }
+                        ]
+                    },
+                    "primaryType": "Mail",
+                    "domain": {
+                        "name": "Ether Mail",
+                        "version": "1",
+                        "chainId": 1,
+                        "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+                    },
+                    "message": {
+                        "from": {
+                        "name": "Cow",
+                        "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+                        },
+                        "to": {
+                        "name": "Bob",
+                        "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+                        },
+                        "contents": "Hello, Bob!"
+                    }
+                    }
+                ]
+                })
+                .then((res) => console.log('personal sign', res))
+                .catch((e) => console.log('personal sign ERR', e));
             }
     </script>
     </head>
     <body>
-        <h1>Testing Metamask Wallet</h1>
+        <h1>Testing Metamask Wallet 3</h1>
         <button onclick="connect()">Connect</button>
-        <button onclick="addEthereumChain()">ADD ETHEREUM CHAIN</button>
+        <button onclick="accounts()">Accounts</button>
+        <button onclick="personalSign()">Sign Data</button>
     </body>
 </html>
