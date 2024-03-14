@@ -8,6 +8,10 @@
 # The coinbase address is the account to pay mining rewards to.
 # The coinbase address is given a LOT of money to start.
 #
+# WE NEED THESE VERSIONS OF THESE MODULES.
+# github.com/crate-crypto/go-ipa v0.0.0-20231205143816-408dbffb2041 // indirect
+# github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
+# github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593 // indirect
 
 GOLANG          := golang:1.22
 NODE            := node:16
