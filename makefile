@@ -41,6 +41,7 @@ dev-setup:
 	brew list ethereum || brew install ethereum
 	brew list solidity || brew install solidity
 	brew list pgcli || brew install pgcli
+	brew list watch || brew instal watch
 
 dev-docker:
 	docker pull $(GOLANG)
