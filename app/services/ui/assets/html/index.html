@@ -3,6 +3,56 @@
     <head>
         <title>Testing Metamask Wallet</title>
         <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <script>
+            function currentDateTime() {
+                const dt = new Date();
+                
+                const year    = dt.getUTCFullYear();
+                const month   = String(dt.getUTCMonth() + 1).padStart(2, '0'); // Month (0-indexed)
+                const day     = String(dt.getUTCDate()).padStart(2, '0');
+                const hours   = String(dt.getUTCHours()).padStart(2, '0');
+                const minutes = String(dt.getUTCMinutes()).padStart(2, '0');
+                const seconds = String(dt.getUTCSeconds()).padStart(2, '0');
+
+                return `${year}${month}${day}${hours}${minutes}${seconds}`;
+            }
+        </script>
+        <script>
+            // Setting some ajax specific global settings.
+            $.ajaxSetup({
+                contentType: "application/json; charset=utf-8",
+            });
+
+            // handleAjaxError is a helper function for handling the response from any
+            // ajax request that is made.
+            function handleAjaxError(jqXHR, exception) {
+                var msg = '';
+
+                switch (jqXHR.status) {
+                case 0:
+                    msg = 'Not connected, verify network.';
+                case 404:
+                    msg = 'Requested page not found. [404]';
+                case 500:
+                    msg = 'Internal Server Error [500].';
+                default:
+                    switch (exception) {
+                    case "parsererror":
+                        msg = 'Requested JSON parse failed.';
+                    case "timeout":
+                        msg = 'Time out error.';
+                    case "abort":
+                        msg = 'Ajax request aborted.';
+                    default:
+                        const o = JSON.parse(jqXHR.responseText);
+                        msg = o.error;
+                    }
+                }
+
+                console.log(msg);
+            }
+        </script>
         <script>
             const sdk = new MetaMaskSDK.MetaMaskSDK({
               dappMetadata: {
@@ -73,19 +123,37 @@
                 .then((res) => console.log('accounts', res))
                 .catch((e) => console.log('accounts ERR', e));
             }
-          
+            
+            var signed;
+            var dateTime;
+            
             function personalSign() {
+              dateTime = currentDateTime();
               ethereum
                 .request({
                     method: 'personal_sign',
                     params: [
-                        hexer("hello world"),
+                        hexer(`{"address":"0x6327a38415c53ffb36c11db55ea74cc9cb4976fd","dateTime":"${dateTime}"}`),
                         "0x6327a38415c53ffb36c11db55ea74cc9cb4976fd"
                     ],
                 })
-                .then((res) => console.log('personal sign', res))
+                .then((res) => { signed=res; console.log('personal sign', res) })
                 .catch((e) => console.log('personal sign ERR', e));
-        }
+            }
+
+            function connectGE() {
+                $.ajax({
+                    type: "post",
+                    url: "http://0.0.0.0:3000/v1/game/connect",
+                    data: `{"address":"0x6327a38415c53ffb36c11db55ea74cc9cb4976fd","dateTime":"${dateTime}","sig":"${signed}"}`,
+                    success: function (response) {
+                        console.log(response);
+                    },
+                    error: function (jqXHR, exception) {
+                        console.log(exception);
+                    },
+                });
+            }
     </script>
     </head>
     <body>
@@ -93,5 +161,6 @@
         <button onclick="connect()">Connect</button>
         <button onclick="accounts()">Accounts</button>
         <button onclick="personalSign()">Sign Data</button>
+        <button onclick="connectGE()">Conn GE</button>
     </body>
 </html>

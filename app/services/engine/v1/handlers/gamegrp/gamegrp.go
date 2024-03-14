@@ -42,7 +42,7 @@ type handlers struct {
 
 // connect is used to return a game token for API usage.
 func (h *handlers) connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	address, err := validateSignature(r, h.connectTimeout)
+	address, err := validateSignature(ctx, h.log, r, h.connectTimeout)
 	if err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
@@ -473,7 +473,7 @@ func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http
 	return h.state(ctx, w, r)
 }
 
-func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
+func validateSignature(ctx context.Context, log *logger.Logger, r *http.Request, timeout time.Duration) (string, error) {
 	var dt struct {
 		Address   string `json:"address"`
 		DateTime  string `json:"dateTime"` // YYYYMMDDHHMMSS
@@ -489,8 +489,10 @@ func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
 		return "", fmt.Errorf("parse time: %w", err)
 	}
 
+	log.Info(ctx, "validate signature", "datetime", dt.DateTime, "address", dt.Address, "signature", dt.Signature, "parsedDT", t.Format("20060102150405"))
+
 	if d := time.Since(t); d > timeout {
-		return "", fmt.Errorf("data is too old, %v", d.Seconds())
+		return "", fmt.Errorf("data is too old, %v utc now, %v seconds passed, %v seconds timeout", time.Now().UTC().Format("20060102150405"), d.Seconds(), timeout.Seconds())
 	}
 
 	data := struct {
@@ -505,6 +507,8 @@ func validateSignature(r *http.Request, timeout time.Duration) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to extract address: %w", err)
 	}
+
+	log.Info(ctx, "validate signature", "calc address", address, "recv address", dt.Address)
 
 	if !strings.EqualFold(strings.ToLower(address), strings.ToLower(data.Address)) {
 		return "", fmt.Errorf("invalid address match, got[%s] exp[%s]", address, data.Address)
