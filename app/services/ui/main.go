@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -49,8 +48,8 @@ func main() {
 	}
 }
 
-//go:embed assets/*
-var documents embed.FS
+//   go:embed assets/*
+//var documents embed.FS
 
 func show(w http.ResponseWriter, r *http.Request) {
 	// tmpl, err := template.New("").ParseFS(documents, "assets/html/index.html")
