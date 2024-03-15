@@ -19,8 +19,12 @@ function config() {
 function connect() {
     ethereum
     .request({
-        method: 'eth_requestAccounts',
-        params: [],
+        method: 'wallet_requestPermissions',
+        params: [
+            {
+                "eth_accounts": {}
+            }
+        ],
     })
     .then((res) => {
         console.log('request accounts', res);
