@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/", show)
+	http.Handle("/", http.FileServer(http.Dir("app/services/ui/website")))
 
 	app := http.Server{
 		Addr:    "localhost:8080",
@@ -46,27 +46,4 @@ func main() {
 	if err := app.Shutdown(ctx); err != nil {
 		app.Close()
 	}
-}
-
-//   go:embed assets/*
-//var documents embed.FS
-
-func show(w http.ResponseWriter, r *http.Request) {
-	// tmpl, err := template.New("").ParseFS(documents, "assets/html/index.html")
-	// if err != nil {
-	// 	http.Error(w, "Parse: "+err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// if err := tmpl.ExecuteTemplate(w, "index.html", nil); err != nil {
-	// 	http.Error(w, "Exec:"+err.Error(), http.StatusInternalServerError)
-	// }
-
-	d, err := os.ReadFile("app/services/ui/assets/html/index.html")
-	if err != nil {
-		http.Error(w, "Read: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Write(d)
 }
