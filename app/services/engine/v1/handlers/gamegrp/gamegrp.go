@@ -42,7 +42,7 @@ type handlers struct {
 
 // connect is used to return a game token for API usage.
 func (h *handlers) connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-	address, err := validateSignature(ctx, h.log, r, h.connectTimeout)
+	address, err := validateSignature(ctx, h.log, r, h.connectTimeout, h.bank.Client().ChainID())
 	if err != nil {
 		return v1.NewTrustedError(err, http.StatusBadRequest)
 	}
@@ -156,12 +156,20 @@ func (h *handlers) events(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 // configuration returns the basic configuration the front end needs to use.
 func (h *handlers) configuration(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
+	// TODO: This is a Hack right now since this namespace doesn't exist
+	// for the client.
+	network := h.bank.Client().Network()
+	if strings.Contains(network, "geth-service.liars-system.svc.cluster.local") {
+		network = "http://localhost:8545"
+	}
+
 	info := struct {
 		Network    string         `json:"network"`
 		ChainID    int            `json:"chainId"`
 		ContractID common.Address `json:"contractId"`
 	}{
-		Network:    h.bank.Client().Network(),
+		Network:    network,
 		ChainID:    h.bank.Client().ChainID(),
 		ContractID: h.bank.ContractID(),
 	}
@@ -473,9 +481,10 @@ func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http
 	return h.state(ctx, w, r)
 }
 
-func validateSignature(ctx context.Context, log *logger.Logger, r *http.Request, timeout time.Duration) (string, error) {
+func validateSignature(ctx context.Context, log *logger.Logger, r *http.Request, timeout time.Duration, chainID int) (string, error) {
 	var dt struct {
 		Address   string `json:"address"`
+		ChainID   int    `json:"chainId"`
 		DateTime  string `json:"dateTime"` // YYYYMMDDHHMMSS
 		Signature string `json:"sig"`
 	}
@@ -489,17 +498,23 @@ func validateSignature(ctx context.Context, log *logger.Logger, r *http.Request,
 		return "", fmt.Errorf("parse time: %w", err)
 	}
 
-	log.Info(ctx, "validate signature", "datetime", dt.DateTime, "address", dt.Address, "signature", dt.Signature, "parsedDT", t.Format("20060102150405"))
+	log.Info(ctx, "validate signature", "datetime", "curtime", time.Now().UTC().Format("20060102150405"), dt.DateTime, "address", dt.Address, "signature", dt.Signature)
 
 	if d := time.Since(t); d > timeout {
-		return "", fmt.Errorf("data is too old, %v utc now, %v seconds passed, %v seconds timeout", time.Now().UTC().Format("20060102150405"), d.Seconds(), timeout.Seconds())
+		return "", fmt.Errorf("data is too old, %v seconds passed > %v seconds timeout", d.Seconds(), timeout.Seconds())
+	}
+
+	if dt.ChainID != chainID {
+		return "", fmt.Errorf("invalid chain id, got %d, exp %d", dt.ChainID, chainID)
 	}
 
 	data := struct {
 		Address  string `json:"address"`
+		ChainID  int    `json:"chainId"`
 		DateTime string `json:"dateTime"`
 	}{
 		Address:  dt.Address,
+		ChainID:  dt.ChainID,
 		DateTime: dt.DateTime,
 	}
 
