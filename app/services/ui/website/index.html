@@ -5,20 +5,18 @@
         <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
         <script src="scripts/system.js"></script>
-        <script src="scripts/api.js"></script>
+        <script src="scripts/connect.js"></script>
+        <script src="scripts/engine.js"></script>
+        <script src="scripts/app.js"></script>
+        <script src="scripts/events.js"></script>
     </head>
     <body>
         <h1>Testing Metamask Wallet</h1>
-        <button onclick="config()">Config</button>
-        <button onclick="connect()">Connect</button>
-        <button onclick="accounts()">Accounts</button>
-        <button onclick="personalSign()">Sign Data</button>
-        <button onclick="connectGE()">Conn GE</button>
+        <button id="gameConnect">Game Connect</button>
+        <button id="gameTables">Game Tables</button>
         <h2></h2>
-        <div id="config"></div>
-        <div id="connect"></div>
-        <div id="sign"></div>
-        <div id="psign"></div>
-        <div id="cge"></div>
+        <div>
+            <div id="error"></div>
+        </div>
     </body>
 </html>
