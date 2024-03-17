@@ -51,7 +51,7 @@ class Engine {
         }
     }
 
-    async queryTables() {
+    async tables() {
         try {
             const tables = await $.ajax({
                 type: "get",

@@ -33,7 +33,7 @@ class App {
     }
 
     async handlerGameTables() {
-        const [tables, err] = await this.engine.queryTables();
+        const [tables, err] = await this.engine.tables();
         if (err != null) {
             $("#error").text(err);
             return;
