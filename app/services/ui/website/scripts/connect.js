@@ -4,49 +4,46 @@
 async function gameConnect(url) {
 
     // Get configuration information from the game engine.
-    const cfg = await config(url);
-    if (isError(cfg)) {
-        return;
+    var [cfg, err] = await config(url);
+    if (err != null) {
+        return [null, err];
     }
 
     // Ask the user's wallet is talking to the same blockchain as
     // the game engine.
-    const sw = await switchChain(cfg.chainId);
-    if (isError(sw)) {
+    var [_, err] = await switchChain(cfg.chainId);
+    if (err != null) {
 
         // The blockchain does not exist in the user's wallet so
         // let's try to help them.
-        const aec = await addEthereumChain(cfg);
-        if (isError(aec)) {
-            return;
+        var [_, err] = await addEthereumChain(cfg);
+        if (err != null) {
+            return [null, err];
         }
 
         // Try one more time to switch the wallet.
-        sw = await switchChain(cfg.chainId);
-        if (isError(sw)) {
-            return;
+        var [_, err] = await switchChain(cfg.chainId);
+        if (err != null) {
+            return [null, err];
         }
     }
 
     // Request permission to use the wallet. The user will select an
     // account to use.
-    const rp = await requestPermissions();
-    if (isError(rp)) {
-        return;
+    var [rp, err] = await requestPermissions();
+    if (err != null) {
+        return [null, err];
     }
 
     // Capture the account that the user selected.
     if (rp.length != 1) {
-        isError(newError("user didn't select one account"));
-        return;
+        return [null, newError("user didn't select one account")];
     }
     if (rp[0].caveats.length != 1) {
-        isError(newError("user didn't select one account"));
-        return;
+        return [null, newError("user didn't select one account")];
     }
     if (rp[0].caveats[0].value.length != 1) {
-        isError(newError("user didn't select one account"));
-        return;
+        return [null, newError("user didn't select one account")];
     }
     const address = rp[0].caveats[0].value[0];
 
@@ -54,18 +51,18 @@ async function gameConnect(url) {
     const dateTime = currentDateTime();
 
     // Sign the arbitrary data.
-    const signature = await personalSign(address, cfg.chainId, dateTime);
-    if (isError(signature)) {
-        return;
+    var [sig, err] = await personalSign(address, cfg.chainId, dateTime);
+    if (err != null) {
+        return [null, err];
     }
     
     // Connect to the game engine to get a token for game play.
-    const cge = await connectGameEngine(url, address, cfg.chainId, dateTime, signature);
-    if (isError(cge)) {
-        return;
+    var [cge, err] = await connectGameEngine(url, address, cfg.chainId, dateTime, sig);
+    if (err != null) {
+        return [null, err];
     }
 
-    return cge.token;
+    return [cge.token, null];
 }
 
 async function config(url) {
@@ -75,11 +72,11 @@ async function config(url) {
             url: `${url}/v1/game/config`
         });
 
-        return result;
+        return [result, null];
     }
     
     catch (e) {
-        return e;
+        return [null, e.responseJSON];
     }
 }
 
@@ -94,11 +91,11 @@ async function switchChain(chainId) {
             ],
         });
     
-        return result;
+        return [result, null];
     }
 
     catch (e) {
-        return e;
+        return [null, e.message];
     }
 }
 
@@ -126,17 +123,17 @@ async function addEthereumChain(cfg) {
             ],
         });
     
-        return result;
+        return [result, null];
     }
 
     catch (e) {
-        return e;
+        return [null, e.message];
     }
 }
 
 async function requestPermissions() {
     try {
-        const res = await ethereum.request({
+        const result = await ethereum.request({
             method: 'wallet_requestPermissions',
             params: [
                 {
@@ -145,11 +142,11 @@ async function requestPermissions() {
             ],
         });
 
-        return res;
+        return [result, null];
     }
 
     catch (e) {
-        return e;
+        return [null, e.message];
     }
 }
 
@@ -165,11 +162,11 @@ async function personalSign(address, chainId, dateTime) {
             ],
         });
 
-        return signature;
+        return [signature, null];
     }
 
     catch (e) {
-        return e;
+        return [null, e.message];
     }
 }
 
@@ -183,10 +180,10 @@ async function connectGameEngine(url, address, chainId, dateTime, sigature) {
             data: data
         });
 
-        return token;
+        return [token, null];
     }
 
     catch (e) {
-        return e.responseJSON;
+        return [null, e.responseJSON];
     }
 }

@@ -8,10 +8,10 @@ async function getGameTables(url, token) {
             },
         });
 
-        return tables;
+        return [tables, null];
     }
 
     catch (e) {
-        return e.responseJSON;
+        return [null, e.responseJSON];
     }
 }

@@ -8,39 +8,9 @@ const sdk = new MetaMaskSDK.MetaMaskSDK({
     }
 });
 
-// Setting some ajax specific global settings.
 $.ajaxSetup({
     contentType: "application/json; charset=utf-8",
 });
-
-// handleAjaxError is a helper function for handling the response from any
-// ajax request that is made.
-function handleAjaxError(jqXHR, exception) {
-    var msg = '';
-
-    switch (jqXHR.status) {
-    case 0:
-        msg = 'Not connected, verify network.';
-    case 404:
-        msg = 'Requested page not found. [404]';
-    case 500:
-        msg = 'Internal Server Error [500].';
-    default:
-        switch (exception) {
-        case "parsererror":
-            msg = 'Requested JSON parse failed.';
-        case "timeout":
-            msg = 'Time out error.';
-        case "abort":
-            msg = 'Ajax request aborted.';
-        default:
-            const o = JSON.parse(jqXHR.responseText);
-            msg = o.error;
-        }
-    }
-
-    console.log(msg);
-}
 
 function hexer(input) {
     const utf8 = toUTF8Array(input);
@@ -48,12 +18,15 @@ function hexer(input) {
     return '0x' + hex.join('');
 }
 
-// From https://stackoverflow.com/a/18729931
 function toUTF8Array(str) {
     var utf8 = [];
+
     for (var i=0; i < str.length; i++) {
         var charcode = str.charCodeAt(i);
-        if (charcode < 0x80) utf8.push(charcode);
+
+        if (charcode < 0x80) {
+            utf8.push(charcode);
+        }
         else if (charcode < 0x800) {
             utf8.push(0xc0 | (charcode >> 6),
                     0x80 | (charcode & 0x3f));
@@ -63,9 +36,10 @@ function toUTF8Array(str) {
                     0x80 | ((charcode>>6) & 0x3f),
                     0x80 | (charcode & 0x3f));
         }
-        // surrogate pair
         else {
+            // Surrogate pair.
             i++;
+            
             // UTF-16 encodes 0x10000-0x10FFFF by
             // subtracting 0x10000 and splitting the
             // 20 bits of 0x0-0xFFFFF into two halves
@@ -77,6 +51,7 @@ function toUTF8Array(str) {
                     0x80 | (charcode & 0x3f));
         }
     }
+
     return utf8;
 }
 

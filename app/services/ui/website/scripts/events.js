@@ -24,8 +24,9 @@ function wireEvents() {
 }
 
 async function eventGameConnect(url) {
-    const token = await gameConnect(url);
-    if (isError(token)) {
+    const [token, err] = await gameConnect(url);
+    if (err != null) {
+        $("#error").text(err);
         return;
     }
 
@@ -36,8 +37,9 @@ async function eventGameConnect(url) {
 }
 
 async function eventGameTables(url, token) {
-    const tables = await getGameTables(url, token);
-    if (isError(tables)) {
+    const [tables, err] = await getGameTables(url, token);
+    if (err != null) {
+        $("#error").text(err);
         return;
     }
 
