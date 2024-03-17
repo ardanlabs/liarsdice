@@ -17,3 +17,18 @@ $.ajaxSetup({
 window.onload = function () {
     app.init();
 }
+
+// =============================================================================
+
+function parseError(e) {
+    switch (true) {
+        case ('responseJSON' in e):
+            return e.responseJSON.error;
+        case ('message' in e):
+            return e.message;
+        case ('responseText' in e):
+            return e.responseText;
+    }
+
+    return "no error field identified";
+}

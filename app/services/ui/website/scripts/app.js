@@ -45,8 +45,7 @@ class App {
     // -------------------------------------------------------------------------
 
     // gameConnect does everything to connect the browser to the wallet and
-    // to the game engine. If successful, a JWT is returned that is needed
-    // for other game engine API calls.
+    // to the game engine.
     async gameConnect() {
 
         // Get configuration information from the game engine.
@@ -55,14 +54,14 @@ class App {
             return err;
         }
 
-        // Ask the user's wallet is talking to the same blockchain as
+        // Ask the user's wallet if it's talking to the same blockchain as
         // the game engine.
         var [_, err] = await Wallet.switchChain(cfg.chainId);
         if (err != null) {
 
             // The blockchain does not exist in the user's wallet so
             // let's try to help them.
-            var [_, err] = await Wallet.addEthereumChain(cfg);
+            var [_, err] = await Wallet.addEthereumChain(cfg.chainId, cfg.network);
             if (err != null) {
                 return err;
             }

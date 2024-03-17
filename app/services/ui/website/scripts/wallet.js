@@ -14,17 +14,17 @@ class Wallet {
         }
 
         catch (e) {
-            return [null, e.message];
+            return [null, parseError(e)];
         }
     }
 
-    static async addEthereumChain(cfg) {
+    static async addEthereumChain(chainId, network) {
         try {
             const result = await ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [
                     {
-                        chainId: '0x' + cfg.chainId.toString(16),
+                        chainId: '0x' + chainId.toString(16),
                         chainName: "Liars Dice Local",
                         rpcUrls: [
                             cfg.network,
@@ -36,7 +36,7 @@ class Wallet {
                             "decimals": 18
                         },
                         blockExplorerUrls: [
-                            cfg.network
+                            network
                         ]
                     }
                 ],
@@ -46,7 +46,7 @@ class Wallet {
         }
 
         catch (e) {
-            return [null, e.message];
+            return [null, parseError(e)];
         }
     }
 
@@ -65,7 +65,7 @@ class Wallet {
         }
 
         catch (e) {
-            return [null, e.message];
+            return [null, parseError(e)];
         }
     }
 
@@ -85,7 +85,7 @@ class Wallet {
         }
 
         catch (e) {
-            return [null, e.message];
+            return [null, parseError(e)];
         }
     }
 }
