@@ -62,6 +62,7 @@ func WebAPI(cfg Config, routeAdder RouteAdder, options ...func(opts *Options)) h
 		mid.Errors(cfg.Log),
 		mid.Metrics(),
 		mid.Panics(),
+		mid.Cors(opts.corsOrigin),
 	)
 
 	if len(opts.corsOrigin) > 0 {

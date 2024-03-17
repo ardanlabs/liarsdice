@@ -7,9 +7,9 @@ require (
 	github.com/ardanlabs/darwin/v3 v3.3.1
 	github.com/ardanlabs/ethereum v0.19.0
 	github.com/arl/statsviz v0.6.0
-	github.com/dimfeld/httptreemux/v5 v5.5.0
 	github.com/ethereum/go-ethereum v1.13.14
 	github.com/gdamore/tcell/v2 v2.7.4
+	github.com/go-json-experiment/json v0.0.0-20231102232822-2e55bd4e08b0
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.19.0

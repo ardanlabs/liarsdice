@@ -51,14 +51,12 @@ class Engine {
         }
     }
 
-    static async queryTables() {
+    async queryTables() {
         try {
             const tables = await $.ajax({
                 type: "get",
-                url: `${this.url}/v1/game/table`,
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader ("Authorization", "Bearer " + this.token);
-                },
+                url: `${this.url}/v1/game/tables`,
+                headers: { "Authorization": "Bearer " + this.token }
             });
 
             return [tables, null];

@@ -2,8 +2,9 @@ package web
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
+
+	"github.com/go-json-experiment/json"
 )
 
 // Respond converts a Go value to JSON and sends it to the client.

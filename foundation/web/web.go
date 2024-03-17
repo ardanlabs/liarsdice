@@ -4,12 +4,12 @@ package web
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"syscall"
 	"time"
 
-	"github.com/dimfeld/httptreemux/v5"
 	"github.com/google/uuid"
 )
 
@@ -21,17 +21,27 @@ type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) e
 // object for each of our http handlers. Feel free to add any configuration
 // data/logic on this App struct.
 type App struct {
-	*httptreemux.ContextMux
+	mux      *http.ServeMux
 	shutdown chan os.Signal
 	mw       []MidHandler
 }
 
 // NewApp creates an App value that handle a set of routes for the application.
 func NewApp(shutdown chan os.Signal, mw ...MidHandler) *App {
+
+	// Create an OpenTelemetry HTTP Handler which wraps our router. This will start
+	// the initial span and annotate it with information about the request/trusted.
+	//
+	// This is configured to use the W3C TraceContext standard to set the remote
+	// parent if a client request includes the appropriate headers.
+	// https://w3c.github.io/trace-context/
+
+	mux := http.NewServeMux()
+
 	return &App{
-		ContextMux: httptreemux.NewContextMux(),
-		shutdown:   shutdown,
-		mw:         mw,
+		mux:      mux,
+		shutdown: shutdown,
+		mw:       mw,
 	}
 }
 
@@ -41,26 +51,30 @@ func (a *App) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
 
+// ServeHTTP implements the http.Handler interface. It's the entry point for
+// all http traffic and allows the opentelemetry mux to run first to handle
+// tracing. The opentelemetry mux then calls the application mux to handle
+// application traffic. This was set up on line 44 in the NewApp function.
+func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	a.mux.ServeHTTP(w, r)
+}
+
 // EnableCORS enables CORS preflight requests to work in the middleware. It
 // prevents the MethodNotAllowedHandler from being called. This must be enabled
 // for the CORS middleware to work.
 func (a *App) EnableCORS(mw MidHandler) {
-	a.mw = append(a.mw, mw)
-
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return Respond(ctx, w, "OK", http.StatusOK)
 	}
-	handler = wrapMiddleware(a.mw, handler)
+	handler = wrapMiddleware([]MidHandler{mw}, handler)
 
-	a.ContextMux.OptionsHandler = func(w http.ResponseWriter, r *http.Request, params map[string]string) {
-		v := Values{
-			TraceID: uuid.NewString(),
-			Now:     time.Now().UTC(),
-		}
-		ctx := setValues(r.Context(), &v)
-
-		handler(ctx, w, r)
+	h := func(w http.ResponseWriter, r *http.Request) {
+		handler(r.Context(), w, r)
 	}
+
+	finalPath := fmt.Sprintf("%s %s", http.MethodOptions, "/")
+
+	a.mux.HandleFunc(finalPath, h)
 }
 
 // HandleNoMiddleware sets a handler function for a given HTTP method and path pair
@@ -86,8 +100,9 @@ func (a *App) HandleNoMiddleware(method string, group string, path string, handl
 	if group != "" {
 		finalPath = "/" + group + path
 	}
+	finalPath = fmt.Sprintf("%s %s", method, finalPath)
 
-	a.ContextMux.Handle(method, finalPath, h)
+	a.mux.HandleFunc(finalPath, h)
 }
 
 // Handle sets a handler function for a given HTTP method and path pair
@@ -115,8 +130,9 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 	if group != "" {
 		finalPath = "/" + group + path
 	}
+	finalPath = fmt.Sprintf("%s %s", method, finalPath)
 
-	a.ContextMux.Handle(method, finalPath, h)
+	a.mux.HandleFunc(finalPath, h)
 }
 
 // validateError validates the error for special conditions that do not
