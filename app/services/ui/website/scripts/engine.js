@@ -1,9 +1,20 @@
 class Engine {
-    static async config(url) {
+    url;
+    token;
+
+    // -------------------------------------------------------------------------
+
+    constructor(url) {
+        this.url = url;
+    }
+
+    // -------------------------------------------------------------------------
+
+    async config() {
         try {
             const result = await $.ajax({
                 type: "get",
-                url: `${url}/v1/game/config`
+                url: `${this.url}/v1/game/config`
             });
 
             return [result, null];
@@ -17,34 +28,36 @@ class Engine {
         }
     }
 
-    static async connectGameEngine(url, address, chainId, dateTime, sigature) {
+    async connect(address, chainId, dateTime, sigature) {
         const data = `{"address":"${address}","chainId":${chainId},"dateTime":"${dateTime}","sig":"${sigature}"}`;
 
         try {
-            const token = await $.ajax({
+            const result = await $.ajax({
                 type: "post",
-                url: `${url}/v1/game/connect`,
+                url: `${this.url}/v1/game/connect`,
                 data: data
             });
 
-            return [token, null];
+            this.token = result.token;
+
+            return null;
         }
 
         catch (e) {
             if ('responseJSON' in e) {
                 return [null, e.responseJSON];
             }
-            return [null, e.responseText];
+            return e.responseText;
         }
     }
 
-    static async queryGameTables(url, token) {
+    static async queryTables() {
         try {
             const tables = await $.ajax({
                 type: "get",
-                url: `${url}/v1/game/table`,
+                url: `${this.url}/v1/game/table`,
                 beforeSend: function(xhr) {
-                    xhr.setRequestHeader ("Authorization", "Bearer " + token);
+                    xhr.setRequestHeader ("Authorization", "Bearer " + this.token);
                 },
             });
 
