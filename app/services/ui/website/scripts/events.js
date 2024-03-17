@@ -1,47 +1,52 @@
-var connect = {
-    url: "http://0.0.0.0:3000",
-    token: ""
-};
+class Events {
+    url;
+    token;
 
-window.onload = function () {
-    wireEvents();
-}
-
-function wireEvents() {
-    const gameConnect = document.getElementById("gameConnect");
-    gameConnect.addEventListener(
-        'click',
-        function () { eventGameConnect(connect.url); },
-        false
-    );
-
-    const gameTables = document.getElementById("gameTables");
-    gameTables.addEventListener(
-        'click',
-        function () { eventGameTables(connect.url, connect.token); },
-        false
-    );
-}
-
-async function eventGameConnect(url) {
-    const [token, err] = await gameConnect(url);
-    if (err != null) {
-        $("#error").text(err);
-        return;
+    constructor(url) {
+        this.url = url;
     }
 
-    connect.token = token;
+    init() {
+        // Make sure 'this' is the object and not the html element
+        // when these methods are executed by the event listener.
+        this.eventGameConnect = this.eventGameConnect.bind(this);
+        this.eventGameTables = this.eventGameTables.bind(this);
 
-    // For now display the token.
-    $("#error").text(token);
-}
+        const gameConnect = document.getElementById("gameConnect");
+        gameConnect.addEventListener(
+            'click',
+            this.eventGameConnect,
+            false
+        );
 
-async function eventGameTables(url, token) {
-    const [tables, err] = await getGameTables(url, token);
-    if (err != null) {
-        $("#error").text(err);
-        return;
+        const gameTables = document.getElementById("gameTables");
+        gameTables.addEventListener(
+            'click',
+            this.eventGameTables,
+            false
+        );
     }
 
-    $("#error").text(JSON.stringify(tables));
+    async eventGameConnect() {
+        const [token, err] = await App.gameConnect(this.url);
+        if (err != null) {
+            $("#error").text(err);
+            return;
+        }
+
+        this.token = token;
+
+        // For now display the token.
+        $("#error").text(token);
+    }
+
+    async eventGameTables() {
+        const [tables, err] = await Engine.queryGameTables(this.url, this.token);
+        if (err != null) {
+            $("#error").text(err);
+            return;
+        }
+
+        $("#error").text(JSON.stringify(tables));
+    }
 }

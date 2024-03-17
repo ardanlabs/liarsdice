@@ -1,3 +1,9 @@
+const events = new Events("http://0.0.0.0:3000");
+
+window.onload = function () {
+    events.init();
+}
+
 const sdk = new MetaMaskSDK.MetaMaskSDK({
     dappMetadata: {
       name: "Pure JS example",
