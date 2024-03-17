@@ -37,13 +37,13 @@ async function gameConnect(url) {
 
     // Capture the account that the user selected.
     if (rp.length != 1) {
-        return [null, newError("user didn't select one account")];
+        return [null, "user didn't select one account"];
     }
     if (rp[0].caveats.length != 1) {
-        return [null, newError("user didn't select one account")];
+        return [null, "user didn't select one account"];
     }
     if (rp[0].caveats[0].value.length != 1) {
-        return [null, newError("user didn't select one account")];
+        return [null, "user didn't select one account"];
     }
     const address = rp[0].caveats[0].value[0];
 
