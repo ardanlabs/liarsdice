@@ -89,7 +89,7 @@ game-engine:
 # ==============================================================================
 # Building contract
 
-SOLC_EVM_VERSION := london
+SOLC_EVM_VERSION := cancun
 
 contract-build:
 	solc --evm-version $(SOLC_EVM_VERSION) --abi business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
