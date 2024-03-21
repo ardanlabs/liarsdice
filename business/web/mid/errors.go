@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
-	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/errs"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/validate"
 	"github.com/ardanlabs/liarsdice/foundation/web"
@@ -20,16 +20,16 @@ func Errors(log *logger.Logger) web.MidHandler {
 			if err := handler(ctx, w, r); err != nil {
 				log.Error(ctx, "message", "msg", err)
 
-				var er v1.ErrorResponse
+				var er errs.ErrorResponse
 				var status int
 
 				switch {
-				case v1.IsTrustedError(err):
-					trsErr := v1.GetTrustedError(err)
+				case errs.IsTrustedError(err):
+					trsErr := errs.GetTrustedError(err)
 
 					if validate.IsFieldErrors(trsErr.Err) {
 						fieldErrors := validate.GetFieldErrors(trsErr.Err)
-						er = v1.ErrorResponse{
+						er = errs.ErrorResponse{
 							Error:  "data validation error",
 							Fields: fieldErrors.Fields(),
 						}
@@ -37,19 +37,19 @@ func Errors(log *logger.Logger) web.MidHandler {
 						break
 					}
 
-					er = v1.ErrorResponse{
+					er = errs.ErrorResponse{
 						Error: trsErr.Error(),
 					}
 					status = trsErr.Status
 
 				case auth.IsAuthError(err):
-					er = v1.ErrorResponse{
+					er = errs.ErrorResponse{
 						Error: http.StatusText(http.StatusUnauthorized),
 					}
 					status = http.StatusUnauthorized
 
 				default:
-					er = v1.ErrorResponse{
+					er = errs.ErrorResponse{
 						Error: http.StatusText(http.StatusInternalServerError),
 					}
 					status = http.StatusInternalServerError

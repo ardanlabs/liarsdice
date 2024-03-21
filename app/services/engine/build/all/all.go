@@ -2,9 +2,9 @@
 package all
 
 import (
-	"github.com/ardanlabs/liarsdice/app/services/engine/v1/handlers/checkgrp"
-	"github.com/ardanlabs/liarsdice/app/services/engine/v1/handlers/gamegrp"
-	"github.com/ardanlabs/liarsdice/business/web/v1/mux"
+	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/checkgrp"
+	"github.com/ardanlabs/liarsdice/app/services/engine/handlers/gamegrp"
+	"github.com/ardanlabs/liarsdice/business/web/mux"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 

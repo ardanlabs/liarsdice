@@ -1,5 +1,5 @@
-// Package v1 provides types and support related to web v1 functionality.
-package v1
+// Package errs provides types and support related to web v1 functionality.
+package errs
 
 import "errors"
 
@@ -41,22 +41,4 @@ func GetTrustedError(err error) *TrustedError {
 		return nil
 	}
 	return te
-}
-
-// PageDocument is the form used for API responses from query API calls.
-type PageDocument[T any] struct {
-	Items       []T `json:"items"`
-	Total       int `json:"total"`
-	Page        int `json:"page"`
-	RowsPerPage int `json:"rowsPerPage"`
-}
-
-// NewPageDocument constructs a response value for a web paging trusted.
-func NewPageDocument[T any](items []T, total int, page int, rowsPerPage int) PageDocument[T] {
-	return PageDocument[T]{
-		Items:       items,
-		Total:       total,
-		Page:        page,
-		RowsPerPage: rowsPerPage,
-	}
 }

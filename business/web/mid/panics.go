@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/ardanlabs/liarsdice/business/web/v1/metrics"
+	"github.com/ardanlabs/liarsdice/business/web/metrics"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 )
 

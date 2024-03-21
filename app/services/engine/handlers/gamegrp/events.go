@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/ardanlabs/liarsdice/business/web/mid"
 	"github.com/google/uuid"
 )
 

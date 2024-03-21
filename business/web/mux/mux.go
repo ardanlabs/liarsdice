@@ -9,8 +9,8 @@ import (
 
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
-	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
-	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/mid"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/jmoiron/sqlx"

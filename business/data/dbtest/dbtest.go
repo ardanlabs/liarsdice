@@ -11,7 +11,7 @@ import (
 
 	"github.com/ardanlabs/liarsdice/business/data/migrate"
 	"github.com/ardanlabs/liarsdice/business/data/sqldb"
-	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ardanlabs/liarsdice/foundation/docker"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"

@@ -16,9 +16,9 @@ import (
 	"github.com/ardanlabs/ethereum/currency"
 	"github.com/ardanlabs/liarsdice/business/core/bank"
 	"github.com/ardanlabs/liarsdice/business/core/game"
-	v1 "github.com/ardanlabs/liarsdice/business/web/v1"
-	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
-	"github.com/ardanlabs/liarsdice/business/web/v1/mid"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
+	"github.com/ardanlabs/liarsdice/business/web/errs"
+	"github.com/ardanlabs/liarsdice/business/web/mid"
 	"github.com/ardanlabs/liarsdice/foundation/logger"
 	"github.com/ardanlabs/liarsdice/foundation/web"
 	"github.com/ethereum/go-ethereum/common"
@@ -44,12 +44,12 @@ type handlers struct {
 func (h *handlers) connect(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	address, err := validateSignature(ctx, h.log, r, h.connectTimeout, h.bank.Client().ChainID())
 	if err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	token, err := generateToken(h.auth, h.activeKID, address)
 	if err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	data := struct {
@@ -182,7 +182,7 @@ func (h *handlers) configuration(ctx context.Context, w http.ResponseWriter, r *
 func (h *handlers) usd2Wei(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	usd, err := strconv.ParseFloat(web.Param(r, "usd"), 64)
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("converting usd: %s", err), http.StatusBadRequest)
 	}
 
 	wei := h.converter.USD2Wei(big.NewFloat(usd))
@@ -215,7 +215,7 @@ func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
@@ -235,13 +235,13 @@ func (h *handlers) state(ctx context.Context, w http.ResponseWriter, r *http.Req
 func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	g, err := game.New(ctx, h.log, h.converter, h.storer, h.bank, mid.GetSubject(ctx), h.anteUSD)
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to create game: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to create game: %w", err), http.StatusBadRequest)
 	}
 
 	subjectID := mid.GetSubject(ctx).String()
 
 	if err := evts.addPlayerToGame(g.ID(), subjectID); err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to add player %q to game: %w", subjectID, err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to add player %q to game: %w", subjectID, err), http.StatusBadRequest)
 	}
 
 	web.SetParam(r, "id", g.ID().String())
@@ -253,12 +253,12 @@ func (h *handlers) newGame(ctx context.Context, w http.ResponseWriter, r *http.R
 func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	n, err := evts.numberOfPlayers(g.ID())
@@ -267,17 +267,17 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	}
 
 	if n == 5 {
-		return v1.NewTrustedError(errors.New("max players sitting"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("max players sitting"), http.StatusBadRequest)
 	}
 
 	subjectID := mid.GetSubject(ctx)
 
 	if err := g.AddAccount(ctx, subjectID); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	if err := evts.addPlayerToGame(g.ID(), subjectID.String()); err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to add player %q to game: %w", subjectID, err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to add player %q to game: %w", subjectID, err), http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "join")
@@ -289,16 +289,16 @@ func (h *handlers) join(ctx context.Context, w http.ResponseWriter, r *http.Requ
 func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if err := g.StartGame(ctx); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "start")
@@ -310,16 +310,16 @@ func (h *handlers) startGame(ctx context.Context, w http.ResponseWriter, r *http
 func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if err := g.RollDice(ctx, mid.GetSubject(ctx)); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "rolldice")
@@ -331,28 +331,28 @@ func (h *handlers) rollDice(ctx context.Context, w http.ResponseWriter, r *http.
 func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	number, err := strconv.Atoi(web.Param(r, "number"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("converting number: %s", err), http.StatusBadRequest)
 	}
 
 	suit, err := strconv.Atoi(web.Param(r, "suit"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("converting suit: %s", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("converting suit: %s", err), http.StatusBadRequest)
 	}
 
 	address := mid.GetSubject(ctx)
 
 	if err := g.Bet(ctx, address, number, suit); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "bet", "index", g.State().Cups[address].OrderIdx)
@@ -364,20 +364,20 @@ func (h *handlers) bet(ctx context.Context, w http.ResponseWriter, r *http.Reque
 func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if _, _, err := g.CallLiar(ctx, mid.GetSubject(ctx)); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	if _, err := g.NextRound(ctx); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "callliar")
@@ -389,19 +389,19 @@ func (h *handlers) callLiar(ctx context.Context, w http.ResponseWriter, r *http.
 func (h *handlers) reconcile(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, h.bankTimeout)
 	defer cancel()
 
 	if _, _, err := g.Reconcile(ctx); err != nil {
-		return v1.NewTrustedError(err, http.StatusInternalServerError)
+		return errs.NewTrustedError(err, http.StatusInternalServerError)
 	}
 
 	evts.send(ctx, g.ID(), "reconcile")
@@ -418,7 +418,7 @@ func (h *handlers) balance(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	balanceGWei, err := h.bank.AccountBalance(ctx, mid.GetSubject(ctx))
 	if err != nil {
-		return v1.NewTrustedError(err, http.StatusInternalServerError)
+		return errs.NewTrustedError(err, http.StatusInternalServerError)
 	}
 
 	resp := struct {
@@ -434,16 +434,16 @@ func (h *handlers) balance(ctx context.Context, w http.ResponseWriter, r *http.R
 func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	if err := g.NextTurn(ctx); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "nextturn")
@@ -457,23 +457,23 @@ func (h *handlers) nextTurn(ctx context.Context, w http.ResponseWriter, r *http.
 func (h *handlers) updateOut(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	gameID, err := uuid.Parse(web.Param(r, "id"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("unable to parse game id: %w", err), http.StatusBadRequest)
 	}
 
 	g, err := game.Tables.Retrieve(gameID)
 	if err != nil {
-		return v1.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
+		return errs.NewTrustedError(errors.New("no game exists"), http.StatusBadRequest)
 	}
 
 	outs, err := strconv.Atoi(web.Param(r, "outs"))
 	if err != nil {
-		return v1.NewTrustedError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
+		return errs.NewTrustedError(fmt.Errorf("converting outs: %s", err), http.StatusBadRequest)
 	}
 
 	address := mid.GetSubject(ctx)
 
 	if err := g.ApplyOut(ctx, address, outs); err != nil {
-		return v1.NewTrustedError(err, http.StatusBadRequest)
+		return errs.NewTrustedError(err, http.StatusBadRequest)
 	}
 
 	evts.send(ctx, g.ID(), "outs")

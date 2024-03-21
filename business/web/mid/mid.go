@@ -4,7 +4,7 @@ package mid
 import (
 	"context"
 
-	"github.com/ardanlabs/liarsdice/business/web/v1/auth"
+	"github.com/ardanlabs/liarsdice/business/web/auth"
 	"github.com/ethereum/go-ethereum/common"
 )
 
