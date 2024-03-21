@@ -11,20 +11,18 @@ class Engine {
     // -------------------------------------------------------------------------
 
     async #isConnected() {
-        return (this.#token != null) ? true : false;
+        return this.#token != null ? true : false;
     }
 
     async Config() {
         try {
             const result = await $.ajax({
-                type: "get",
-                url: `${this.#url}/v1/game/config`
+                type: 'get',
+                url: `${this.#url}/v1/game/config`,
             });
 
             return [result, null];
-        }
-        
-        catch (e) {
+        } catch (e) {
             return [null, parseError(e)];
         }
     }
@@ -34,17 +32,15 @@ class Engine {
             this.#token = null;
 
             const result = await $.ajax({
-                type: "post",
+                type: 'post',
                 url: `${this.#url}/v1/game/connect`,
-                data: `{"address":"${address}","chainId":${chainId},"dateTime":"${dateTime}","sig":"${sigature}"}`
+                data: `{"address":"${address}","chainId":${chainId},"dateTime":"${dateTime}","sig":"${sigature}"}`,
             });
 
             this.#token = result.token;
 
             return null;
-        }
-
-        catch (e) {
+        } catch (e) {
             return [null, parseError(e)];
         }
     }
@@ -52,19 +48,17 @@ class Engine {
     async Tables() {
         try {
             if (!this.isConnected) {
-                return [null, "not connected to game engine"];
+                return [null, 'not connected to game engine'];
             }
 
             const tables = await $.ajax({
-                type: "get",
+                type: 'get',
                 url: `${this.#url}/v1/game/tables`,
-                headers: { "Authorization": "Bearer " + this.#token }
+                headers: {Authorization: 'Bearer ' + this.#token},
             });
 
             return [tables, null];
-        }
-
-        catch (e) {
+        } catch (e) {
             return [null, parseError(e)];
         }
     }
@@ -76,11 +70,11 @@ export default Engine;
 
 function parseError(e) {
     switch (true) {
-        case ('responseJSON' in e):
+        case 'responseJSON' in e:
             return e.responseJSON.error;
-        case ('responseText' in e):
+        case 'responseText' in e:
             return e.responseText;
     }
 
-    return "no error field identified";
+    return 'no error field identified';
 }

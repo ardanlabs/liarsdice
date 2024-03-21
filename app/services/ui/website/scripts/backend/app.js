@@ -18,8 +18,8 @@ class App {
         this.handlerGameConnect = this.#handlerGameConnect.bind(this);
         this.handlerGameTables = this.#handlerGameTables.bind(this);
 
-        $("#gameConnect").click(this.handlerGameConnect);
-        $("#gameTables").click(this.handlerGameTables);
+        $('#gameConnect').click(this.handlerGameConnect);
+        $('#gameTables').click(this.handlerGameTables);
     }
 
     // -------------------------------------------------------------------------
@@ -27,22 +27,22 @@ class App {
     async #handlerGameConnect() {
         const err = await this.#gameConnect();
         if (err != null) {
-            $("#error").text(err);
+            $('#error').text(err);
             return;
         }
 
         // For now display the token.
-        $("#error").text(this.#engine.token);
+        $('#error').text(this.#engine.token);
     }
 
     async #handlerGameTables() {
         const [tables, err] = await this.#engine.Tables();
         if (err != null) {
-            $("#error").text(err);
+            $('#error').text(err);
             return;
         }
 
-        $("#error").text(JSON.stringify(tables));
+        $('#error').text(JSON.stringify(tables));
     }
 
     // -------------------------------------------------------------------------
@@ -50,7 +50,6 @@ class App {
     // gameConnect does everything to connect the browser to the wallet and
     // to the game engine.
     async #gameConnect() {
-
         // Get configuration information from the game engine.
         var [cfg, err] = await this.#engine.Config();
         if (err != null) {
@@ -61,7 +60,6 @@ class App {
         // the game engine.
         var [_, err] = await Wallet.SwitchChain(cfg.chainId);
         if (err != null) {
-
             // The blockchain does not exist in the user's wallet so
             // let's try to help them.
             var [_, err] = await Wallet.AddEthereumChain(cfg.chainId, cfg.network);
@@ -120,11 +118,11 @@ export default App;
 
 function currentDateTime() {
     const dt = new Date();
-    
-    const year    = dt.getUTCFullYear();
-    const month   = String(dt.getUTCMonth() + 1).padStart(2, '0'); // Month (0-indexed)
-    const day     = String(dt.getUTCDate()).padStart(2, '0');
-    const hours   = String(dt.getUTCHours()).padStart(2, '0');
+
+    const year = dt.getUTCFullYear();
+    const month = String(dt.getUTCMonth() + 1).padStart(2, '0'); // Month (0-indexed)
+    const day = String(dt.getUTCDate()).padStart(2, '0');
+    const hours = String(dt.getUTCHours()).padStart(2, '0');
     const minutes = String(dt.getUTCMinutes()).padStart(2, '0');
     const seconds = String(dt.getUTCSeconds()).padStart(2, '0');
 
