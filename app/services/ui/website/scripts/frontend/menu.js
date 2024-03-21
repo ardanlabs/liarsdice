@@ -7,11 +7,11 @@ class MenuScene extends Phaser.Scene {
 
     preload() {
         // Load assets for your menu UI (images, fonts)
-        this.load.image('background_image', './assets/greenbackground.png');
-        this.load.image('dice_image', './assets/Dice.png');
-        this.load.image('connect_button', './assets/connectbtn.png');
-        this.load.image('joingame_button', './assets/joinbtn.png');
-        this.load.image('newgame_button', './assets/newbtn.png');
+        this.load.image('background_image', '/assets/greenbackground.png');
+        this.load.image('dice_image', '/assets/Dice.png');
+        this.load.image('connect_button', '/assets/connectbtn.png');
+        this.load.image('joingame_button', '/assets/joinbtn.png');
+        this.load.image('newgame_button', '/assets/newbtn.png');
     }
 
     create() {
@@ -19,9 +19,9 @@ class MenuScene extends Phaser.Scene {
         const backgroundImage = this.add.image(0, 0, 'background_image');
         backgroundImage.setScale(0.5); // Adjust image scale if needed
 
-        const connectButton = this.add.image(400, 400, 'connect_button');
+        const connectButton = this.add.image(200, 100, 'connect_button');
         connectButton.setInteractive();
-        const joinButton = this.add.image(400, 400, 'joingame_button');
+        const joinButton = this.add.image(200, 200, 'joingame_button');
         joinButton.setInteractive();
         const newGameButton = this.add.image(400, 400, 'newgame_button');
         newGameButton.setInteractive();
