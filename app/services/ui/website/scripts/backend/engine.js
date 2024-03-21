@@ -1,24 +1,24 @@
 class Engine {
-    url;
-    token;
+    #url;
+    #token;
 
     // -------------------------------------------------------------------------
 
     constructor(url) {
-        this.url = url;
+        this.#url = url;
     }
 
     // -------------------------------------------------------------------------
 
-    async isConnected() {
-        return (token != null) ? true : false;
+    async #isConnected() {
+        return (this.#token != null) ? true : false;
     }
 
-    async config() {
+    async Config() {
         try {
             const result = await $.ajax({
                 type: "get",
-                url: `${this.url}/v1/game/config`
+                url: `${this.#url}/v1/game/config`
             });
 
             return [result, null];
@@ -29,17 +29,17 @@ class Engine {
         }
     }
 
-    async connect(address, chainId, dateTime, sigature) {
+    async Connect(address, chainId, dateTime, sigature) {
         try {
-            this.token = null;
+            this.#token = null;
 
             const result = await $.ajax({
                 type: "post",
-                url: `${this.url}/v1/game/connect`,
+                url: `${this.#url}/v1/game/connect`,
                 data: `{"address":"${address}","chainId":${chainId},"dateTime":"${dateTime}","sig":"${sigature}"}`
             });
 
-            this.token = result.token;
+            this.#token = result.token;
 
             return null;
         }
@@ -49,7 +49,7 @@ class Engine {
         }
     }
 
-    async tables() {
+    async Tables() {
         try {
             if (!this.isConnected) {
                 return [null, "not connected to game engine"];
@@ -57,8 +57,8 @@ class Engine {
 
             const tables = await $.ajax({
                 type: "get",
-                url: `${this.url}/v1/game/tables`,
-                headers: { "Authorization": "Bearer " + this.token }
+                url: `${this.#url}/v1/game/tables`,
+                headers: { "Authorization": "Bearer " + this.#token }
             });
 
             return [tables, null];
@@ -68,4 +68,19 @@ class Engine {
             return [null, parseError(e)];
         }
     }
+}
+
+export default Engine;
+
+// =============================================================================
+
+function parseError(e) {
+    switch (true) {
+        case ('responseJSON' in e):
+            return e.responseJSON.error;
+        case ('responseText' in e):
+            return e.responseText;
+    }
+
+    return "no error field identified";
 }

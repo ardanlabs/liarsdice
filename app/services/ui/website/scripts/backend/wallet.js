@@ -1,5 +1,5 @@
 class Wallet {
-    static async switchChain(chainId) {
+    static async SwitchChain(chainId) {
         try {
             const result = await ethereum.request({
                 method: 'wallet_switchEthereumChain',
@@ -18,7 +18,7 @@ class Wallet {
         }
     }
 
-    static async addEthereumChain(chainId, network) {
+    static async AddEthereumChain(chainId, network) {
         try {
             const result = await ethereum.request({
                 method: 'wallet_addEthereumChain',
@@ -50,7 +50,7 @@ class Wallet {
         }
     }
 
-    static async requestPermissions() {
+    static async RequestPermissions() {
         try {
             const result = await ethereum.request({
                 method: 'wallet_requestPermissions',
@@ -69,7 +69,7 @@ class Wallet {
         }
     }
 
-    static async personalSign(address, chainId, dateTime) {
+    static async PersonalSign(address, chainId, dateTime) {
         const data = `{"address":"${address}","chainId":${chainId},"dateTime":"${dateTime}"}`;
 
         try {
@@ -90,7 +90,18 @@ class Wallet {
     }
 }
 
+export default Wallet;
+
 // =============================================================================
+
+function parseError(e) {
+    switch (true) {
+        case ('message' in e):
+            return e.message;
+    }
+
+    return "no error field identified";
+}
 
 function hexer(input) {
     const utf8 = toUTF8Array(input);
