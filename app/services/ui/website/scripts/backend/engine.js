@@ -74,6 +74,8 @@ function parseError(e) {
             return e.responseJSON.error;
         case 'responseText' in e:
             return e.responseText;
+        case 'statusText' in e:
+            return 'engine not running';
     }
 
     return 'no error field identified';
