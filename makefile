@@ -87,6 +87,16 @@ game-engine:
 		.
 
 # ==============================================================================
+# Building contract
+
+SOLC_EVM_VERSION := cancun
+
+contract-build:
+	solc --evm-version $(SOLC_EVM_VERSION) --abi business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
+	solc --evm-version $(SOLC_EVM_VERSION) --bin business/contract/src/bank/bank.sol -o business/contract/abi/bank --overwrite
+	abigen --bin=business/contract/abi/bank/Bank.bin --abi=business/contract/abi/bank/Bank.abi --pkg=bank --out=business/contract/go/bank/bank.go
+
+# ==============================================================================
 # Running from within k8s/kind
 #
 # To start the system for the first time, run these two commands:
