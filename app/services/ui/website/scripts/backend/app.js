@@ -1,73 +1,74 @@
+import Engine from './engine.js';
+import Wallet from './wallet.js';
+
 class App {
-    engine;
+    #engine;
 
     // -------------------------------------------------------------------------
 
     constructor(url) {
-        this.engine = new Engine(url);
+        this.#engine = new Engine(url);
     }
 
     // -------------------------------------------------------------------------
 
-    init() {
+    Init() {
         // Make sure 'this' is the object and not the html element
         // when these methods are executed by the event listener.
-        this.handlerGameConnect = this.handlerGameConnect.bind(this);
-        this.handlerGameTables = this.handlerGameTables.bind(this);
+        this.handlerGameConnect = this.#handlerGameConnect.bind(this);
+        this.handlerGameTables = this.#handlerGameTables.bind(this);
 
-        $("#gameConnect").click(this.handlerGameConnect);
-        $("#gameTables").click(this.handlerGameTables);
+        $('#gameConnect').click(this.handlerGameConnect);
+        $('#gameTables').click(this.handlerGameTables);
     }
 
     // -------------------------------------------------------------------------
 
-    async handlerGameConnect() {
-        const err = await this.gameConnect();
+    async #handlerGameConnect() {
+        const err = await this.#gameConnect();
         if (err != null) {
-            $("#error").text(err);
+            $('#error').text(err);
             return;
         }
 
         // For now display the token.
-        $("#error").text(this.engine.token);
+        $('#error').text(this.#engine.token);
     }
 
-    async handlerGameTables() {
-        const [tables, err] = await this.engine.tables();
+    async #handlerGameTables() {
+        const [tables, err] = await this.#engine.Tables();
         if (err != null) {
-            $("#error").text(err);
+            $('#error').text(err);
             return;
         }
 
-        $("#error").text(JSON.stringify(tables));
+        $('#error').text(JSON.stringify(tables));
     }
 
     // -------------------------------------------------------------------------
 
     // gameConnect does everything to connect the browser to the wallet and
     // to the game engine.
-    async gameConnect() {
-
+    async #gameConnect() {
         // Get configuration information from the game engine.
-        var [cfg, err] = await this.engine.config();
+        var [cfg, err] = await this.#engine.Config();
         if (err != null) {
             return err;
         }
 
         // Ask the user's wallet if it's talking to the same blockchain as
         // the game engine.
-        var [_, err] = await Wallet.switchChain(cfg.chainId);
+        var [_, err] = await Wallet.SwitchChain(cfg.chainId);
         if (err != null) {
-
             // The blockchain does not exist in the user's wallet so
             // let's try to help them.
-            var [_, err] = await Wallet.addEthereumChain(cfg.chainId, cfg.network);
+            var [_, err] = await Wallet.AddEthereumChain(cfg.chainId, cfg.network);
             if (err != null) {
                 return err;
             }
 
             // Try one more time to switch the wallet.
-            var [_, err] = await Wallet.switchChain(cfg.chainId);
+            var [_, err] = await Wallet.SwitchChain(cfg.chainId);
             if (err != null) {
                 return err;
             }
@@ -75,7 +76,7 @@ class App {
 
         // Request permission to use the wallet. The user will select an
         // account to use.
-        var [rp, err] = await Wallet.requestPermissions();
+        var [rp, err] = await Wallet.RequestPermissions();
         if (err != null) {
             return err;
         }
@@ -96,13 +97,13 @@ class App {
         const dateTime = currentDateTime();
 
         // Sign the arbitrary data.
-        var [sig, err] = await Wallet.personalSign(address, cfg.chainId, dateTime);
+        var [sig, err] = await Wallet.PersonalSign(address, cfg.chainId, dateTime);
         if (err != null) {
             return err;
         }
 
         // Connect to the game engine to get a token for game play.
-        var err = await this.engine.connect(address, cfg.chainId, dateTime, sig);
+        var err = await this.#engine.Connect(address, cfg.chainId, dateTime, sig);
         if (err != null) {
             return err;
         }
@@ -111,15 +112,17 @@ class App {
     }
 }
 
+export default App;
+
 // =============================================================================
 
 function currentDateTime() {
     const dt = new Date();
-    
-    const year    = dt.getUTCFullYear();
-    const month   = String(dt.getUTCMonth() + 1).padStart(2, '0'); // Month (0-indexed)
-    const day     = String(dt.getUTCDate()).padStart(2, '0');
-    const hours   = String(dt.getUTCHours()).padStart(2, '0');
+
+    const year = dt.getUTCFullYear();
+    const month = String(dt.getUTCMonth() + 1).padStart(2, '0'); // Month (0-indexed)
+    const day = String(dt.getUTCDate()).padStart(2, '0');
+    const hours = String(dt.getUTCHours()).padStart(2, '0');
     const minutes = String(dt.getUTCMinutes()).padStart(2, '0');
     const seconds = String(dt.getUTCSeconds()).padStart(2, '0');
 
