@@ -32,12 +32,22 @@ class MenuScene extends Phaser.Scene {
 
         const joinButton = this.add.image(250, 400, 'joingame_button');
         joinButton.setInteractive();
+
         const newGameButton = this.add.image(550, 400, 'newgame_button');
         newGameButton.setInteractive();
 
-        // Handle button click to start the game
         connectButton.on('pointerdown', () => {
+            // The logic for connectic the wallet should be here
             this.scene.start('game'); // Start the game scene
+        });
+
+        joinButton.on('pointerdown', () => {
+            // The logic for finding available tables and/or selecting one
+            // should be here
+        });
+
+        newGameButton.on('pointerdown', () => {
+            // The logic for a new game should be here
         });
     }
 }

@@ -1,3 +1,7 @@
+$.ajaxSetup({
+    contentType: 'application/json; charset=utf-8',
+});
+
 class Engine {
     #url;
     #token;
@@ -10,9 +14,15 @@ class Engine {
 
     // -------------------------------------------------------------------------
 
-    async #isConnected() {
+    IsConnected() {
         return this.#token != null ? true : false;
     }
+
+    Token() {
+        return this.#token;
+    }
+
+    // -------------------------------------------------------------------------
 
     async Config() {
         try {
@@ -47,7 +57,7 @@ class Engine {
 
     async Tables() {
         try {
-            if (!this.isConnected) {
+            if (!this.IsConnected()) {
                 return [null, 'not connected to game engine'];
             }
 

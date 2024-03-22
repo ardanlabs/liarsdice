@@ -1,74 +1,41 @@
-import Engine from './engine.js';
-import Wallet from './wallet.js';
+import Engine from '../backend/engine.js';
+import Wallet from '../backend/wallet.js';
 
-class App {
-    #engine;
+class Backend {
+    Engine;
+    Wallet;
 
     // -------------------------------------------------------------------------
 
     constructor(url) {
-        this.#engine = new Engine(url);
+        this.Engine = new Engine(url);
+        this.Wallet = new Wallet();
     }
 
     // -------------------------------------------------------------------------
 
-    Init() {
-        // Make sure 'this' is the object and not the html element
-        // when these methods are executed by the event listener.
-        this.handlerGameConnect = this.#handlerGameConnect.bind(this);
-        this.handlerGameTables = this.#handlerGameTables.bind(this);
-
-        $('#gameConnect').click(this.handlerGameConnect);
-        $('#gameTables').click(this.handlerGameTables);
-    }
-
-    // -------------------------------------------------------------------------
-
-    async #handlerGameConnect() {
-        const err = await this.#gameConnect();
-        if (err != null) {
-            $('#error').text(err);
-            return;
-        }
-
-        // For now display the token.
-        $('#error').text(this.#engine.token);
-    }
-
-    async #handlerGameTables() {
-        const [tables, err] = await this.#engine.Tables();
-        if (err != null) {
-            $('#error').text(err);
-            return;
-        }
-
-        $('#error').text(JSON.stringify(tables));
-    }
-
-    // -------------------------------------------------------------------------
-
-    // gameConnect does everything to connect the browser to the wallet and
+    // GameConnect does everything to connect the browser to the wallet and
     // to the game engine.
-    async #gameConnect() {
+    async GameConnect() {
         // Get configuration information from the game engine.
-        var [cfg, err] = await this.#engine.Config();
+        var [cfg, err] = await this.Engine.Config();
         if (err != null) {
             return err;
         }
 
         // Ask the user's wallet if it's talking to the same blockchain as
         // the game engine.
-        var [_, err] = await Wallet.SwitchChain(cfg.chainId);
+        var [_, err] = await this.Wallet.SwitchChain(cfg.chainId);
         if (err != null) {
             // The blockchain does not exist in the user's wallet so
             // let's try to help them.
-            var [_, err] = await Wallet.AddEthereumChain(cfg.chainId, cfg.network);
+            var [_, err] = await this.Wallet.AddEthereumChain(cfg.chainId, cfg.network);
             if (err != null) {
                 return err;
             }
 
             // Try one more time to switch the wallet.
-            var [_, err] = await Wallet.SwitchChain(cfg.chainId);
+            var [_, err] = await this.Wallet.SwitchChain(cfg.chainId);
             if (err != null) {
                 return err;
             }
@@ -76,7 +43,7 @@ class App {
 
         // Request permission to use the wallet. The user will select an
         // account to use.
-        var [rp, err] = await Wallet.RequestPermissions();
+        var [rp, err] = await this.Wallet.RequestPermissions();
         if (err != null) {
             return err;
         }
@@ -97,13 +64,13 @@ class App {
         const dateTime = currentDateTime();
 
         // Sign the arbitrary data.
-        var [sig, err] = await Wallet.PersonalSign(address, cfg.chainId, dateTime);
+        var [sig, err] = await this.Wallet.PersonalSign(address, cfg.chainId, dateTime);
         if (err != null) {
             return err;
         }
 
         // Connect to the game engine to get a token for game play.
-        var err = await this.#engine.Connect(address, cfg.chainId, dateTime, sig);
+        var err = await this.Engine.Connect(address, cfg.chainId, dateTime, sig);
         if (err != null) {
             return err;
         }
@@ -112,7 +79,7 @@ class App {
     }
 }
 
-export default App;
+export default Backend;
 
 // =============================================================================
 
