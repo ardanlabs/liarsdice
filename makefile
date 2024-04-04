@@ -13,6 +13,9 @@
 #
 # For more ethereum calls look at the smart contract project
 #
+# go get github.com/ethereum/go-ethereum@master
+# make deps-upgrade
+# Look at go.mod for go-ethereum and cherry pick deps
 
 GOLANG          := golang:1.22
 NODE            := node:16
