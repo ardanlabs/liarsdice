@@ -29,8 +29,12 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/tools/internal/aliases"
 	"golang.org/x/tools/internal/typeparams"
+	"golang.org/x/tools/internal/typesinternal"
 )
+
+// TODO(adonovan): think about generic aliases.
 
 // A Path is an opaque name that identifies a types.Object
 // relative to its package. Conceptually, the name consists of a
@@ -223,7 +227,7 @@ func (enc *Encoder) For(obj types.Object) (Path, error) {
 	//    Reject obviously non-viable cases.
 	switch obj := obj.(type) {
 	case *types.TypeName:
-		if _, ok := obj.Type().(*typeparams.TypeParam); !ok {
+		if _, ok := aliases.Unalias(obj.Type()).(*types.TypeParam); !ok {
 			// With the exception of type parameters, only package-level type names
 			// have a path.
 			return "", fmt.Errorf("no path for %v", obj)
@@ -283,7 +287,7 @@ func (enc *Encoder) For(obj types.Object) (Path, error) {
 			}
 		} else {
 			if named, _ := T.(*types.Named); named != nil {
-				if r := findTypeParam(obj, typeparams.ForNamed(named), path, nil); r != nil {
+				if r := findTypeParam(obj, named.TypeParams(), path, nil); r != nil {
 					// generic named type
 					return Path(r), nil
 				}
@@ -310,7 +314,7 @@ func (enc *Encoder) For(obj types.Object) (Path, error) {
 		}
 
 		// Inspect declared methods of defined types.
-		if T, ok := o.Type().(*types.Named); ok {
+		if T, ok := aliases.Unalias(o.Type()).(*types.Named); ok {
 			path = append(path, opType)
 			// The method index here is always with respect
 			// to the underlying go/types data structures,
@@ -395,13 +399,8 @@ func (enc *Encoder) concreteMethod(meth *types.Func) (Path, bool) {
 		return "", false
 	}
 
-	recvT := meth.Type().(*types.Signature).Recv().Type()
-	if ptr, ok := recvT.(*types.Pointer); ok {
-		recvT = ptr.Elem()
-	}
-
-	named, ok := recvT.(*types.Named)
-	if !ok {
+	_, named := typesinternal.ReceiverNamed(meth.Type().(*types.Signature).Recv())
+	if named == nil {
 		return "", false
 	}
 
@@ -444,6 +443,8 @@ func (enc *Encoder) concreteMethod(meth *types.Func) (Path, bool) {
 // nil, it will be allocated as necessary.
 func find(obj types.Object, T types.Type, path []byte, seen map[*types.TypeName]bool) []byte {
 	switch T := T.(type) {
+	case *aliases.Alias:
+		return find(obj, aliases.Unalias(T), path, seen)
 	case *types.Basic, *types.Named:
 		// Named types belonging to pkg were handled already,
 		// so T must belong to another package. No path.
@@ -462,7 +463,7 @@ func find(obj types.Object, T types.Type, path []byte, seen map[*types.TypeName]
 		}
 		return find(obj, T.Elem(), append(path, opElem), seen)
 	case *types.Signature:
-		if r := findTypeParam(obj, typeparams.ForSignature(T), path, seen); r != nil {
+		if r := findTypeParam(obj, T.TypeParams(), path, seen); r != nil {
 			return r
 		}
 		if r := find(obj, T.Params(), append(path, opParams), seen); r != nil {
@@ -505,7 +506,7 @@ func find(obj types.Object, T types.Type, path []byte, seen map[*types.TypeName]
 			}
 		}
 		return nil
-	case *typeparams.TypeParam:
+	case *types.TypeParam:
 		name := T.Obj()
 		if name == obj {
 			return append(path, opObj)
@@ -525,7 +526,7 @@ func find(obj types.Object, T types.Type, path []byte, seen map[*types.TypeName]
 	panic(T)
 }
 
-func findTypeParam(obj types.Object, list *typeparams.TypeParamList, path []byte, seen map[*types.TypeName]bool) []byte {
+func findTypeParam(obj types.Object, list *types.TypeParamList, path []byte, seen map[*types.TypeName]bool) []byte {
 	for i := 0; i < list.Len(); i++ {
 		tparam := list.At(i)
 		path2 := appendOpArg(path, opTypeParam, i)
@@ -562,7 +563,7 @@ func Object(pkg *types.Package, p Path) (types.Object, error) {
 	}
 	// abstraction of *types.{Named,Signature}
 	type hasTypeParams interface {
-		TypeParams() *typeparams.TypeParamList
+		TypeParams() *types.TypeParamList
 	}
 	// abstraction of *types.{Named,TypeParam}
 	type hasObj interface {
@@ -616,6 +617,7 @@ func Object(pkg *types.Package, p Path) (types.Object, error) {
 
 		// Inv: t != nil, obj == nil
 
+		t = aliases.Unalias(t)
 		switch code {
 		case opElem:
 			hasElem, ok := t.(hasElem) // Pointer, Slice, Array, Chan, Map
@@ -664,7 +666,7 @@ func Object(pkg *types.Package, p Path) (types.Object, error) {
 			t = tparams.At(index)
 
 		case opConstraint:
-			tparam, ok := t.(*typeparams.TypeParam)
+			tparam, ok := t.(*types.TypeParam)
 			if !ok {
 				return nil, fmt.Errorf("cannot apply %q to %s (got %T, want type parameter)", code, t, t)
 			}
