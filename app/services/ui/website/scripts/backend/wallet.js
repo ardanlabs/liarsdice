@@ -1,5 +1,15 @@
+const sdk = new MetaMaskSDK.MetaMaskSDK({
+    dappMetadata: {
+        name: 'Liars Dice',
+        url: 'http://' + window.location.host,
+    },
+    logging: {
+        sdk: false,
+    },
+});
+
 class Wallet {
-    static async SwitchChain(chainId) {
+    async SwitchChain(chainId) {
         try {
             const result = await ethereum.request({
                 method: 'wallet_switchEthereumChain',
@@ -16,7 +26,7 @@ class Wallet {
         }
     }
 
-    static async AddEthereumChain(chainId, network) {
+    async AddEthereumChain(chainId, network) {
         try {
             const result = await ethereum.request({
                 method: 'wallet_addEthereumChain',
@@ -42,7 +52,7 @@ class Wallet {
         }
     }
 
-    static async RequestPermissions() {
+    async RequestPermissions() {
         try {
             const result = await ethereum.request({
                 method: 'wallet_requestPermissions',
@@ -59,7 +69,7 @@ class Wallet {
         }
     }
 
-    static async PersonalSign(address, chainId, dateTime) {
+    async PersonalSign(address, chainId, dateTime) {
         const data = `{"address":"${address}","chainId":${chainId},"dateTime":"${dateTime}"}`;
 
         try {

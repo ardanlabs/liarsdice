@@ -13,10 +13,9 @@
 #
 # For more ethereum calls look at the smart contract project
 #
-# WE NEED THESE VERSIONS OF THESE MODULES.
-#     github.com/crate-crypto/go-ipa v0.0.0-20231205143816-408dbffb2041 // indirect
-#     github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
-#     github.com/cockroachdb/pebble v0.0.0-20230928194634-aa077af62593 // indirect
+# go get github.com/ethereum/go-ethereum@master
+# make deps-upgrade
+# Look at go.mod for go-ethereum and cherry pick deps
 
 GOLANG          := golang:1.22
 NODE            := node:16

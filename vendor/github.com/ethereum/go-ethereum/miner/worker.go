@@ -75,7 +75,7 @@ type newPayloadResult struct {
 	receipts []*types.Receipt       // Receipts collected during construction
 }
 
-// generateParams wraps various of settings for generating sealing task.
+// generateParams wraps various settings for generating sealing task.
 type generateParams struct {
 	timestamp   uint64            // The timestamp for sealing task
 	forceTime   bool              // Flag whether the given timestamp is immutable or not
@@ -105,7 +105,8 @@ func (miner *Miner) generateWork(params *generateParams) *newPayloadResult {
 			log.Warn("Block building is interrupted", "allowance", common.PrettyDuration(miner.config.Recommit))
 		}
 	}
-	block, err := miner.engine.FinalizeAndAssemble(miner.chain, work.header, work.state, work.txs, nil, work.receipts, params.withdrawals)
+	body := types.Body{Transactions: work.txs, Withdrawals: params.withdrawals}
+	block, err := miner.engine.FinalizeAndAssemble(miner.chain, work.header, work.state, &body, work.receipts)
 	if err != nil {
 		return &newPayloadResult{err: err}
 	}
@@ -130,7 +131,7 @@ func (miner *Miner) prepareWork(genParams *generateParams) (*environment, error)
 	if genParams.parentHash != (common.Hash{}) {
 		block := miner.chain.GetBlockByHash(genParams.parentHash)
 		if block == nil {
-			return nil, fmt.Errorf("missing parent")
+			return nil, errors.New("missing parent")
 		}
 		parent = block.Header()
 	}
@@ -264,7 +265,7 @@ func (miner *Miner) applyTransaction(env *environment, tx *types.Transaction) (*
 		snap = env.state.Snapshot()
 		gp   = env.gasPool.Gas()
 	)
-	receipt, err := core.ApplyTransaction(miner.chainConfig, miner.chain, &env.coinbase, env.gasPool, env.state, env.header, tx, &env.header.GasUsed, *miner.chain.GetVMConfig())
+	receipt, err := core.ApplyTransaction(miner.chainConfig, miner.chain, &env.coinbase, env.gasPool, env.state, env.header, tx, &env.header.GasUsed, vm.Config{})
 	if err != nil {
 		env.state.RevertToSnapshot(snap)
 		env.gasPool.SetGas(gp)
@@ -338,7 +339,7 @@ func (miner *Miner) commitTransactions(env *environment, plainTxs, blobTxs *tran
 			continue
 		}
 		// Error may be ignored here. The error has already been checked
-		// during transaction acceptance is the transaction pool.
+		// during transaction acceptance in the transaction pool.
 		from, _ := types.Sender(env.signer, tx)
 
 		// Check whether the tx is replay protected. If we're not in the EIP155 hf
