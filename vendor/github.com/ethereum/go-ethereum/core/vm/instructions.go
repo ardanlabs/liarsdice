@@ -173,11 +173,7 @@ func opByte(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byt
 
 func opAddmod(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	x, y, z := scope.Stack.pop(), scope.Stack.pop(), scope.Stack.peek()
-	if z.IsZero() {
-		z.Clear()
-	} else {
-		z.AddMod(&x, &y, z)
-	}
+	z.AddMod(&x, &y, z)
 	return nil, nil
 }
 
@@ -344,6 +340,10 @@ func opReturnDataCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeConte
 
 func opExtCodeSize(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]byte, error) {
 	slot := scope.Stack.peek()
+	address := slot.Bytes20()
+	if witness := interpreter.evm.StateDB.Witness(); witness != nil {
+		witness.AddCode(interpreter.evm.StateDB.GetCode(address))
+	}
 	slot.SetUint64(uint64(interpreter.evm.StateDB.GetCodeSize(slot.Bytes20())))
 	return nil, nil
 }
@@ -363,9 +363,9 @@ func opCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([
 	if overflow {
 		uint64CodeOffset = math.MaxUint64
 	}
+
 	codeCopy := getData(scope.Contract.Code, uint64CodeOffset, length.Uint64())
 	scope.Memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy)
-
 	return nil, nil
 }
 
@@ -382,7 +382,11 @@ func opExtCodeCopy(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext)
 		uint64CodeOffset = math.MaxUint64
 	}
 	addr := common.Address(a.Bytes20())
-	codeCopy := getData(interpreter.evm.StateDB.GetCode(addr), uint64CodeOffset, length.Uint64())
+	code := interpreter.evm.StateDB.GetCode(addr)
+	if witness := interpreter.evm.StateDB.Witness(); witness != nil {
+		witness.AddCode(code)
+	}
+	codeCopy := getData(code, uint64CodeOffset, length.Uint64())
 	scope.Memory.Set(memOffset.Uint64(), length.Uint64(), codeCopy)
 
 	return nil, nil
@@ -438,6 +442,7 @@ func opBlockhash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) (
 		num.Clear()
 		return nil, nil
 	}
+
 	var upper, lower uint64
 	upper = interpreter.evm.Context.BlockNumber.Uint64()
 	if upper < 257 {
@@ -446,7 +451,11 @@ func opBlockhash(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) (
 		lower = upper - 256
 	}
 	if num64 >= lower && num64 < upper {
-		num.SetBytes(interpreter.evm.Context.GetHash(num64).Bytes())
+		res := interpreter.evm.Context.GetHash(num64)
+		if witness := interpreter.evm.StateDB.Witness(); witness != nil {
+			witness.AddBlockHash(num64)
+		}
+		num.SetBytes(res[:])
 	} else {
 		num.Clear()
 	}
@@ -587,6 +596,7 @@ func opCreate(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]b
 	if interpreter.evm.chainRules.IsEIP150 {
 		gas -= gas / 64
 	}
+
 	// reuse size int for stackvalue
 	stackvalue := size
 
@@ -627,6 +637,7 @@ func opCreate2(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 		input        = scope.Memory.GetCopy(int64(offset.Uint64()), int64(size.Uint64()))
 		gas          = scope.Contract.Gas
 	)
+
 	// Apply EIP150
 	gas -= gas / 64
 	scope.Contract.UseGas(gas, interpreter.evm.Config.Tracer, tracing.GasChangeCallContractCreation2)
@@ -641,7 +652,6 @@ func opCreate2(pc *uint64, interpreter *EVMInterpreter, scope *ScopeContext) ([]
 		stackvalue.SetBytes(addr.Bytes())
 	}
 	scope.Stack.push(&stackvalue)
-
 	scope.Contract.RefundGas(returnGas, interpreter.evm.Config.Tracer, tracing.GasChangeCallLeftOverRefunded)
 
 	if suberr == ErrExecutionReverted {
@@ -900,6 +910,7 @@ func makePush(size uint64, pushByteSize int) executionFunc {
 				pushByteSize,
 			)),
 		)
+
 		*pc += size
 		return nil, nil
 	}

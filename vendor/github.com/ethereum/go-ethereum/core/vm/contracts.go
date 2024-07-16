@@ -137,6 +137,8 @@ var PrecompiledContractsPrague = map[common.Address]PrecompiledContract{
 
 var PrecompiledContractsBLS = PrecompiledContractsPrague
 
+var PrecompiledContractsVerkle = PrecompiledContractsPrague
+
 var (
 	PrecompiledAddressesPrague    []common.Address
 	PrecompiledAddressesCancun    []common.Address
@@ -294,10 +296,7 @@ type bigModExp struct {
 var (
 	big1      = big.NewInt(1)
 	big3      = big.NewInt(3)
-	big4      = big.NewInt(4)
 	big7      = big.NewInt(7)
-	big8      = big.NewInt(8)
-	big16     = big.NewInt(16)
 	big20     = big.NewInt(20)
 	big32     = big.NewInt(32)
 	big64     = big.NewInt(64)
@@ -323,13 +322,13 @@ func modexpMultComplexity(x *big.Int) *big.Int {
 	case x.Cmp(big1024) <= 0:
 		// (x ** 2 // 4 ) + ( 96 * x - 3072)
 		x = new(big.Int).Add(
-			new(big.Int).Div(new(big.Int).Mul(x, x), big4),
+			new(big.Int).Rsh(new(big.Int).Mul(x, x), 2),
 			new(big.Int).Sub(new(big.Int).Mul(big96, x), big3072),
 		)
 	default:
 		// (x ** 2 // 16) + (480 * x - 199680)
 		x = new(big.Int).Add(
-			new(big.Int).Div(new(big.Int).Mul(x, x), big16),
+			new(big.Int).Rsh(new(big.Int).Mul(x, x), 4),
 			new(big.Int).Sub(new(big.Int).Mul(big480, x), big199680),
 		)
 	}
@@ -367,7 +366,7 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 	adjExpLen := new(big.Int)
 	if expLen.Cmp(big32) > 0 {
 		adjExpLen.Sub(expLen, big32)
-		adjExpLen.Mul(big8, adjExpLen)
+		adjExpLen.Lsh(adjExpLen, 3)
 	}
 	adjExpLen.Add(adjExpLen, big.NewInt(int64(msb)))
 	// Calculate the gas cost of the operation
@@ -381,8 +380,8 @@ func (c *bigModExp) RequiredGas(input []byte) uint64 {
 		//    ceiling(x/8)^2
 		//
 		//where is x is max(length_of_MODULUS, length_of_BASE)
-		gas = gas.Add(gas, big7)
-		gas = gas.Div(gas, big8)
+		gas.Add(gas, big7)
+		gas.Rsh(gas, 3)
 		gas.Mul(gas, gas)
 
 		gas.Mul(gas, math.BigMax(adjExpLen, big1))
@@ -705,6 +704,8 @@ func (c *bls12381G1Add) Run(input []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	// No need to check the subgroup here, as specified by EIP-2537
+
 	// Compute r = p_0 + p_1
 	p0.Add(p0, p1)
 
@@ -733,6 +734,11 @@ func (c *bls12381G1Mul) Run(input []byte) ([]byte, error) {
 	// Decode G1 point
 	if p0, err = decodePointG1(input[:128]); err != nil {
 		return nil, err
+	}
+	// 'point is on curve' check already done,
+	// Here we need to apply subgroup checks.
+	if !p0.IsInSubGroup() {
+		return nil, errBLS12381G1PointSubgroup
 	}
 	// Decode scalar value
 	e := new(big.Int).SetBytes(input[128:])
@@ -787,6 +793,11 @@ func (c *bls12381G1MultiExp) Run(input []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		// 'point is on curve' check already done,
+		// Here we need to apply subgroup checks.
+		if !p.IsInSubGroup() {
+			return nil, errBLS12381G1PointSubgroup
+		}
 		points[i] = *p
 		// Decode scalar value
 		scalars[i] = *new(fr.Element).SetBytes(input[t1:t2])
@@ -827,6 +838,8 @@ func (c *bls12381G2Add) Run(input []byte) ([]byte, error) {
 		return nil, err
 	}
 
+	// No need to check the subgroup here, as specified by EIP-2537
+
 	// Compute r = p_0 + p_1
 	r := new(bls12381.G2Affine)
 	r.Add(p0, p1)
@@ -856,6 +869,11 @@ func (c *bls12381G2Mul) Run(input []byte) ([]byte, error) {
 	// Decode G2 point
 	if p0, err = decodePointG2(input[:256]); err != nil {
 		return nil, err
+	}
+	// 'point is on curve' check already done,
+	// Here we need to apply subgroup checks.
+	if !p0.IsInSubGroup() {
+		return nil, errBLS12381G2PointSubgroup
 	}
 	// Decode scalar value
 	e := new(big.Int).SetBytes(input[256:])
@@ -909,6 +927,11 @@ func (c *bls12381G2MultiExp) Run(input []byte) ([]byte, error) {
 		p, err := decodePointG2(input[t0:t1])
 		if err != nil {
 			return nil, err
+		}
+		// 'point is on curve' check already done,
+		// Here we need to apply subgroup checks.
+		if !p.IsInSubGroup() {
+			return nil, errBLS12381G2PointSubgroup
 		}
 		points[i] = *p
 		// Decode scalar value
@@ -1099,9 +1122,6 @@ func (c *bls12381MapG1) Run(input []byte) ([]byte, error) {
 
 	// Compute mapping
 	r := bls12381.MapToG1(fe)
-	if err != nil {
-		return nil, err
-	}
 
 	// Encode the G1 point to 128 bytes
 	return encodePointG1(&r), nil
@@ -1135,9 +1155,6 @@ func (c *bls12381MapG2) Run(input []byte) ([]byte, error) {
 
 	// Compute mapping
 	r := bls12381.MapToG2(bls12381.E2{A0: c0, A1: c1})
-	if err != nil {
-		return nil, err
-	}
 
 	// Encode the G2 point to 256 bytes
 	return encodePointG2(&r), nil

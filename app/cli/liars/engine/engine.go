@@ -51,9 +51,11 @@ func (e *Engine) Connect(keyStorePath string, address common.Address, passPhrase
 
 	dt := struct {
 		Address  common.Address `json:"address"`
+		ChainID  int            `json:"chainId"`  // 1337
 		DateTime string         `json:"dateTime"` // YYYYMMDDHHMMSS
 	}{
 		Address:  address,
+		ChainID:  1337,
 		DateTime: time.Now().UTC().Format("20060102150405"),
 	}
 
@@ -64,10 +66,12 @@ func (e *Engine) Connect(keyStorePath string, address common.Address, passPhrase
 
 	dts := struct {
 		Address   common.Address `json:"address"`
+		ChainID   int            `json:"chainId"`
 		DateTime  string         `json:"dateTime"`
 		Signature string         `json:"sig"`
 	}{
-		Address:   address,
+		Address:   dt.Address,
+		ChainID:   dt.ChainID,
 		DateTime:  dt.DateTime,
 		Signature: sig,
 	}
