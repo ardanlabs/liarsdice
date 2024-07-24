@@ -9,7 +9,6 @@ package sha3
 // bytes.
 
 import (
-	"crypto"
 	"hash"
 )
 
@@ -39,13 +38,6 @@ func New384() hash.Hash {
 // and 256 bits against collision attacks.
 func New512() hash.Hash {
 	return new512()
-}
-
-func init() {
-	crypto.RegisterHash(crypto.SHA3_224, New224)
-	crypto.RegisterHash(crypto.SHA3_256, New256)
-	crypto.RegisterHash(crypto.SHA3_384, New384)
-	crypto.RegisterHash(crypto.SHA3_512, New512)
 }
 
 func new224Generic() *state {

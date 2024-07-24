@@ -19,12 +19,12 @@
 
 GOLANG          := golang:1.22
 NODE            := node:16
-ALPINE          := alpine:3.19
-CADDY           := caddy:2.6-alpine
-KIND            := kindest/node:v1.29.2
+ALPINE          := alpine:3.20
+CADDY           := caddy:2.8-alpine
+KIND            := kindest/node:v1.30.0
 BUSYBOX         := busybox:stable
 GETH            := ethereum/client-go:stable
-POSTGRES        := postgres:16.2
+POSTGRES        := postgres:16.3
 
 KIND_CLUSTER    := liars-game-cluster
 NAMESPACE       := liars-system
@@ -48,14 +48,15 @@ dev-setup:
 	brew list watch || brew instal watch
 
 dev-docker:
-	docker pull $(GOLANG)
-	docker pull $(NODE)
-	docker pull $(ALPINE)
-	docker pull $(CADDY)
-	docker pull $(KIND)
-	docker pull $(BUSYBOX)
-	docker pull $(GETH)
-	docker pull $(POSTGRES)
+	docker pull $(GOLANG) & \
+	docker pull $(NODE) & \
+	docker pull $(ALPINE) & \
+	docker pull $(CADDY) & \
+	docker pull $(KIND) & \
+	docker pull $(BUSYBOX) & \
+	docker pull $(GETH) & \
+	docker pull $(POSTGRES) & \
+	wait;
 
 # ==============================================================================
 # Game UI
@@ -75,7 +76,7 @@ game-ui:
 # ==============================================================================
 # Building containers
 
-all: game-engine
+build: game-engine
 
 game-engine:
 	docker build \
@@ -143,9 +144,9 @@ dev-apply:
 dev-restart:
 	kubectl rollout restart deployment engine --namespace=liars-system
 
-dev-update: all dev-load dev-restart
+dev-update: build dev-load dev-restart
 
-dev-update-apply: all dev-load dev-apply
+dev-update-apply: build dev-load dev-apply
 
 dev-logs-init:
 	kubectl logs --namespace=$(NAMESPACE) -l app=$(APP) -f --tail=100 -c init-ge-migrate

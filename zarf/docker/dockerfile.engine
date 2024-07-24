@@ -1,6 +1,6 @@
 # Build the Go Binary.
-FROM golang:1.22 as build_engine
-ENV CGO_ENABLED 0
+FROM golang:1.22 AS build_engine
+ENV CGO_ENABLED=0
 ARG BUILD_REF
 
 # Copy the source code into the container.
@@ -16,7 +16,7 @@ RUN go build -ldflags "-X main.build=${BUILD_REF}"
 
 
 # Run the Go Binary in Alpine.
-FROM alpine:3.19
+FROM alpine:3.20
 ARG BUILD_DATE
 ARG BUILD_REF
 RUN addgroup -g 1000 -S engine && \
