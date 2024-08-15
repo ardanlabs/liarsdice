@@ -17,14 +17,14 @@
 # make deps-upgrade
 # Look at go.mod for go-ethereum and cherry pick deps
 
-GOLANG          := golang:1.22
+GOLANG          := golang:1.23
 NODE            := node:16
 ALPINE          := alpine:3.20
 CADDY           := caddy:2.8-alpine
-KIND            := kindest/node:v1.30.0
+KIND            := kindest/node:v1.31.0
 BUSYBOX         := busybox:stable
 GETH            := ethereum/client-go:stable
-POSTGRES        := postgres:16.3
+POSTGRES        := postgres:16.4
 
 KIND_CLUSTER    := liars-game-cluster
 NAMESPACE       := liars-system
