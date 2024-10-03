@@ -55,15 +55,15 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/balance", hdl.balance, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/tables", hdl.tables, mid.Authenticate(cfg.Auth))
 
-	app.Handle(http.MethodGet, version, "/game/:id/state", hdl.state, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/join", hdl.join, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/start", hdl.startGame, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/rolldice", hdl.rollDice, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/bet/:number/:suit", hdl.bet, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/liar", hdl.callLiar, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/reconcile", hdl.reconcile, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/state", hdl.state, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/join", hdl.join, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/start", hdl.startGame, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/rolldice", hdl.rollDice, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/bet/:number/:suit", hdl.bet, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/liar", hdl.callLiar, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/reconcile", hdl.reconcile, mid.Authenticate(cfg.Auth))
 
 	// Timeout Situations with a player
-	app.Handle(http.MethodGet, version, "/game/:id/next", hdl.nextTurn, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/:id/out/:outs", hdl.updateOut, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/next", hdl.nextTurn, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/out/:outs", hdl.updateOut, mid.Authenticate(cfg.Auth))
 }
