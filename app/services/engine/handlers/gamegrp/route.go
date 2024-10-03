@@ -50,7 +50,7 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodGet, version, "/game/events", hdl.events, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/config", hdl.configuration)
-	app.Handle(http.MethodGet, version, "/game/usd2wei/:usd", hdl.usd2Wei)
+	app.Handle(http.MethodGet, version, "/game/usd2wei/{usd}", hdl.usd2Wei)
 	app.Handle(http.MethodGet, version, "/game/new", hdl.newGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/balance", hdl.balance, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/tables", hdl.tables, mid.Authenticate(cfg.Auth))
@@ -59,11 +59,11 @@ func Routes(app *web.App, cfg Config) {
 	app.Handle(http.MethodGet, version, "/game/{id}/join", hdl.join, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/{id}/start", hdl.startGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/{id}/rolldice", hdl.rollDice, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/{id}/bet/:number/:suit", hdl.bet, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/bet/{number}/{suit}", hdl.bet, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/{id}/liar", hdl.callLiar, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/{id}/reconcile", hdl.reconcile, mid.Authenticate(cfg.Auth))
 
 	// Timeout Situations with a player
 	app.Handle(http.MethodGet, version, "/game/{id}/next", hdl.nextTurn, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/game/{id}/out/:outs", hdl.updateOut, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/game/{id}/out/{outs}", hdl.updateOut, mid.Authenticate(cfg.Auth))
 }
