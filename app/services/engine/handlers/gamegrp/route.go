@@ -50,7 +50,7 @@ func Routes(app *web.App, cfg Config) {
 
 	app.Handle(http.MethodGet, version, "/game/events", hdl.events, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/config", hdl.configuration)
-	app.Handle(http.MethodGet, version, "/game/usd2wei/{usd}", hdl.usd2Wei)
+	app.Handle(http.MethodGet, version, "/game/money/usd2wei/{usd}", hdl.usd2Wei)
 	app.Handle(http.MethodGet, version, "/game/new", hdl.newGame, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/balance", hdl.balance, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/game/tables", hdl.tables, mid.Authenticate(cfg.Auth))
