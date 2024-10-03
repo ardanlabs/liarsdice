@@ -79,10 +79,9 @@ func toAppBet(bet game.Bet) appBet {
 }
 
 type appCup struct {
-	Player  common.Address `json:"account"`
-	Dice    []int          `json:"dice"`
-	LastBet appBet         `json:"lastBet"`
-	Outs    int            `json:"outs"`
+	Player common.Address `json:"account"`
+	Dice   []int          `json:"dice"`
+	Outs   int            `json:"outs"`
 }
 
 func toAppCup(cup game.Cup, dice []int) appCup {

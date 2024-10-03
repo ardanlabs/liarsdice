@@ -111,11 +111,13 @@ func (b *Board) drawBoard(status engine.State) {
 		}
 
 		// Last Bets.
-		if cup.LastBet.Number != 0 {
-			bet := fmt.Sprintf("%d %-10s", cup.LastBet.Number, words[cup.LastBet.Suit])
-			b.print(betX, addrY, bet)
-		} else {
-			b.print(betX, addrY, "                 ")
+		for i := len(status.Bets) - 1; i >= 0; i-- {
+			bet := status.Bets[i]
+			if bet.AccountID == cup.AccountID {
+				betStr := fmt.Sprintf("%d %-10s", bet.Number, words[bet.Suit])
+				b.print(betX, addrY, betStr)
+				break
+			}
 		}
 
 		// Balance Column.
