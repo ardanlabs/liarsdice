@@ -4,7 +4,7 @@ const sdk = new MetaMaskSDK.MetaMaskSDK({
         url: 'http://' + window.location.host,
     },
     logging: {
-        sdk: false,
+        sdk: true,
     },
 });
 
@@ -92,7 +92,7 @@ export default Wallet;
 function parseError(e) {
     switch (true) {
         case 'message' in e:
-            return e.message;
+            return e.ReferenceError;
     }
 
     return 'no error field identified';
@@ -124,12 +124,7 @@ function toUTF8Array(str) {
             // subtracting 0x10000 and splitting the
             // 20 bits of 0x0-0xFFFFF into two halves
             charcode = 0x10000 + (((charcode & 0x3ff) << 10) | (str.charCodeAt(i) & 0x3ff));
-            utf8.push(
-                0xf0 | (charcode >> 18),
-                0x80 | ((charcode >> 12) & 0x3f),
-                0x80 | ((charcode >> 6) & 0x3f),
-                0x80 | (charcode & 0x3f)
-            );
+            utf8.push(0xf0 | (charcode >> 18), 0x80 | ((charcode >> 12) & 0x3f), 0x80 | ((charcode >> 6) & 0x3f), 0x80 | (charcode & 0x3f));
         }
     }
 
