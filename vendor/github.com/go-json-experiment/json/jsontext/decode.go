@@ -125,8 +125,8 @@ func NewDecoder(r io.Reader, opts ...Options) *Decoder {
 
 // Reset resets a decoder such that it is reading afresh from r and
 // configured with the provided options. Reset must not be called on an
-// a Decoder passed to the [encoding/json/v2.UnmarshalerV2.UnmarshalJSONV2] method
-// or the [encoding/json/v2.UnmarshalFuncV2] function.
+// a Decoder passed to the [encoding/json/v2.UnmarshalerFrom.UnmarshalJSONFrom] method
+// or the [encoding/json/v2.UnmarshalFromFunc] function.
 func (d *Decoder) Reset(r io.Reader, opts ...Options) {
 	switch {
 	case d == nil:
@@ -134,7 +134,7 @@ func (d *Decoder) Reset(r io.Reader, opts ...Options) {
 	case r == nil:
 		panic("jsontext: invalid nil io.Reader")
 	case d.s.Flags.Get(jsonflags.WithinArshalCall):
-		panic("jsontext: cannot reset Decoder passed to json.UnmarshalerV2")
+		panic("jsontext: cannot reset Decoder passed to json.UnmarshalerFrom")
 	}
 	d.s.reset(nil, r, opts...)
 }
@@ -364,9 +364,22 @@ func (d *decoderState) CountNextDelimWhitespace() int {
 
 // checkDelim checks whether delim is valid for the given next kind.
 func (d *decoderState) checkDelim(delim byte, next Kind) error {
+	where := "at start of value"
+	switch d.Tokens.needDelim(next) {
+	case delim:
+		return nil
+	case ':':
+		where = "after object name (expecting ':')"
+	case ',':
+		if d.Tokens.Last.isObject() {
+			where = "after object value (expecting ',' or '}')"
+		} else {
+			where = "after array element (expecting ',' or ']')"
+		}
+	}
 	pos := d.prevEnd // restore position to right after leading whitespace
 	pos += jsonwire.ConsumeWhitespace(d.buf[pos:])
-	err := d.Tokens.checkDelim(delim, next)
+	err := jsonwire.NewInvalidCharacterError(d.buf[pos:], where)
 	return wrapSyntacticError(d, err, pos, 0)
 }
 
@@ -398,6 +411,30 @@ func (d *decoderState) SkipValue() error {
 		}
 		return nil
 	}
+}
+
+// SkipValueRemainder skips the remainder of a value
+// after reading a '{' or '[' token.
+func (d *decoderState) SkipValueRemainder() error {
+	if d.Tokens.Depth()-1 > 0 && d.Tokens.Last.Length() == 0 {
+		for n := d.Tokens.Depth(); d.Tokens.Depth() >= n; {
+			if _, err := d.ReadToken(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// SkipUntil skips all tokens until the state machine
+// is at or past the specified depth and length.
+func (d *decoderState) SkipUntil(depth int, length int64) error {
+	for d.Tokens.Depth() > depth || (d.Tokens.Depth() == depth && d.Tokens.Last.Length() < length) {
+		if _, err := d.ReadToken(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ReadToken reads the next [Token], advancing the read offset.
@@ -594,7 +631,7 @@ func (d *decoderState) ReadToken() (Token, error) {
 		return ArrayEnd, nil
 
 	default:
-		err = jsonwire.NewInvalidCharacterError(d.buf[pos:], "at start of token")
+		err = jsonwire.NewInvalidCharacterError(d.buf[pos:], "at start of value")
 		return Token{}, wrapSyntacticError(d, err, pos, +1)
 	}
 }
@@ -712,6 +749,23 @@ func (d *decoderState) ReadValue(flags *jsonwire.ValueFlags) (Value, error) {
 	return d.buf[pos-n : pos : pos], nil
 }
 
+// CheckNextValue checks whether the next value is syntactically valid,
+// but does not advance the read offset.
+func (d *decoderState) CheckNextValue() error {
+	d.PeekKind() // populates d.peekPos and d.peekErr
+	pos, err := d.peekPos, d.peekErr
+	d.peekPos, d.peekErr = 0, nil
+	if err != nil {
+		return err
+	}
+
+	var flags jsonwire.ValueFlags
+	if pos, err := d.consumeValue(&flags, pos, d.Tokens.Depth()); err != nil {
+		return wrapSyntacticError(d, err, pos, +1)
+	}
+	return nil
+}
+
 // CheckEOF verifies that the input has no more data.
 func (d *decoderState) CheckEOF() error {
 	switch pos, err := d.consumeWhitespace(d.prevEnd); err {
@@ -792,6 +846,9 @@ func (d *decoderState) consumeValue(flags *jsonwire.ValueFlags, pos, depth int) 
 		case '[':
 			return d.consumeArray(flags, pos, depth)
 		default:
+			if (d.Tokens.Last.isObject() && next == ']') || (d.Tokens.Last.isArray() && next == '}') {
+				return pos, errMismatchDelim
+			}
 			return pos, jsonwire.NewInvalidCharacterError(d.buf[pos:], "at start of value")
 		}
 		if err == io.ErrUnexpectedEOF {
@@ -1027,7 +1084,7 @@ func (d *decoderState) consumeArray(flags *jsonwire.ValueFlags, pos, depth int) 
 			pos++
 			return pos, nil
 		default:
-			return pos, jsonwire.NewInvalidCharacterError(d.buf[pos:], "after array value (expecting ',' or ']')")
+			return pos, jsonwire.NewInvalidCharacterError(d.buf[pos:], "after array element (expecting ',' or ']')")
 		}
 	}
 }
