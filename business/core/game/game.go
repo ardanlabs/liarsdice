@@ -265,7 +265,7 @@ func (g *Game) rollDice(ctx context.Context, player common.Address, manualRole .
 		return fmt.Errorf("player [%s] does not exist in the game", player)
 	}
 
-	if manualRole == nil || len(manualRole) < 5 {
+	if len(manualRole) < 5 {
 		for i := range cup.Dice {
 			cup.Dice[i] = rand.Intn(6) + 1
 		}
