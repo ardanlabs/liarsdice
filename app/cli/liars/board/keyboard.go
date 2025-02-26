@@ -157,7 +157,7 @@ func (b *Board) joinGame() error {
 
 		if state.Status != "newgame" {
 			b.closeModal()
-			b.showModal(fmt.Sprintf("invalid status state: " + state.Status))
+			b.showModal(fmt.Sprintf("invalid status state: %s", state.Status))
 			return
 		}
 
