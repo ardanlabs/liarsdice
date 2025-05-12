@@ -45,11 +45,11 @@ const (
 	fieldTransport11TCPLen = 13
 	fieldTransport11UDPLen = 10
 
-	// Kernel version >= 4.14 MaxLen
+	// kernel version >= 4.14 MaxLen
 	// See: https://elixir.bootlin.com/linux/v6.4.8/source/net/sunrpc/xprtrdma/xprt_rdma.h#L393
 	fieldTransport11RDMAMaxLen = 28
 
-	// Kernel version <= 4.2 MinLen
+	// kernel version <= 4.2 MinLen
 	// See: https://elixir.bootlin.com/linux/v4.2.8/source/net/sunrpc/xprtrdma/xprt_rdma.h#L331
 	fieldTransport11RDMAMinLen = 20
 )

@@ -1,5 +1,5 @@
-# github.com/DataDog/zstd v1.5.7
-## explicit; go 1.14
+# github.com/DataDog/zstd v1.4.5
+## explicit
 github.com/DataDog/zstd
 # github.com/DeOne4eg/eth-unit-converter v0.2.0
 ## explicit; go 1.16
@@ -11,13 +11,16 @@ github.com/Microsoft/go-winio/internal/fs
 github.com/Microsoft/go-winio/internal/socket
 github.com/Microsoft/go-winio/internal/stringbuffer
 github.com/Microsoft/go-winio/pkg/guid
+# github.com/StackExchange/wmi v1.2.1
+## explicit; go 1.13
+github.com/StackExchange/wmi
 # github.com/VictoriaMetrics/fastcache v1.12.2
 ## explicit; go 1.13
 github.com/VictoriaMetrics/fastcache
 # github.com/agnivade/levenshtein v1.2.1
 ## explicit; go 1.21
 github.com/agnivade/levenshtein
-# github.com/ardanlabs/conf/v3 v3.6.0
+# github.com/ardanlabs/conf/v3 v3.7.2
 ## explicit; go 1.23.0
 github.com/ardanlabs/conf/v3
 # github.com/ardanlabs/darwin/v3 v3.3.1
@@ -37,7 +40,7 @@ github.com/arl/statsviz/internal/static
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/bits-and-blooms/bitset v1.22.0
+# github.com/bits-and-blooms/bitset v1.20.0
 ## explicit; go 1.16
 github.com/bits-and-blooms/bitset
 # github.com/cespare/xxhash/v2 v2.3.0
@@ -64,13 +67,13 @@ github.com/cockroachdb/errors/secondary
 github.com/cockroachdb/errors/stdstrings
 github.com/cockroachdb/errors/telemetrykeys
 github.com/cockroachdb/errors/withstack
-# github.com/cockroachdb/fifo v0.0.0-20240816210425-c5d0cb0b6fc0
+# github.com/cockroachdb/fifo v0.0.0-20240606204812-0bbfbd93a7ce
 ## explicit; go 1.20
 github.com/cockroachdb/fifo
-# github.com/cockroachdb/logtags v0.0.0-20241215232642-bb51bb14a506
-## explicit; go 1.18
+# github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b
+## explicit; go 1.16
 github.com/cockroachdb/logtags
-# github.com/cockroachdb/pebble v1.1.5
+# github.com/cockroachdb/pebble v1.1.2
 ## explicit; go 1.20
 github.com/cockroachdb/pebble
 github.com/cockroachdb/pebble/bloom
@@ -105,7 +108,7 @@ github.com/cockroachdb/pebble/record
 github.com/cockroachdb/pebble/sstable
 github.com/cockroachdb/pebble/vfs
 github.com/cockroachdb/pebble/vfs/atomicfs
-# github.com/cockroachdb/redact v1.1.6
+# github.com/cockroachdb/redact v1.1.5
 ## explicit; go 1.14
 github.com/cockroachdb/redact
 github.com/cockroachdb/redact/builder
@@ -120,10 +123,10 @@ github.com/cockroachdb/redact/internal/rfmt/fmtsort
 # github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06
 ## explicit; go 1.19
 github.com/cockroachdb/tokenbucket
-# github.com/consensys/bavard v0.1.30
+# github.com/consensys/bavard v0.1.27
 ## explicit; go 1.22
 github.com/consensys/bavard
-# github.com/consensys/gnark-crypto v0.17.0
+# github.com/consensys/gnark-crypto v0.16.0
 ## explicit; go 1.22
 github.com/consensys/gnark-crypto/ecc
 github.com/consensys/gnark-crypto/ecc/bls12-381
@@ -139,10 +142,20 @@ github.com/consensys/gnark-crypto/field/hash
 github.com/consensys/gnark-crypto/field/pool
 github.com/consensys/gnark-crypto/internal/generator/config
 github.com/consensys/gnark-crypto/internal/parallel
-github.com/consensys/gnark-crypto/utils/cpu
 # github.com/cpuguy83/go-md2man/v2 v2.0.6
 ## explicit; go 1.12
 github.com/cpuguy83/go-md2man/v2/md2man
+# github.com/crate-crypto/go-eth-kzg v1.3.0
+## explicit; go 1.22
+github.com/crate-crypto/go-eth-kzg
+github.com/crate-crypto/go-eth-kzg/internal/domain
+github.com/crate-crypto/go-eth-kzg/internal/erasure_code
+github.com/crate-crypto/go-eth-kzg/internal/kzg
+github.com/crate-crypto/go-eth-kzg/internal/kzg_multi
+github.com/crate-crypto/go-eth-kzg/internal/kzg_multi/fk20
+github.com/crate-crypto/go-eth-kzg/internal/multiexp
+github.com/crate-crypto/go-eth-kzg/internal/poly
+github.com/crate-crypto/go-eth-kzg/internal/utils
 # github.com/crate-crypto/go-ipa v0.0.0-20240724233137-53bbb0ceb27a
 ## explicit; go 1.18
 github.com/crate-crypto/go-ipa
@@ -153,26 +166,20 @@ github.com/crate-crypto/go-ipa/banderwagon
 github.com/crate-crypto/go-ipa/common
 github.com/crate-crypto/go-ipa/common/parallel
 github.com/crate-crypto/go-ipa/ipa
-# github.com/crate-crypto/go-kzg-4844 v1.1.0
-## explicit; go 1.20
-github.com/crate-crypto/go-kzg-4844
-github.com/crate-crypto/go-kzg-4844/internal/kzg
-github.com/crate-crypto/go-kzg-4844/internal/multiexp
-github.com/crate-crypto/go-kzg-4844/internal/utils
-# github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+# github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/deckarep/golang-set/v2 v2.8.0
+# github.com/deckarep/golang-set/v2 v2.6.0
 ## explicit; go 1.18
 github.com/deckarep/golang-set/v2
-# github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
-## explicit; go 1.17
+# github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1
+## explicit; go 1.16
 github.com/decred/dcrd/dcrec/secp256k1/v4
 github.com/decred/dcrd/dcrec/secp256k1/v4/ecdsa
-# github.com/ethereum/c-kzg-4844 v1.0.3
+# github.com/ethereum/c-kzg-4844/v2 v2.1.0
 ## explicit; go 1.19
-github.com/ethereum/c-kzg-4844/bindings/go
-# github.com/ethereum/go-ethereum v1.15.7
+github.com/ethereum/c-kzg-4844/v2/bindings/go
+# github.com/ethereum/go-ethereum v1.15.11
 ## explicit; go 1.23.0
 github.com/ethereum/go-ethereum
 github.com/ethereum/go-ethereum/accounts
@@ -200,6 +207,7 @@ github.com/ethereum/go-ethereum/consensus/misc/eip4844
 github.com/ethereum/go-ethereum/core
 github.com/ethereum/go-ethereum/core/filtermaps
 github.com/ethereum/go-ethereum/core/forkid
+github.com/ethereum/go-ethereum/core/history
 github.com/ethereum/go-ethereum/core/rawdb
 github.com/ethereum/go-ethereum/core/state
 github.com/ethereum/go-ethereum/core/state/pruner
@@ -337,17 +345,18 @@ github.com/gdamore/tcell/v2/terminfo/x/xfce
 github.com/gdamore/tcell/v2/terminfo/x/xterm
 github.com/gdamore/tcell/v2/terminfo/x/xterm_ghostty
 github.com/gdamore/tcell/v2/terminfo/x/xterm_kitty
-# github.com/getsentry/sentry-go v0.31.1
-## explicit; go 1.21
+# github.com/getsentry/sentry-go v0.27.0
+## explicit; go 1.18
 github.com/getsentry/sentry-go
 github.com/getsentry/sentry-go/internal/debug
 github.com/getsentry/sentry-go/internal/otel/baggage
 github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
 github.com/getsentry/sentry-go/internal/ratelimit
+github.com/getsentry/sentry-go/internal/traceparser
 # github.com/go-ini/ini v1.67.0
 ## explicit
 github.com/go-ini/ini
-# github.com/go-json-experiment/json v0.0.0-20250223041408-d3c622f1b874
+# github.com/go-json-experiment/json v0.0.0-20250417205406-170dfdcf87d1
 ## explicit; go 1.24
 github.com/go-json-experiment/json
 github.com/go-json-experiment/json/internal
@@ -388,8 +397,8 @@ github.com/gobwas/glob/syntax/ast
 github.com/gobwas/glob/syntax/lexer
 github.com/gobwas/glob/util/runes
 github.com/gobwas/glob/util/strings
-# github.com/gofrs/flock v0.12.1
-## explicit; go 1.21.0
+# github.com/gofrs/flock v0.8.1
+## explicit
 github.com/gofrs/flock
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
@@ -401,7 +410,7 @@ github.com/gogo/protobuf/types
 # github.com/golang-jwt/jwt/v4 v4.5.2
 ## explicit; go 1.16
 github.com/golang-jwt/jwt/v4
-# github.com/golang/snappy v1.0.0
+# github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb
 ## explicit
 github.com/golang/snappy
 # github.com/google/uuid v1.6.0
@@ -413,12 +422,12 @@ github.com/gorilla/mux
 # github.com/gorilla/websocket v1.5.3
 ## explicit; go 1.12
 github.com/gorilla/websocket
-# github.com/hashicorp/go-bexpr v0.1.14
-## explicit; go 1.18
+# github.com/hashicorp/go-bexpr v0.1.10
+## explicit; go 1.14
 github.com/hashicorp/go-bexpr
 github.com/hashicorp/go-bexpr/grammar
-# github.com/holiman/billy v0.0.0-20250108194907-5352da567d3e
-## explicit; go 1.19
+# github.com/holiman/billy v0.0.0-20240216141850-2abb0c79d3c4
+## explicit; go 1.18
 github.com/holiman/billy
 # github.com/holiman/bloomfilter/v2 v2.0.3
 ## explicit; go 1.15
@@ -492,8 +501,8 @@ github.com/leodido/go-urn/scim/schema
 # github.com/lucasb-eyer/go-colorful v1.2.0
 ## explicit; go 1.12
 github.com/lucasb-eyer/go-colorful
-# github.com/mattn/go-colorable v0.1.14
-## explicit; go 1.18
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
@@ -501,10 +510,10 @@ github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.16
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
-# github.com/mitchellh/mapstructure v1.5.0
+# github.com/mitchellh/mapstructure v1.4.1
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
-# github.com/mitchellh/pointerstructure v1.2.1
+# github.com/mitchellh/pointerstructure v1.2.0
 ## explicit; go 1.13
 github.com/mitchellh/pointerstructure
 # github.com/mmcloughlin/addchain v0.4.0
@@ -537,8 +546,8 @@ github.com/munnerz/goautoneg
 # github.com/olekukonko/tablewriter v0.0.5
 ## explicit; go 1.12
 github.com/olekukonko/tablewriter
-# github.com/open-policy-agent/opa v1.3.0
-## explicit; go 1.23.6
+# github.com/open-policy-agent/opa v1.4.2
+## explicit; go 1.23.8
 github.com/open-policy-agent/opa/capabilities
 github.com/open-policy-agent/opa/internal/bundle
 github.com/open-policy-agent/opa/internal/cidr/merge
@@ -628,7 +637,7 @@ github.com/open-policy-agent/opa/v1/types
 github.com/open-policy-agent/opa/v1/util
 github.com/open-policy-agent/opa/v1/util/decoding
 github.com/open-policy-agent/opa/v1/version
-# github.com/pion/dtls/v2 v2.2.12
+# github.com/pion/dtls/v2 v2.2.7
 ## explicit; go 1.13
 github.com/pion/dtls/v2
 github.com/pion/dtls/v2/internal/ciphersuite
@@ -648,22 +657,22 @@ github.com/pion/dtls/v2/pkg/protocol/alert
 github.com/pion/dtls/v2/pkg/protocol/extension
 github.com/pion/dtls/v2/pkg/protocol/handshake
 github.com/pion/dtls/v2/pkg/protocol/recordlayer
-# github.com/pion/logging v0.2.3
-## explicit; go 1.20
+# github.com/pion/logging v0.2.2
+## explicit; go 1.12
 github.com/pion/logging
 # github.com/pion/stun/v2 v2.0.0
 ## explicit; go 1.12
 github.com/pion/stun/v2
 github.com/pion/stun/v2/internal/hmac
-# github.com/pion/transport/v2 v2.2.10
+# github.com/pion/transport/v2 v2.2.1
 ## explicit; go 1.12
 github.com/pion/transport/v2/connctx
 github.com/pion/transport/v2/deadline
 github.com/pion/transport/v2/packetio
 github.com/pion/transport/v2/replaydetector
 github.com/pion/transport/v2/udp
-# github.com/pion/transport/v3 v3.0.7
-## explicit; go 1.19
+# github.com/pion/transport/v3 v3.0.1
+## explicit; go 1.12
 github.com/pion/transport/v3
 github.com/pion/transport/v3/stdnet
 github.com/pion/transport/v3/utils/xor
@@ -677,32 +686,31 @@ github.com/prometheus/client_golang/prometheus/internal
 # github.com/prometheus/client_model v0.6.1
 ## explicit; go 1.19
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.63.0
+# github.com/prometheus/common v0.62.0
 ## explicit; go 1.21
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.16.0
-## explicit; go 1.21
+# github.com/prometheus/procfs v0.15.1
+## explicit; go 1.20
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/rcrowley/go-metrics v0.0.0-20250401214520-65e299d6c5c9
+# github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0
 ## explicit
 github.com/rcrowley/go-metrics
-# github.com/rivo/uniseg v0.4.7
+# github.com/rivo/uniseg v0.4.3
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/rogpeppe/go-internal v1.14.1
-## explicit; go 1.23
+# github.com/rogpeppe/go-internal v1.13.1
+## explicit; go 1.22
 github.com/rogpeppe/go-internal/fmtsort
-# github.com/rs/cors v1.11.1
-## explicit; go 1.13
+# github.com/rs/cors v1.7.0
+## explicit
 github.com/rs/cors
-github.com/rs/cors/internal
 # github.com/russross/blackfriday/v2 v2.1.0
 ## explicit
 github.com/russross/blackfriday/v2
-# github.com/shirou/gopsutil v3.21.11+incompatible
+# github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible
 ## explicit
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/internal/common
@@ -735,18 +743,15 @@ github.com/syndtr/goleveldb/leveldb/util
 # github.com/tchap/go-patricia/v2 v2.3.2
 ## explicit; go 1.16
 github.com/tchap/go-patricia/v2/patricia
-# github.com/tklauser/go-sysconf v0.3.15
-## explicit; go 1.23.0
+# github.com/tklauser/go-sysconf v0.3.12
+## explicit; go 1.13
 github.com/tklauser/go-sysconf
-# github.com/tklauser/numcpus v0.10.0
-## explicit; go 1.23.0
+# github.com/tklauser/numcpus v0.6.1
+## explicit; go 1.13
 github.com/tklauser/numcpus
-# github.com/urfave/cli/v2 v2.27.6
+# github.com/urfave/cli/v2 v2.27.5
 ## explicit; go 1.18
 github.com/urfave/cli/v2
-# github.com/wlynxg/anet v0.0.5
-## explicit; go 1.20
-github.com/wlynxg/anet
 # github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb
 ## explicit
 github.com/xeipuuv/gojsonpointer
@@ -759,9 +764,6 @@ github.com/xrash/smetrics
 # github.com/yashtewari/glob-intersection v0.2.0
 ## explicit; go 1.17
 github.com/yashtewari/glob-intersection
-# github.com/yusufpapurcu/wmi v1.2.4
-## explicit; go 1.16
-github.com/yusufpapurcu/wmi
 # go.opentelemetry.io/auto/sdk v1.1.0
 ## explicit; go 1.22.0
 go.opentelemetry.io/auto/sdk
@@ -806,19 +808,14 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ripemd160
 golang.org/x/crypto/scrypt
 golang.org/x/crypto/sha3
-# golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
-## explicit; go 1.23.0
+# golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/rand
 # golang.org/x/net v0.38.0
 ## explicit; go 1.23.0
-golang.org/x/net/bpf
 golang.org/x/net/html
 golang.org/x/net/html/atom
-golang.org/x/net/internal/iana
-golang.org/x/net/internal/socket
-golang.org/x/net/ipv4
-golang.org/x/net/ipv6
 # golang.org/x/sync v0.12.0
 ## explicit; go 1.23.0
 golang.org/x/sync/errgroup
@@ -838,11 +835,9 @@ golang.org/x/term
 # golang.org/x/text v0.23.0
 ## explicit; go 1.23.0
 golang.org/x/text/cases
-golang.org/x/text/collate
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/internal
-golang.org/x/text/internal/colltab
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
