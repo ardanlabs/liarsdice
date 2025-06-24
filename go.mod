@@ -1,27 +1,27 @@
 module github.com/ardanlabs/liarsdice
 
-go 1.24
+go 1.24.0
 
-toolchain go1.24.0
+toolchain go1.24.4
 
 require (
-	github.com/ardanlabs/conf/v3 v3.7.2
+	github.com/ardanlabs/conf/v3 v3.8.0
 	github.com/ardanlabs/darwin/v3 v3.3.1
 	github.com/ardanlabs/ethereum v0.20.0
 	github.com/arl/statsviz v0.6.0
 	github.com/ethereum/go-ethereum v1.15.11
 	github.com/gdamore/tcell/v2 v2.8.1
-	github.com/go-json-experiment/json v0.0.0-20250417205406-170dfdcf87d1
+	github.com/go-json-experiment/json v0.0.0-20250517221953-25912455fbc8
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mattn/go-runewidth v0.0.16
-	github.com/open-policy-agent/opa v1.4.2
+	github.com/open-policy-agent/opa v1.5.1
 	github.com/spf13/cobra v1.9.1
 )
 
@@ -51,7 +51,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/ethereum/c-kzg-4844/v2 v2.1.0 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
-	github.com/fsnotify/fsnotify v1.8.0 // indirect
+	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/getsentry/sentry-go v0.27.0 // indirect
@@ -92,8 +92,8 @@ require (
 	github.com/pion/transport/v2 v2.2.1 // indirect
 	github.com/pion/transport/v3 v3.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_golang v1.21.1 // indirect
-	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/client_golang v1.22.0 // indirect
+	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20200313005456-10cdbea86bc0 // indirect
@@ -110,6 +110,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.26 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
@@ -119,13 +120,13 @@ require (
 	go.opentelemetry.io/otel/metric v1.35.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/net v0.38.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-	golang.org/x/term v0.30.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.31.0 // indirect
+	golang.org/x/text v0.24.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250218202821-56aae31c358a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
