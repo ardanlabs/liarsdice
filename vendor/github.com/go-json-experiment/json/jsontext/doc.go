@@ -18,8 +18,8 @@
 //   - a JSON literal (i.e., null, true, or false)
 //   - a JSON string (e.g., "hello, world!")
 //   - a JSON number (e.g., 123.456)
-//   - a start or end delimiter for a JSON object (i.e., '{' or '}')
-//   - a start or end delimiter for a JSON array (i.e., '[' or ']')
+//   - a begin or end delimiter for a JSON object (i.e., '{' or '}')
+//   - a begin or end delimiter for a JSON array (i.e., '[' or ']')
 //
 // A JSON token is represented by the [Token] type in Go. Technically,
 // there are two additional structural characters (i.e., ':' and ','),
@@ -96,6 +96,10 @@
 // RFC 7493 is a stricter subset of RFC 8259 and fully compliant with it.
 // In particular, it makes specific choices about behavior that RFC 8259
 // leaves as undefined in order to ensure greater interoperability.
+//
+// # Security Considerations
+//
+// See the "Security Considerations" section in [encoding/json/v2].
 package jsontext
 
 // requireKeyedLiterals can be embedded in a struct to require keyed literals.
