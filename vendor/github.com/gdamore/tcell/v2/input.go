@@ -413,7 +413,7 @@ func (ip *inputProcessor) scan() {
 				ip.post(NewEventKey(KeyTab, 0, ModNone))
 			case '\b', '\x7F':
 				ip.post(NewEventKey(KeyBackspace, 0, ModNone))
-			case '\n', '\r':
+			case '\r':
 				ip.post(NewEventKey(KeyEnter, 0, ModNone))
 			default:
 				// Control keys - legacy handling
@@ -675,15 +675,16 @@ func (ip *inputProcessor) handleWinKey(P []int) {
 		// key up event ignore ignore
 		return
 	}
-	if P[0] == 0 && P[2] == 27 && ip.nested == nil {
-		ip.nested = &inputProcessor{
-			evch: ip.evch,
-			rows: ip.rows,
-			cols: ip.cols,
-		}
-	}
 
-	if ip.nested != nil && P[2] > 0 && P[2] < 0x80 { // only ASCII in win32-input-mode
+	if P[0] == 0 && P[1] == 0 && P[2] > 0 && P[2] < 0x80 { // only ASCII in win32-input-mode
+		if ip.nested == nil {
+			ip.nested = &inputProcessor{
+				evch: ip.evch,
+				rows: ip.rows,
+				cols: ip.cols,
+			}
+		}
+
 		ip.nested.ScanUTF8([]byte{byte(P[2])})
 		return
 	}
